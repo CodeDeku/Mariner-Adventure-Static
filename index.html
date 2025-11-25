@@ -44,6 +44,7 @@
             <!-- Scene Image -->
             <div class="relative w-full aspect-square md:aspect-[4/3] bg-gray-900 rounded border border-gray-700 overflow-hidden shadow-2xl shrink-0 group">
                 <button id="reset-game-btn" onclick="confirmReset()" class="absolute top-2 left-2 z-30 text-[10px] border border-red-900/50 text-red-400 bg-black/60 hover:text-red-200 hover:bg-red-900/80 px-2 py-1 rounded transition-all cinzel font-bold backdrop-blur-sm"><i class="fas fa-skull mr-1"></i>New Game</button>
+                <!-- DEFAULT IMAGE PLACEHOLDER IS HERE -->
                 <img id="scene-image" src="" alt="Scene Visualization" class="w-full h-full object-cover transition-opacity duration-1000" onerror="this.src='https://placehold.co/600x400/0f172a/1e293b?text=The+Void'">
                 <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/80 to-transparent p-4">
                     <h2 id="scene-title" class="text-xl cinzel text-amber-500 text-shadow"></h2>
@@ -111,6 +112,7 @@
         import { getFirestore, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- FIREBASE CONFIG ---
+        // NOTE: You do NOT need the Google API Key anymore for static images.
         const firebaseConfig = {
             apiKey: "AIzaSyDlg5dETZJpbJ9GzMV01pUYA06XbFmySbw",
             authDomain: "edward-jones-75546.firebaseapp.com",
@@ -129,6 +131,7 @@
         // --- STATIC IMAGE MAPPING ---
         // INSTRUCTIONS: Create a folder named 'images' in your repo.
         // Upload your images there with these exact filenames.
+        // Example: https://yourname.github.io/images/storm.jpg
         const sceneImages = {
             'prologue_storm': 'images/storm.jpg',
             'prologue_abyss': 'images/abyss.jpg',
