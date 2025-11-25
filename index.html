@@ -5,47 +5,107 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edward Jones: The Mariner of the Damned</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Fonts -->
+    <!-- Fonts: Cinzel (Headers), Crimson Text (Body), Dancing Script (Journal) -->
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=Dancing+Script:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
     <style>
-        body { font-family: 'Crimson Text', serif; background-color: #050a10; color: #cdd5e0; min-height: 100vh; display: flex; flex-direction: column; }
-        h1, h2, h3, .cinzel { font-family: 'Cinzel', serif; }
-        .journal-font { font-family: 'Dancing Script', cursive; font-size: 1.3rem; line-height: 1.6; color: #94a3b8; }
+        body {
+            font-family: 'Crimson Text', serif;
+            background-color: #050a10;
+            color: #cdd5e0;
+            /* Allow natural scrolling */
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        h1, h2, h3, .cinzel {
+            font-family: 'Cinzel', serif;
+        }
+        .journal-font {
+            font-family: 'Dancing Script', cursive;
+            font-size: 1.3rem;
+            line-height: 1.6;
+            color: #94a3b8; 
+        }
         /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #0f172a; }
         ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #475569; }
-        .btn-game { transition: all 0.2s; position: relative; overflow: hidden; }
+        
+        .btn-game {
+            transition: all 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
         .btn-game:active { transform: translateY(1px); }
         .text-shadow { text-shadow: 0 2px 4px rgba(0,0,0,0.8); }
-        @keyframes pulse-glow { 0%, 100% { box-shadow: 0 0 5px rgba(59, 130, 246, 0.2); border-color: #3b82f6; } 50% { box-shadow: 0 0 15px rgba(59, 130, 246, 0.5); border-color: #60a5fa; } }
+        
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 5px rgba(59, 130, 246, 0.2); border-color: #3b82f6; }
+            50% { box-shadow: 0 0 15px rgba(59, 130, 246, 0.5); border-color: #60a5fa; }
+        }
         .crew-active { animation: pulse-glow 2s infinite; background-color: rgba(30, 58, 138, 0.3); }
-        @keyframes item-pulse { 0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.4); } 50% { box-shadow: 0 0 10px 0 rgba(16, 185, 129, 0.2); border-color: rgba(16, 185, 129, 0.8); } 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.4); } }
+
+        /* Item Pulse for Consumables */
+        @keyframes item-pulse {
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.4); }
+            50% { box-shadow: 0 0 10px 0 rgba(16, 185, 129, 0.2); border-color: rgba(16, 185, 129, 0.8); }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.4); }
+        }
         .item-consumable { animation: item-pulse 3s infinite; }
+
+        /* Influence Marker Transition */
         #inf-marker { transition: left 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
-        .water-stained { background-color: #1e293b; background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23334155' fill-opacity='0.1' fill-rule='evenodd'/%3E%3C/svg%3E"); }
+
+        /* Journal Background Pattern */
+        .water-stained {
+            background-color: #1e293b;
+            background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23334155' fill-opacity='0.1' fill-rule='evenodd'/%3E%3C/svg%3E");
+        }
+        
+        .fade-in { animation: fadeIn 0.8s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* Blur UI when in prologue */
         .prologue-blur { filter: blur(4px); opacity: 0.5; pointer-events: none; transition: all 1s; }
         .prologue-active { opacity: 1; filter: none; }
+        
+        /* Hidden Log State */
         .log-hidden { opacity: 0; pointer-events: none; transform: translateY(20px); }
         .log-visible { opacity: 1; pointer-events: auto; transform: translateY(0); transition: all 1s ease-out; }
     </style>
 </head>
 <body>
+
+    <!-- Loading Overlay -->
     <div id="app-loading" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black text-white">
         <div class="text-4xl cinzel text-blue-500 mb-4 animate-pulse text-center px-4">Edward Jones:<br>The Mariner of the Damned</div>
         <div class="text-gray-400 cinzel text-sm">Summoning the Crew...</div>
     </div>
 
+    <!-- Main Game Container -->
     <div class="flex-1 flex flex-col md:flex-row max-w-7xl mx-auto w-full p-2 md:p-4 gap-4 mb-8">
-        <!-- LEFT COLUMN -->
+        
+        <!-- LEFT COLUMN: Visuals, Stats & Inventory -->
         <div class="flex flex-col w-full md:w-1/3 gap-3 shrink-0">
+            
             <!-- Scene Image -->
             <div class="relative w-full aspect-square md:aspect-[4/3] bg-gray-900 rounded border border-gray-700 overflow-hidden shadow-2xl shrink-0 group">
-                <button id="reset-game-btn" onclick="confirmReset()" class="absolute top-2 left-2 z-30 text-[10px] border border-red-900/50 text-red-400 bg-black/60 hover:text-red-200 hover:bg-red-900/80 px-2 py-1 rounded transition-all cinzel font-bold backdrop-blur-sm"><i class="fas fa-skull mr-1"></i>New Game</button>
-                <!-- DEFAULT IMAGE PLACEHOLDER IS HERE -->
-                <img id="scene-image" src="" alt="Scene Visualization" class="w-full h-full object-cover transition-opacity duration-1000" onerror="this.src='https://placehold.co/600x400/0f172a/1e293b?text=The+Void'">
+                <!-- Reset Button -->
+                <button id="reset-game-btn" onclick="confirmReset()" class="absolute top-2 left-2 z-30 text-[10px] border border-red-900/50 text-red-400 bg-black/60 hover:text-red-200 hover:bg-red-900/80 px-2 py-1 rounded transition-all cinzel font-bold backdrop-blur-sm">
+                    <i class="fas fa-skull mr-1"></i>New Game
+                </button>
+
+                <!-- Placeholder Image / Static Image Target -->
+                <img id="scene-image" src="" alt="Scene Visualization" class="w-full h-full object-cover opacity-0 transition-opacity duration-1000">
+                
+                <div id="image-loader" class="absolute inset-0 flex items-center justify-center bg-gray-800 text-gray-500">
+                    <div class="flex flex-col items-center">
+                        <i class="fas fa-circle-notch fa-spin text-2xl mb-2 text-amber-600"></i>
+                        <span class="text-xs cinzel tracking-widest text-amber-600">Manifesting Vision...</span>
+                    </div>
+                </div>
                 <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/80 to-transparent p-4">
                     <h2 id="scene-title" class="text-xl cinzel text-amber-500 text-shadow"></h2>
                 </div>
@@ -53,85 +113,141 @@
 
             <!-- Stats Panel -->
             <div id="stats-panel" class="bg-gray-800/80 rounded border border-gray-700 p-3 flex flex-col gap-3 shadow-lg backdrop-blur-sm relative transition-all duration-1000">
+                
                 <!-- Health -->
                 <div>
-                    <div class="flex justify-between text-xs cinzel text-gray-400 mb-1"><span>Vitality</span><span id="hp-text">20/20</span></div>
-                    <div class="w-full bg-gray-900 h-2 rounded-full overflow-hidden border border-gray-700"><div id="hp-bar" class="bg-red-800 h-full w-full transition-all duration-500"></div></div>
+                    <div class="flex justify-between text-xs cinzel text-gray-400 mb-1">
+                        <span>Vitality</span>
+                        <span id="hp-text">20/20</span>
+                    </div>
+                    <div class="w-full bg-gray-900 h-2 rounded-full overflow-hidden border border-gray-700">
+                        <div id="hp-bar" class="bg-red-800 h-full w-full transition-all duration-500"></div>
+                    </div>
                 </div>
-                <!-- Currency & Influence -->
+
+                <!-- Currency & Influence (Tug of War) -->
                 <div class="grid grid-cols-1 gap-2 text-sm">
-                    <div class="bg-gray-900 p-2 rounded border border-gray-700 flex items-center justify-between"><span class="text-amber-500 cinzel"><i class="fas fa-coins mr-2"></i>Shillings</span><span id="shillings-display" class="font-bold text-gray-200">0</span></div>
+                    <!-- Shillings -->
+                    <div class="bg-gray-900 p-2 rounded border border-gray-700 flex items-center justify-between">
+                        <span class="text-amber-500 cinzel"><i class="fas fa-coins mr-2"></i>Shillings</span>
+                        <span id="shillings-display" class="font-bold text-gray-200">0</span>
+                    </div>
+
+                    <!-- Tug of War Influence Bar -->
                     <div class="bg-gray-900 p-2 rounded border border-gray-700 flex flex-col text-[10px] gap-2 relative">
-                        <div class="flex justify-between items-center cinzel text-[9px] uppercase tracking-wider font-bold"><span class="text-blue-400"><i class="fas fa-shield-alt mr-1"></i>Order</span><span class="text-gray-500">Neutral</span><span class="text-emerald-400">Chaos<i class="fas fa-skull-crossbones ml-1"></i></span></div>
+                        <div class="flex justify-between items-center cinzel text-[9px] uppercase tracking-wider font-bold">
+                            <span class="text-blue-400"><i class="fas fa-shield-alt mr-1"></i>Order</span>
+                            <span class="text-gray-500">Neutral</span>
+                            <span class="text-emerald-400">Chaos<i class="fas fa-skull-crossbones ml-1"></i></span>
+                        </div>
+                        
                         <div class="relative w-full h-3 bg-gray-800 rounded-full border border-gray-600 overflow-hidden">
+                            <!-- Gradient Background -->
                             <div class="absolute inset-0 bg-gradient-to-r from-blue-900 via-gray-800 to-emerald-900 opacity-60"></div>
+                            
+                            <!-- Center Line -->
                             <div class="absolute left-1/2 top-0 bottom-0 w-px bg-gray-500 z-0"></div>
+                            
+                            <!-- Moving Marker -->
                             <div id="inf-marker" class="absolute top-0 bottom-0 w-1.5 bg-white shadow-[0_0_10px_rgba(255,255,255,0.8)] z-10 rounded-full transform -translate-x-1/2" style="left: 50%;"></div>
                         </div>
                         <div class="text-center text-[9px] text-gray-500 italic" id="inf-status-text">Unknown to all</div>
                     </div>
                 </div>
-                <!-- Crew -->
+
+                <!-- Crew (Guiding Voice) -->
                 <div>
-                    <div class="flex justify-between items-end border-b border-gray-700 pb-1 mb-2"><span class="text-xs cinzel text-gray-400">Guiding Voice (+1d4)</span><span class="text-[10px] text-gray-600 italic">Resets on Long Rest</span></div>
-                    <div class="grid grid-cols-2 gap-2" id="crew-panel"></div>
+                    <div class="flex justify-between items-end border-b border-gray-700 pb-1 mb-2">
+                        <span class="text-xs cinzel text-gray-400">Guiding Voice (+1d4)</span>
+                        <span class="text-[10px] text-gray-600 italic">Resets on Long Rest</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2" id="crew-panel">
+                        <!-- Crew buttons injected here -->
+                    </div>
                 </div>
-                <!-- Inventory -->
+
+                <!-- Inventory (List View) -->
                 <div class="flex-1 flex flex-col">
-                    <div class="flex justify-between items-end border-b border-gray-700 pb-1 mb-2"><span class="text-xs cinzel text-gray-400"><i class="fas fa-briefcase mr-1"></i> Inventory</span></div>
-                    <div id="item-desc-area" class="text-[10px] text-gray-400 h-8 italic mb-2 text-center leading-tight flex items-center justify-center bg-gray-900/50 border border-gray-700/50 rounded px-2 transition-all duration-300">Hover over an item to inspect it.</div>
-                    <div id="inventory-panel" class="flex flex-col gap-1"></div>
+                    <div class="flex justify-between items-end border-b border-gray-700 pb-1 mb-2">
+                        <span class="text-xs cinzel text-gray-400"><i class="fas fa-briefcase mr-1"></i> Inventory</span>
+                    </div>
+
+                    <!-- Inventory Description Area -->
+                    <div id="item-desc-area" class="text-[10px] text-gray-400 h-8 italic mb-2 text-center leading-tight flex items-center justify-center bg-gray-900/50 border border-gray-700/50 rounded px-2 transition-all duration-300">
+                        Hover over an item to inspect it.
+                    </div>
+
+                    <!-- Inventory List Container -->
+                    <div id="inventory-panel" class="flex flex-col gap-1">
+                        <!-- Inventory Items injected here -->
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- RIGHT COLUMN -->
+        <!-- RIGHT COLUMN: Narrative & Interaction -->
         <div class="flex flex-col w-full md:w-2/3 gap-4">
-            <!-- Main Scene Text -->
+            
+            <!-- 1. MAIN SCENE TEXT -->
             <div id="main-scene-text" class="bg-[#111318] rounded border border-gray-700 p-6 shadow-inner relative flex flex-col justify-center min-h-[160px]">
                 <div class="text-center text-gray-500 italic">Initializing Story...</div>
             </div>
-            <!-- Action Buttons -->
+
+            <!-- 2. ACTION BUTTONS -->
             <div class="shrink-0 flex flex-col gap-2">
-                 <div id="active-crew-indicator" class="hidden text-center text-blue-400 text-xs cinzel animate-pulse mb-1"><i class="fas fa-ghost mr-1"></i> <span id="active-crew-name"></span> is guiding your next move...</div>
-                <div id="choices-area" class="grid grid-cols-1 gap-2"></div>
+                 <div id="active-crew-indicator" class="hidden text-center text-blue-400 text-xs cinzel animate-pulse mb-1">
+                    <i class="fas fa-ghost mr-1"></i> <span id="active-crew-name"></span> is guiding your next move...
+                </div>
+                <div id="choices-area" class="grid grid-cols-1 gap-2">
+                    <!-- Choice buttons injected here -->
+                </div>
             </div>
-            <!-- Journal -->
+
+            <!-- 3. SHIP'S LOG / JOURNAL -->
             <div id="journal-container" class="log-hidden h-64 md:h-80 shrink-0 rounded border border-gray-600 bg-gray-800 shadow-2xl flex flex-col overflow-hidden relative">
-                <div class="bg-[#0f172a] text-center py-1 border-b border-gray-700 z-10 shadow-md"><h3 class="cinzel text-amber-600 text-xs tracking-[0.2em] font-bold">The Log of The Trident's Kiss</h3></div>
-                <div id="journal-scroll-area" class="flex-1 water-stained p-6 overflow-y-auto"><div id="journal-content" class="space-y-6"></div><div class="h-4"></div></div>
+                <div class="bg-[#0f172a] text-center py-1 border-b border-gray-700 z-10 shadow-md">
+                    <h3 class="cinzel text-amber-600 text-xs tracking-[0.2em] font-bold">The Log of The Trident's Kiss</h3>
+                </div>
+                <div id="journal-scroll-area" class="flex-1 water-stained p-6 overflow-y-auto">
+                    <div id="journal-content" class="space-y-6">
+                         <!-- Past text injected here -->
+                    </div>
+                    <div class="h-4"></div>
+                </div>
                 <div class="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-black/20 to-transparent pointer-events-none"></div>
             </div>
+
         </div>
     </div>
 
-    <!-- Firebase & Game Logic -->
+    <!-- Firebase Imports & Game Logic -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // --- FIREBASE CONFIG ---
-        // NOTE: You do NOT need the Google API Key anymore for static images.
+        // --- CONFIGURATION ---
+        // Static Version - No Gemini API Key needed here!
+        
         const firebaseConfig = {
-            apiKey: "AIzaSyDlg5dETZJpbJ9GzMV01pUYA06XbFmySbw",
-            authDomain: "edward-jones-75546.firebaseapp.com",
-            projectId: "edward-jones-75546",
-            storageBucket: "edward-jones-75546.firebasestorage.app",
-            messagingSenderId: "76799051768",
-            appId: "1:76799051768:web:fdd3641b597adfc6a0780d"
+			apiKey: "AIzaSyDlg5dETZJpbJ9GzMV01pUYA06XbFmySbw",
+			authDomain: "edward-jones-75546.firebaseapp.com",
+			projectId: "edward-jones-75546",
+			storageBucket: "edward-jones-75546.firebasestorage.app",
+			messagingSenderId: "76799051768",
+			appId: "1:76799051768:web:fdd3641b597adfc6a0780d"
         };
 
+        // Initialize Firebase immediately (Global Scope)
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
+        
         const appId = "edward-jones-standalone";
         let user;
 
         // --- STATIC IMAGE MAPPING ---
-        // INSTRUCTIONS: Create a folder named 'images' in your repo.
-        // Upload your images there with these exact filenames.
-        // Example: https://yourname.github.io/images/storm.jpg
+        // Ensure you have these files in your 'images' folder on GitHub
         const sceneImages = {
             'prologue_storm': 'images/storm.jpg',
             'prologue_abyss': 'images/abyss.jpg',
@@ -154,99 +270,530 @@
             // Default fallback
             'default': 'https://placehold.co/600x400/0f172a/1e293b?text=The+Void' 
         };
-
-        // --- GAME DATA ---
+        
+        // --- GAME DATA FACTORY ---
         function createInitialState() {
             return {
                 currentSceneId: 'prologue_storm', 
-                currentHP: 20, maxHP: 20, shillings: 0, inventory: [], influence: 0, 
+                currentHP: 20,
+                maxHP: 20,
+                shillings: 0, 
+                inventory: [], 
+                // Expanded Influence Scale: -20 to +20
+                influence: 0, 
                 crew: {
-                    gareth: { name: 'Captain Gareth', skill: 'Insight', used: false },
-                    quinn: { name: 'Quinn', skill: 'Investigation', used: false },
-                    talon: { name: 'Talon', skill: 'Perception', used: false },
-                    bones: { name: 'Bones', skill: 'Survival', used: false }
+                    gareth: { name: 'Captain Gareth', skill: 'Insight', used: false, desc: 'Add +1d4 to Initiative & Insight' },
+                    quinn: { name: 'Quinn', skill: 'Investigation', used: false, desc: 'Add +1d4 to Investigation & History' },
+                    talon: { name: 'Talon', skill: 'Perception', used: false, desc: 'Add +1d4 to Survival & Perception' },
+                    bones: { name: 'Bones', skill: 'Survival', used: false, desc: 'Add +1d4 to Nature & Foraging' }
                 },
                 history: [] 
             };
         }
+
         let gameState = createInitialState();
         let activeCrewMember = null;
 
-        // --- ITEM & SCENE DATA ---
+        // Interactive Items Definition
         const itemRegistry = {
-            "Ship's Log": { type: 'key', icon: 'fa-book-skull', color: 'text-amber-700', desc: "Records of the damned. Unlocks your history." },
-            "Captain's Tricorn": { type: 'key', icon: 'fa-hat-cowboy', color: 'text-blue-500', desc: "The heavy felt hat of your predecessor." },
-            "Rum (Heal 5)": { type: 'consumable', icon: 'fa-wine-bottle', color: 'text-amber-500', btnText: "DRINK", desc: "Potent grog. Restores 5 HP.", action: (s) => { s.currentHP = Math.min(s.maxHP, s.currentHP+5); s.inventory.splice(s.inventory.indexOf("Rum (Heal 5)"),1); return "Drank Rum. Healed 5 HP."; }},
-            "Healing Potion": { type: 'consumable', icon: 'fa-flask', color: 'text-red-500', btnText: "DRINK", desc: "Alchemical vitality. Restores 10 HP.", action: (s) => { s.currentHP = Math.min(s.maxHP, s.currentHP+10); s.inventory.splice(s.inventory.indexOf("Healing Potion"),1); return "Drank Potion. Healed 10 HP."; }},
-            "Rusted Cutlass": { type: 'key', icon: 'fa-khanda', color: 'text-gray-400', desc: "A reliable blade." },
-            "Rope": { type: 'key', icon: 'fa-om', color: 'text-yellow-700', desc: "Essential for climbing cliffs." },
-            "Torch": { type: 'key', icon: 'fa-fire', color: 'text-orange-500', desc: "Illuminates dark caves." }
+            "Ship's Log": { type: 'key', icon: 'fa-book-skull', color: 'text-amber-700', desc: "Key Item: Records of the damned. Unlocks your history." },
+            "Captain's Tricorn": { type: 'key', icon: 'fa-hat-cowboy', color: 'text-blue-500', desc: "Passive: The heavy felt hat of your predecessor." },
+            "Rum (Heal 5)": {
+                type: 'consumable',
+                icon: 'fa-wine-bottle',
+                color: 'text-amber-500',
+                btnText: "DRINK",
+                desc: "Consumable: Potent grog. Restores 5 HP immediately.",
+                action: (state) => {
+                    const healAmount = 5;
+                    const oldHP = state.currentHP;
+                    state.currentHP = Math.min(state.maxHP, state.currentHP + healAmount);
+                    const idx = state.inventory.indexOf("Rum (Heal 5)");
+                    if (idx > -1) state.inventory.splice(idx, 1);
+                    return `Drank Rum. Healed ${state.currentHP - oldHP} HP.`;
+                }
+            },
+            "Healing Potion": {
+                type: 'consumable',
+                icon: 'fa-flask',
+                color: 'text-red-500',
+                btnText: "DRINK",
+                desc: "Consumable: Alchemical vitality. Restores 10 HP.",
+                action: (state) => {
+                    const healAmount = 10;
+                    const oldHP = state.currentHP;
+                    state.currentHP = Math.min(state.maxHP, state.currentHP + healAmount);
+                    const idx = state.inventory.indexOf("Healing Potion");
+                    if (idx > -1) state.inventory.splice(idx, 1);
+                    return `Drank Potion. Healed ${state.currentHP - oldHP} HP.`;
+                }
+            },
+            "Rusted Cutlass": { type: 'key', icon: 'fa-khanda', color: 'text-gray-400', desc: "Passive: A reliable blade. Required for certain combat events." },
+            "Rope": { type: 'key', icon: 'fa-om', color: 'text-yellow-700', desc: "Passive: Essential for climbing cliffs." },
+            "Torch": { type: 'key', icon: 'fa-fire', color: 'text-orange-500', desc: "Passive: Illuminates dark caves." },
+            "Strange Coin": { type: 'key', icon: 'fa-circle-notch', color: 'text-yellow-600', desc: "Passive: Ancient currency. May open doors not made of wood." },
+            "Compass": { type: 'key', icon: 'fa-compass', color: 'text-blue-400', desc: "Passive: Points not north, but towards something unholy." }
         };
 
+        // --- SCENE DATABASE ---
         const scenes = {
-            'prologue_storm': { title: "The Planar Storm", text: "The deck heaves. Violet lightning tears the sky. Captain Gareth screams orders against the wind.", choices: [{ text: "Help Quinn secure cargo", nextScene: 'prologue_abyss' }, { text: "Stand with the Captain", nextScene: 'prologue_abyss' }] },
-            'prologue_abyss': { title: "The Deep", text: "The ship shatters. You sink into freezing darkness. A massive shadow rises from the deep... something ancient.", journal: "I saw... something in the deep.", choices: [{ text: "Wake Up", nextScene: 'start' }] },
-            'start': { title: "The Wreckage", text: "You awake on grey sand. The voices of your crew echo in your skull.", journal: "I survived. But I am not alone.", choices: [{ text: "Search debris (Investigation)", nextScene: 'wreckage_search', type: 'skill', dc: 8 }, { text: "Head to treeline", nextScene: 'treeline' }] },
-            'wreckage_search': { isLogic: true, resolve: (r) => r >= 8 ? 'wreckage_success' : 'wreckage_fail' },
-            'wreckage_success': { title: "Salvage", text: "You find a Cutlass, Shillings, and the Captain's Hat. Quinn points to the Logbook.", onEnter: (s) => { if(!s.inventory.includes("Ship's Log")) { s.inventory.push("Rusted Cutlass","Captain's Tricorn","Ship's Log"); s.shillings+=7; return "Found gear & 7s."; } }, choices: [{ text: "Move to Treeline", nextScene: 'treeline_prepared' }] },
-            'wreckage_fail': { title: "Empty Sands", text: "You find nothing but driftwood.", choices: [{ text: "Move to Treeline", nextScene: 'treeline' }] },
-            'treeline_prepared': { title: "Whispering Woods", text: "You have your gear. The voices are calm.", choices: [{ text: "Main Road", nextScene: 'road_encounter' }, { text: "Game Trail (DC 12)", nextScene: 'trail_check', type: 'skill', dc: 12 }] },
-            'treeline': { title: "Whispering Woods", text: "Quinn screams: 'The Log!' You stumble and find it at your feet.", onEnter: (s) => { if(!s.inventory.includes("Ship's Log")) s.inventory.push("Ship's Log"); }, choices: [{ text: "Main Road", nextScene: 'road_encounter' }, { text: "Game Trail (DC 12)", nextScene: 'trail_check', type: 'skill', dc: 12 }] },
-            'road_encounter': { title: "The Guard", text: "A Royal Guard blocks the path.", choices: [{ text: "Speak", nextScene: 'guard_talk' }, { text: "Attack", nextScene: 'combat_guard' }] },
-            'trail_check': { isLogic: true, resolve: (r) => r >= 12 ? 'trail_success' : 'trail_fail' },
-            'trail_success': { title: "Hidden Cove", text: "You spot Smugglers loading crates.", onEnter: (s) => { s.influence = Math.min(20, s.influence+4); return "Found Smugglers (Chaos +4)"; }, choices: [{ text: "Approach", nextScene: 'smuggler_meet' }, { text: "To Market", nextScene: 'market_crossroads' }] },
-            'trail_fail': { title: "Lost", text: "You stumble into the Guard.", onEnter: (s) => { s.currentHP-=2; return "Took 2 Dmg"; }, choices: [{ text: "Confront", nextScene: 'road_encounter' }] },
-            'guard_talk': { title: "Interrogation", text: "He eyes you suspiciously.", choices: [{ text: "Bribe (5s)", nextScene: 'guard_bribe', cost: 5 }, { text: "Respect", nextScene: 'guard_respect' }, { text: "Intimidate (DC 13)", nextScene: 'guard_intimidate_check', type: 'skill', dc: 13 }, { text: "Attack", nextScene: 'combat_guard' }] },
-            'guard_respect': { title: "Order", text: "He respects your discipline.", onEnter: (s) => { s.influence = Math.max(-20, s.influence-4); return "Order -4"; }, choices: [{ text: "To Market", nextScene: 'market_crossroads' }] },
-            'guard_bribe': { title: "Toll Paid", text: "He takes the coin.", onEnter: (s) => "Bribed (Neutral)", choices: [{ text: "To Market", nextScene: 'market_crossroads' }] },
-            'guard_intimidate_check': { isLogic: true, resolve: (r) => r >= 13 ? 'guard_scared' : 'combat_guard' },
-            'guard_scared': { title: "Fear", text: "He flees.", onEnter: (s) => { s.influence += 4; return "Chaos +4"; }, choices: [{ text: "To Market", nextScene: 'market_crossroads' }] },
-            'combat_guard': { title: "Combat", text: "You fight him off.", onEnter: (s) => { s.currentHP-=5; s.influence=20; return "Took 5 Dmg. Outlaw."; }, choices: [{ text: "To Market", nextScene: 'market_crossroads' }] },
-            'smuggler_meet': { title: "The Cove", text: "Smugglers draw weapons.", choices: [{ text: "Flash Sign (Chaos +3)", nextScene: 'smuggler_friend', reqSmuggler: 3 }, { text: "Pay (5s)", nextScene: 'smuggler_pay', cost: 5 }, { text: "Run", nextScene: 'market_crossroads' }] },
-            'smuggler_friend': { title: "Allies", text: "They give you Rum.", onEnter: (s) => { s.inventory.push("Rum (Heal 5)"); return "Got Rum"; }, choices: [{ text: "To Market", nextScene: 'market_crossroads' }] },
-            'smuggler_pay': { title: "Paid", text: "They let you pass.", choices: [{ text: "To Market", nextScene: 'market_crossroads' }] },
-            'market_crossroads': { title: "Port Market", text: "Merchants hawk wares.", choices: [{ text: "Shop", nextScene: 'market_stall' }, { text: "To Lighthouse", nextScene: 'lighthouse_split' }] },
-            'market_stall': { title: "Merchant", text: "Wares for sale.", journal: null, choices: [{ text: "Potion (5s)", nextScene: 'buy_potion', cost: 5 }, { text: "Rope (3s)", nextScene: 'buy_rope', cost: 3 }, { text: "Torch (2s)", nextScene: 'buy_torch', cost: 2 }, { text: "Sell", nextScene: 'market_sell' }, { text: "Leave", nextScene: 'lighthouse_split' }] },
-            'market_sell': { title: "Selling", text: "What will you sell?", journal: null, choices: [{ text: "Rope (+2s)", nextScene: 'sell_rope', reqItem: 'Rope' }, { text: "Torch (+1s)", nextScene: 'sell_torch', reqItem: 'Torch' }, { text: "Potion (+3s)", nextScene: 'sell_potion', reqItem: 'Healing Potion' }, { text: "Rum (+2s)", nextScene: 'sell_rum', reqItem: 'Rum (Heal 5)' }, { text: "Back", nextScene: 'market_stall' }] },
-            'sell_rope': { title: "Sold", text: "Sold Rope.", journal: "I sold the rope.", onEnter: (s) => { s.shillings+=2; s.inventory.splice(s.inventory.indexOf("Rope"),1); return "+2s"; }, choices: [{ text: "More", nextScene: 'market_sell' }] },
-            'sell_torch': { title: "Sold", text: "Sold Torch.", journal: "I sold the torch.", onEnter: (s) => { s.shillings+=1; s.inventory.splice(s.inventory.indexOf("Torch"),1); return "+1s"; }, choices: [{ text: "More", nextScene: 'market_sell' }] },
-            'sell_potion': { title: "Sold", text: "Sold Potion.", journal: "I sold the potion.", onEnter: (s) => { s.shillings+=3; s.inventory.splice(s.inventory.indexOf("Healing Potion"),1); return "+3s"; }, choices: [{ text: "More", nextScene: 'market_sell' }] },
-            'sell_rum': { title: "Sold", text: "Sold Rum.", journal: "I sold the rum.", onEnter: (s) => { s.shillings+=2; s.inventory.splice(s.inventory.indexOf("Rum (Heal 5)"),1); return "+2s"; }, choices: [{ text: "More", nextScene: 'market_sell' }] },
-            'buy_potion': { title: "Bought", text: "Bought Potion.", journal: "I bought a potion.", onEnter: (s) => { s.inventory.push("Healing Potion"); return "Got Potion"; }, choices: [{ text: "Back", nextScene: 'market_stall' }] },
-            'buy_rope': { title: "Bought", text: "Bought Rope.", journal: "I bought rope.", onEnter: (s) => { s.inventory.push("Rope"); return "Got Rope"; }, choices: [{ text: "Back", nextScene: 'market_stall' }] },
-            'buy_torch': { title: "Bought", text: "Bought Torch.", journal: "I bought a torch.", onEnter: (s) => { s.inventory.push("Torch"); return "Got Torch"; }, choices: [{ text: "Back", nextScene: 'market_stall' }] },
-            'lighthouse_split': { title: "The Approach", text: "Cliff or Cave?", choices: [{ text: "Climb Cliff", nextScene: 'cliff_climb' }, { text: "Enter Caves", nextScene: 'dark_caves' }] },
-            'cliff_climb': { title: "The Cliff", text: "Steep and slick.", choices: [{ text: "Use Rope", nextScene: 'lighthouse_arrival', reqItem: 'Rope', consume: true }, { text: "Free Solo (DC 14)", nextScene: 'climb_check', type: 'skill', dc: 14 }] },
-            'climb_check': { isLogic: true, resolve: (r) => r >= 14 ? 'lighthouse_arrival' : 'climb_fail' },
-            'climb_fail': { title: "Fall", text: "You slip.", onEnter: (s) => { s.currentHP-=5; return "Took 5 Dmg"; }, choices: [{ text: "Continue", nextScene: 'lighthouse_arrival' }] },
-            'dark_caves': { title: "Caves", text: "Pitch black.", choices: [{ text: "Use Torch", nextScene: 'lighthouse_arrival', reqItem: 'Torch', consume: true }, { text: "Stumble (DC 14)", nextScene: 'dark_check', type: 'skill', dc: 14 }] },
-            'dark_check': { isLogic: true, resolve: (r) => r >= 14 ? 'lighthouse_arrival' : 'dark_fail' },
-            'dark_fail': { title: "Hurt", text: "You trip.", onEnter: (s) => { s.currentHP-=4; return "Took 4 Dmg"; }, choices: [{ text: "Continue", nextScene: 'lighthouse_arrival' }] },
-            'lighthouse_arrival': { title: "Arrival", text: "You reach the door.", choices: [{ text: "Open", nextScene: 'faction_check' }] },
-            'faction_check': { isLogic: true, resolve: (r, s) => s.influence <= -4 ? 'ending_order' : s.influence >= 4 ? 'ending_chaos' : 'ending_neutral' },
-            'ending_order': { title: "The Deputy", text: "Guards welcome you.", choices: [{ text: "Rest", nextScene: 'rest_complete' }] },
-            'ending_chaos': { title: "Smuggler's Ally", text: "Smugglers welcome you.", choices: [{ text: "Rest", nextScene: 'rest_complete' }] },
-            'ending_neutral': { title: "The Shadow", text: "You sneak in alone.", choices: [{ text: "Rest", nextScene: 'rest_complete' }] },
-            'rest_complete': { title: "Dreamscape", text: "You sleep.", onEnter: (s) => { s.currentHP=s.maxHP; Object.values(s.crew).forEach(c=>c.used=false); return "Rested."; }, choices: [{ text: "Restart", type: 'reset' }] }
+            // --- PROLOGUE ---
+            'prologue_storm': {
+                title: "The Planar Storm",
+                text: "The deck of The Trident's Kiss heaves violently. Above, the sky isn't black, but a bleeding violet bruise. Captain Gareth stands at the wheel, screaming orders against the howling wind. 'Secure the lines! We ride this out!' Quinn, the Quartermaster, is frantically tying down crates on the main deck.",
+                journal: "It started with the sky tearing open. Gareth tried to hold the course. Quinn tried to save the cargo. I just tried to stand.",
+                imagePrompt: "17th century ship deck in a violent violet magical storm, captain yelling at wheel, chaotic waves, dark fantasy.",
+                choices: [
+                    { text: "Help Quinn secure the cargo", nextScene: 'prologue_abyss', type: 'travel' },
+                    { text: "Stand with the Captain", nextScene: 'prologue_abyss', type: 'travel' }
+                ]
+            },
+            'prologue_abyss': {
+                title: "The God of the Deep",
+                text: "A wave of pure magical force shatters the hull like glass. The freezing dark claims you instantly. As you sink, drifting into the abyss, you see IT rising from the depths—a colossal shadow, vast as a mountain, with eyes like dying stars. The screams of Gareth, Quinn, Talon, and Bones are silenced by the water... then they echo *inside* your skull.",
+                journal: "The ship shattered. I sank. I saw a... Shadow... something ancient. And then the voices began.",
+                imagePrompt: "Underwater view looking down at a massive terrifying shadow monster with glowing eyes, sinking ship debris, deep blue dark atmosphere.",
+                choices: [
+                    { text: "Gasp for air (Wake Up)", nextScene: 'start', type: 'travel' }
+                ]
+            },
+            // ... (Rest of scenes remain the same) ...
+            'start': {
+                title: "The Wreckage",
+                text: "You gasp, lungs burning, and retch salt water onto the grey sand. The storm has passed. 'The Trident's Kiss' lies shattered across the shore. The voices are loud now—Gareth's command, Quinn's panic—bickering inside your head. You are alive, but you are a vessel for the dead.",
+                journal: "I awoke on the shore. Alive. But they are with me now. Bound to me.",
+                imagePrompt: "Dark 17th century shipwreck on a gloomy beach, storm clouds clearing, gothic horror style, cinematic lighting.",
+                choices: [
+                    { text: "Search the debris (Investigation)", nextScene: 'wreckage_search', type: 'skill', dc: 8, skill: 'Investigation' },
+                    { text: "Head toward the treeline", nextScene: 'treeline', type: 'travel' }
+                ]
+            },
+            'wreckage_search': {
+                isLogic: true,
+                resolve: (roll) => roll >= 8 ? 'wreckage_success' : 'wreckage_fail'
+            },
+            'wreckage_success': {
+                title: "Salvage",
+                text: "Quinn guides your hand to a buried chest. Inside, you find a Rusted Cutlass, a pouch of Shillings, and Captain Gareth's Tricorn Hat. You place the hat on your head, and the voices quiet slightly. Quinn then points frantically to a damp book nearby—the Ship's Log.",
+                journal: "Found a blade, coin, and the Captain's Hat. Quinn insisted I take the Logbook. It holds our history.",
+                imagePrompt: "Close up of a weathered pirate chest in the sand, open with a rusted sword and gold coins inside, dark moody lighting.",
+                onEnter: (state) => {
+                    const items = ["Rusted Cutlass", "Captain's Tricorn", "Ship's Log"];
+                    let found = false;
+                    items.forEach(i => {
+                        if(!state.inventory.includes(i)) {
+                            state.inventory.push(i);
+                            found = true;
+                        }
+                    });
+                    if (found) {
+                        state.shillings += 7; 
+                        return "Found: Cutlass, Hat, Log & 7 Shillings.";
+                    }
+                    return null;
+                },
+                choices: [{ text: "Move to Treeline", nextScene: 'treeline_prepared', type: 'travel' }]
+            },
+            'wreckage_fail': {
+                title: "Empty Sands",
+                text: "You dig through the driftwood until your fingers bleed, but find nothing of value. The tide is rising.",
+                journal: "Scavenging yielded nothing but splinters.",
+                imagePrompt: "Empty wet sand and driftwood, desolate atmosphere, tide coming in.",
+                choices: [{ text: "Move to Treeline", nextScene: 'treeline', type: 'travel' }]
+            },
+            'treeline_prepared': {
+                title: "The Whispering Woods",
+                text: "The forest looms ahead, trees twisted like grasping hands. You adjust the weight of the cutlass and logbook. The voices are a dull murmur, satisfied for the moment. A well-traveled road cuts through the center, but Talon notices a faint game trail disappearing into the brush.",
+                journal: "I reached the treeline with the Log and my gear. The voices are quieter now. Talon pointed out a hidden path.",
+                imagePrompt: "Spooky dark forest entrance, twisted trees, fog, two paths visible.",
+                choices: [
+                    { text: "Take the Main Road", nextScene: 'road_encounter', type: 'travel' },
+                    { text: "Take the Game Trail (Survival DC 12)", nextScene: 'trail_check', type: 'skill', dc: 12, skill: 'Survival' }
+                ]
+            },
+            'treeline': {
+                title: "The Whispering Woods",
+                text: "The forest looms ahead. As you step forward, Quinn screams in your mind. 'The Log! Don't leave the history!' You stumble, looking down to see the water-logged Ship's Log at your feet. You pick it up to silence him.",
+                journal: "Quinn wouldn't let me leave without the Log. I found it at the treeline.",
+                imagePrompt: "Spooky dark forest entrance, twisted trees, fog, two paths visible.",
+                onEnter: (state) => {
+                    if(!state.inventory.includes("Ship's Log")) {
+                        state.inventory.push("Ship's Log");
+                        return "Obtained Ship's Log (Required).";
+                    }
+                    return null;
+                },
+                choices: [
+                    { text: "Take the Main Road", nextScene: 'road_encounter', type: 'travel' },
+                    { text: "Take the Game Trail (Survival DC 12)", nextScene: 'trail_check', type: 'skill', dc: 12, skill: 'Survival' }
+                ]
+            },
+            'road_encounter': {
+                title: "The King's Guard",
+                text: "A heavy-set Royal Guard in plate armor blocks the path. He's nailing a 'WANTED' poster to a tree. He spots you immediately. 'Halt! Identify yourself, traveler.'",
+                journal: "Ran into a Royal Guard on the main road. No way to hide now.",
+                imagePrompt: "A medieval guard in plate armor standing on a dirt road, holding a hammer and poster, looking at viewer.",
+                choices: [
+                    { text: "Speak diplomatically", nextScene: 'guard_talk', type: 'dialogue' },
+                    { text: "Attack him", nextScene: 'combat_guard', type: 'combat' }
+                ]
+            },
+            'trail_check': {
+                isLogic: true,
+                resolve: (roll) => roll >= 12 ? 'trail_success' : 'trail_fail'
+            },
+            'trail_success': {
+                title: "Hidden Signs",
+                text: "Talon navigates the thorns effortlessly. You emerge near a hidden cove, overlooking a group of men loading crates. Smugglers.",
+                journal: "Talon led me through the brush. We found a Smuggler's Cove unseen.",
+                imagePrompt: "View from bushes looking down at a sea cave with smugglers and lanterns, stealthy perspective.",
+                onEnter: (state) => { 
+                    state.influence = Math.min(20, state.influence + 4); 
+                    return "Secrets Learned (Chaos +4)"; 
+                },
+                choices: [
+                    { text: "Approach them", nextScene: 'smuggler_meet', type: 'travel' },
+                    { text: "Head to the Market Crossroads", nextScene: 'market_crossroads', type: 'travel' }
+                ]
+            },
+            'trail_fail': {
+                title: "Lost",
+                text: "The undergrowth fights you. You stumble out of the brush, loud and covered in burrs, right in front of a Royal Guard.",
+                journal: "Tried the hidden path, but made too much noise. Stumbled right into a Guard.",
+                imagePrompt: "First person view of stumbling out of bushes, surprised guard face close up.",
+                onEnter: (state) => { state.currentHP -= 2; return "Took 2 Scratch Damage."; },
+                choices: [{ text: "Confront the Guard", nextScene: 'road_encounter', type: 'dialogue' }] 
+            },
+            'guard_talk': {
+                title: "The Interrogation",
+                text: "The Guard eyes your ragged clothes. 'You look like wreckage refuse. We have reports of smugglers. Make it worth my while, or I'll haul you in.'",
+                journal: "The Guard is corrupt. He wants a bribe or a reason to let me go.",
+                imagePrompt: "Close up of guard's face, greedy expression, hand extended.",
+                choices: [
+                    { text: "Bribe him (5 Shillings)", nextScene: 'guard_bribe', type: 'action', cost: 5 },
+                    { text: "Show Respect (Diplomacy)", nextScene: 'guard_respect', type: 'dialogue' },
+                    { text: "Intimidate him (Insight DC 13)", nextScene: 'guard_intimidate_check', type: 'skill', dc: 13, skill: 'Insight' },
+                    { text: "Attack", nextScene: 'combat_guard', type: 'combat' }
+                ]
+            },
+            'guard_respect': {
+                title: "Order and Law",
+                text: "You salute with practiced discipline. 'Just a shipwrecked sailor, sir. Keeping to the road.' The Guard straightens, recognizing the posture. 'Carry on then. Watch for the cove rats.'",
+                journal: "I showed the Guard respect. He treated me like a man, not a rat.",
+                onEnter: (state) => {
+                    state.influence = Math.max(-20, state.influence - 4); 
+                    return "Showed Respect (Order -4)";
+                },
+                choices: [{ text: "Head to Market Crossroads", nextScene: 'market_crossroads', type: 'travel' }]
+            },
+            'guard_bribe': {
+                title: "The Toll",
+                text: "He bites the gold. 'Get moving. Head to the Market, don't linger here.'",
+                journal: "Paid the toll. I played the game and walked away neutral.",
+                imagePrompt: "Guard putting coin in pouch, turning away.",
+                onEnter: (state) => { return "Bribed Guard (Neutral Act)."; },
+                choices: [{ text: "Head to Market Crossroads", nextScene: 'market_crossroads', type: 'travel' }]
+            },
+            'guard_intimidate_check': {
+                isLogic: true,
+                resolve: (roll) => roll >= 13 ? 'guard_scared' : 'combat_guard'
+            },
+            'guard_scared': {
+                title: "Spectral Fear",
+                text: "You channel Gareth's command. Your eyes flare with pale light. The Guard stumbles back, terrified. 'Go! Just go!'",
+                journal: "Gareth spoke through me. The Guard fled in terror.",
+                imagePrompt: "Guard looking terrified, backing away, spectral blue aura around the viewer.",
+                onEnter: (state) => { 
+                    state.influence = Math.min(20, state.influence + 4); 
+                    return "Guard Terrified (Chaos +4)."; 
+                },
+                choices: [{ text: "Head to Market Crossroads", nextScene: 'market_crossroads', type: 'travel' }]
+            },
+            'combat_guard': {
+                title: "Steel Clashes",
+                text: "He draws his hammer. The fight is brutal and short. You survive, but you are now an enemy of the crown.",
+                journal: "Had to fight the Guard. I am an outlaw now.",
+                imagePrompt: "Action shot of combat, hammer swinging, motion blur, gritty.",
+                onEnter: (state) => { 
+                    const dmg = Math.floor(Math.random() * 6) + 3;
+                    state.currentHP -= dmg;
+                    state.influence = 20; // Max Chaos
+                    return `Took ${dmg} damage. Became Outlaw (Max Chaos).`;
+                },
+                choices: [{ text: "Limp to Market Crossroads", nextScene: 'market_crossroads', type: 'travel' }]
+            },
+            'smuggler_meet': {
+                title: "The Cove",
+                text: "The men draw blades as you approach. 'One step closer and you're fish food.'",
+                journal: "Found the smugglers. They aren't friendly.",
+                imagePrompt: "Group of pirates drawing weapons in a cave, firelight reflections.",
+                choices: [
+                    { text: "Flash 'The Mariner's Sign' (Req: Chaos +3)", nextScene: 'smuggler_friend', type: 'action', reqSmuggler: 3 },
+                    { text: "Buy safe passage (5 Shillings)", nextScene: 'smuggler_pay', type: 'action', cost: 5 },
+                    { text: "Run to Market", nextScene: 'market_crossroads', type: 'travel' }
+                ]
+            },
+            'smuggler_friend': {
+                title: "Old Alliances",
+                text: "They recognize the sign. 'The Mariner lives? We have something of yours.' They hand you a bottle of Rum.",
+                journal: "The smugglers recognized the code. Gave me Rum.",
+                imagePrompt: "Pirate handing a bottle of rum to the viewer, smiling, cave background.",
+                onEnter: (state) => {
+                     state.inventory.push("Rum (Heal 5)");
+                     return "Received Rum.";
+                },
+                choices: [{ text: "Head to Market Crossroads", nextScene: 'market_crossroads', type: 'travel' }]
+            },
+            'smuggler_pay': {
+                title: "Business",
+                text: "They take the coin. 'Don't let the Guard see you.'",
+                journal: "Paid the smugglers off.",
+                imagePrompt: "Coin changing hands in shadow.",
+                choices: [{ text: "Head to Market Crossroads", nextScene: 'market_crossroads', type: 'travel' }]
+            },
+            'market_crossroads': {
+                title: "The Port of Shadows",
+                text: "You arrive at the edge of the ramshackle port town. Merchants hawk their wares under tattered awnings. The Lighthouse looms in the distance, but the path is treacherous.",
+                journal: "Reached the Port Market. I should stock up before the final push.",
+                imagePrompt: "Dark fantasy medieval market square, merchants, lanterns, ominous lighthouse in distant background.",
+                choices: [
+                    { text: "Visit the Merchant", nextScene: 'market_stall', type: 'travel' },
+                    { text: "Head to the Lighthouse", nextScene: 'lighthouse_split', type: 'travel' }
+                ]
+            },
+            'market_stall': {
+                title: "The Merchant",
+                text: "A hooded figure displays goods on a crate. 'Coin for survival, traveler?'",
+                journal: null,
+                imagePrompt: "Hooded merchant face in shadow, displaying rope, potions, and torches on a table.",
+                choices: [
+                    { text: "Buy Healing Potion (5s)", nextScene: 'buy_potion', type: 'action', cost: 5 },
+                    { text: "Buy Rope (3s)", nextScene: 'buy_rope', type: 'action', cost: 3 },
+                    { text: "Buy Torch (2s)", nextScene: 'buy_torch', type: 'action', cost: 2 },
+                    { text: "Sell Wares (Earn Coin)", nextScene: 'market_sell', type: 'travel' },
+                    { text: "Leave", nextScene: 'lighthouse_split', type: 'travel' }
+                ]
+            },
+            'market_sell': {
+                title: "The Merchant - Selling",
+                text: "The merchant eyes your gear. 'I can take some of that off your hands for a fair price.'",
+                journal: null,
+                choices: [
+                    { text: "Sell Rope (+2s)", nextScene: 'sell_rope', type: 'action', reqItem: 'Rope' },
+                    { text: "Sell Torch (+1s)", nextScene: 'sell_torch', type: 'action', reqItem: 'Torch' },
+                    { text: "Sell Potion (+3s)", nextScene: 'sell_potion', type: 'action', reqItem: 'Healing Potion' },
+                    { text: "Sell Rum (+2s)", nextScene: 'sell_rum', type: 'action', reqItem: 'Rum (Heal 5)' }, 
+                    { text: "Back to Buying", nextScene: 'market_stall', type: 'travel' }
+                ]
+            },
+            'sell_rope': {
+                title: "Sold",
+                text: "You hand over the rope.",
+                journal: "I sold the rope.",
+                onEnter: (state) => {
+                    const idx = state.inventory.indexOf("Rope");
+                    if (idx > -1) state.inventory.splice(idx, 1);
+                    state.shillings += 2;
+                    return "Sold Rope (+2s)";
+                },
+                choices: [{ text: "Continue Selling", nextScene: 'market_sell', type: 'travel' }]
+            },
+            'sell_torch': {
+                title: "Sold",
+                text: "You hand over the torch.",
+                journal: "I sold the torch.",
+                onEnter: (state) => {
+                    const idx = state.inventory.indexOf("Torch");
+                    if (idx > -1) state.inventory.splice(idx, 1);
+                    state.shillings += 1;
+                    return "Sold Torch (+1s)";
+                },
+                choices: [{ text: "Continue Selling", nextScene: 'market_sell', type: 'travel' }]
+            },
+            'sell_potion': {
+                title: "Sold",
+                text: "You hand over the potion.",
+                journal: "I sold the potion.",
+                onEnter: (state) => {
+                    const idx = state.inventory.indexOf("Healing Potion");
+                    if (idx > -1) state.inventory.splice(idx, 1);
+                    state.shillings += 3;
+                    return "Sold Potion (+3s)";
+                },
+                choices: [{ text: "Continue Selling", nextScene: 'market_sell', type: 'travel' }]
+            },
+            'sell_rum': {
+                title: "Sold",
+                text: "You hand over the bottle of rum.",
+                journal: "I handed over the bottle of rum.",
+                onEnter: (state) => {
+                    const idx = state.inventory.indexOf("Rum (Heal 5)");
+                    if (idx > -1) state.inventory.splice(idx, 1);
+                    state.shillings += 2; 
+                    return "Sold Rum (+2s)";
+                },
+                choices: [{ text: "Continue Selling", nextScene: 'market_sell', type: 'travel' }]
+            },
+            'buy_potion': {
+                title: "Purchase",
+                text: "You exchange coin for the red liquid.",
+                journal: "I bought a healing potion.",
+                onEnter: (state) => { state.inventory.push("Healing Potion"); return "Bought Potion."; },
+                choices: [{ text: "Return to Merchant", nextScene: 'market_stall', type: 'travel' }]
+            },
+            'buy_rope': {
+                title: "Purchase",
+                text: "You coil the sturdy hemp rope over your shoulder.",
+                journal: "I bought a coil of rope.",
+                onEnter: (state) => { state.inventory.push("Rope"); return "Bought Rope."; },
+                choices: [{ text: "Return to Merchant", nextScene: 'market_stall', type: 'travel' }]
+            },
+            'buy_torch': {
+                title: "Purchase",
+                text: "A simple torch, dipped in pitch.",
+                journal: "I bought a torch.",
+                onEnter: (state) => { state.inventory.push("Torch"); return "Bought Torch."; },
+                choices: [{ text: "Return to Merchant", nextScene: 'market_stall', type: 'travel' }]
+            },
+            'lighthouse_split': {
+                title: "The Final Approach",
+                text: "The Lighthouse stands atop a jagged cliff. Two paths present themselves: a sheer climb up the rock face, or a dark, winding tunnel through the sea caves below.",
+                journal: "Two ways to the top: climb the cliff or brave the dark caves.",
+                imagePrompt: "Fork in the path, one way leading to a dark cave mouth, the other up a steep cliff face, lighthouse at top.",
+                choices: [
+                    { text: "Climb the Cliff", nextScene: 'cliff_climb', type: 'travel' },
+                    { text: "Enter the Sea Caves", nextScene: 'dark_caves', type: 'travel' }
+                ]
+            },
+            'cliff_climb': {
+                title: "The Precipice",
+                text: "The wind howls, threatening to tear you from the rock.",
+                imagePrompt: "Looking down a steep cliff into the ocean, vertigo, hands gripping rock.",
+                choices: [
+                    { text: "Use Rope (Safe Climb)", nextScene: 'lighthouse_arrival', type: 'action', reqItem: 'Rope', consume: true },
+                    { text: "Free Solo (Athletics DC 14)", nextScene: 'climb_check', type: 'skill', dc: 14, skill: 'Athletics' } // Bones (Survival) helps here? Maybe just raw luck/HP
+                ]
+            },
+            'climb_check': {
+                isLogic: true,
+                resolve: (roll) => roll >= 14 ? 'lighthouse_arrival' : 'climb_fail'
+            },
+            'climb_fail': {
+                title: "Slip and Fall",
+                text: "Your grip fails. You slide twenty feet, shredding skin against stone before catching a root.",
+                journal: "Almost fell to my death. Climbing without rope was foolish.",
+                onEnter: (state) => { state.currentHP -= 5; return "Took 5 Damage."; },
+                choices: [{ text: "Keep Climbing", nextScene: 'lighthouse_arrival', type: 'travel' }]
+            },
+            'dark_caves': {
+                title: "The Abyss Below",
+                text: "The air is thick and smells of rot. It is pitch black.",
+                imagePrompt: "Pitch black cave interior, faint light from entrance behind.",
+                choices: [
+                    { text: "Light Torch (Safe Passage)", nextScene: 'lighthouse_arrival', type: 'action', reqItem: 'Torch', consume: true },
+                    { text: "Stumble in Dark (Perception DC 14)", nextScene: 'dark_check', type: 'skill', dc: 14, skill: 'Perception' }
+                ]
+            },
+            'dark_check': {
+                isLogic: true,
+                resolve: (roll) => roll >= 14 ? 'lighthouse_arrival' : 'dark_fail'
+            },
+            'dark_fail': {
+                title: "Unseen Dangers",
+                text: "In the dark, you trip over unseen rocks and twist your ankle. Something scuttles away in the shadows.",
+                journal: "The caves were too dark. I got hurt.",
+                onEnter: (state) => { state.currentHP -= 4; return "Took 4 Damage."; },
+                choices: [{ text: "Limp to the Exit", nextScene: 'lighthouse_arrival', type: 'travel' }]
+            },
+            // --- ENDING ---
+            'lighthouse_arrival': {
+                title: "The Beacon",
+                text: "You reach the heavy iron doors of the Lighthouse. But you are not alone.",
+                journal: "Made it to the Lighthouse doors. Someone is waiting.",
+                imagePrompt: "Massive iron lighthouse doors, silhouette of a figure standing in front.",
+                choices: [
+                    { text: "Confront them", nextScene: 'faction_check', type: 'travel' }
+                ]
+            },
+            'faction_check': {
+                isLogic: true,
+                resolve: (r, state) => {
+                    if (state.influence <= -4) return 'ending_order'; // Threshold lowered to 4
+                    if (state.influence >= 4) return 'ending_chaos'; // Threshold lowered to 4
+                    return 'ending_neutral';
+                }
+            },
+            'ending_order': {
+                title: "The Deputy",
+                text: "A squad of Royal Guards stands at the door. Their captain salutes you. 'We heard you cleared out the riff-raff on the road. The Lighthouse is yours to secure, Deputy.' They open the doors for you.",
+                journal: "The Guards respect me. They let me pass without question. Order has its perks.",
+                imagePrompt: "Royal guards saluting, opening heavy doors, light spilling out.",
+                choices: [{ text: "Enter and Rest (Demo End)", nextScene: 'rest_complete', type: 'rest' }]
+            },
+            'ending_chaos': {
+                title: "Smuggler's Ally", // Changed title
+                text: "Smugglers lounge by the entrance. They grin as you approach. 'The Mariner! We heard you made a fool of the Guard. This haven is open to you, brother.' They toss you a key.",
+                journal: "The smugglers see me as one of their own. They gave me the key.",
+                imagePrompt: "Smugglers cheering, holding up a large iron key, rough friendly atmosphere.",
+                choices: [{ text: "Enter and Rest (Demo End)", nextScene: 'rest_complete', type: 'rest' }]
+            },
+            'ending_neutral': {
+                title: "The Shadow",
+                text: "The door is barred. No one is here to welcome you. You must pick the lock yourself, slipping in like a ghost, unseen by Guard or Smuggler alike.",
+                journal: "I arrived alone. I enter alone. No allies, no enemies.",
+                imagePrompt: "Close up of hands picking a lock on a massive door, solitary and quiet.",
+                choices: [{ text: "Enter and Rest (Demo End)", nextScene: 'rest_complete', type: 'rest' }]
+            },
+            'rest_complete': {
+                title: "The Dreamscape",
+                text: "You sleep. In your dreams, you are back on The Trident's Kiss. Gareth, Quinn, Talon, and Bones are at their posts, whole again. 'The Wolf King waits,' Gareth says. You wake refreshed.",
+                journal: "Slept in the lighthouse. The crew visited me in dreams. I feel stronger.",
+                imagePrompt: "Ethereal ghost ship deck, glowing blue spectral crew members working, peaceful.",
+                onEnter: (state) => {
+                    state.currentHP = state.maxHP;
+                    Object.keys(state.crew).forEach(k => state.crew[k].used = false);
+                    return "Restored HP & Crew.";
+                },
+                choices: [
+                    { text: "Begin A New Legend (Reset)", type: 'reset' }
+                ]
+            }
         };
 
-        // --- STATIC IMAGE GENERATION ---
-        function generateSceneImage(sceneId) {
+        // --- CORE FUNCTIONS ---
+
+        async function generateSceneImage(sceneId) {
             // Simple mapping: If scene exists in our map, use it. Else use default.
-            const url = sceneImages[sceneId] || sceneImages['default'];
+            // If sceneId is undefined (e.g. first load), default to 'prologue_storm' or 'default'
+            const key = sceneId || 'default';
+            const url = sceneImages[key] || sceneImages['default'];
+            
             const imgEl = document.getElementById('scene-image');
+            const loader = document.getElementById('image-loader');
+            
+            // Hide image, show loader
             imgEl.style.opacity = 0;
+            loader.style.display = 'flex';
+
+            // Simulate network delay for effect, or load immediately
             setTimeout(() => {
                 imgEl.src = url;
-                imgEl.onload = () => { imgEl.style.opacity = 1; };
-            }, 200);
+                imgEl.onload = () => {
+                    loader.style.display = 'none';
+                    imgEl.style.opacity = 1;
+                };
+                // Handle broken links by falling back to placeholder
+                imgEl.onerror = () => {
+                    loader.style.display = 'none';
+                    imgEl.src = sceneImages['default'];
+                    imgEl.style.opacity = 1;
+                }
+            }, 100);
         }
 
-        // --- CORE LOGIC ---
         async function init() {
-            const app = initializeApp(firebaseConfig);
-            auth = getAuth(app);
-            db = getFirestore(app);
+            // Initialize Firebase directly with the config object defined above.
+            // No need to parse it, and no need to reassign it.
             window.confirmReset = confirmReset;
 
             onAuthStateChanged(auth, async (u) => {
@@ -257,136 +804,378 @@
                     setTimeout(() => document.getElementById('app-loading').remove(), 500);
                 }
             });
-            
-            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) await signInWithCustomToken(auth, __initial_auth_token);
-            else await signInAnonymously(auth);
+
+            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                await signInWithCustomToken(auth, __initial_auth_token);
+            } else {
+                await signInAnonymously(auth);
+            }
         }
 
         async function setupRealtimeListener() {
             const docRef = doc(db, 'artifacts', appId, 'users', user.uid, 'data', 'game_save');
+            
             try {
                 const snap = await getDoc(docRef);
-                if (!snap.exists()) { await setDoc(docRef, gameState); renderScene('prologue_storm'); }
-                else { gameState = { ...createInitialState(), ...snap.data() }; renderScene(gameState.currentSceneId, false); rebuildJournal(); }
-            } catch (e) { renderScene('prologue_storm'); }
-            onSnapshot(docRef, (snap) => { if (snap.exists()) { gameState = { ...gameState, ...snap.data() }; updateUI(); } });
-        }
-
-        async function saveGame() { if (user) await setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'data', 'game_save'), JSON.parse(JSON.stringify(gameState))); }
-
-        // --- RENDER FUNCTIONS (Simplified for brevity) ---
-        function rebuildJournal() {
-            const el = document.getElementById('journal-content'); el.innerHTML = '';
-            gameState.history.forEach(h => { const d = document.createElement('div'); d.className = "journal-font pb-2 border-b border-gray-700/30"; d.innerHTML = h; el.appendChild(d); });
-            document.getElementById('journal-scroll-area').scrollTop = 9999;
-        }
-        function addToHistory(text, type) { if(text) { gameState.history.push(type==='roll' ? `<span class='text-blue-400 font-bold'>${text}</span>` : text); rebuildJournal(); } }
-
-        async function renderScene(sceneId, log=true) {
-            const scene = scenes[sceneId];
-            if (!scene) return;
-            
-            if (gameState.currentHP <= 0 && !sceneId.includes('prologue')) {
-                document.getElementById('main-scene-text').innerHTML = "<span class='text-red-600'>Edward has fallen.</span>";
-                renderChoices([{text: "Restart", type: 'reset'}]); return;
+                if (!snap.exists()) {
+                    await setDoc(docRef, gameState);
+                    renderScene('prologue_storm');
+                } else {
+                    const data = snap.data();
+                    if (data.influence === undefined) {
+                        data.influence = 0; 
+                        delete data.guardInfluence;
+                        delete data.smugglerInfluence;
+                    }
+                    gameState = { ...createInitialState(), ...data }; 
+                    renderScene(gameState.currentSceneId, false);
+                    rebuildJournal();
+                }
+            } catch (e) {
+                console.error("Save error", e);
+                renderScene('prologue_storm');
             }
 
-            // LOGIC NODES
+            onSnapshot(docRef, (snap) => {
+                if (snap.exists()) {
+                    const data = snap.data();
+                    if (JSON.stringify(data) !== JSON.stringify(gameState)) {
+                        gameState = { ...gameState, ...data };
+                        updateUI();
+                    }
+                }
+            });
+        }
+
+        async function saveGame() {
+            if (!user) return;
+            const docRef = doc(db, 'artifacts', appId, 'users', user.uid, 'data', 'game_save');
+            const safeState = JSON.parse(JSON.stringify(gameState));
+            await setDoc(docRef, safeState);
+        }
+
+        let resetConfirmTimer = null;
+        function confirmReset() {
+            const btn = document.getElementById('reset-game-btn');
+            if (btn.classList.contains('bg-red-900')) {
+                resetGame();
+                clearTimeout(resetConfirmTimer);
+                btn.innerHTML = '<i class="fas fa-skull mr-1"></i>New Game';
+                btn.classList.remove('bg-red-900', 'text-white');
+                btn.classList.add('text-red-400', 'bg-black/60');
+            } else {
+                btn.innerHTML = '<i class="fas fa-exclamation-triangle mr-1"></i>Confirm?';
+                btn.classList.remove('text-red-400', 'bg-black/60');
+                btn.classList.add('bg-red-900', 'text-white');
+                resetConfirmTimer = setTimeout(() => {
+                    btn.innerHTML = '<i class="fas fa-skull mr-1"></i>New Game';
+                    btn.classList.remove('bg-red-900', 'text-white');
+                    btn.classList.add('text-red-400', 'bg-black/60');
+                }, 3000);
+            }
+        }
+
+        async function resetGame() {
+            gameState = createInitialState();
+            document.getElementById('journal-content').innerHTML = '';
+            await saveGame();
+            renderScene('prologue_storm');
+            rebuildJournal();
+            document.getElementById('inf-status-text').textContent = "Unknown to all";
+            document.getElementById('item-desc-area').textContent = "Hover over an item to inspect it.";
+        }
+
+        function rebuildJournal() {
+            const container = document.getElementById('journal-content');
+            container.innerHTML = gameState.history.join('');
+            scrollToBottom();
+        }
+
+        function scrollToBottom() {
+            const area = document.getElementById('journal-scroll-area');
+            area.scrollTop = area.scrollHeight;
+        }
+
+        function addToHistory(text, type = 'entry') {
+            let html = '';
+            if (type === 'entry') {
+                html = `<div class="journal-font pb-4 border-b border-gray-700/30 text-gray-400 fade-in">${text}</div>`;
+            } else if (type === 'system') {
+                html = `<div class="text-xs text-amber-500 font-mono mb-2 fade-in">> ${text}</div>`;
+            } else if (type === 'roll') {
+                html = `<div class="text-xs text-blue-400 font-bold mb-2 fade-in font-serif">${text}</div>`;
+            }
+            gameState.history.push(html);
+            rebuildJournal();
+        }
+
+        async function renderScene(sceneId, logText = true) {
+            const scene = scenes[sceneId];
+            if (!scene) return;
+
+            if (gameState.currentHP <= 0 && sceneId !== 'start' && !sceneId.includes('prologue')) {
+                document.getElementById('main-scene-text').innerHTML = 
+                    `<div class="text-red-600 font-bold text-xl text-center cinzel">Edward has fallen.</div>
+                     <div class="text-center mt-4">The voices consume you.</div>`;
+                document.getElementById('choices-area').innerHTML = 
+                    `<button onclick="window.location.reload()" class="w-full p-4 bg-red-900 text-white rounded cinzel border border-red-500 hover:bg-red-800">Resurrect (Restart)</button>`;
+                return;
+            }
+
             if (scene.isLogic) {
-                let roll = Math.floor(Math.random()*20)+1;
-                let msg = `Rolled ${roll}`;
-                if (activeCrewMember) { roll+=Math.floor(Math.random()*4)+1; msg+=` + Crew`; gameState.crew[Object.keys(gameState.crew).find(k=>gameState.crew[k].name===activeCrewMember.name)].used=true; activeCrewMember=null; }
-                addToHistory(msg, 'roll');
-                saveGame(); renderScene(scene.resolve(roll, gameState)); return;
+                let roll = Math.floor(Math.random() * 20) + 1;
+                let logMsg = `Check (DC ${gameState.lastDC || 10}): Rolled d20 (${roll})`;
+                
+                if (activeCrewMember) {
+                    const bonus = Math.floor(Math.random() * 4) + 1;
+                    roll += bonus;
+                    logMsg += ` + ${bonus} (${activeCrewMember.name})`;
+                    const crewKey = Object.keys(gameState.crew).find(k => gameState.crew[k].name === activeCrewMember.name);
+                    gameState.crew[crewKey].used = true;
+                    activeCrewMember = null;
+                }
+
+                addToHistory(`${logMsg} = ${roll}`, 'roll');
+                const nextId = scene.resolve(roll, gameState); // Passing state to resolve for influence checks
+                saveGame();
+                renderScene(nextId); 
+                return;
             }
 
             gameState.currentSceneId = sceneId;
-            if (scene.onEnter && log) { const m = scene.onEnter(gameState); if(m) addToHistory(`<span class='text-emerald-500'>${m}</span>`); saveGame(); }
-            
-            // VISUALS & TEXT
-            generateSceneImage(sceneId);
-            if (log) {
-                document.getElementById('main-scene-text').innerHTML = `<p class="text-lg leading-relaxed text-gray-200">${scene.text}</p>`;
-                document.getElementById('scene-title').innerText = scene.title;
-            }
-            
-            // UI STATES
-            const logContainer = document.getElementById('journal-container');
-            const statsPanel = document.getElementById('stats-panel');
-            if (sceneId.startsWith('prologue')) { statsPanel.classList.add('prologue-blur'); logContainer.classList.add('log-hidden'); }
-            else { statsPanel.classList.remove('prologue-blur'); if(gameState.inventory.includes("Ship's Log")) logContainer.classList.remove('log-hidden'); }
+            activeCrewMember = null;
 
+            if (scene.onEnter && logText) {
+                const msg = scene.onEnter(gameState);
+                if (msg) addToHistory(msg, 'system');
+                saveGame();
+            }
+
+            const textEl = document.getElementById('main-scene-text');
+            textEl.innerHTML = `<h2 class="text-2xl cinzel text-amber-500 mb-2">${scene.title}</h2><p class="text-lg leading-relaxed text-gray-300 fade-in">${scene.text}</p>`;
+            document.getElementById('scene-title').innerText = scene.title;
+            
+            generateSceneImage(sceneId);
             renderChoices(scene.choices);
             updateUI();
         }
 
         function renderChoices(choices) {
-            const area = document.getElementById('choices-area'); area.innerHTML = '';
-            choices.forEach(c => {
-                if ((c.reqSmuggler && gameState.influence < c.reqSmuggler) || (c.reqGuard && gameState.influence > -c.reqGuard) || (c.cost && gameState.shillings < c.cost) || (c.reqItem && !gameState.inventory.includes(c.reqItem))) return;
+            const container = document.getElementById('choices-area');
+            container.innerHTML = '';
+
+            choices.forEach(choice => {
+                if (choice.reqSmuggler && gameState.influence < choice.reqSmuggler) return;
+                if (choice.reqGuard && gameState.influence > -choice.reqGuard) return;
+                if (choice.cost && gameState.shillings < choice.cost) return;
+                if (choice.reqItem && !gameState.inventory.includes(choice.reqItem)) return;
+
                 const btn = document.createElement('button');
-                btn.className = "btn-game w-full p-3 bg-gray-800 border border-gray-600 hover:border-amber-500 text-left rounded shadow flex justify-between group";
-                btn.innerHTML = `<span class="cinzel font-bold text-gray-200 group-hover:text-amber-400">${c.text}</span>`;
-                if (c.type === 'reset') btn.innerHTML = `<span class="text-amber-500"><i class="fas fa-undo"></i> ${c.text}</span>`;
+                btn.className = "btn-game w-full p-3 bg-gray-800 border border-gray-600 hover:border-amber-500 hover:bg-gray-750 text-left rounded shadow flex items-center justify-between group";
+                
+                let label = choice.text;
+                let icon = '<i class="fas fa-chevron-right text-gray-600 group-hover:text-amber-500"></i>';
+
+                if (choice.type === 'skill') {
+                    label += ` <span class="text-blue-400 text-xs uppercase tracking-wider ml-1">[${choice.skill} DC ${choice.dc}]</span>`;
+                    icon = '<i class="fas fa-dice-d20 text-blue-500"></i>';
+                }
+                if (choice.cost) {
+                    label += ` <span class="text-amber-500 text-xs ml-1">(-${choice.cost}s)</span>`;
+                }
+                if (choice.type === 'reset') {
+                     icon = '<i class="fas fa-undo text-amber-500"></i>';
+                     btn.className += " border-amber-900/50";
+                }
+
+                btn.innerHTML = `<span class="cinzel font-bold text-gray-300 group-hover:text-amber-100">${label}</span>${icon}`;
+                
                 btn.onclick = () => {
-                    if (c.type === 'reset') { resetGame(); return; }
-                    if (c.consume && c.reqItem) { gameState.inventory.splice(gameState.inventory.indexOf(c.reqItem), 1); addToHistory(`${c.reqItem} used.`, 'system'); }
-                    const txt = scenes[gameState.currentSceneId].journal || scenes[gameState.currentSceneId].text;
-                    if (txt) addToHistory(txt, 'entry');
-                    if (c.cost) gameState.shillings -= c.cost;
-                    if (c.type === 'skill') gameState.lastDC = c.dc;
-                    renderScene(c.nextScene);
+                    if (choice.type === 'reset') {
+                        resetGame();
+                        return;
+                    }
+
+                    if (choice.consume && choice.reqItem) {
+                        const idx = gameState.inventory.indexOf(choice.reqItem);
+                        if (idx > -1) {
+                            gameState.inventory.splice(idx, 1);
+                            addToHistory(`${choice.reqItem} used and discarded.`, 'system');
+                        }
+                    }
+
+                    const currentScene = scenes[gameState.currentSceneId];
+                    // Only add to history if the journal entry isn't explicitly null
+                    const entryText = currentScene.journal !== undefined ? currentScene.journal : currentScene.text;
+                    if (entryText !== null) {
+                        addToHistory(entryText, 'entry');
+                    }
+
+                    if (choice.cost) gameState.shillings -= choice.cost;
+                    if (choice.type === 'skill') gameState.lastDC = choice.dc;
+                    
+                    renderScene(choice.nextScene);
                 };
-                area.appendChild(btn);
-            });
-            // Item Actions
-            gameState.inventory.forEach(i => {
-               const def = itemRegistry[i];
-               if(def && def.type === 'consumable') {
-                   const b = document.createElement('button');
-                   b.className = "btn-game w-full p-3 bg-gray-900 border border-emerald-900 hover:border-emerald-500 text-left rounded shadow flex justify-between group";
-                   b.innerHTML = `<span class="cinzel font-bold text-emerald-500">${def.btnText} ${i.split('(')[0]}</span>`;
-                   b.onclick = () => { const m = def.action(gameState); addToHistory(`<span class='text-amber-400'>${m}</span>`, 'system'); saveGame(); updateUI(); };
-                   area.appendChild(b);
-               } 
+                container.appendChild(btn);
             });
         }
 
         function updateUI() {
-            document.getElementById('hp-bar').style.width = `${(gameState.currentHP/gameState.maxHP)*100}%`;
-            document.getElementById('hp-text').innerText = `${gameState.currentHP}/${gameState.maxHP}`;
-            document.getElementById('shillings-display').innerText = gameState.shillings;
-            const infPct = ((gameState.influence+20)/40)*100;
-            document.getElementById('inf-marker').style.left = `${Math.max(0, Math.min(100, infPct))}%`;
-            document.getElementById('inf-status-text').innerText = gameState.influence < -10 ? "Sworn to Crown" : gameState.influence > 10 ? "Pirate Lord" : "Neutral";
+            // PROLOGUE & LOG UI HANDLING
+            const statsPanel = document.getElementById('stats-panel');
+            const journalContainer = document.getElementById('journal-container');
+            const sceneId = gameState.currentSceneId;
             
-            const crewP = document.getElementById('crew-panel'); crewP.innerHTML = '';
-            Object.values(gameState.crew).forEach(c => {
-                const b = document.createElement('button');
-                b.className = `p-1 text-xs border rounded ${c.used ? 'bg-gray-900 text-gray-600' : (activeCrewMember?.name===c.name ? 'bg-blue-900 text-blue-200 border-blue-400' : 'bg-gray-800 text-gray-300')}`;
-                b.disabled = c.used; b.innerHTML = `<b>${c.name.split(' ')[0]}</b><br>${c.skill}`;
-                b.onclick = () => { activeCrewMember = activeCrewMember?.name===c.name ? null : c; updateUI(); };
-                crewP.appendChild(b);
-            });
+            if (sceneId && sceneId.startsWith('prologue')) {
+                statsPanel.classList.add('prologue-blur');
+                journalContainer.classList.add('log-hidden');
+                journalContainer.classList.remove('log-visible');
+            } else {
+                statsPanel.classList.remove('prologue-blur');
+                statsPanel.classList.add('prologue-active');
+                
+                if(gameState.inventory.includes("Ship's Log")) {
+                    journalContainer.classList.remove('log-hidden');
+                    journalContainer.classList.add('log-visible');
+                } else {
+                    journalContainer.classList.add('log-hidden');
+                    journalContainer.classList.remove('log-visible');
+                }
+            }
 
-            const invP = document.getElementById('inventory-panel'); invP.innerHTML = '';
-            if(gameState.inventory.length===0) invP.innerHTML = '<div class="text-center text-gray-600 italic text-xs">Empty</div>';
-            else gameState.inventory.forEach(i => {
-                const def = itemRegistry[i] || {icon:'fa-box', color:'text-gray-500'};
-                const row = document.createElement('div');
-                row.className = "flex items-center gap-2 p-2 bg-gray-900/60 rounded border border-gray-800";
-                row.innerHTML = `<i class="fas ${def.icon} ${def.color}"></i><span class="text-xs text-gray-300">${i.split('(')[0]}</span>`;
-                invP.appendChild(row);
-            });
+            // HP
+            const hpPct = (gameState.currentHP / gameState.maxHP) * 100;
+            const bar = document.getElementById('hp-bar');
+            bar.style.width = `${hpPct}%`;
+            bar.className = `h-full transition-all duration-500 ${hpPct < 30 ? 'bg-red-600 animate-pulse' : 'bg-red-800'}`;
+            document.getElementById('hp-text').innerText = `${gameState.currentHP}/${gameState.maxHP}`;
+
+            // Money
+            document.getElementById('shillings-display').innerText = gameState.shillings;
+            
+            // Influence
+            const inf = gameState.influence || 0;
+            const pct = ((inf + 20) / 40) * 100;
+            const marker = document.getElementById('inf-marker');
+            if (marker) marker.style.left = `${Math.max(0, Math.min(100, pct))}%`;
+            
+            const infText = document.getElementById('inf-status-text');
+            if (infText) {
+                if (inf < -10) infText.textContent = "Sworn to the Crown";
+                else if (inf < -5) infText.textContent = "Respected by Guards";
+                else if (inf > 10) infText.textContent = "Pirate Lord";
+                else if (inf > 5) infText.textContent = "Known Smuggler";
+                else infText.textContent = "Unknown / Neutral";
+            }
+
+            // Crew UI
             const ind = document.getElementById('active-crew-indicator');
-            if(activeCrewMember) { ind.classList.remove('hidden'); document.getElementById('active-crew-name').innerText = activeCrewMember.name; }
-            else ind.classList.add('hidden');
+            const nameSpan = document.getElementById('active-crew-name');
+            if (activeCrewMember) {
+                ind.classList.remove('hidden');
+                nameSpan.innerText = activeCrewMember.name;
+            } else {
+                ind.classList.add('hidden');
+            }
+
+            const crewContainer = document.getElementById('crew-panel');
+            crewContainer.innerHTML = '';
+            Object.values(gameState.crew).forEach(c => {
+                const btn = document.createElement('button');
+                const isSelected = activeCrewMember && activeCrewMember.name === c.name;
+                
+                let baseClass = "p-2 rounded border text-left transition-all relative overflow-hidden ";
+                if (c.used) {
+                    baseClass += "bg-black/50 border-gray-800 text-gray-700 cursor-not-allowed opacity-50";
+                } else if (isSelected) {
+                    baseClass += "bg-blue-900/40 border-blue-400 text-blue-100 crew-active ring-1 ring-blue-400";
+                } else {
+                    baseClass += "bg-gray-800 border-gray-600 text-gray-300 hover:border-gray-400 hover:bg-gray-700";
+                }
+                btn.className = baseClass;
+                btn.disabled = c.used;
+                btn.innerHTML = `
+                    <div class="font-bold text-[11px] cinzel leading-tight">${c.name}</div>
+                    <div class="text-[9px] ${isSelected ? 'text-blue-200' : 'text-gray-500'}">${c.skill}</div>
+                    ${c.used ? '<i class="fas fa-lock absolute top-1 right-1 text-[10px]"></i>' : ''}
+                `;
+                btn.onclick = () => {
+                    if (isSelected) activeCrewMember = null;
+                    else activeCrewMember = c;
+                    updateUI();
+                };
+                crewContainer.appendChild(btn);
+            });
+
+            // Inventory List View
+            const invContainer = document.getElementById('inventory-panel');
+            invContainer.innerHTML = '';
+            const descArea = document.getElementById('item-desc-area');
+            
+            if (gameState.inventory.length === 0) {
+                invContainer.innerHTML = '<div class="text-center text-[10px] text-gray-600 italic py-2">Inventory Empty</div>';
+            } else {
+                gameState.inventory.forEach(itemName => {
+                    const itemDef = itemRegistry[itemName] || { type: 'misc', icon: 'fa-box', color: 'text-gray-500', desc: "A strange item." };
+                    const isConsumable = itemDef.type === 'consumable';
+                    
+                    const itemRow = document.createElement('div');
+                    itemRow.className = `group w-full flex items-center justify-between p-2 rounded border transition-all cursor-default relative ${
+                        isConsumable 
+                        ? 'bg-gray-900/80 border-emerald-900/50 hover:border-emerald-500 hover:bg-gray-800' 
+                        : 'bg-gray-900/60 border-gray-800 hover:border-gray-600'
+                    }`;
+
+                    // Left Side: Icon + Name
+                    const leftSide = document.createElement('div');
+                    leftSide.className = 'flex items-center gap-3';
+                    leftSide.innerHTML = `
+                        <div class="text-lg w-5 text-center ${itemDef.color}"><i class="fas ${itemDef.icon}"></i></div>
+                        <span class="text-xs cinzel text-gray-300 group-hover:text-gray-100 transition-colors">${itemName.split('(')[0]}</span>
+                    `;
+                    itemRow.appendChild(leftSide);
+
+                    // Right Side: Action Button or Tag
+                    const rightSide = document.createElement('div');
+                    if (isConsumable) {
+                        const actionBtn = document.createElement('button');
+                        actionBtn.className = "px-2 py-1 bg-emerald-900/40 border border-emerald-600/30 text-emerald-500 text-[9px] font-bold rounded hover:bg-emerald-600 hover:text-white transition-all tracking-wider";
+                        actionBtn.innerText = itemDef.btnText || "USE";
+                        actionBtn.onclick = (e) => {
+                            e.stopPropagation();
+                            const result = itemDef.action(gameState);
+                            addToHistory(result, 'system');
+                            saveGame();
+                            updateUI();
+                        };
+                        rightSide.appendChild(actionBtn);
+                    } else {
+                        const tag = document.createElement('span');
+                        tag.className = "text-[9px] text-gray-600 uppercase tracking-wider font-bold opacity-50 group-hover:opacity-100 transition-opacity";
+                        tag.innerText = "PASSIVE";
+                        rightSide.appendChild(tag);
+                    }
+                    itemRow.appendChild(rightSide);
+
+                    // Hover Description Logic
+                    const defaultText = "Hover over an item to inspect it.";
+                    itemRow.onmouseenter = () => {
+                        descArea.innerText = itemDef.desc || defaultText;
+                        descArea.classList.add('text-amber-400');
+                        descArea.classList.remove('text-gray-400');
+                    };
+                    itemRow.onmouseleave = () => {
+                        descArea.innerText = defaultText;
+                        descArea.classList.remove('text-amber-400');
+                        descArea.classList.add('text-gray-400');
+                    };
+
+                    invContainer.appendChild(itemRow);
+                });
+            }
         }
 
-        async function resetGame() {
-            gameState = createInitialState(); await saveGame(); renderScene('prologue_storm'); rebuildJournal();
-        }
-        function confirmReset() { resetGame(); }
+        init();
     </script>
 </body>
 </html>
