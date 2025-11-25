@@ -697,7 +697,7 @@
                 title: "The Deputy",
                 text: "A squad of Royal Guards stands at the door. Their captain salutes you. 'We heard you cleared out the riff-raff on the road. The Lighthouse is yours to secure, Deputy.' They open the doors for you.",
                 journal: "The Guards respect me. They let me pass without question. Order has its perks.",
-                choices: [{ text: "Enter and Rest (Demo End)", nextScene: 'lighthouse_vigil', type: 'rest' }]
+                choices: [{ text: "Enter and Rest", nextScene: 'lighthouse_vigil', type: 'rest' }]
             },
             'ending_chaos': {
                 title: "Smuggler's Ally",
@@ -712,7 +712,7 @@
                 choices: [{ text: "Enter and Rest (Demo End)", nextScene: 'lighthouse_vigil', type: 'rest' }]
             },
             'lighthouse_vigil': {
-                title: "The Wolf King's Toll",
+                title: "Charting Course",
                 text: "The lighthouse lamp cuts a bright path through the dark, but your gaze is fixed on the water-warped pages of the Ship's Log. The ink has run on the coordinates, but Gareth's handwriting remains clear on the final page—a verse you heard him sing against the storm:<br><br>" +
                       "<i class='text-blue-300'>“There’s a tax for the coin and a tax for the bread,<br>" +
                       "But who pays the toll for the army of dead?<br>" +
@@ -720,7 +720,13 @@
                       "Now the Ring and the Blade are lost at sea,<br>" +
                       "Waiting for a Captain as cursed as he.“</i><br><br>" +
                       "The bickering voices in your mind fall silent. Then, softly, they begin to hum the melody in unison. It is not a myth; it is a map. To ferry your crew to the afterlife, you must find the Wolves of Valor.",
-                journal: "The shanty holds the truth. I must find the Ring and the Blade to save my crew. I am the Captain now.",
+                journal: "The shanty holds the truth. I must find the Ring and the Blade to save my crew. I am the Captain now.<br>" +
+                      "<i class='text-blue-300'>“There’s a tax for the coin and a tax for the bread,<br>" +
+                      "But who pays the toll for the army of dead?<br>" +
+                      "...<br>" +
+                      "Now the Ring and the Blade are lost at sea,<br>" +
+                      "Waiting for a Captain as cursed as he.“</i><br><br>" +
+                      "The bickering voices in your mind fall silent. Then, softly, they begin to hum the melody in unison. It is not a myth; it is a map. To ferry your crew to the afterlife, you must find the Wolves of Valor.",
                 onEnter: (state) => {
                     state.currentHP = state.maxHP;
                     Object.keys(state.crew).forEach(k => state.crew[k].used = false);
