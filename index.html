@@ -178,7 +178,7 @@
                     </div>
             </div>
 
-            <div id="journal-container" class="order-5 md:order-none log-hidden h-96 md:h-[500px] shrink-0 rounded border border-gray-600 bg-gray-800 shadow-2xl flex flex-col overflow-hidden relative">
+            <div id="journal-container" class="order-5 md:order-none log-hidden h-96 md:h-[476px] shrink-0 rounded border border-gray-600 bg-gray-800 shadow-2xl flex flex-col overflow-hidden relative">
                 <div class="bg-[#0f172a] text-center py-1 border-b border-gray-700 z-10 shadow-md">
                     <h3 class="cinzel text-amber-600 text-sm tracking-[0.2em] font-bold">The Log of The Trident's Kiss</h3>
                 </div>
@@ -220,28 +220,64 @@
 
         // --- STATIC IMAGE MAPPING ---
         // Ensure you have these files in your 'images' folder on GitHub
-        const sceneImages = {
-            'prologue_storm': 'images/storm.jpg',
-            'prologue_abyss': 'images/abyss.jpg',
-            'start': 'images/wreckage.jpg',
-            'wreckage_success': 'images/chest.jpg',
-            'treeline': 'images/forest.jpg',
-            'treeline_prepared': 'images/forest.jpg',
-            'road_encounter': 'images/guard_road.jpg',
-            'trail_success': 'images/smuggler_cove_high.jpg',
-            'guard_talk': 'images/guard_face.jpg',
-            'market_crossroads': 'images/market.jpg',
-            'market_stall': 'images/merchant.jpg',
-            'lighthouse_split': 'images/lighthouse_far.jpg',
-            'dark_caves': 'images/caves.jpg',
-            'cliff_climb': 'images/cliff.jpg',
-            'lighthouse_arrival': 'images/lighthouse_door.jpg',
-            'ending_chaos': 'images/smugglers_win.jpg',
-            'ending_order': 'images/guards_win.jpg',
-            'rest_complete': 'images/dream.jpg',
-            // Default fallback
-            'default': 'https://placehold.co/600x400/0f172a/1e293b?text=The+Void' 
-        };
+		const sceneImages = {
+			// --- Prologue & Start ---
+			'prologue_storm': 'images/storm.jpg',
+			'prologue_abyss': 'images/abyss.jpg',
+			'start': 'images/wreckage.jpg',
+			'wreckage_success': 'images/chest.jpg',
+			'wreckage_fail': 'images/sand_empty.jpg', // New
+
+			// --- The Forest & Encounters ---
+			'treeline': 'images/forest.jpg',
+			'treeline_prepared': 'images/forest.jpg',
+			'road_encounter': 'images/guard_road.jpg',
+			'trail_success': 'images/smuggler_cove_high.jpg',
+			'trail_fail': 'images/stumble_guard.jpg', // New
+
+			// --- Guard Interactions ---
+			'guard_talk': 'images/guard_face.jpg',
+			'guard_respect': 'images/guard_salute.jpg', // New
+			'guard_bribe': 'images/guard_bribe.jpg', // New
+			'guard_scared': 'images/guard_scared.jpg', // New
+			'combat_guard': 'images/combat_hammer.jpg', // New
+
+			// --- Smuggler Interactions ---
+			'smuggler_meet': 'images/smuggler_standoff.jpg', // New
+			'smuggler_friend': 'images/smuggler_rum.jpg', // New
+			'smuggler_pay': 'images/smuggler_pay.jpg', // New
+
+			// --- Market & Transactions ---
+			'market_crossroads': 'images/market.jpg',
+			'market_stall': 'images/merchant.jpg',
+			'market_sell': 'images/merchant_hands.jpg', // New (Merchant viewing items)
+			
+			// Universal Transaction Image (Buy/Sell actions)
+			'buy_potion': 'images/transaction.jpg',
+			'buy_rope': 'images/transaction.jpg',
+			'buy_torch': 'images/transaction.jpg',
+			'sell_rope': 'images/transaction.jpg',
+			'sell_torch': 'images/transaction.jpg',
+			'sell_potion': 'images/transaction.jpg',
+			'sell_rum': 'images/transaction.jpg',
+
+			// --- The Climb & Caves ---
+			'lighthouse_split': 'images/lighthouse_far.jpg',
+			'cliff_climb': 'images/cliff.jpg',
+			'climb_fail': 'images/fall_cliff.jpg', // New
+			'dark_caves': 'images/caves.jpg',
+			'dark_fail': 'images/cave_injury.jpg', // New
+
+			// --- Endings ---
+			'lighthouse_arrival': 'images/lighthouse_door.jpg',
+			'ending_order': 'images/guards_win.jpg',
+			'ending_chaos': 'images/smugglers_win.jpg',
+			'ending_neutral': 'images/lockpick.jpg', // New
+			'rest_complete': 'images/dream.jpg',
+
+			// Default fallback
+			'default': 'https://placehold.co/600x400/0f172a/1e293b?text=The+Void' 
+		};
         
         // --- GAME DATA FACTORY ---
         function createInitialState() {
@@ -416,7 +452,7 @@
             },
             'trail_success': {
                 title: "Hidden Signs",
-                text: "Talon navigates the thorns effortlessly. You emerge near a hidden cove, overlooking a group of men loading crates. Smugglers.",
+                text: "Talon helps you navigate the thorns effortlessly. You emerge near a hidden cove, overlooking a group of men loading crates. Smugglers.",
                 journal: "Talon led me through the brush. We found a Smuggler's Cove unseen.",
                 imagePrompt: "View from bushes looking down at a sea cave with smugglers and lanterns, stealthy perspective.",
                 onEnter: (state) => { 
@@ -496,7 +532,7 @@
             },
             'smuggler_meet': {
                 title: "The Cove",
-                text: "The men draw blades as you approach. 'One step closer and you're fish food.'",
+                text: "The men draw blades as you approach. 'One step closer and you're fish food!'",
                 journal: "Found the smugglers. They aren't friendly.",
                 imagePrompt: "Group of pirates drawing weapons in a cave, firelight reflections.",
                 choices: [
