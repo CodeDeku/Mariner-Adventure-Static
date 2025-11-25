@@ -92,6 +92,7 @@
     <!-- Audio Toggle Button (Fixed Position) -->
     <div class="fixed top-4 right-4 z-50">
         <button id="audio-toggle" class="bg-gray-800/80 border border-gray-600 text-gray-400 p-2 rounded-full hover:text-amber-500 transition-colors w-10 h-10 flex items-center justify-center shadow-lg backdrop-blur">
+            <!-- Default Icon: Muted -->
             <i class="fas fa-volume-mute"></i>
         </button>
     </div>
@@ -233,10 +234,12 @@
         // --- AUDIO MANAGER ---
         class AudioManager {
             constructor() {
+                // Setup Ambience Loop
                 this.ambience = new Audio('audio/ambience.mp3');
                 this.ambience.loop = true;
                 this.ambience.volume = 0.3; // Quiet by default
                 
+                // Setup Click SFX
                 this.clickSound = new Audio('audio/click.mp3');
                 this.clickSound.volume = 0.5;
 
@@ -263,17 +266,19 @@
                 const icon = btn.querySelector('i');
 
                 if (!this.isMuted) {
-                    // User wants sound
+                    // Active State
                     this.ambience.play().catch(e => console.log("Autoplay blocked"));
+                    // Icon Swap Logic
                     icon.classList.remove('fa-volume-mute');
-                    icon.classList.add('fa-volume-up');
+                    icon.classList.add('fa-volume-high'); // Active Speaker Icon
                     btn.classList.add('text-amber-500', 'border-amber-500');
                     btn.classList.remove('text-gray-400', 'border-gray-600');
                 } else {
-                    // Mute
+                    // Muted State
                     this.ambience.pause();
-                    icon.classList.remove('fa-volume-up');
-                    icon.classList.add('fa-volume-mute');
+                    // Icon Swap Logic
+                    icon.classList.remove('fa-volume-high');
+                    icon.classList.add('fa-volume-mute'); // Muted Speaker Icon
                     btn.classList.remove('text-amber-500', 'border-amber-500');
                     btn.classList.add('text-gray-400', 'border-gray-600');
                 }
