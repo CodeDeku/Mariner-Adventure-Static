@@ -746,22 +746,9 @@
                     return "Mission Accepted: Find the Wolves of Valor.";
                 },
                 choices: [
-                    { text: "Search for the Wolves of Valor (End Demo)", type: 'reset' },
-					{ text: "Rest one more night", nextScene: 'lighthouse_rest', type: 'rest' }
+                    { text: "Find the Wolves of Valor (End Demo)", type: 'reset' }
                 ]
-            },
-			'lighthouse_rest': {
-                title: "Extra Rest",
-                text: "The lantern's warm glow offers a calming sanctuary as the storm crashes against the lighthouse walls. After securing your hoisted hammock, its soft, steady sway swiftly lulls you to sleep",
-                journal: "I took an extra night at the lighthouse to rest up and prepare a charter.",
-                onEnter: (state) => {
-                    state.currentHP = state.maxHP;
-                    Object.keys(state.crew).forEach(k => state.crew[k].used = false);
-                },
-                choices: [
-                    { text: "Search for the Wolves of Valor (End Demo)", type: 'reset' }
-                ]
-            },
+            }
         };
 
         // --- CORE FUNCTIONS ---
