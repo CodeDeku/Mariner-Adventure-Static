@@ -89,6 +89,13 @@
         <div class="text-gray-400 cinzel text-sm">Summoning the Crew...</div>
     </div>
 
+    <!-- Audio Toggle Button (Fixed Position) -->
+    <div class="fixed top-4 right-4 z-50">
+        <button id="audio-toggle" class="bg-gray-800/80 border border-gray-600 text-gray-400 p-2 rounded-full hover:text-amber-500 transition-colors w-10 h-10 flex items-center justify-center shadow-lg backdrop-blur">
+            <i class="fas fa-volume-mute"></i>
+        </button>
+    </div>
+
     <div class="grid grid-cols-1 md:flex md:flex-row max-w-7xl mx-auto w-full p-2 md:p-4 gap-4 mb-8">
         
         <div class="contents md:flex md:flex-col md:w-1/3 gap-3 shrink-0">
@@ -114,8 +121,8 @@
             <div id="stats-panel" class="order-4 md:order-none bg-gray-800/80 rounded border border-gray-700 p-3 flex flex-col gap-3 shadow-lg backdrop-blur-sm relative transition-all duration-1000">
                 
                 <div>
-                    <div class="flex justify-between text-sm cinzel text-gray-400 mb-1">
-                        <span>Edward Jones</span>
+                    <div class="flex justify-between text-xs cinzel text-gray-400 mb-1">
+                        <span>Vitality</span>
                         <span id="hp-text">20/20</span>
                     </div>
                     <div class="w-full bg-gray-900 h-2 rounded-full overflow-hidden border border-gray-700">
@@ -222,6 +229,58 @@
         
         const appId = "edward-jones-standalone";
         let user;
+
+        // --- AUDIO MANAGER ---
+        class AudioManager {
+            constructor() {
+                this.ambience = new Audio('audio/ambience.mp3');
+                this.ambience.loop = true;
+                this.ambience.volume = 0.3; // Quiet by default
+                
+                this.clickSound = new Audio('audio/click.mp3');
+                this.clickSound.volume = 0.5;
+
+                this.isMuted = true;
+                this.hasInteracted = false;
+
+                // Bind toggle button
+                const btn = document.getElementById('audio-toggle');
+                btn.onclick = () => this.toggleMute();
+            }
+
+            playClick() {
+                if (!this.isMuted) {
+                    // Clone node to allow rapid overlapping clicks
+                    const sound = this.clickSound.cloneNode();
+                    sound.volume = 0.5;
+                    sound.play().catch(e => console.log("Audio play blocked"));
+                }
+            }
+
+            toggleMute() {
+                this.isMuted = !this.isMuted;
+                const btn = document.getElementById('audio-toggle');
+                const icon = btn.querySelector('i');
+
+                if (!this.isMuted) {
+                    // User wants sound
+                    this.ambience.play().catch(e => console.log("Autoplay blocked"));
+                    icon.classList.remove('fa-volume-mute');
+                    icon.classList.add('fa-volume-up');
+                    btn.classList.add('text-amber-500', 'border-amber-500');
+                    btn.classList.remove('text-gray-400', 'border-gray-600');
+                } else {
+                    // Mute
+                    this.ambience.pause();
+                    icon.classList.remove('fa-volume-up');
+                    icon.classList.add('fa-volume-mute');
+                    btn.classList.remove('text-amber-500', 'border-amber-500');
+                    btn.classList.add('text-gray-400', 'border-gray-600');
+                }
+            }
+        }
+
+        const audioManager = new AudioManager();
 
         // --- STATIC IMAGE MAPPING ---
 		const sceneImages = {
@@ -968,6 +1027,35 @@
                 const btn = document.createElement('button');
                 btn.className = "btn-game w-full p-3 bg-gray-800 border border-gray-600 hover:border-amber-500 hover:bg-gray-750 text-left rounded shadow flex items-center justify-between group";
                 
+                // Audio Hook: Add click sound to all game buttons
+                btn.onclick = (e) => {
+                    audioManager.playClick();
+                    
+                    if (choice.type === 'reset') {
+                        resetGame();
+                        return;
+                    }
+
+                    if (choice.consume && choice.reqItem) {
+                        const idx = gameState.inventory.indexOf(choice.reqItem);
+                        if (idx > -1) {
+                            gameState.inventory.splice(idx, 1);
+                            addToHistory(`${choice.reqItem} used and discarded.`, 'system');
+                        }
+                    }
+
+                    const currentScene = scenes[gameState.currentSceneId];
+                    const entryText = currentScene.journal !== undefined ? currentScene.journal : currentScene.text;
+                    if (entryText !== null) {
+                        addToHistory(entryText, 'entry');
+                    }
+
+                    if (choice.cost) gameState.shillings -= choice.cost;
+                    if (choice.type === 'skill') gameState.lastDC = choice.dc;
+                    
+                    renderScene(choice.nextScene);
+                };
+                
                 let label = choice.text;
                 let icon = '<i class="fas fa-chevron-right text-gray-600 group-hover:text-amber-500"></i>';
 
@@ -984,33 +1072,6 @@
                 }
 
                 btn.innerHTML = `<span class="cinzel font-bold text-gray-300 group-hover:text-amber-100">${label}</span>${icon}`;
-                
-                btn.onclick = () => {
-                    if (choice.type === 'reset') {
-                        resetGame();
-                        return;
-                    }
-
-                    if (choice.consume && choice.reqItem) {
-                        const idx = gameState.inventory.indexOf(choice.reqItem);
-                        if (idx > -1) {
-                            gameState.inventory.splice(idx, 1);
-                            addToHistory(`${choice.reqItem} used and discarded.`, 'system');
-                        }
-                    }
-
-                    const currentScene = scenes[gameState.currentSceneId];
-                    // Only add to history if the journal entry isn't explicitly null
-                    const entryText = currentScene.journal !== undefined ? currentScene.journal : currentScene.text;
-                    if (entryText !== null) {
-                        addToHistory(entryText, 'entry');
-                    }
-
-                    if (choice.cost) gameState.shillings -= choice.cost;
-                    if (choice.type === 'skill') gameState.lastDC = choice.dc;
-                    
-                    renderScene(choice.nextScene);
-                };
                 container.appendChild(btn);
             });
         }
@@ -1109,6 +1170,8 @@
                     ${c.used ? '<i class="fas fa-lock absolute top-1 right-1 text-[10px]"></i>' : ''}
                 `;
                 btn.onclick = () => {
+                    // Audio Hook for Crew Buttons
+                    audioManager.playClick();
                     if (isSelected) activeCrewMember = null;
                     else activeCrewMember = c;
                     updateUI();
@@ -1152,6 +1215,8 @@
                         actionBtn.innerText = itemDef.btnText || "USE";
                         actionBtn.onclick = (e) => {
                             e.stopPropagation();
+                            // Audio Hook for Item Use
+                            audioManager.playClick();
                             const result = itemDef.action(gameState);
                             addToHistory(result, 'system');
                             saveGame();
