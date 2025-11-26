@@ -1639,7 +1639,8 @@
                 if (choice.reqItem && !gameState.inventory.includes(choice.reqItem)) return;
 
                 const btn = document.createElement('button');
-                btn.className = "btn-game w-full p-3 bg-gray-800 border border-gray-600 hover:border-amber-500 hover:bg-gray-750 text-left rounded shadow flex items-center justify-between group";
+                // Removed justify-between for skill checks to allow left alignment
+                btn.className = `btn-game w-full p-3 bg-gray-800 border border-gray-600 hover:border-amber-500 hover:bg-gray-750 text-left rounded shadow flex items-center ${(choice.type === 'skill' || choice.cost) ? 'justify-start' : 'justify-between'} group`;
                 
                 btn.onclick = (e) => {
                     audioManager.playClick();
@@ -1709,18 +1710,16 @@
                     }
                 };
                 
-                let label = choice.text;
-                let icon = '<i class="fas fa-chevron-right text-gray-600 group-hover:text-amber-500"></i>';
+                let label = `<span class="cinzel font-bold text-gray-300 group-hover:text-amber-100">${choice.text}</span>`;
+                let icon = '';
 
                 if (choice.type === 'skill') {
-                    // MODIFIED: Removed redundant text from the main label
-                    label = `<span class="cinzel font-bold text-gray-300 group-hover:text-amber-100">${label}</span>`;
-                    label += ` <span class="text-blue-400 text-xs uppercase tracking-wider ml-1">[${choice.skill} DC ${choice.dc}]</span>`;
+                    // Skill notation and dice icon are aligned immediately after the label
+                    label += ` <span class="text-blue-400 text-xs uppercase tracking-wider ml-2 mr-4">[${choice.skill} DC ${choice.dc}]</span>`;
                     icon = '<i class="fas fa-dice-d20 text-blue-500"></i>';
                 } else {
-                    label = `<span class="cinzel font-bold text-gray-300 group-hover:text-amber-100">${label}</span>`;
+                    icon = '<i class="fas fa-chevron-right text-gray-600 group-hover:text-amber-500"></i>';
                 }
-
 
                 if (choice.cost) {
                     label += ` <span class="text-amber-500 text-xs ml-1">(-${choice.cost}s)</span>`;
@@ -1729,8 +1728,17 @@
                      icon = '<i class="fas fa-undo text-amber-500"></i>';
                      btn.className += " border-amber-900/50";
                 }
+                
+                // For non-skill checks that don't have a cost, we re-apply justify-between
+                if (choice.type !== 'skill' && !choice.cost) {
+                     btn.innerHTML = `<span class="cinzel font-bold text-gray-300 group-hover:text-amber-100">${choice.text}</span>${icon}`;
+                     btn.classList.add('justify-between');
+                     btn.classList.remove('justify-start');
+                } else {
+                     btn.innerHTML = `${label}${icon}`;
+                }
 
-                btn.innerHTML = `${label}${icon}`;
+
                 container.appendChild(btn);
             });
         }
