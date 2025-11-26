@@ -66,6 +66,41 @@
 
         #inf-marker { transition: left 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
 
+        /* --- ATMOSPHERIC FX --- */
+        
+        /* Container for FX */
+        #fx-overlay {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            z-index: 20;
+            transition: box-shadow 0.5s ease;
+        }
+
+        /* 1. Planar Pulse (Violet) */
+        @keyframes pulse-violet-anim {
+            0%, 100% { box-shadow: inset 0 0 20px 0px rgba(139, 92, 246, 0.1); background-color: rgba(139, 92, 246, 0.05); }
+            50% { box-shadow: inset 0 0 80px 20px rgba(139, 92, 246, 0.4); background-color: rgba(139, 92, 246, 0.15); }
+        }
+        .fx-pulse-violet {
+            animation: pulse-violet-anim 4s infinite ease-in-out;
+            mix-blend-mode: overlay;
+        }
+
+        /* 2. Damage Flash (Red) */
+        @keyframes flash-red-anim {
+            0% { background-color: rgba(220, 38, 38, 0.6); }
+            100% { background-color: transparent; }
+        }
+        .fx-flash-red {
+            animation: flash-red-anim 0.4s ease-out forwards;
+        }
+
+        /* 3. Low HP Vignette (Static Red/Dark) */
+        .fx-vignette-low {
+            box-shadow: inset 0 0 100px 40px rgba(153, 27, 27, 0.5);
+        }
+
         .water-stained {
             background-color: #1e293b;
             background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23334155' fill-opacity='0.1' fill-rule='evenodd'/%3E%3C/svg%3E");
@@ -106,6 +141,9 @@
                 <button id="reset-game-btn" onclick="confirmReset()" class="absolute top-2 left-2 z-30 text-[10px] border border-red-900/50 text-red-400 bg-black/60 hover:text-red-200 hover:bg-red-900/80 px-2 py-1 rounded transition-all cinzel font-bold backdrop-blur-sm">
                     <i class="fas fa-skull mr-1"></i>New Game
                 </button>
+
+                <!-- New FX Overlay -->
+                <div id="fx-overlay"></div>
 
                 <img id="scene-image" src="" alt="Scene Visualization" class="w-full h-full object-cover opacity-0 transition-opacity duration-1000">
                 
@@ -337,6 +375,35 @@
 
         const audioManager = new AudioManager();
 
+        // --- FX MANAGER ---
+        class FXManager {
+            constructor() {
+                this.overlay = document.getElementById('fx-overlay');
+            }
+
+            clearEffects() {
+                // Remove all effects except flash animations (they remove themselves)
+                this.overlay.classList.remove('fx-pulse-violet', 'fx-vignette-low');
+            }
+
+            flashRed() {
+                this.overlay.classList.add('fx-flash-red');
+                setTimeout(() => this.overlay.classList.remove('fx-flash-red'), 400);
+            }
+            
+            setPulse(active) {
+                if(active) this.overlay.classList.add('fx-pulse-violet');
+                else this.overlay.classList.remove('fx-pulse-violet');
+            }
+
+            setVignette(active) {
+                if(active) this.overlay.classList.add('fx-vignette-low');
+                else this.overlay.classList.remove('fx-vignette-low');
+            }
+        }
+        
+        const fxManager = new FXManager();
+
         // --- STATIC IMAGE MAPPING ---
 		const sceneImages = {
 			'prologue_storm': 'images/storm.jpg',
@@ -564,7 +631,11 @@
                 title: "Lost",
                 text: "The undergrowth fights you. You stumble out of the brush, loud and covered in burrs, right in front of a Royal Guard.",
                 journal: "Tried the hidden path, but made too much noise. Stumbled right into a Guard.",
-                onEnter: (state) => { state.currentHP -= 2; return "Took 2 Scratch Damage."; },
+                onEnter: (state) => { 
+                    state.currentHP -= 2; 
+                    fxManager.flashRed();
+                    return "Took 2 Scratch Damage."; 
+                },
                 choices: [{ text: "Confront the Guard", nextScene: 'road_encounter', type: 'dialogue' }] 
             },
             'guard_talk': {
@@ -618,8 +689,9 @@
                 journal: "Had to fight the Guard. I am an outlaw now.",
                 onEnter: (state) => { 
                     audioManager.playClash();
-                    const dmg = Math.floor(Math.random() * 6) + 8; // 1d6+8
+                    const dmg = Math.floor(Math.random() * 6) + 10; // Increased damage: 10-15
                     state.currentHP -= dmg;
+                    fxManager.flashRed(); // Trigger Visual Damage
                     state.influence = 20; // Max Chaos
                     return `Took ${dmg} damage. Became Outlaw (Max Chaos).`;
                 },
@@ -798,7 +870,11 @@
                 title: "Slip and Fall",
                 text: "Your grip fails. You slide twenty feet, shredding skin against stone before catching a root.",
                 journal: "Almost fell to my death. Climbing without rope was foolish.",
-                onEnter: (state) => { state.currentHP -= 5; return "Took 5 Damage."; },
+                onEnter: (state) => { 
+                    state.currentHP -= 5; 
+                    fxManager.flashRed();
+                    return "Took 5 Damage."; 
+                },
                 choices: [{ text: "Keep Climbing", nextScene: 'lighthouse_arrival', type: 'travel' }]
             },
             'dark_caves': {
@@ -817,7 +893,11 @@
                 title: "Unseen Dangers",
                 text: "In the dark, you trip over unseen rocks and twist your ankle. Something scuttles away in the shadows.",
                 journal: "The caves were too dark. I got hurt.",
-                onEnter: (state) => { state.currentHP -= 4; return "Took 4 Damage."; },
+                onEnter: (state) => { 
+                    state.currentHP -= 4; 
+                    fxManager.flashRed();
+                    return "Took 4 Damage."; 
+                },
                 choices: [{ text: "Limp to the Exit", nextScene: 'lighthouse_arrival', type: 'travel' }]
             },
             'lighthouse_arrival': {
@@ -1085,6 +1165,16 @@
             gameState.currentSceneId = sceneId;
             activeCrewMember = null;
 
+            // --- FX TRIGGER LOGIC ---
+            fxManager.clearEffects();
+
+            // Violet Pulse scenes
+            if (['prologue_storm', 'prologue_abyss', 'guard_scared', 'lighthouse_vigil'].includes(sceneId)) {
+                fxManager.setPulse(true);
+            } else {
+                fxManager.setPulse(false);
+            }
+
             if (scene.onEnter && logText) {
                 const msg = scene.onEnter(gameState);
                 if (msg) addToHistory(msg, 'system');
@@ -1192,8 +1282,13 @@
             bar.className = `h-full transition-all duration-500 ${hpPct < 30 ? 'bg-red-600 animate-pulse' : 'bg-red-800'}`;
             document.getElementById('hp-text').innerText = `${gameState.currentHP}/${gameState.maxHP}`;
 
-            // Check for low health audio
+            // Check for low health audio & vignette
             audioManager.checkVulnerable(gameState.currentHP, gameState.maxHP);
+            if (hpPct <= 30) {
+                fxManager.setVignette(true);
+            } else {
+                fxManager.setVignette(false);
+            }
 
             // Money
             document.getElementById('shillings-display').innerText = gameState.shillings;
