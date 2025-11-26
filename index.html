@@ -45,6 +45,19 @@
         }
         .crew-active { animation: pulse-glow 2s infinite; background-color: rgba(30, 58, 138, 0.3); }
 
+        /* Custom glow for FREE USE / Mushroom */
+        @keyframes pulse-purple {
+            0%, 100% { box-shadow: 0 0 8px rgba(168, 85, 247, 0.5); border-color: #a855f7; }
+            50% { box-shadow: 0 0 18px rgba(192, 132, 252, 0.8); border-color: #c084fc; }
+        }
+        .crew-free-use-glow {
+            animation: pulse-purple 2s infinite;
+            background-color: rgba(88, 28, 135, 0.5); /* deep violet */
+            border-color: #a855f7 !important;
+            color: #f3e8ff !important;
+        }
+
+
         /* --- TUTORIAL PULSE --- */
         @keyframes pulse-amber {
             0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); border-color: #f59e0b; }
@@ -500,6 +513,8 @@
 			'ending_order': 'images/guards_win.jpg',
 			'ending_chaos': 'images/smugglers_win.jpg',
 			'ending_neutral': 'images/lockpick.jpg', 
+            'ending_neutral_check': 'images/lockpick.jpg', // New scene for the mushroom test
+            'ending_neutral_success': 'images/lockpick.jpg',
 			'lighthouse_vigil': 'images/dream.jpg',
 			'lighthouse_rest': 'images/dream.jpg',
 			'default': 'https://placehold.co/600x400/0f172a/1e293b?text=The+Void' 
@@ -571,12 +586,17 @@
                 icon: 'fa-cloud-meatball', 
                 color: 'text-purple-300',
                 btnText: "MUNCH",
-                desc: "Consumable: A subterranean mushroom used for mental clarity.",
+                desc: "Consumable: A subterranean mushroom used for mental clarity. Your next Guiding Voice check will be FREE.",
                 action: (state) => {
+                    // Set flag to true. It is consumed on the next successful skill check, 
+                    // preventing accidental consumption without a skill check.
+                    if (state.crewUseFree) {
+                        return "The residual clarity remains. You can only benefit from one mushroom at a time.";
+                    }
                     state.crewUseFree = true;
                     const idx = state.inventory.indexOf("Pearlescent Mushroom");
                     if (idx > -1) state.inventory.splice(idx, 1);
-                    return `Consumed Pearlescent Mushroom. Your next Guiding Voice check will be FREE.`;
+                    return `Consumed Pearlescent Mushroom. Clarity gained! (Free Guiding Voice available)`;
                 }
             },
             "Curious Cargo": { // NEW ITEM: Influence driver
@@ -966,7 +986,7 @@
                     audioManager.playCoins();
                     return "Sold Curious Cargo (+10s).";
                 },
-                choices: [{ text: "Return to Merchant", nextScene: 'market_stall', type: 'travel' }]
+                choices: [{ text: "Continue Selling", nextScene: 'market_sell', type: 'travel' }]
             },
             'sell_rope': {
                 title: "Sold",
@@ -979,7 +999,7 @@
                     audioManager.playCoins();
                     return "Sold Rope (+2s)";
                 },
-                choices: [{ text: "Return to Merchant", nextScene: 'market_stall', type: 'travel' }]
+                choices: [{ text: "Continue Selling", nextScene: 'market_sell', type: 'travel' }]
             },
             'sell_torch': {
                 title: "Sold",
@@ -992,7 +1012,7 @@
                     audioManager.playCoins();
                     return "Sold Torch (+1s)";
                 },
-                choices: [{ text: "Return to Merchant", nextScene: 'market_stall', type: 'travel' }]
+                choices: [{ text: "Continue Selling", nextScene: 'market_sell', type: 'travel' }]
             },
             'sell_potion': {
                 title: "Sold",
@@ -1005,7 +1025,7 @@
                     audioManager.playCoins();
                     return "Sold Potion (+3s)";
                 },
-                choices: [{ text: "Return to Merchant", nextScene: 'market_stall', type: 'travel' }]
+                choices: [{ text: "Continue Selling", nextScene: 'market_sell', type: 'travel' }]
             },
             'sell_rum': {
                 title: "Sold",
@@ -1018,7 +1038,7 @@
                     audioManager.playCoins();
                     return "Sold Rum (+2s)";
                 },
-                choices: [{ text: "Return to Merchant", nextScene: 'market_stall', type: 'travel' }]
+                choices: [{ text: "Continue Selling", nextScene: 'market_sell', type: 'travel' }]
             },
             'buy_potion': {
                 title: "Purchase",
@@ -1141,7 +1161,8 @@
                 resolve: (r, state) => {
                     if (state.influence <= -4) return 'ending_order'; 
                     if (state.influence >= 4) return 'ending_chaos'; 
-                    return 'ending_neutral';
+                    // Neutral path now leads to the skill check scene for testing
+                    return 'ending_neutral_check'; 
                 }
             },
             'ending_order': {
@@ -1155,6 +1176,38 @@
                 text: "Smugglers lounge by the entrance. They grin as you approach. 'The Mariner! We heard you made a fool of the Guard. This haven is open to you, brother.' They toss you a key.",
                 journal: "The smugglers see me as one of their own. They gave me the key.",
                 choices: [{ text: "Enter and Rest (Demo End)", nextScene: 'lighthouse_vigil', type: 'rest' }]
+            },
+            // NEW SCENE: Skill check to enter neutral ending
+            'ending_neutral_check': {
+                title: "The Locked Door",
+                text: "The heavy iron door is barred from the inside. There are no friendly faces. You must use your wits to find the mechanism to force the lock, or risk being caught lingering.",
+                journal: "The Lighthouse is sealed. I need to find the mechanism to enter.",
+                choices: [
+                    // Changed to Insight DC 15 (Captain Gareth)
+                    { text: "Analyze the mechanism (Insight DC 15)", nextScene: 'neutral_lock_logic', type: 'skill', dc: 15, skill: 'Insight' }
+                ]
+            },
+            'neutral_lock_logic': {
+                isLogic: true,
+                resolve: (roll) => roll >= 15 ? 'ending_neutral_success' : 'ending_neutral_fail'
+            },
+            'ending_neutral_success': {
+                title: "The Shadow Entrance",
+                // Updated narrative text to reference Gareth
+                text: "Captain Gareth's voice is calm, analyzing the door's weak points instantly. The ancient mechanism bows to your superior insight, and the heavy bolt slides back. You slip inside, unseen and unopposed.",
+                journal: "I forced the lock using insight and entered the lighthouse. Nobody saw me.",
+                choices: [{ text: "Enter and Rest (Demo End)", nextScene: 'lighthouse_vigil', type: 'rest' }]
+            },
+            'ending_neutral_fail': {
+                title: "The Shadow Fails",
+                text: "Your attempt to understand the mechanism jams the lock further. The noise echoes in the wind, and you must hurry before someone investigates.",
+                journal: "I failed to pick the lock. The chaos will come soon.",
+                onEnter: (state) => { 
+                    state.currentHP -= 2; 
+                    fxManager.flashRed();
+                    return "Took 2 Damage (Hurry)."; 
+                },
+                choices: [{ text: "Force the Door Open (Risk)", nextScene: 'ending_neutral', type: 'travel' }]
             },
             'ending_neutral': {
                 title: "The Shadow",
@@ -1432,12 +1485,19 @@
                         // If it's not a free use, mark as used
                         if (!gameState.crewUseFree) {
                             gameState.crew[crewKey].used = true;
-                            // Store the ID of the crew member used on this successful check
-                            if (roll >= gameState.lastDC) {
-                                gameState.lastCrewUsedId = crewKey;
-                            }
+                        } else {
+                            // MUSHROOM LOGIC: Log free use but DO NOT mark crew member as used.
+                            addToHistory(`*Pearlescent Mushroom consumed for FREE GUIDANCE.*`, 'system');
                         }
-                        gameState.crewUseFree = false; // Consume the free use if it existed
+                        
+                        // Store the ID of the crew member used on this check (used for Talon Cargo logic)
+                        if (roll >= gameState.lastDC) {
+                            gameState.lastCrewUsedId = crewKey;
+                        }
+                        
+                        // CONSUME MUSHROOM EFFECT after the attempt
+                        gameState.crewUseFree = false; 
+                        
                     } else {
                         crewUsedName = activeCrewMember.name;
                         logMsg += ` + 0 (${crewUsedName} - Invalid Skill)`;
@@ -1504,7 +1564,6 @@
 
             // --- LOCAL STOCK UTILITY ---
             const currentSceneId = gameState.currentSceneId;
-            // FIX: Corrected the reference error from currentId to currentSceneId
             const currentSceneStock = scenes[currentSceneId] ? scenes[currentSceneId].stock : {};
             const marketStock = scenes['market_stall'].stock; // Reference for selling logic
             
@@ -1514,6 +1573,7 @@
             // Handle dynamic generation for Market Scenes
             if (currentSceneId === 'market_stall') {
                 // Remove hardcoded buy options from the original array first
+                // Only keep static navigation buttons
                 processedChoices = processedChoices.filter(c => c.nextScene !== 'market_sell' && c.nextScene !== 'lighthouse_split');
 
                 // 1. Generate Dynamic Buy Options
@@ -1579,6 +1639,14 @@
                         return;
                     }
                     
+                    // --- MUSHROOM CHECK: If mushroom is active and click is NOT a skill check, log a warning ---
+                    if (gameState.crewUseFree && choice.type !== 'skill' && choice.type !== 'dialogue') {
+                        addToHistory(`*Warning: The Pearlescent Mushroom's clarity is best saved for a crucial skill check.*`, 'system');
+                        // Do NOT consume the free use, just continue the scene flow
+                        // This prevents wasting the buff on a simple travel or dialogue button.
+                    }
+
+
                     // --- FINAL STOCK CHECK BEFORE TRANSACTION (Crucial Fix) ---
                     // 1. Check buying stock
                     if (choice.type === 'action' && currentSceneId === 'market_stall' && choice.stockItem) {
@@ -1729,19 +1797,20 @@
 
                 const btn = document.createElement('button');
                 const isSelected = activeCrewMember && activeCrewMember.name === c.name;
-                
+                // Determine if this crew member is available for FREE USE
+                const isAvailableForFreeUse = gameState.crewUseFree && !c.used;
+
                 let baseClass = "p-2 rounded border text-left transition-all relative overflow-hidden ";
                 
-                // Add crew-active pulse if the free use is available and this crew member is selected
-                const isFreeUseActive = gameState.crewUseFree && isSelected;
                 
-                if (c.used && !isFreeUseActive) {
+                if (c.used && !isAvailableForFreeUse) { // Note: c.used will be false if mushroom is active
+                    // Used crew members are disabled
                     baseClass += "bg-black/50 border-gray-800 text-gray-700 cursor-not-allowed opacity-50";
+                } else if (isAvailableForFreeUse) { 
+                     // NEW: Purple glow for available crew members when mushroom is active
+                    baseClass += "crew-free-use-glow";
                 } else if (isSelected) {
                     baseClass += "bg-blue-900/40 border-blue-400 text-blue-100 crew-active ring-1 ring-blue-400";
-                    if (isFreeUseActive) {
-                         baseClass += " bg-purple-900/40 border-purple-400 crew-active";
-                    }
                 } else {
                     baseClass += "bg-gray-800 border-gray-600 text-gray-300 hover:border-gray-400 hover:bg-gray-700";
                 }
@@ -1752,13 +1821,13 @@
                 }
 
                 btn.className = baseClass;
-                // Only disable if USED and NOT free-use selected
-                btn.disabled = c.used && !isFreeUseActive;
+                // Only disable if USED
+                btn.disabled = c.used && !isAvailableForFreeUse; 
                 btn.innerHTML = `
                     <div class="font-bold text-[12px] cinzel leading-tight">${c.name}</div>
-                    <div class="text-[10px] ${isSelected ? 'text-blue-200' : 'text-gray-500'}">${c.skill}</div>
+                    <div class="text-[10px] ${isSelected || isAvailableForFreeUse ? 'text-white' : 'text-gray-500'}">${c.skill}</div>
                     ${c.used ? '<i class="fas fa-lock absolute top-1 right-1 text-[10px]"></i>' : ''}
-                    ${isFreeUseActive ? '<i class="fas fa-gift absolute top-1 right-1 text-[10px] text-purple-300"></i>' : ''}
+                    ${isAvailableForFreeUse ? '<i class="fas fa-star absolute top-1 right-1 text-[10px] text-purple-300"></i>' : ''}
                 `;
                 btn.onclick = () => {
                     audioManager.playClick();
