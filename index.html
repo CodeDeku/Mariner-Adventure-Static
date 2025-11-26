@@ -610,6 +610,24 @@
             return allowedSkills.includes(skillType);
         }
 
+        // --- MARKET BLUEPRINTS (Global Definitions for all merchants) ---
+        // This is the single source of truth for item pricing and scene flow
+        const MARKET_BUY_OPTIONS = [
+            { item: "Healing Potion", nextScene: 'buy_potion', cost: 5 },
+            { item: "Rope", nextScene: 'buy_rope', cost: 3 },
+            { item: "Torch", nextScene: 'buy_torch', cost: 2 }
+        ];
+
+        const MARKET_SELL_OPTIONS = [
+            { item: "Curious Cargo", nextScene: 'sell_cargo', value: 10 },
+            { item: "Rope", nextScene: 'sell_rope', value: 2 },
+            { item: "Torch", nextScene: 'sell_torch', value: 1 },
+            { item: "Healing Potion", nextScene: 'sell_potion', value: 3 },
+            { item: "Rum (Heal 5)", nextScene: 'sell_rum', value: 2 }
+        ];
+        // --- END MARKET BLUEPRINTS ---
+        
+
         // --- SCENE DATABASE ---
         const scenes = {
             'prologue_storm': {
@@ -869,7 +887,7 @@
                 onEnter: (state) => {
                     const idx = state.inventory.indexOf("Curious Cargo");
                     if (idx > -1) state.inventory.splice(idx, 1);
-                    // Stock tracking: Mark this item as 'sold' by the merchant's buyer, ensuring the merchant won't buy it later.
+                    // This prevents the Merchant from later trying to buy it
                     scenes['market_stall'].stock["Curious Cargo"] = 0; 
                     state.influence = Math.min(20, state.influence + 6); // High Chaos gain
                     return "Gave Cargo. Chaos +6.";
@@ -921,7 +939,7 @@
                     'quinn': "Supplies are the difference between a legend and a corpse. Buy what you can."
                 },
                 choices: [
-                    // Dynamic options will be prepended in renderChoices
+                    // NOTE: Buy options are generated dynamically in renderChoices
                     { text: "Sell Wares (Earn Coin)", nextScene: 'market_sell', type: 'travel' },
                     { text: "Leave", nextScene: 'lighthouse_split', type: 'travel' }
                 ]
@@ -930,7 +948,7 @@
                 title: "The Merchant - Selling",
                 text: "The merchant eyes your gear. 'I can take some of that off your hands for a fair price.'",
                 journal: null,
-                // Choices will be dynamically generated in renderChoices
+                // NOTE: Sell options are generated dynamically in renderChoices
                 choices: [
                     { text: "Back to Buying", nextScene: 'market_stall', type: 'travel' }
                 ]
@@ -1486,64 +1504,50 @@
 
             // --- LOCAL STOCK UTILITY ---
             const currentSceneId = gameState.currentSceneId;
-            // FIX: Corrected the reference from currentId to currentSceneId
+            // FIX: Corrected the reference error from currentId to currentSceneId
             const currentSceneStock = scenes[currentSceneId] ? scenes[currentSceneId].stock : {};
             const marketStock = scenes['market_stall'].stock; // Reference for selling logic
             
-            // Pre-calculate items available to BUY from this merchant
-            const itemsForSale = [
-                { item: "Healing Potion", nextScene: 'buy_potion', cost: 5 },
-                { item: "Rope", nextScene: 'buy_rope', cost: 3 },
-                { item: "Torch", nextScene: 'buy_torch', cost: 2 }
-            ];
+            // Collect all choices, starting with static ones
+            let processedChoices = [...choices]; 
 
-            // Pre-calculate items the merchant will BUY from the player
-            const sellableItems = [
-                { item: "Curious Cargo", nextScene: 'sell_cargo', value: 10, checkStock: true }, // Check merchant's capacity
-                { item: "Rope", nextScene: 'sell_rope', value: 2 },
-                { item: "Torch", nextScene: 'sell_torch', value: 1 },
-                { item: "Healing Potion", nextScene: 'sell_potion', value: 3 },
-                { item: "Rum (Heal 5)", nextScene: 'sell_rum', value: 2 } 
-            ];
-            // --- END LOCAL STOCK UTILITY ---
-            
             // Handle dynamic generation for Market Scenes
             if (currentSceneId === 'market_stall') {
-                // Isolate static choices
-                const staticChoices = choices.filter(c => c.nextScene === 'market_sell' || c.nextScene === 'lighthouse_split');
-                choices = []; // Clear original list
+                // Remove hardcoded buy options from the original array first
+                processedChoices = processedChoices.filter(c => c.nextScene !== 'market_sell' && c.nextScene !== 'lighthouse_split');
 
-                // Generate Dynamic Buy Options
-                itemsForSale.forEach(sale => {
+                // 1. Generate Dynamic Buy Options
+                MARKET_BUY_OPTIONS.forEach(sale => {
                     const stock = currentSceneStock[sale.item] || 0;
                     if (stock > 0) {
-                        choices.push({
+                        processedChoices.push({
                             text: `Buy ${sale.item.split('(')[0].trim()} (${sale.cost}s, Stock: ${stock})`,
                             nextScene: sale.nextScene,
                             type: 'action',
                             cost: sale.cost,
-                            stockItem: sale.item
+                            stockItem: sale.item // Used for stock check in onclick
                         });
                     }
                 });
                 
-                // Add static navigation back in
-                choices = choices.concat(staticChoices);
-            }
-            
-            if (currentSceneId === 'market_sell') {
+                // 2. Add static navigation back in
+                processedChoices.push(choices.find(c => c.nextScene === 'market_sell'));
+                processedChoices.push(choices.find(c => c.nextScene === 'lighthouse_split'));
+
+            } else if (currentSceneId === 'market_sell') {
                 // Isolate navigation choices and prepare to regenerate sell options
                 const permanentChoices = choices.filter(c => c.nextScene === 'market_stall' || c.nextScene === 'lighthouse_split');
-                choices = []; // Clear original list
+                processedChoices = []; 
 
-                sellableItems.forEach(sell => {
+                // Generate Dynamic Sell Options
+                MARKET_SELL_OPTIONS.forEach(sell => {
                     if (gameState.inventory.includes(sell.item)) {
                         // Special check for Curious Cargo: Merchant won't buy it if stock is 0
                         if (sell.item === 'Curious Cargo' && marketStock['Curious Cargo'] === 0) {
                             return; // Merchant has already bought it once
                         }
 
-                        choices.push({
+                        processedChoices.push({
                             text: `Sell ${sell.item.split('(')[0].trim()} (+${sell.value}s)`,
                             nextScene: sell.nextScene,
                             type: 'action',
@@ -1552,27 +1556,13 @@
                     }
                 });
                 // Add back the navigation choices
-                choices = choices.concat(permanentChoices);
+                processedChoices = processedChoices.concat(permanentChoices);
             }
 
             // --- Process Choices and Create Buttons ---
-            choices.forEach(choice => {
+            processedChoices.forEach(choice => {
                 
-                // --- STOCK CHECK FOR RENDERING ---
-                // Skip rendering buy buttons if stock is zero (already handled by dynamic loop, but good for safety)
-                if (currentSceneId === 'market_stall' && choice.stockItem) {
-                     if ((currentSceneStock[choice.stockItem] || 0) <= 0) {
-                        return;
-                    }
-                }
-                // Skip rendering sell cargo if merchant already bought it
-                if (currentSceneId === 'market_sell' && choice.reqItem === 'Curious Cargo') {
-                    if (marketStock['Curious Cargo'] === 0) {
-                        return;
-                    }
-                }
-                
-                // Re-check general requirements
+                // --- GENERAL REQUIREMENTS CHECK ---
                 if (choice.reqSmuggler && gameState.influence < choice.reqSmuggler) return;
                 if (choice.reqGuard && gameState.influence > -choice.reqGuard) return;
                 if (choice.cost && gameState.shillings < choice.cost) return;
