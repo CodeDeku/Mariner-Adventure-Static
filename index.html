@@ -69,15 +69,15 @@
         /* --- LORE TOOLTIPS --- */
         .memory-keyword {
             color: #60a5fa; /* Blue-400 */
-            text-shadow: 0 0 5px rgba(59, 130, 246, 0.6); /* Spectral Glow */
+            text-shadow: 0 0 8px rgba(59, 130, 246, 0.5); /* Soft Glow */
             cursor: help;
             position: relative;
-            transition: text-shadow 0.3s;
+            transition: all 0.3s ease;
             font-weight: 600;
-            border-bottom: 1px solid transparent; /* Invisible border for spacing */
+            border-bottom: 1px solid transparent; 
         }
         .memory-keyword:hover {
-            text-shadow: 0 0 10px rgba(59, 130, 246, 1), 0 0 2px #fff; /* Intense Glow on Hover */
+            text-shadow: 0 0 12px rgba(59, 130, 246, 0.9), 0 0 2px #fff; /* Intense Glow */
             color: #bfdbfe; /* Blue-200 */
         }
         /* Tooltip Box */
@@ -98,10 +98,14 @@
             z-index: 100;
             pointer-events: none;
             font-family: 'Crimson Text', serif;
-            box-shadow: 0 0 15px rgba(59, 130, 246, 0.3);
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.2);
             text-align: center;
             white-space: normal;
+            opacity: 0;
+            animation: fadeInTooltip 0.2s forwards;
         }
+        @keyframes fadeInTooltip { to { opacity: 1; } }
+
         /* Tooltip Arrow */
         .memory-keyword:hover::before {
             content: '';
@@ -113,6 +117,8 @@
             border-style: solid;
             border-color: #3b82f6 transparent transparent transparent;
             z-index: 100;
+            opacity: 0;
+            animation: fadeInTooltip 0.2s forwards;
         }
 
         /* --- ATMOSPHERIC FX --- */
@@ -561,9 +567,6 @@
                 title: "The Planar Storm",
                 text: "The deck of The Trident's Kiss heaves violently. Above, the sky isn't black, but a bleeding violet bruise. Captain Gareth stands at the wheel, singing against the gale. '...But who pays the toll for the army of dead?!' he roars, laughing at the violet sky. Quinn, the Quartermaster, is frantically tying down crates on the main deck.",
                 journal: "It started with the sky tearing open. Gareth tried to hold the course. Quinn tried to save the cargo. I just tried to stand.",
-                banter: {
-                    'gareth': "Hold fast! The sea demands a toll!"
-                },
                 choices: [
                     { text: "Help Quinn secure the cargo", nextScene: 'prologue_abyss', type: 'travel' },
                     { text: "Stand with the Captain", nextScene: 'prologue_abyss', type: 'travel' }
