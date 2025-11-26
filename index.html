@@ -526,7 +526,7 @@
             'dark_caves_illuminated': 'images/caves.jpg', 
 			'dark_fail': 'images/cave_injury.jpg', 
 			'lighthouse_arrival': 'images/lighthouse_door.jpg',
-            'the_abyss_claims': 'images/abyss.jpg', // New death scene image
+            'edward_death': 'images/abyss.jpg', // Renamed Death Scene
 			'ending_order': 'images/guards_win.jpg',
 			'ending_chaos': 'images/smugglers_win.jpg',
 			'ending_neutral_check': 'images/lockpick.jpg', 
@@ -672,7 +672,7 @@
             'prologue_storm': {
                 title: "The Planar Storm",
                 text: "The deck of The Trident's Kiss heaves violently. Above, the sky isn't black, but a bleeding violet bruise. Captain Gareth stands at the wheel, singing against the gale. '...But who pays the toll for the army of dead?!' he roars, laughing at the violet sky. Quinn, the Quartermaster, is frantically tying down crates on the main deck.",
-                journal: "It started with the sky tearing open. Gareth tried to hold the course. Quinn tried to save the cargo. I just tried to stand.",
+                journal: "It started with the sky tearing open. Captain Gareth tried to hold the course. Quinn tried to save the cargo. I just tried to stand.",
                 // REMOVED GARETH BANTER HERE
                 choices: [
                     { text: "Help Quinn secure the cargo", nextScene: 'prologue_abyss', type: 'travel' },
@@ -838,6 +838,7 @@
                 text: "The undergrowth fights you. You stumble out of the brush, loud and covered in burrs, right in front of a Royal Guard.",
                 journal: "Tried the hidden path, but made too much noise. Stumbled right into a Guard.",
                 onEnter: (state) => { 
+                    // Use helper to apply damage and clamp HP at 0
                     state.currentHP = applyDamage(state.currentHP, 2); 
                     fxManager.flashRed();
                     return "Took 2 Scratch Damage."; 
@@ -1294,10 +1295,10 @@
                     { text: "Search for the Wolves of Valor (End Demo)", type: 'reset' }
                 ]
             },
-            // NEW SCENE: Dedicated Death Scene
-            'the_abyss_claims': {
+            // MODIFIED SCENE: Dedicated Death Scene
+            'edward_death': {
                 title: "The Mariner's End",
-                text: "The voices fall silent, only to surge back in a deafening, cold chorus that rips through your mind. The debt is paid. The Planar Storm claims its last crewman, pulling you into the abyss. You feel the crushing presence of the Leviathan one final time.",
+                text: "<span class='text-red-500 font-bold'>The voices fall silent, only to surge back in a deafening, cold chorus that rips through your mind.</span> The debt is paid. The Planar Storm claims its last crewman, pulling you into the abyss. You feel the crushing presence of the Leviathan one final time.",
                 journal: "Edward Jones is lost to the deep. The voices of the damned are finally silenced.",
                 choices: [
                     { text: "Awaken (Restart Game)", type: 'reset' }
@@ -1308,6 +1309,7 @@
         // --- CORE FUNCTIONS ---
         // NEW HELPER: Applies damage while ensuring HP doesn't go below 0.
         function applyDamage(currentHP, damageAmount) {
+            // Clamps HP at 0
             return Math.max(0, currentHP - damageAmount);
         }
 
@@ -1509,14 +1511,9 @@
             
             // --- DEATH CHECK 0: Check previous state before processing current scene logic ---
             // If the player entered this scene already dead (e.g., from damage applied in a previous scene's logic)
-            if (gameState.currentHP === 0 && sceneId !== 'the_abyss_claims') {
-                 // Block the journal entry of the scene they just died on
-                 if (gameState.history.length > 0) {
-                     // Check if the last entry was a temporary system message (like 'Took 5 Damage')
-                     // If it was a regular journal entry, remove it to reflect immediate death impact
-                     // Safety check: Don't remove the whole history, only the last entry if it's the scene entry
-                 }
-                renderScene('the_abyss_claims');
+            // This prevents a journal entry from the current scene being added before the death scene loads
+            if (gameState.currentHP === 0 && sceneId !== 'edward_death') {
+                renderScene('edward_death');
                 return;
             }
 
@@ -1594,21 +1591,23 @@
 
             if (scene.onEnter && logText) {
                 const msg = scene.onEnter(gameState);
+                // Apply damage and then check death immediately
                 if (msg) addToHistory(msg, 'system');
                 saveGame();
             }
 
             // --- DEATH CHECK 1: Immediately check if onEnter killed the player ---
-            if (gameState.currentHP === 0 && sceneId !== 'the_abyss_claims') {
-                // If damage was applied and killed the player on entry, redirect to death scene
-                // The onEnter message (e.g., 'Took 5 Damage') is already in the history, which is appropriate.
-                renderScene('the_abyss_claims');
+            if (gameState.currentHP === 0 && sceneId !== 'edward_death') {
+                renderScene('edward_death');
                 return;
             }
 
-
             const textEl = document.getElementById('main-scene-text');
-            let finalHtml = `<h2 class="2xl cinzel text-amber-500 mb-2">${scene.title}</h2><p class="text-lg leading-relaxed text-gray-300 fade-in">${scene.text}</p>`;
+            // Check if we are in the Death scene to apply unique styling
+            const isDeathScene = sceneId === 'edward_death';
+            
+            let finalHtml = `<h2 class="2xl cinzel ${isDeathScene ? 'text-red-500' : 'text-amber-500'} mb-2">${scene.title}</h2>
+                             <p class="text-lg leading-relaxed ${isDeathScene ? 'text-red-300' : 'text-gray-300'} fade-in">${scene.text}</p>`;
             
             // --- BANTER INJECTION (AUTOMATIC) ---
             if (scene.banter) {
@@ -1629,11 +1628,11 @@
             activeCrewMember = null; 
             
             generateSceneImage(sceneId);
-            renderChoices(scene.choices);
+            renderChoices(scene.choices, isDeathScene); // Pass death status to renderChoices
             updateUI();
         }
 
-        function renderChoices(choices) {
+        function renderChoices(choices, isDeathScene = false) {
             const container = document.getElementById('choices-area');
             container.innerHTML = '';
 
@@ -1720,7 +1719,19 @@
                 // Use flex and justify-start for skill/cost/influence buttons, and justify-between for pure travel/dialogue
                 const alignmentClass = (choice.type === 'skill' || choice.cost || choice.value || choice.chaosGain || choice.orderGain) ? 'justify-start' : 'justify-between';
                 
-                btn.className = `btn-game w-full p-3 bg-gray-800 border border-gray-600 hover:border-amber-500 hover:bg-gray-750 text-left rounded shadow flex items-center ${alignmentClass} group`;
+                // Base class for buttons
+                let btnClass = `btn-game w-full p-3 text-left rounded shadow flex items-center ${alignmentClass} cinzel font-bold `;
+
+                if (isDeathScene) {
+                    // Apply distinct red style for the Restart button
+                    btnClass += 'bg-red-700 border-red-500 hover:bg-red-600 text-white';
+                } else {
+                    // Standard active button style
+                    btnClass += 'bg-gray-800 border-gray-600 hover:border-amber-500 hover:bg-gray-750 text-gray-300 group';
+                }
+
+
+                btn.className = btnClass;
                 
                 btn.onclick = (e) => {
                     audioManager.playClick();
@@ -1839,8 +1850,12 @@
                 // --- End Transaction Display ---
                 
                 if (choice.type === 'reset') {
-                     icon = '<i class="fas fa-undo text-amber-500"></i>';
-                     btn.className += " border-amber-900/50";
+                     icon = '<i class="fas fa-undo text-white"></i>'; // Ensure reset button icon is white/visible
+                     btn.className += " border-red-500";
+                     // Content is already set to the red button style above
+                } else {
+                    // Standard button icon setup
+                    content = `<span class="cinzel font-bold text-gray-300 group-hover:text-amber-100">${choice.text}</span>`;
                 }
                 
                 // If there is supplemental text (skill/cost/value), merge it with the main content
