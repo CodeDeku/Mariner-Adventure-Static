@@ -1857,6 +1857,13 @@
             const invContainer = document.getElementById('inventory-panel');
             invContainer.innerHTML = '';
             const descArea = document.getElementById('item-desc-area');
+            const defaultText = "Hover over an item to inspect it.";
+
+            // --- FIX START: Reset description area appearance ---
+            descArea.innerText = defaultText;
+            descArea.classList.remove('text-amber-400');
+            descArea.classList.add('text-gray-400'); 
+            // --- FIX END ---
             
             if (gameState.inventory.length === 0) {
                 invContainer.innerHTML = '<div class="text-center text-[10px] text-gray-600 italic py-2">Inventory Empty</div>';
@@ -1906,7 +1913,6 @@
                     itemRow.appendChild(rightSide);
 
                     // Hover Description Logic
-                    const defaultText = "Hover over an item to inspect it.";
                     itemRow.onmouseenter = () => {
                         descArea.innerText = itemDef.desc || defaultText;
                         descArea.classList.add('text-amber-400');
