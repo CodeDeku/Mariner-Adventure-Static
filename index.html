@@ -776,7 +776,7 @@
             // Original trail_success text is now for Bones or no crew (no cargo)
             'trail_success': {
                 title: "Hidden Signs",
-                text: "You struggle through the thorns but emerge near a hidden cove, overlooking a group of men loading crates. <span class='memory-keyword' data-lore='The unseen veins of the coast. They value coin above law.'>Smugglers</span>.",
+                text: "You struggle through the thorns but emerge near a hidden cove, overlooking a group of men loading crates. <span class='memory-keyword' data-lore='The unseen veins of the coast. They value coin above law.'>Smuggler</span>s.",
                 journal: "The trail was tough, but we found a Smuggler's Cove unseen.",
                 banter: {
                     'bones': "I smell rum... and unwashed men."
@@ -959,7 +959,8 @@
                 },
                 choices: [
                     // NOTE: Buy options are generated dynamically in renderChoices
-                    { text: "Sell Wares (Earn Coin)", nextScene: 'market_sell', type: 'travel' },
+                    // "Sell Wares (Earn Coin)" changed to "Sell Wares"
+                    { text: "Sell Wares", nextScene: 'market_sell', type: 'travel' }, 
                     { text: "Leave", nextScene: 'lighthouse_split', type: 'travel' }
                 ]
             },
@@ -1583,7 +1584,8 @@
                     const stock = currentSceneStock[sale.item] || 0;
                     if (stock > 0) {
                         processedChoices.push({
-                            text: `Buy ${sale.item.split('(')[0].trim()} (${sale.cost}s, Stock: ${stock})`,
+                            // FIX 1: Removed redundant cost (e.g., "(2s)")
+                            text: `Buy ${sale.item.split('(')[0].trim()} (Stock: ${stock})`,
                             nextScene: sale.nextScene,
                             type: 'action',
                             cost: sale.cost,
@@ -1593,7 +1595,14 @@
                 });
                 
                 // 2. Add static navigation back in
-                processedChoices.push(choices.find(c => c.nextScene === 'market_sell'));
+                // Find and rename the "Sell Wares (Earn Coin)" button.
+                const sellWaresChoice = choices.find(c => c.nextScene === 'market_sell');
+                if (sellWaresChoice) {
+                    // FIX 2: Renamed the selling button text
+                    sellWaresChoice.text = "Sell Wares"; 
+                    processedChoices.push(sellWaresChoice);
+                }
+                
                 processedChoices.push(choices.find(c => c.nextScene === 'lighthouse_split'));
 
             } else if (currentSceneId === 'market_sell') {
