@@ -860,7 +860,7 @@
             'guard_respect': {
                 title: "Order and Law",
                 text: "You salute with practiced discipline. 'Just a shipwrecked sailor, sir. Keeping to the road.' The Guard straightens, recognizing the posture. 'Carry on then. Watch for the cove rats.'",
-                journal: "I showed the Guard respect (Order +4).",
+                journal: "I showed the Guard respect (+4 Order).",
                 onEnter: (state) => {
                     // APPLY NEGATIVE INFLUENCE SHIFT (Order)
                     state.influence = Math.max(-20, state.influence - 4); 
@@ -904,7 +904,7 @@
                     state.influence = 20; // Max Chaos
                     return `Took ${dmg} damage. Became Outlaw (Max Chaos).`;
                 },
-                choices: [{ text: "Limp to Market Crossroads", type: 'travel' }]
+                choices: [{ text: "Limp to Market Crossroads", nextScene: 'market_crossroads', type: 'travel' }]
             },
             'smuggler_meet': {
                 title: "The Cove",
@@ -931,7 +931,8 @@
                     state.influence = Math.min(20, state.influence + 6); // High Chaos gain
                     return "Gave Cargo. Chaos +6.";
                 },
-                choices: [{ text: "Head to Market Crossroads", type: 'travel' }]
+                // FIX: Added nextScene target
+                choices: [{ text: "Head to Market Crossroads", nextScene: 'market_crossroads', type: 'travel' }]
             },
             'smuggler_friend': {
                 title: "Old Alliances",
@@ -941,7 +942,8 @@
                      state.inventory.push("Rum (Heal 5)");
                      return "Received Rum.";
                 },
-                choices: [{ text: "Head to Market Crossroads", type: 'travel' }]
+                // FIX: Added nextScene target
+                choices: [{ text: "Head to Market Crossroads", nextScene: 'market_crossroads', type: 'travel' }]
             },
             'smuggler_pay': {
                 title: "Business",
@@ -951,7 +953,8 @@
                     audioManager.playCoins();
                     return "Paid Smugglers.";
                 },
-                choices: [{ text: "Head to Market Crossroads", type: 'travel' }]
+                // FIX: Added nextScene target
+                choices: [{ text: "Head to Market Crossroads", nextScene: 'market_crossroads', type: 'travel' }]
             },
             'market_crossroads': {
                 title: "The Port of Shadows",
