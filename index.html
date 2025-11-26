@@ -1183,7 +1183,7 @@
                 text: "The heavy iron door is barred from the inside. There are no friendly faces. You must use your wits to find the mechanism to force the lock, or risk being caught lingering.",
                 journal: "The Lighthouse is sealed. I need to find the mechanism to enter.",
                 choices: [
-                    // Changed to Insight DC 15 (Captain Gareth)
+                    // Insight DC 15 (Captain Gareth)
                     { text: "Analyze the mechanism (Insight DC 15)", nextScene: 'neutral_lock_logic', type: 'skill', dc: 15, skill: 'Insight' }
                 ]
             },
@@ -1195,25 +1195,28 @@
                 title: "The Shadow Entrance",
                 // Updated narrative text to reference Gareth
                 text: "Captain Gareth's voice is calm, analyzing the door's weak points instantly. The ancient mechanism bows to your superior insight, and the heavy bolt slides back. You slip inside, unseen and unopposed.",
-                journal: "I forced the lock using insight and entered the lighthouse. Nobody saw me.",
-                choices: [{ text: "Enter and Rest (Demo End)", nextScene: 'lighthouse_vigil', type: 'rest' }]
+                journal: "I forced the lock open and entered the lighthouse. Nobody saw me.",
+                // REDIRECTED to Lighthouse Vigil
+                choices: [{ text: "Enter and Rest", nextScene: 'lighthouse_vigil', type: 'rest' }]
             },
             'ending_neutral_fail': {
                 title: "The Shadow Fails",
                 text: "Your attempt to understand the mechanism jams the lock further. The noise echoes in the wind, and you must hurry before someone investigates.",
-                journal: "I failed to pick the lock. The chaos will come soon.",
+                journal: "I failed to pick the lock. I needed the practice anyway.",
                 onEnter: (state) => { 
                     state.currentHP -= 2; 
                     fxManager.flashRed();
                     return "Took 2 Damage (Hurry)."; 
                 },
-                choices: [{ text: "Force the Door Open (Risk)", nextScene: 'ending_neutral', type: 'travel' }]
+                // REDIRECTED to Lighthouse Vigil
+                choices: [{ text: "Force the Door Open (Risk)", nextScene: 'lighthouse_vigil', type: 'travel' }]
             },
             'ending_neutral': {
+                // REDUNDANT SCENE REMOVED
                 title: "The Shadow",
                 text: "The door is barred. No one is here to welcome you. You must pick the lock yourself, slipping in like a ghost, unseen by Guard or Smuggler alike.",
                 journal: "I arrived alone. I enter alone. No allies, no enemies.",
-                choices: [{ text: "Enter and Rest (Demo End)", nextScene: 'lighthouse_vigil', type: 'rest' }]
+                choices: [{ text: "Enter and Rest", nextScene: 'lighthouse_vigil', type: 'rest' }]
             },
             'lighthouse_vigil': {
                 title: "Charting Course",
