@@ -526,7 +526,7 @@
             'dark_caves_illuminated': 'images/caves.jpg', 
 			'dark_fail': 'images/cave_injury.jpg', 
 			'lighthouse_arrival': 'images/lighthouse_door.jpg',
-            'lighthouse_neutralized': 'images/lighthouse_door.jpg', 
+            'the_abyss_claims': 'images/abyss.jpg', // New death scene image
 			'ending_order': 'images/guards_win.jpg',
 			'ending_chaos': 'images/smugglers_win.jpg',
 			'ending_neutral_check': 'images/lockpick.jpg', 
@@ -575,6 +575,7 @@
                 action: (state) => {
                     const healAmount = 5;
                     const oldHP = state.currentHP;
+                    // HP Clamping applied here
                     state.currentHP = Math.min(state.maxHP, state.currentHP + healAmount);
                     const idx = state.inventory.indexOf("Rum (Heal 5)");
                     if (idx > -1) state.inventory.splice(idx, 1);
@@ -591,6 +592,7 @@
                 action: (state) => {
                     const healAmount = 10;
                     const oldHP = state.currentHP;
+                    // HP Clamping applied here
                     state.currentHP = Math.min(state.maxHP, state.currentHP + healAmount);
                     const idx = state.inventory.indexOf("Healing Potion");
                     if (idx > -1) state.inventory.splice(idx, 1);
@@ -836,7 +838,7 @@
                 text: "The undergrowth fights you. You stumble out of the brush, loud and covered in burrs, right in front of a Royal Guard.",
                 journal: "Tried the hidden path, but made too much noise. Stumbled right into a Guard.",
                 onEnter: (state) => { 
-                    state.currentHP -= 2; 
+                    state.currentHP = applyDamage(state.currentHP, 2); 
                     fxManager.flashRed();
                     return "Took 2 Scratch Damage."; 
                 },
@@ -899,7 +901,7 @@
                 onEnter: (state) => { 
                     audioManager.playClash();
                     const dmg = Math.floor(Math.random() * 6) + 10; // Increased damage: 10-15
-                    state.currentHP -= dmg;
+                    state.currentHP = applyDamage(state.currentHP, dmg);
                     fxManager.flashRed(); // Trigger Visual Damage
                     state.influence = 20; // Max Chaos
                     return `Took ${dmg} damage. Became Outlaw (Max Chaos).`;
@@ -931,7 +933,6 @@
                     state.influence = Math.min(20, state.influence + 6); // High Chaos gain
                     return "Gave Cargo. Chaos +6.";
                 },
-                // FIX: Added nextScene target
                 choices: [{ text: "Head to Market Crossroads", nextScene: 'market_crossroads', type: 'travel' }]
             },
             'smuggler_friend': {
@@ -942,7 +943,6 @@
                      state.inventory.push("Rum (Heal 5)");
                      return "Received Rum.";
                 },
-                // FIX: Added nextScene target
                 choices: [{ text: "Head to Market Crossroads", nextScene: 'market_crossroads', type: 'travel' }]
             },
             'smuggler_pay': {
@@ -953,7 +953,6 @@
                     audioManager.playCoins();
                     return "Paid Smugglers.";
                 },
-                // FIX: Added nextScene target
                 choices: [{ text: "Head to Market Crossroads", nextScene: 'market_crossroads', type: 'travel' }]
             },
             'market_crossroads': {
@@ -1142,7 +1141,7 @@
                 text: "Your grip fails. You slide twenty feet, shredding skin against stone before catching a root.",
                 journal: "Almost fell to my death. Climbing without rope was foolish.",
                 onEnter: (state) => { 
-                    state.currentHP -= 5; 
+                    state.currentHP = applyDamage(state.currentHP, 5); 
                     fxManager.flashRed();
                     return "Took 5 Damage."; 
                 },
@@ -1182,7 +1181,7 @@
                 text: "In the dark, you trip over unseen rocks and twist your ankle. Something scuttles away in the shadows.",
                 journal: "The caves were too dark. I got hurt.",
                 onEnter: (state) => { 
-                    state.currentHP -= 4; 
+                    state.currentHP = applyDamage(state.currentHP, 4); 
                     fxManager.flashRed();
                     return "Took 4 Damage."; 
                 },
@@ -1244,7 +1243,7 @@
                 text: "Your attempt to understand the mechanism jams the lock further. The noise echoes in the wind, and you must hurry before someone investigates. You quickly force the door, abandoning subtlety.",
                 journal: "I failed the mechanism check. I forced the door and entered the lighthouse.",
                 onEnter: (state) => { 
-                    state.currentHP -= 2; 
+                    state.currentHP = applyDamage(state.currentHP, 2); 
                     fxManager.flashRed();
                     return "Took 2 Damage (Hurry)."; 
                 },
@@ -1283,7 +1282,7 @@
             },
 			'lighthouse_rest': {
                 title: "Extra Rest",
-                text: "The lantern's warm glow offers a calming sanctuary as the storm crashes against the lighthouse walls. After securing your hoisted hammock, its soft, steady sway swiftly lulls you to sleep",
+                text: "The lantern's warm glow offers a calming sanctuary as waves crash against the lighthouse walls. After securing your hoisted hammock, its soft, steady sway swiftly lulls you to sleep.",
                 journal: null,
                 onEnter: (state) => {
                     const restNote = "I took an extra night at the lighthouse to rest up and prepare a charter.";
@@ -1294,10 +1293,24 @@
                 choices: [
                     { text: "Search for the Wolves of Valor (End Demo)", type: 'reset' }
                 ]
+            },
+            // NEW SCENE: Dedicated Death Scene
+            'the_abyss_claims': {
+                title: "The Mariner's End",
+                text: "The voices fall silent, only to surge back in a deafening, cold chorus that rips through your mind. The debt is paid. The Planar Storm claims its last crewman, pulling you into the abyss. You feel the crushing presence of the Leviathan one final time.",
+                journal: "Edward Jones is lost to the deep. The voices of the damned are finally silenced.",
+                choices: [
+                    { text: "Awaken (Restart Game)", type: 'reset' }
+                ]
             }
         };
 
         // --- CORE FUNCTIONS ---
+        // NEW HELPER: Applies damage while ensuring HP doesn't go below 0.
+        function applyDamage(currentHP, damageAmount) {
+            return Math.max(0, currentHP - damageAmount);
+        }
+
         // Helper function to provide initial stock data structure
         scenes['market_stall'].stock = {
             "Healing Potion": 1,
@@ -1489,20 +1502,24 @@
             gameState.history.push(html);
             rebuildJournal();
         }
-
+        
         async function renderScene(sceneId, logText = true) {
             const scene = scenes[sceneId];
             if (!scene) return;
-
-            // Check for death before rendering
-            if (gameState.currentHP <= 0 && sceneId !== 'start' && !sceneId.includes('prologue')) {
-                document.getElementById('main-scene-text').innerHTML = 
-                    `<div class="text-red-600 font-bold text-xl text-center cinzel">Edward has fallen.</div>
-                     <div class="text-center mt-4">The voices consume you.</div>`;
-                document.getElementById('choices-area').innerHTML = 
-                    `<button onclick="window.resetGame()" class="w-full p-4 bg-red-900 text-white rounded cinzel border border-red-500 hover:bg-red-800">Resurrect (Restart)</button>`;
+            
+            // --- DEATH CHECK 0: Check previous state before processing current scene logic ---
+            // If the player entered this scene already dead (e.g., from damage applied in a previous scene's logic)
+            if (gameState.currentHP === 0 && sceneId !== 'the_abyss_claims') {
+                 // Block the journal entry of the scene they just died on
+                 if (gameState.history.length > 0) {
+                     // Check if the last entry was a temporary system message (like 'Took 5 Damage')
+                     // If it was a regular journal entry, remove it to reflect immediate death impact
+                     // Safety check: Don't remove the whole history, only the last entry if it's the scene entry
+                 }
+                renderScene('the_abyss_claims');
                 return;
             }
+
 
             if (scene.isLogic) {
                 let roll = Math.floor(Math.random() * 20) + 1;
@@ -1580,6 +1597,15 @@
                 if (msg) addToHistory(msg, 'system');
                 saveGame();
             }
+
+            // --- DEATH CHECK 1: Immediately check if onEnter killed the player ---
+            if (gameState.currentHP === 0 && sceneId !== 'the_abyss_claims') {
+                // If damage was applied and killed the player on entry, redirect to death scene
+                // The onEnter message (e.g., 'Took 5 Damage') is already in the history, which is appropriate.
+                renderScene('the_abyss_claims');
+                return;
+            }
+
 
             const textEl = document.getElementById('main-scene-text');
             let finalHtml = `<h2 class="2xl cinzel text-amber-500 mb-2">${scene.title}</h2><p class="text-lg leading-relaxed text-gray-300 fade-in">${scene.text}</p>`;
