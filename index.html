@@ -507,6 +507,7 @@
         
         // --- GAME DATA FACTORY ---
         function createInitialState() {
+            // Note: Initial stock is defined on the scene objects (e.g., scenes['market_stall'].stock)
             return {
                 currentSceneId: 'prologue_storm', 
                 currentHP: 20,
@@ -516,7 +517,6 @@
                 influence: 0, 
                 crewUseFree: false, 
                 lastCrewUsedId: null, 
-                // REMOVED GLOBAL ITEM STOCK
                 crew: {
                     gareth: { id: 'gareth', name: 'Captain Gareth', skill: 'Insight', used: false, desc: 'Add +1d4 to Initiative & Insight' },
                     quinn: { id: 'quinn', name: 'Quinn', skill: 'Investigation', used: false, desc: 'Add +1d4 to Investigation & History' },
@@ -758,7 +758,7 @@
             'trail_success_talon': {
                 title: "Smuggler's Route",
                 text: "Talon guides your movement, emphasizing silence and observation. You emerge near a hidden cove, spotting a marked crate abandoned near the tideline. You grab it just before noticing a group of men loading crates. <span class='memory-keyword' data-lore='The unseen veins of the coast. They value coin above law.'>Smugglers</span>.",
-                journal: "Talon's skill led me through the brush. Found some mysterious Cargo and reached a Smuggler's Cove unseen.",
+                journal: "Talon's skill led me through the brush. Found Curious Cargo and reached a Smuggler's Cove unseen.",
                 banter: {
                     'bones': "I smell rum... and unwashed men."
                 },
@@ -869,7 +869,8 @@
                 onEnter: (state) => {
                     const idx = state.inventory.indexOf("Curious Cargo");
                     if (idx > -1) state.inventory.splice(idx, 1);
-                    // Stock is handled by consuming the item from player inventory (since this isn't a merchant sale)
+                    // Stock tracking: Mark this item as 'sold' by the merchant's buyer, ensuring the merchant won't buy it later.
+                    scenes['market_stall'].stock["Curious Cargo"] = 0; 
                     state.influence = Math.min(20, state.influence + 6); // High Chaos gain
                     return "Gave Cargo. Chaos +6.";
                 },
@@ -920,12 +921,7 @@
                     'quinn': "Supplies are the difference between a legend and a corpse. Buy what you can."
                 },
                 choices: [
-                    // Dynamic Buy Options checking local stock
-                    // NOTE: Need to hardcode strings here since dynamic generation is limited by static choice array definition
-                    { text: `Buy Healing Potion (5s, Stock: ${scenes['market_stall'].stock['Healing Potion']})`, nextScene: 'buy_potion', type: 'action', cost: 5, reqStock: {item: "Healing Potion", scene: 'market_stall'} },
-                    { text: `Buy Rope (3s, Stock: ${scenes['market_stall'].stock['Rope']})`, nextScene: 'buy_rope', type: 'action', cost: 3, reqStock: {item: "Rope", scene: 'market_stall'} },
-                    { text: `Buy Torch (2s, Stock: ${scenes['market_stall'].stock['Torch']})`, nextScene: 'buy_torch', type: 'action', cost: 2, reqStock: {item: "Torch", scene: 'market_stall'} },
-                    
+                    // Dynamic options will be prepended in renderChoices
                     { text: "Sell Wares (Earn Coin)", nextScene: 'market_sell', type: 'travel' },
                     { text: "Leave", nextScene: 'lighthouse_split', type: 'travel' }
                 ]
@@ -934,14 +930,8 @@
                 title: "The Merchant - Selling",
                 text: "The merchant eyes your gear. 'I can take some of that off your hands for a fair price.'",
                 journal: null,
+                // Choices will be dynamically generated in renderChoices
                 choices: [
-                    // Selling Option to Merchant - checks player inventory AND merchant buy stock
-                    ...(gameState.inventory.includes("Curious Cargo") && scenes['market_stall'].stock['Curious Cargo'] > 0 ? [{ text: "Sell Curious Cargo (+10s)", nextScene: 'sell_cargo', type: 'action', reqItem: 'Curious Cargo', reqStock: {item: "Curious Cargo", scene: 'market_stall'} }] : []),
-                    
-                    { text: "Sell Rope (+2s)", nextScene: 'sell_rope', type: 'action', reqItem: 'Rope' },
-                    { text: "Sell Torch (+1s)", nextScene: 'sell_torch', type: 'action', reqItem: 'Torch' },
-                    { text: "Sell Potion (+3s)", nextScene: 'sell_potion', type: 'action', reqItem: 'Healing Potion' },
-                    { text: "Sell Rum (+2s)", nextScene: 'sell_rum', type: 'action', reqItem: 'Rum (Heal 5)' }, 
                     { text: "Back to Buying", nextScene: 'market_stall', type: 'travel' }
                 ]
             },
@@ -1201,7 +1191,14 @@
         };
 
         // --- CORE FUNCTIONS ---
-
+        // Helper function to provide initial stock data structure
+        scenes['market_stall'].stock = {
+            "Healing Potion": 1,
+            "Rope": 1,
+            "Torch": 1,
+            "Curious Cargo": 1 // Tracks how many times this merchant will buy the cargo (1 max)
+        };
+        
         async function generateSceneImage(sceneId) {
             const key = sceneId || 'default';
             const url = sceneImages[key] || sceneImages['default'];
@@ -1342,7 +1339,12 @@
             // Reset state
             gameState = createInitialState();
             // Reset scene data manually (needed for market stock)
-            scenes['market_stall'].stock = createInitialState().itemStock;
+            scenes['market_stall'].stock = {
+                "Healing Potion": 1,
+                "Rope": 1,
+                "Torch": 1,
+                "Curious Cargo": 1 
+            };
 
             document.getElementById('journal-content').innerHTML = '';
             await saveGame();
@@ -1484,16 +1486,17 @@
 
             // --- LOCAL STOCK UTILITY ---
             const currentSceneId = gameState.currentSceneId;
-            const currentSceneStock = scenes[currentSceneId] ? scenes[currentSceneId].stock : {};
+            const currentSceneStock = scenes[currentSceneId] ? scenes[currentId].stock : {};
             const marketStock = scenes['market_stall'].stock; // Reference for selling logic
             
-            // Pre-calculate available items based on local scene stock and player inventory
+            // Pre-calculate items available to BUY from this merchant
             const itemsForSale = [
                 { item: "Healing Potion", nextScene: 'buy_potion', cost: 5 },
                 { item: "Rope", nextScene: 'buy_rope', cost: 3 },
                 { item: "Torch", nextScene: 'buy_torch', cost: 2 }
             ];
 
+            // Pre-calculate items the merchant will BUY from the player
             const sellableItems = [
                 { item: "Curious Cargo", nextScene: 'sell_cargo', value: 10, checkStock: true }, // Check merchant's capacity
                 { item: "Rope", nextScene: 'sell_rope', value: 2 },
@@ -1502,34 +1505,41 @@
                 { item: "Rum (Heal 5)", nextScene: 'sell_rum', value: 2 } 
             ];
             // --- END LOCAL STOCK UTILITY ---
-
-
+            
+            // Handle dynamic generation for Market Scenes
             if (currentSceneId === 'market_stall') {
+                // Isolate static choices
+                const staticChoices = choices.filter(c => c.nextScene === 'market_sell' || c.nextScene === 'lighthouse_split');
+                choices = []; // Clear original list
+
                 // Generate Dynamic Buy Options
                 itemsForSale.forEach(sale => {
                     const stock = currentSceneStock[sale.item] || 0;
                     if (stock > 0) {
-                        choices.unshift({ // Add to top of the list
+                        choices.push({
                             text: `Buy ${sale.item.split('(')[0].trim()} (${sale.cost}s, Stock: ${stock})`,
                             nextScene: sale.nextScene,
                             type: 'action',
-                            cost: sale.cost
+                            cost: sale.cost,
+                            stockItem: sale.item
                         });
                     }
                 });
+                
+                // Add static navigation back in
+                choices = choices.concat(staticChoices);
             }
             
             if (currentSceneId === 'market_sell') {
-                // Generate Dynamic Sell Options
-                // We clear the hardcoded options and rebuild them based on player inventory, excluding the back/leave buttons
+                // Isolate navigation choices and prepare to regenerate sell options
                 const permanentChoices = choices.filter(c => c.nextScene === 'market_stall' || c.nextScene === 'lighthouse_split');
-                choices = [];
+                choices = []; // Clear original list
 
                 sellableItems.forEach(sell => {
                     if (gameState.inventory.includes(sell.item)) {
-                        // Special check for Curious Cargo: Merchant won't buy it if already bought/traded
+                        // Special check for Curious Cargo: Merchant won't buy it if stock is 0
                         if (sell.item === 'Curious Cargo' && marketStock['Curious Cargo'] === 0) {
-                            return;
+                            return; // Merchant has already bought it once
                         }
 
                         choices.push({
@@ -1544,10 +1554,21 @@
                 choices = choices.concat(permanentChoices);
             }
 
+            // --- Process Choices and Create Buttons ---
             choices.forEach(choice => {
-                // Check stock for purchasing/selling Curious Cargo at the cove (only checking inventory here, not stock)
-                if (choice.type === 'action' && choice.reqItem === 'Curious Cargo' && currentSceneId === 'smuggler_meet' && !gameState.inventory.includes("Curious Cargo")) {
-                    return; // Skip if player doesn't have the cargo
+                
+                // --- STOCK CHECK FOR RENDERING ---
+                // Skip rendering buy buttons if stock is zero (already handled by dynamic loop, but good for safety)
+                if (currentSceneId === 'market_stall' && choice.stockItem) {
+                     if ((currentSceneStock[choice.stockItem] || 0) <= 0) {
+                        return;
+                    }
+                }
+                // Skip rendering sell cargo if merchant already bought it
+                if (currentSceneId === 'market_sell' && choice.reqItem === 'Curious Cargo') {
+                    if (marketStock['Curious Cargo'] === 0) {
+                        return;
+                    }
                 }
                 
                 // Re-check general requirements
@@ -1566,6 +1587,25 @@
                         resetGame();
                         return;
                     }
+                    
+                    // --- FINAL STOCK CHECK BEFORE TRANSACTION (Crucial Fix) ---
+                    // 1. Check buying stock
+                    if (choice.type === 'action' && currentSceneId === 'market_stall' && choice.stockItem) {
+                         if (currentSceneStock[choice.stockItem] <= 0) {
+                            addToHistory(`${choice.stockItem} is out of stock.`, 'system');
+                            updateUI();
+                            return;
+                        }
+                    }
+                    // 2. Check selling stock (Curious Cargo)
+                    if (choice.type === 'action' && choice.reqItem === 'Curious Cargo' && currentSceneId === 'market_sell') {
+                         if (marketStock['Curious Cargo'] <= 0) {
+                            addToHistory(`The Merchant has no need for another Curious Cargo.`, 'system');
+                            updateUI();
+                            return;
+                        }
+                    }
+
 
                     if (choice.consume && choice.reqItem) {
                         const idx = gameState.inventory.indexOf(choice.reqItem);
