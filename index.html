@@ -738,7 +738,7 @@
             },
             'treeline_prepared': {
                 title: "The Whispering Woods",
-                text: "The forest looms ahead, trees twisted like grasping hands. You adjust the weight of the cutlass and logbook. The voices are a dull murmur, satisfied for the moment. A well-traveled road cuts through the center, but Talon notices a faint game trail disappearing into the brush.",
+                text: "The forest looms ahead, trees twisted like grasping hands. You adjust the weight of your gear, clutching the heavy Ship's Log against your side. The voices are a dull murmur, satisfied for the moment. A well-traveled road cuts through the center, but Talon notices a faint game trail disappearing into the brush.",
                 journal: "I reached the treeline with the Log and my gear. The voices are quieter now. Talon pointed out a hidden path.",
                 banter: {
                     'gareth': "Stick to the road, lad. We need steady ground.",
@@ -757,7 +757,7 @@
                 onEnter: (state) => {
                     if(!state.inventory.includes("Ship's Log")) {
                         state.inventory.push("Ship's Log");
-                        return "Obtained Ship's Log (Required).";
+                        return "Obtained Ship's Log.";
                     }
                     return null;
                 },
@@ -768,7 +768,7 @@
             },
             'road_encounter': {
                 title: "The King's Guard",
-                text: "A heavy-set <span class='memory-keyword' data-lore='The iron fist of the Crown. They despise the supernatural and govern with martial law.'>Royal Guard</span> in plate armor blocks the path. He's nailing a 'WANTED' poster to a tree. He spots you immediately. 'Halt! Identify yourself, traveler.'",
+                text: "A heavy-set <span class='memory-keyword' data-lore='The iron fist of the Crown. They despise the supernatural and govern with martial law.'>Royal Guard</span> in plate armor blocks the path. He's nailing a 'WANTED' poster to a tree. He spots you immediately. 'Halt! Identify yourself!'",
                 journal: "Ran into a Royal Guard on the main road. No way to hide now.",
                 choices: [
                     { text: "Speak diplomatically", nextScene: 'guard_talk', type: 'dialogue' },
@@ -1207,7 +1207,7 @@
             },
             'ending_order': {
                 title: "The Deputy",
-                text: "A squad of Royal Guards stands at the door. Their captain salutes you. 'We heard you cleared out the riff-raff on the road. The Lighthouse is yours to secure, Deputy.' They open the doors for you.",
+                text: "A squad of Royal Guards stands at the door, pikes grounded. Their captain steps forward, his gauntlet striking his breastplate in a sharp salute. 'We have eyes on the road, citizen. In a land governed by rot, you kept to the code. The Lighthouse is yours to secure, Deputy.' They part ranks, granting you passage with the discipline of a king's court.",
                 journal: "The Guards respect me. They let me pass without question. Order has its perks.",
                 choices: [{ text: "Enter and Rest", nextScene: 'lighthouse_vigil', type: 'rest' }]
             },
@@ -1220,7 +1220,7 @@
             // NEW SCENE: Skill check to enter neutral ending
             'ending_neutral_check': {
                 title: "The Locked Door",
-                text: "The heavy iron door is barred from the inside. There are no friendly faces. You must use your wits to find the mechanism to force the lock, or risk being caught lingering.",
+                text: "The clearing is empty. The presence you sensed was only the crew's anticipation screaming in your mind. There is no welcome party—just the wind and a barred door. You must find a way to breach the lock alone.",
                 journal: "The Lighthouse is sealed. I need to find the mechanism to enter.",
                 choices: [
                     // Insight DC 15 (Captain Gareth)
