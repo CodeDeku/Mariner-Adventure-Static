@@ -1145,7 +1145,6 @@
                     fxManager.flashRed();
                     return "Took 5 Damage."; 
                 },
-                // Redirects to death scene if HP hit 0, otherwise continues
                 choices: [{ text: "Keep Climbing", nextScene: 'lighthouse_arrival', type: 'travel' }]
             },
             'dark_caves': {
@@ -1728,7 +1727,7 @@
 
                 if (isDeathScene) {
                     // Apply deep red style for the Restart button (MODIFIED)
-                    btnClass += 'bg-red-900 border-red-700 hover:bg-red-800 text-white text-xl text-center';
+                    btnClass += 'bg-red-900 border-red-700 hover:bg-red-800 hover:border-amber-500 text-white text-xl text-center';
                 } else {
                     // Standard active button style
                     btnClass += 'bg-gray-800 border-gray-600 hover:border-amber-500 hover:bg-gray-750 text-gray-300 group';
