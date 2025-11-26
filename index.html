@@ -1468,19 +1468,19 @@
 
                 if (activeCrewMember) {
                     const isSkilled = getBonusForSkill(activeCrewMember, gameState.lastSkillType);
+                    const crewKey = activeCrewMember.id;
                     
-                    if (isSkilled) { // Only grant bonus if skill is matched OR free use is active
+                    if (isSkilled) { 
                         const bonus = Math.floor(Math.random() * 4) + 1;
                         roll += bonus;
                         crewUsedName = activeCrewMember.name;
                         logMsg += ` + ${bonus} (${crewUsedName})`;
                         
-                        const crewKey = activeCrewMember.id;
-                        
                         // MUSHROOM LOGIC CHECK (APPLY COST OR FREE USE)
                         if (gameState.crewUseFree) {
                             // Free use: DO NOT mark as used, but consume the mushroom effect.
                             addToHistory(`*Pearlescent Mushroom consumed for FREE GUIDANCE.*`, 'system');
+                            gameState.crewUseFree = false; // CONSUME EFFECT
                         } else {
                             // Normal use: Mark as used.
                             gameState.crew[crewKey].used = true;
@@ -1493,10 +1493,11 @@
                         
                     } else if (gameState.crewUseFree) {
                          // Crew selected, mushroom active, but SKILL DOESN'T MATCH.
-                         // Per D&D, no bonus is granted. Do not consume mushroom or crew use.
+                         // No bonus is granted. Mushroom effect is conserved.
                         crewUsedName = activeCrewMember.name;
                         logMsg += ` + 0 (${crewUsedName} - Invalid Skill, Mushroom conserved)`;
                         addToHistory(`*Mushroom conserved: ${crewUsedName} doesn't have expertise in ${gameState.lastSkillType}.*`, 'system');
+                        // DO NOT set crewUseFree = false here
                     } else {
                         // Crew selected, mushroom inactive, skill doesn't match.
                         crewUsedName = activeCrewMember.name;
@@ -1504,8 +1505,6 @@
                         // Do not mark as used if skill was invalid
                     }
                     
-                    // Always consume the mushroom effect if it was active and the roll was executed
-                    gameState.crewUseFree = false; 
                     activeCrewMember = null;
                 }
 
@@ -1809,16 +1808,19 @@
                 if (c.used) { 
                     // Used crew members are disabled
                     baseClass += "bg-black/50 border-gray-800 text-gray-700 cursor-not-allowed opacity-50";
-                } else if (isAvailableForFreeUse && !isSelected) { 
-                     // NEW: Purple glow for available crew members when mushroom is active, pre-selection
-                    baseClass += "crew-free-use-glow";
-                } else if (isSelected) {
-                    // SELECTED: Standard selection glow (blue) OR persistent purple glow (if free use is active on the selected one)
-                    if (isAvailableForFreeUse) {
-                         baseClass += "crew-free-use-glow"; // Keep purple glow on selected member if mushroom is active
+                } else if (gameState.crewUseFree && isSelected) {
+                     // Mushroom active AND this member is SELECTED: Apply purple glow to selected member
+                     baseClass += "crew-free-use-glow";
+                } else if (gameState.crewUseFree && !isSelected) {
+                    // Mushroom active but NOT SELECTED: Apply purple pulse *only* if no crew member is active
+                    if (!activeCrewMember) {
+                        baseClass += "crew-free-use-glow";
                     } else {
-                         baseClass += "bg-blue-900/40 border-blue-400 text-blue-100 crew-active ring-1 ring-blue-400";
+                         baseClass += "bg-gray-800 border-gray-600 text-gray-300 hover:border-gray-400 hover:bg-gray-700"; // Normal styling if another crew member is already selected
                     }
+                } else if (isSelected) {
+                    // Standard selection glow
+                    baseClass += "bg-blue-900/40 border-blue-400 text-blue-100 crew-active ring-1 ring-blue-400";
                 } else {
                     baseClass += "bg-gray-800 border-gray-600 text-gray-300 hover:border-gray-400 hover:bg-gray-700";
                 }
