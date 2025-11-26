@@ -245,16 +245,22 @@
                 this.clickSound.volume = 0.5;
                 
                 this.gaspSound = new Audio('audio/gasp.mp3');
-                this.gaspSound.volume = 0.6;
+                this.gaspSound.volume = 0.5;
                 
                 this.clashSound = new Audio('audio/clash.mp3');
                 this.clashSound.volume = 0.5;
                 
                 this.coinsSound = new Audio('audio/coins.mp3');
                 this.coinsSound.volume = 0.5;
+                
+                this.vulnerableSound = new Audio('audio/vulnerable.mp3');
+                this.vulnerableSound.volume = 0.5;
 
                 this.isMuted = true;
                 this.hasInteracted = false;
+                
+                // Track if vulnerable sound played this scene to prevent looping
+                this.playedVulnerable = false;
 
                 // Bind toggle button
                 const btn = document.getElementById('audio-toggle');
@@ -274,6 +280,17 @@
             playGasp() { this.playSFX(this.gaspSound); }
             playClash() { this.playSFX(this.clashSound); }
             playCoins() { this.playSFX(this.coinsSound); }
+            
+            checkVulnerable(currentHP, maxHP) {
+                const pct = (currentHP / maxHP) * 100;
+                if (pct <= 30 && !this.playedVulnerable && !this.isMuted) {
+                    this.playSFX(this.vulnerableSound);
+                    this.playedVulnerable = true;
+                } else if (pct > 30) {
+                    // Reset flag if they heal up
+                    this.playedVulnerable = false;
+                }
+            }
 
             toggleMute() {
                 this.isMuted = !this.isMuted;
@@ -1155,6 +1172,9 @@
             bar.style.width = `${hpPct}%`;
             bar.className = `h-full transition-all duration-500 ${hpPct < 30 ? 'bg-red-600 animate-pulse' : 'bg-red-800'}`;
             document.getElementById('hp-text').innerText = `${gameState.currentHP}/${gameState.maxHP}`;
+
+            // Check for low health audio
+            audioManager.checkVulnerable(gameState.currentHP, gameState.maxHP);
 
             // Money
             document.getElementById('shillings-display').innerText = gameState.shillings;
