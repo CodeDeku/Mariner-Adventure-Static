@@ -255,6 +255,7 @@
                 
                 this.vulnerableSound = new Audio('audio/vulnerable.mp3');
                 this.vulnerableSound.volume = 0.6;
+                this.vulnerableSound.loop = true; // Loop the panting sound
                 
                 this.ghostSound = new Audio('audio/ghost.mp3');
                 this.ghostSound.volume = 0.4;
@@ -287,11 +288,18 @@
             
             checkVulnerable(currentHP, maxHP) {
                 const pct = (currentHP / maxHP) * 100;
-                if (pct <= 30 && !this.playedVulnerable && !this.isMuted) {
-                    this.playSFX(this.vulnerableSound);
-                    this.playedVulnerable = true;
-                } else if (pct > 30) {
-                    // Reset flag if they heal up
+                
+                if (pct <= 30) {
+                    // Player is vulnerable
+                    if (!this.playedVulnerable && !this.isMuted) {
+                        // Play the looping sound directly (not a clone)
+                        this.vulnerableSound.play().catch(e => console.log("Audio play blocked"));
+                        this.playedVulnerable = true;
+                    }
+                } else {
+                    // Player is healed above threshold - Stop Sound
+                    this.vulnerableSound.pause();
+                    this.vulnerableSound.currentTime = 0;
                     this.playedVulnerable = false;
                 }
             }
@@ -312,6 +320,7 @@
                 } else {
                     // Muted State
                     this.ambience.pause();
+                    this.vulnerableSound.pause(); // Ensure panting stops on mute
                     // Icon Swap Logic
                     icon.classList.remove('fa-volume-high');
                     icon.classList.add('fa-volume-mute'); // Muted Speaker Icon
@@ -1246,9 +1255,13 @@
                 btn.onclick = () => {
                     // Audio Hook for Crew Buttons
                     audioManager.playClick();
-                    audioManager.playGhost();
-                    if (isSelected) activeCrewMember = null;
-                    else activeCrewMember = c;
+                    
+                    if (isSelected) {
+                        activeCrewMember = null;
+                    } else {
+                        activeCrewMember = c;
+                        audioManager.playGhost(); // Only play when selecting
+                    }
                     updateUI();
                 };
                 crewContainer.appendChild(btn);
