@@ -604,7 +604,7 @@
                 journal: "Had to fight the Guard. I am an outlaw now.",
                 onEnter: (state) => { 
                     audioManager.playClash();
-                    const dmg = Math.floor(Math.random() * 6) + 8; // Increased damage: 10-15
+                    const dmg = Math.floor(Math.random() * 6) + 10; // Increased damage: 10-15
                     state.currentHP -= dmg;
                     state.influence = 20; // Max Chaos
                     return `Took ${dmg} damage. Became Outlaw (Max Chaos).`;
@@ -885,3 +885,446 @@
                 ]
             }
         };
+
+        // --- CORE FUNCTIONS ---
+
+        async function generateSceneImage(sceneId) {
+            // Simple mapping: If scene exists in our map, use it. Else use default.
+            // If sceneId is undefined (e.g. first load), default to 'prologue_storm' or 'default'
+            const key = sceneId || 'default';
+            const url = sceneImages[key] || sceneImages['default'];
+            
+            const imgEl = document.getElementById('scene-image');
+            const loader = document.getElementById('image-loader');
+            
+            // Hide image, show loader
+            imgEl.style.opacity = 0;
+            loader.style.display = 'flex';
+
+            // Simulate network delay for effect, or load immediately
+            setTimeout(() => {
+                imgEl.src = url;
+                imgEl.onload = () => {
+                    loader.style.display = 'none';
+                    imgEl.style.opacity = 1;
+                };
+                // Handle broken links by falling back to placeholder
+                imgEl.onerror = () => {
+                    loader.style.display = 'none';
+                    imgEl.src = sceneImages['default'];
+                    imgEl.style.opacity = 1;
+                }
+            }, 100);
+        }
+
+        async function init() {
+            // Initialize Firebase directly with the config object defined above.
+            window.confirmReset = confirmReset;
+
+            onAuthStateChanged(auth, async (u) => {
+                if (u) {
+                    user = u;
+                    await setupRealtimeListener();
+                    document.getElementById('app-loading').classList.add('fade-out');
+                    setTimeout(() => document.getElementById('app-loading').remove(), 500);
+                }
+            });
+
+            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                await signInWithCustomToken(auth, __initial_auth_token);
+            } else {
+                await signInAnonymously(auth);
+            }
+        }
+
+        async function setupRealtimeListener() {
+            const docRef = doc(db, 'artifacts', appId, 'users', user.uid, 'data', 'game_save');
+            
+            try {
+                const snap = await getDoc(docRef);
+                if (!snap.exists()) {
+                    await setDoc(docRef, gameState);
+                    renderScene('prologue_storm');
+                } else {
+                    const data = snap.data();
+                    if (data.influence === undefined) {
+                        data.influence = 0; 
+                        delete data.guardInfluence;
+                        delete data.smugglerInfluence;
+                    }
+                    gameState = { ...createInitialState(), ...data }; 
+                    renderScene(gameState.currentSceneId, false);
+                    rebuildJournal();
+                }
+            } catch (e) {
+                console.error("Save error", e);
+                renderScene('prologue_storm');
+            }
+
+            onSnapshot(docRef, (snap) => {
+                if (snap.exists()) {
+                    const data = snap.data();
+                    if (JSON.stringify(data) !== JSON.stringify(gameState)) {
+                        gameState = { ...gameState, ...data };
+                        updateUI();
+                    }
+                }
+            });
+        }
+
+        async function saveGame() {
+            if (!user) return;
+            const docRef = doc(db, 'artifacts', appId, 'users', user.uid, 'data', 'game_save');
+            const safeState = JSON.parse(JSON.stringify(gameState));
+            await setDoc(docRef, safeState);
+        }
+
+        let resetConfirmTimer = null;
+        function confirmReset() {
+            const btn = document.getElementById('reset-game-btn');
+            if (btn.classList.contains('bg-red-900')) {
+                resetGame();
+                clearTimeout(resetConfirmTimer);
+                btn.innerHTML = '<i class="fas fa-skull mr-1"></i>New Game';
+                btn.classList.remove('bg-red-900', 'text-white');
+                btn.classList.add('text-red-400', 'bg-black/60');
+            } else {
+                btn.innerHTML = '<i class="fas fa-exclamation-triangle mr-1"></i>Confirm?';
+                btn.classList.remove('text-red-400', 'bg-black/60');
+                btn.classList.add('bg-red-900', 'text-white');
+                resetConfirmTimer = setTimeout(() => {
+                    btn.innerHTML = '<i class="fas fa-skull mr-1"></i>New Game';
+                    btn.classList.remove('bg-red-900', 'text-white');
+                    btn.classList.add('text-red-400', 'bg-black/60');
+                }, 3000);
+            }
+        }
+
+        async function resetGame() {
+            gameState = createInitialState();
+            document.getElementById('journal-content').innerHTML = '';
+            await saveGame();
+            renderScene('prologue_storm');
+            rebuildJournal();
+            document.getElementById('inf-status-text').textContent = "Unknown to all";
+            document.getElementById('item-desc-area').textContent = "Hover over an item to inspect it.";
+        }
+
+        function rebuildJournal() {
+            const container = document.getElementById('journal-content');
+            container.innerHTML = gameState.history.join('');
+            scrollToBottom();
+        }
+
+        function scrollToBottom() {
+            const area = document.getElementById('journal-scroll-area');
+            area.scrollTop = area.scrollHeight;
+        }
+
+        function addToHistory(text, type = 'entry') {
+            let html = '';
+            if (type === 'entry') {
+                html = `<div class="journal-font pb-4 border-b border-gray-700/30 text-gray-400 fade-in">${text}</div>`;
+            } else if (type === 'system') {
+                html = `<div class="text-xs text-amber-500 font-mono mb-2 fade-in">> ${text}</div>`;
+            } else if (type === 'roll') {
+                html = `<div class="text-xs text-blue-400 font-bold mb-2 fade-in font-serif">${text}</div>`;
+            }
+            gameState.history.push(html);
+            rebuildJournal();
+        }
+
+        async function renderScene(sceneId, logText = true) {
+            const scene = scenes[sceneId];
+            if (!scene) return;
+
+            if (gameState.currentHP <= 0 && sceneId !== 'start' && !sceneId.includes('prologue')) {
+                document.getElementById('main-scene-text').innerHTML = 
+                    `<div class="text-red-600 font-bold text-xl text-center cinzel">Edward has fallen.</div>
+                     <div class="text-center mt-4">The voices consume you.</div>`;
+                document.getElementById('choices-area').innerHTML = 
+                    `<button onclick="window.location.reload()" class="w-full p-4 bg-red-900 text-white rounded cinzel border border-red-500 hover:bg-red-800">Resurrect (Restart)</button>`;
+                return;
+            }
+
+            if (scene.isLogic) {
+                let roll = Math.floor(Math.random() * 20) + 1;
+                let logMsg = `Check (DC ${gameState.lastDC || 10}): Rolled d20 (${roll})`;
+                
+                if (activeCrewMember) {
+                    const bonus = Math.floor(Math.random() * 4) + 1;
+                    roll += bonus;
+                    logMsg += ` + ${bonus} (${activeCrewMember.name})`;
+                    const crewKey = Object.keys(gameState.crew).find(k => gameState.crew[k].name === activeCrewMember.name);
+                    gameState.crew[crewKey].used = true;
+                    activeCrewMember = null;
+                }
+
+                addToHistory(`${logMsg} = ${roll}`, 'roll');
+                const nextId = scene.resolve(roll, gameState); // Passing state to resolve for influence checks
+                saveGame();
+                renderScene(nextId); 
+                return;
+            }
+
+            gameState.currentSceneId = sceneId;
+            activeCrewMember = null;
+
+            if (scene.onEnter && logText) {
+                const msg = scene.onEnter(gameState);
+                if (msg) addToHistory(msg, 'system');
+                saveGame();
+            }
+
+            const textEl = document.getElementById('main-scene-text');
+            textEl.innerHTML = `<h2 class="text-2xl cinzel text-amber-500 mb-2">${scene.title}</h2><p class="text-lg leading-relaxed text-gray-300 fade-in">${scene.text}</p>`;
+            document.getElementById('scene-title').innerText = scene.title;
+            
+            generateSceneImage(sceneId);
+            renderChoices(scene.choices);
+            updateUI();
+        }
+
+        function renderChoices(choices) {
+            const container = document.getElementById('choices-area');
+            container.innerHTML = '';
+
+            choices.forEach(choice => {
+                if (choice.reqSmuggler && gameState.influence < choice.reqSmuggler) return;
+                if (choice.reqGuard && gameState.influence > -choice.reqGuard) return;
+                if (choice.cost && gameState.shillings < choice.cost) return;
+                if (choice.reqItem && !gameState.inventory.includes(choice.reqItem)) return;
+
+                const btn = document.createElement('button');
+                btn.className = "btn-game w-full p-3 bg-gray-800 border border-gray-600 hover:border-amber-500 hover:bg-gray-750 text-left rounded shadow flex items-center justify-between group";
+                
+                // Audio Hook: Add click sound to all game buttons
+                btn.onclick = (e) => {
+                    audioManager.playClick();
+                    
+                    if (choice.type === 'reset') {
+                        resetGame();
+                        return;
+                    }
+
+                    if (choice.consume && choice.reqItem) {
+                        const idx = gameState.inventory.indexOf(choice.reqItem);
+                        if (idx > -1) {
+                            gameState.inventory.splice(idx, 1);
+                            addToHistory(`${choice.reqItem} used and discarded.`, 'system');
+                        }
+                    }
+
+                    const currentScene = scenes[gameState.currentSceneId];
+                    const entryText = currentScene.journal !== undefined ? currentScene.journal : currentScene.text;
+                    if (entryText !== null) {
+                        addToHistory(entryText, 'entry');
+                    }
+
+                    if (choice.cost) gameState.shillings -= choice.cost;
+                    if (choice.type === 'skill') gameState.lastDC = choice.dc;
+                    
+                    renderScene(choice.nextScene);
+                };
+                
+                let label = choice.text;
+                let icon = '<i class="fas fa-chevron-right text-gray-600 group-hover:text-amber-500"></i>';
+
+                if (choice.type === 'skill') {
+                    label += ` <span class="text-blue-400 text-xs uppercase tracking-wider ml-1">[${choice.skill} DC ${choice.dc}]</span>`;
+                    icon = '<i class="fas fa-dice-d20 text-blue-500"></i>';
+                }
+                if (choice.cost) {
+                    label += ` <span class="text-amber-500 text-xs ml-1">(-${choice.cost}s)</span>`;
+                }
+                if (choice.type === 'reset') {
+                     icon = '<i class="fas fa-undo text-amber-500"></i>';
+                     btn.className += " border-amber-900/50";
+                }
+
+                btn.innerHTML = `<span class="cinzel font-bold text-gray-300 group-hover:text-amber-100">${label}</span>${icon}`;
+                container.appendChild(btn);
+            });
+        }
+
+        function updateUI() {
+            // PROLOGUE & LOG UI HANDLING
+            const statsPanel = document.getElementById('stats-panel');
+            const journalContainer = document.getElementById('journal-container');
+            const sceneId = gameState.currentSceneId;
+            
+            if (sceneId && sceneId.startsWith('prologue')) {
+                statsPanel.classList.add('prologue-blur');
+                journalContainer.classList.add('log-hidden');
+                journalContainer.classList.remove('log-visible');
+            } else {
+                statsPanel.classList.remove('prologue-blur');
+                statsPanel.classList.add('prologue-active');
+                
+                if(gameState.inventory.includes("Ship's Log")) {
+                    journalContainer.classList.remove('log-hidden');
+                    journalContainer.classList.add('log-visible');
+                } else {
+                    journalContainer.classList.add('log-hidden');
+                    journalContainer.classList.remove('log-visible');
+                }
+            }
+
+            // HP
+            const hpPct = (gameState.currentHP / gameState.maxHP) * 100;
+            const bar = document.getElementById('hp-bar');
+            bar.style.width = `${hpPct}%`;
+            bar.className = `h-full transition-all duration-500 ${hpPct < 30 ? 'bg-red-600 animate-pulse' : 'bg-red-800'}`;
+            document.getElementById('hp-text').innerText = `${gameState.currentHP}/${gameState.maxHP}`;
+
+            // Check for low health audio
+            audioManager.checkVulnerable(gameState.currentHP, gameState.maxHP);
+
+            // Money
+            document.getElementById('shillings-display').innerText = gameState.shillings;
+            
+            // Influence
+            const inf = gameState.influence || 0;
+            const pct = ((inf + 20) / 40) * 100;
+            const marker = document.getElementById('inf-marker');
+            if (marker) marker.style.left = `${Math.max(0, Math.min(100, pct))}%`;
+            
+            const infText = document.getElementById('inf-status-text');
+            if (infText) {
+                if (inf < -10) infText.textContent = "Sworn to the Crown";
+                else if (inf < -5) infText.textContent = "Respected by Guards";
+                else if (inf > 10) infText.textContent = "Pirate Lord";
+                else if (inf > 5) infText.textContent = "Known Smuggler";
+                else infText.textContent = "Unknown / Neutral";
+            }
+
+            // Crew UI
+            const ind = document.getElementById('active-crew-indicator');
+            const nameSpan = document.getElementById('active-crew-name');
+            if (activeCrewMember) {
+                ind.classList.remove('hidden');
+                nameSpan.innerText = activeCrewMember.name;
+            } else {
+                ind.classList.add('hidden');
+            }
+
+            const crewContainer = document.getElementById('crew-panel');
+            crewContainer.innerHTML = '';
+            
+            // Define fixed order of keys
+            const crewOrder = ['gareth', 'quinn', 'talon', 'bones'];
+            
+            crewOrder.forEach(key => {
+                const c = gameState.crew[key];
+                if (!c) return; // Safety check
+
+                const btn = document.createElement('button');
+                const isSelected = activeCrewMember && activeCrewMember.name === c.name;
+                
+                let baseClass = "p-2 rounded border text-left transition-all relative overflow-hidden ";
+                if (c.used) {
+                    baseClass += "bg-black/50 border-gray-800 text-gray-700 cursor-not-allowed opacity-50";
+                } else if (isSelected) {
+                    baseClass += "bg-blue-900/40 border-blue-400 text-blue-100 crew-active ring-1 ring-blue-400";
+                } else {
+                    baseClass += "bg-gray-800 border-gray-600 text-gray-300 hover:border-gray-400 hover:bg-gray-700";
+                }
+
+                // --- TUTORIAL PULSE LOGIC ---
+                // If scene is 'start', Quinn is unused, and no crew is active -> pulse Amber
+                if (gameState.currentSceneId === 'start' && c.name === 'Quinn' && !c.used && !activeCrewMember) {
+                    baseClass += " tutorial-pulse";
+                }
+
+                btn.className = baseClass;
+                btn.disabled = c.used;
+                btn.innerHTML = `
+                    <div class="font-bold text-[12px] cinzel leading-tight">${c.name}</div>
+                    <div class="text-[10px] ${isSelected ? 'text-blue-200' : 'text-gray-500'}">${c.skill}</div>
+                    ${c.used ? '<i class="fas fa-lock absolute top-1 right-1 text-[10px]"></i>' : ''}
+                `;
+                btn.onclick = () => {
+                    // Audio Hook for Crew Buttons
+                    audioManager.playClick();
+                    audioManager.playGhost();
+                    if (isSelected) activeCrewMember = null;
+                    else activeCrewMember = c;
+                    updateUI();
+                };
+                crewContainer.appendChild(btn);
+            });
+
+            // Inventory List View
+            const invContainer = document.getElementById('inventory-panel');
+            invContainer.innerHTML = '';
+            const descArea = document.getElementById('item-desc-area');
+            
+            if (gameState.inventory.length === 0) {
+                invContainer.innerHTML = '<div class="text-center text-[10px] text-gray-600 italic py-2">Inventory Empty</div>';
+            } else {
+                gameState.inventory.forEach(itemName => {
+                    const itemDef = itemRegistry[itemName] || { type: 'misc', icon: 'fa-box', color: 'text-gray-500', desc: "A strange item." };
+                    const isConsumable = itemDef.type === 'consumable';
+                    
+                    const itemRow = document.createElement('div');
+                    itemRow.className = `group w-full flex items-center justify-between p-2 rounded border transition-all cursor-default relative ${
+                        isConsumable 
+                        ? 'bg-gray-900/80 border-emerald-900/50 hover:border-emerald-500 hover:bg-gray-800' 
+                        : 'bg-gray-900/60 border-gray-800 hover:border-gray-600'
+                    }`;
+
+                    // Left Side: Icon + Name
+                    const leftSide = document.createElement('div');
+                    leftSide.className = 'flex items-center gap-3';
+                    leftSide.innerHTML = `
+                        <div class="text-lg w-5 text-center ${itemDef.color}"><i class="fas ${itemDef.icon}"></i></div>
+                        <span class="text-xs cinzel text-gray-300 group-hover:text-gray-100 transition-colors">${itemName.split('(')[0]}</span>
+                    `;
+                    itemRow.appendChild(leftSide);
+
+                    // Right Side: Action Button or Tag
+                    const rightSide = document.createElement('div');
+                    if (isConsumable) {
+                        const actionBtn = document.createElement('button');
+                        actionBtn.className = "px-2 py-1 bg-emerald-900/40 border border-emerald-600/30 text-emerald-500 text-[9px] font-bold rounded hover:bg-emerald-600 hover:text-white transition-all tracking-wider";
+                        actionBtn.innerText = itemDef.btnText || "USE";
+                        actionBtn.onclick = (e) => {
+                            e.stopPropagation();
+                            // Audio Hook for Item Use
+                            audioManager.playClick();
+                            const result = itemDef.action(gameState);
+                            addToHistory(result, 'system');
+                            saveGame();
+                            updateUI();
+                        };
+                        rightSide.appendChild(actionBtn);
+                    } else {
+                        const tag = document.createElement('span');
+                        tag.className = "text-[9px] text-gray-600 uppercase tracking-wider font-bold opacity-50 group-hover:opacity-100 transition-opacity";
+                        tag.innerText = "PASSIVE";
+                        rightSide.appendChild(tag);
+                    }
+                    itemRow.appendChild(rightSide);
+
+                    // Hover Description Logic
+                    const defaultText = "Hover over an item to inspect it.";
+                    itemRow.onmouseenter = () => {
+                        descArea.innerText = itemDef.desc || defaultText;
+                        descArea.classList.add('text-amber-400');
+                        descArea.classList.remove('text-gray-400');
+                    };
+                    itemRow.onmouseleave = () => {
+                        descArea.innerText = defaultText;
+                        descArea.classList.remove('text-amber-400');
+                        descArea.classList.add('text-gray-400');
+                    };
+
+                    invContainer.appendChild(itemRow);
+                });
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>
