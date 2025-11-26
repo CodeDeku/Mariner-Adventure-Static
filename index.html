@@ -66,9 +66,53 @@
 
         #inf-marker { transition: left 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
 
+        /* --- LORE TOOLTIPS --- */
+        .memory-keyword {
+            color: #60a5fa; /* Blue-400 */
+            border-bottom: 1px dashed #60a5fa;
+            cursor: help;
+            position: relative;
+            transition: color 0.2s;
+        }
+        .memory-keyword:hover {
+            color: #93c5fd; /* Blue-300 */
+        }
+        /* Tooltip Box */
+        .memory-keyword:hover::after {
+            content: attr(data-lore);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%) translateY(-8px);
+            background: #0f172a; /* Slate-900 */
+            border: 1px solid #3b82f6; /* Blue-500 */
+            color: #e2e8f0;
+            padding: 10px;
+            border-radius: 4px;
+            width: 240px;
+            font-size: 0.85rem;
+            line-height: 1.4;
+            z-index: 100;
+            pointer-events: none;
+            font-family: 'Crimson Text', serif;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            white-space: normal;
+        }
+        /* Tooltip Arrow */
+        .memory-keyword:hover::before {
+            content: '';
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%) translateY(0px);
+            border-width: 6px;
+            border-style: solid;
+            border-color: #3b82f6 transparent transparent transparent;
+            z-index: 100;
+        }
+
         /* --- ATMOSPHERIC FX --- */
-        
-        /* Container for FX */
         #fx-overlay {
             position: absolute;
             inset: 0;
@@ -77,7 +121,6 @@
             transition: box-shadow 0.5s ease;
         }
 
-        /* 1. Planar Pulse (Violet) */
         @keyframes pulse-violet-anim {
             0%, 100% { box-shadow: inset 0 0 20px 0px rgba(139, 92, 246, 0.1); background-color: rgba(139, 92, 246, 0.05); }
             50% { box-shadow: inset 0 0 80px 20px rgba(139, 92, 246, 0.4); background-color: rgba(139, 92, 246, 0.15); }
@@ -87,7 +130,6 @@
             mix-blend-mode: overlay;
         }
 
-        /* 2. Damage Flash (Red) */
         @keyframes flash-red-anim {
             0% { background-color: rgba(220, 38, 38, 0.6); }
             100% { background-color: transparent; }
@@ -96,14 +138,13 @@
             animation: flash-red-anim 0.4s ease-out forwards;
         }
 
-        /* 3. Low HP Vignette (Static Red/Dark) */
         .fx-vignette-low {
             box-shadow: inset 0 0 80px 30px rgba(127, 29, 29, 0.3);
         }
 
         .water-stained {
             background-color: #1e293b;
-            background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23334155' fill-opacity='0.1' fill-rule='evenodd'/%3E%3C/svg%3E");
+            background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23334155' fill-opacity='0.1' fill-rule='evenodd'/%3E%3C/svg%3E");
         }
         
         .fade-in { animation: fadeIn 0.8s ease-in; }
@@ -283,7 +324,7 @@
                 this.clickSound.volume = 0.5;
                 
                 this.gaspSound = new Audio('audio/gasp.mp3');
-                this.gaspSound.volume = 0.5;
+                this.gaspSound.volume = 0.6;
                 
                 this.clashSound = new Audio('audio/clash.mp3');
                 this.clashSound.volume = 0.5;
@@ -296,7 +337,7 @@
                 this.vulnerableSound.loop = true; // Loop the panting sound
                 
                 this.ghostSound = new Audio('audio/ghost.mp3');
-                this.ghostSound.volume = 0.3;
+                this.ghostSound.volume = 0.4;
 
                 this.isMuted = true;
                 this.hasInteracted = false;
@@ -458,10 +499,10 @@
                 inventory: [], 
                 influence: 0, 
                 crew: {
-                    gareth: { name: 'Captain Gareth', skill: 'Insight', used: false, desc: 'Add +1d4 to Initiative & Insight' },
-                    quinn: { name: 'Quinn', skill: 'Investigation', used: false, desc: 'Add +1d4 to Investigation & History' },
-                    talon: { name: 'Talon', skill: 'Perception', used: false, desc: 'Add +1d4 to Survival & Perception' },
-                    bones: { name: 'Bones', skill: 'Survival', used: false, desc: 'Add +1d4 to Nature & Foraging' }
+                    gareth: { id: 'gareth', name: 'Captain Gareth', skill: 'Insight', used: false, desc: 'Add +1d4 to Initiative & Insight' },
+                    quinn: { id: 'quinn', name: 'Quinn', skill: 'Investigation', used: false, desc: 'Add +1d4 to Investigation & History' },
+                    talon: { id: 'talon', name: 'Talon', skill: 'Perception', used: false, desc: 'Add +1d4 to Survival & Perception' },
+                    bones: { id: 'bones', name: 'Bones', skill: 'Survival', used: false, desc: 'Add +1d4 to Nature & Foraging' }
                 },
                 history: [] 
             };
@@ -517,6 +558,9 @@
                 title: "The Planar Storm",
                 text: "The deck of The Trident's Kiss heaves violently. Above, the sky isn't black, but a bleeding violet bruise. Captain Gareth stands at the wheel, singing against the gale. '...But who pays the toll for the army of dead?!' he roars, laughing at the violet sky. Quinn, the Quartermaster, is frantically tying down crates on the main deck.",
                 journal: "It started with the sky tearing open. Gareth tried to hold the course. Quinn tried to save the cargo. I just tried to stand.",
+                banter: {
+                    'gareth': "Hold fast! The sea demands a toll!"
+                },
                 choices: [
                     { text: "Help Quinn secure the cargo", nextScene: 'prologue_abyss', type: 'travel' },
                     { text: "Stand with the Captain", nextScene: 'prologue_abyss', type: 'travel' }
@@ -534,6 +578,9 @@
                 title: "The Wreckage",
                 text: "You gasp, lungs burning, and retch salt water onto the grey sand. The storm has passed. 'The Trident's Kiss' lies shattered across the shore. The voices are loud now—Gareth's command, Quinn's panic—bickering inside your head. You are alive, but you are a vessel for the dead.",
                 journal: "I awoke on the shore. Alive. But they are with me now. Bound to me.",
+                banter: {
+                    'quinn': "The answers are in the debris, Edward. Dig."
+                },
                 onEnter: (state) => {
                     // AUDIO: Gasp sound on wake up
                     audioManager.playGasp();
@@ -580,6 +627,9 @@
                 title: "The Whispering Woods",
                 text: "The forest looms ahead, trees twisted like grasping hands. You adjust the weight of the cutlass and logbook. The voices are a dull murmur, satisfied for the moment. A well-traveled road cuts through the center, but Talon notices a faint game trail disappearing into the brush.",
                 journal: "I reached the treeline with the Log and my gear. The voices are quieter now. Talon pointed out a hidden path.",
+                banter: {
+                    'talon': "The road is watched. The wild is ours."
+                },
                 choices: [
                     { text: "Take the Main Road", nextScene: 'road_encounter', type: 'travel' },
                     { text: "Take the Game Trail (Survival DC 12)", nextScene: 'trail_check', type: 'skill', dc: 12, skill: 'Survival' }
@@ -603,7 +653,7 @@
             },
             'road_encounter': {
                 title: "The King's Guard",
-                text: "A heavy-set Royal Guard in plate armor blocks the path. He's nailing a 'WANTED' poster to a tree. He spots you immediately. 'Halt! Identify yourself, traveler.'",
+                text: "A heavy-set <span class='memory-keyword' data-lore='The iron fist of the Crown. They despise the supernatural and govern with martial law.'>Royal Guard</span> in plate armor blocks the path. He's nailing a 'WANTED' poster to a tree. He spots you immediately. 'Halt! Identify yourself, traveler.'",
                 journal: "Ran into a Royal Guard on the main road. No way to hide now.",
                 choices: [
                     { text: "Speak diplomatically", nextScene: 'guard_talk', type: 'dialogue' },
@@ -616,8 +666,11 @@
             },
             'trail_success': {
                 title: "Hidden Signs",
-                text: "Talon helps you navigate the thorns effortlessly. You emerge near a hidden cove, overlooking a group of men loading crates. Smugglers.",
+                text: "Talon helps you navigate the thorns effortlessly. You emerge near a hidden cove, overlooking a group of men loading crates. <span class='memory-keyword' data-lore='The unseen veins of the coast. They value coin above law.'>Smugglers</span>.",
                 journal: "Talon led me through the brush. We found a Smuggler's Cove unseen.",
+                banter: {
+                    'bones': "I smell rum... and unwashed men."
+                },
                 onEnter: (state) => { 
                     state.influence = Math.min(20, state.influence + 4); 
                     return "Secrets Learned (Chaos +4)"; 
@@ -642,6 +695,9 @@
                 title: "The Interrogation",
                 text: "The Guard eyes your ragged clothes. 'You look like wreckage refuse. We have reports of smugglers. Make it worth my while, or I'll haul you in.'",
                 journal: "The Guard is corrupt. He wants a bribe or a reason to let me go.",
+                banter: {
+                    'gareth': "Stand tall. Authority respects strength, or gold."
+                },
                 choices: [
                     { text: "Bribe him (5 Shillings)", nextScene: 'guard_bribe', type: 'action', cost: 5 },
                     { text: "Show Respect (Diplomacy)", nextScene: 'guard_respect', type: 'dialogue' },
@@ -880,6 +936,9 @@
             'dark_caves': {
                 title: "The Abyss Below",
                 text: "The air is thick and smells of rot. It is pitch black.",
+                banter: {
+                    'bones': "Damp... dark... good place for mushrooms, bad for ankles."
+                },
                 choices: [
                     { text: "Light Torch (Safe Passage)", nextScene: 'lighthouse_arrival', type: 'action', reqItem: 'Torch', consume: true },
                     { text: "Stumble in Dark (Perception DC 14)", nextScene: 'dark_check', type: 'skill', dc: 14, skill: 'Perception' }
@@ -1163,8 +1222,7 @@
             }
 
             gameState.currentSceneId = sceneId;
-            activeCrewMember = null;
-
+            
             // --- FX TRIGGER LOGIC ---
             fxManager.clearEffects();
 
@@ -1182,8 +1240,21 @@
             }
 
             const textEl = document.getElementById('main-scene-text');
-            textEl.innerHTML = `<h2 class="text-2xl cinzel text-amber-500 mb-2">${scene.title}</h2><p class="text-lg leading-relaxed text-gray-300 fade-in">${scene.text}</p>`;
+            let finalHtml = `<h2 class="text-2xl cinzel text-amber-500 mb-2">${scene.title}</h2><p class="text-lg leading-relaxed text-gray-300 fade-in">${scene.text}</p>`;
+            
+            // --- BANTER INJECTION ---
+            if (activeCrewMember && scene.banter && scene.banter[activeCrewMember.id]) {
+                const banterText = scene.banter[activeCrewMember.id];
+                finalHtml += `<div class="mt-4 text-blue-400 italic border-l-2 border-blue-500 pl-3 fade-in">
+                                <span class="font-bold text-xs uppercase block mb-1">${activeCrewMember.name}:</span>
+                                "${banterText}"
+                              </div>`;
+            }
+            
+            textEl.innerHTML = finalHtml;
             document.getElementById('scene-title').innerText = scene.title;
+            
+            activeCrewMember = null; // Reset crew member after banter is displayed
             
             generateSceneImage(sceneId);
             renderChoices(scene.choices);
