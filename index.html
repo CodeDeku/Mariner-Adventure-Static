@@ -197,12 +197,6 @@
 
                 <img id="scene-image" src="" alt="Scene Visualization" class="w-full h-full object-cover opacity-0 transition-opacity duration-1000">
                 
-                <div id="image-loader" class="absolute inset-0 flex items-center justify-center bg-gray-800 text-gray-500">
-                    <div class="flex flex-col items-center">
-                        <i class="fas fa-circle-notch fa-spin text-2xl mb-2 text-amber-600"></i>
-                        <span class="text-xs cinzel tracking-widest text-amber-600">Manifesting Vision...</span>
-                    </div>
-                </div>
                 <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/80 to-transparent p-4">
                     <h2 id="scene-title" class="text-xl cinzel text-amber-500 text-shadow"></h2>
                 </div>
@@ -482,15 +476,17 @@
 			'buy_torch': 'images/merchant.jpg',
 			'sell_rope': 'images/merchant.jpg',
 			'sell_torch': 'images/merchant.jpg',
+            'sell_cargo': 'images/merchant.jpg', 
 			'sell_potion': 'images/merchant.jpg',
 			'sell_rum': 'images/merchant.jpg',
 			'lighthouse_split': 'images/lighthouse_far.jpg',
 			'cliff_climb': 'images/cliff.jpg',
 			'climb_fail': 'images/fall_cliff.jpg', 
 			'dark_caves': 'images/caves.jpg',
-            'dark_caves_illuminated': 'images/illuminated.jpg', // Added for the mushroom reward
+            'dark_caves_illuminated': 'images/caves.jpg', 
 			'dark_fail': 'images/cave_injury.jpg', 
 			'lighthouse_arrival': 'images/lighthouse_door.jpg',
+            'lighthouse_neutralized': 'images/lighthouse_door.jpg', 
 			'ending_order': 'images/guards_win.jpg',
 			'ending_chaos': 'images/smugglers_win.jpg',
 			'ending_neutral': 'images/lockpick.jpg', 
@@ -508,7 +504,9 @@
                 shillings: 0, 
                 inventory: [], 
                 influence: 0, 
-                crewUseFree: false, // NEW: Flag for one free Guiding Voice use
+                crewUseFree: false, 
+                // We track which crew member was used on the LAST successful check for complex flows
+                lastCrewUsedId: null, 
                 crew: {
                     gareth: { id: 'gareth', name: 'Captain Gareth', skill: 'Insight', used: false, desc: 'Add +1d4 to Initiative & Insight' },
                     quinn: { id: 'quinn', name: 'Quinn', skill: 'Investigation', used: false, desc: 'Add +1d4 to Investigation & History' },
@@ -556,17 +554,28 @@
                     return `Drank Potion. Healed ${state.currentHP - oldHP} HP.`;
                 }
             },
-            "Pearlescent Mushroom": { // NEW ITEM
+            "Pearlescent Mushroom": { 
                 type: 'consumable',
                 icon: 'fa-cloud-meatball', 
                 color: 'text-purple-300',
-                btnText: "EAT",
-                desc: "Consumable: A subterranean mushroom. Provides mental clarity.",
+                btnText: "MUNCH",
+                desc: "Consumable: A subterranean mushroom. Provides mental clarity, making your next Guiding Voice check FREE (crew member is not expended).",
                 action: (state) => {
                     state.crewUseFree = true;
                     const idx = state.inventory.indexOf("Pearlescent Mushroom");
                     if (idx > -1) state.inventory.splice(idx, 1);
                     return `Consumed Pearlescent Mushroom. Your next Guiding Voice check will be FREE.`;
+                }
+            },
+            "Curious Cargo": { // NEW ITEM: Influence driver
+                type: 'key',
+                icon: 'fa-box-open', 
+                color: 'text-yellow-600',
+                desc: "Passive: A heavy crate of smuggled goods. The Merchant will pay well, but it marks you as a friend of Chaos.",
+                btnText: "SELL",
+                action: (state) => {
+                    // This item is meant to be sold via the market_sell scene, not used from inventory
+                    return "Must be sold at the Market.";
                 }
             },
             "Rusted Cutlass": { type: 'key', icon: 'fa-khanda', color: 'text-gray-400', desc: "Passive: A reliable blade. Required for certain combat events." },
@@ -665,7 +674,7 @@
                 banter: {
                     'gareth': "Stick to the road, lad. We need steady ground.",
                     'talon': "The road is watched. The wild is ours.",
-                    'bones': "Game trail. Good eating, safe walking." // Added Bones
+                    'bones': "Game trail. Good eating, safe walking." 
                 },
                 choices: [
                     { text: "Take the Main Road", nextScene: 'road_encounter', type: 'travel' },
@@ -697,10 +706,26 @@
                     { text: "Attack him", nextScene: 'combat_guard', type: 'combat' }
                 ]
             },
+            // Modified Logic Scene to check for Talon being used
             'trail_check': {
                 isLogic: true,
-                resolve: (roll) => roll >= 12 ? 'trail_success' : 'trail_fail'
+                resolve: (roll, state) => {
+                    // Pass the last crew used for conditional scene resolution
+                    const success = roll >= state.lastDC;
+                    
+                    if (success) {
+                        // If successful AND Talon was used, send to special cargo scene
+                        if (state.lastCrewUsedId === 'talon') {
+                            return 'trail_success_talon';
+                        }
+                        // Otherwise (success with Bones or no crew), send to normal success
+                        return 'trail_success';
+                    }
+                    
+                    return 'trail_fail';
+                }
             },
+            // Original trail_success text is now for Bones or no crew
             'trail_success': {
                 title: "Hidden Signs",
                 text: "Talon helps you navigate the thorns effortlessly. You emerge near a hidden cove, overlooking a group of men loading crates. <span class='memory-keyword' data-lore='The unseen veins of the coast. They value coin above law.'>Smugglers</span>.",
@@ -710,6 +735,28 @@
                 },
                 onEnter: (state) => { 
                     state.influence = Math.min(20, state.influence + 4); 
+                    return "Secrets Learned (Chaos +4)"; 
+                },
+                choices: [
+                    { text: "Approach them", nextScene: 'smuggler_meet', type: 'travel' },
+                    { text: "Head to the Market Crossroads", nextScene: 'market_crossroads', type: 'travel' }
+                ]
+            },
+            // NEW SCENE for Talon's specific success (acquiring cargo)
+            'trail_success_talon': {
+                title: "Smuggler's Route",
+                // Updated text to reflect finding the Cargo
+                text: "Talon guides your movement, emphasizing silence and observation. You emerge near a hidden cove, spotting a marked crate abandoned near the tideline—Curious Cargo. You grab it just before noticing a group of men loading crates. <span class='memory-keyword' data-lore='The unseen veins of the coast. They value coin above law.'>Smugglers</span>.",
+                journal: "Talon's skill led me through the brush. Found Curious Cargo and reached a Smuggler's Cove unseen.",
+                banter: {
+                    'bones': "I smell rum... and unwashed men."
+                },
+                onEnter: (state) => { 
+                    state.influence = Math.min(20, state.influence + 4); 
+                    if (!state.inventory.includes("Curious Cargo")) {
+                        state.inventory.push("Curious Cargo");
+                        return "Secrets Learned (Chaos +4). Found Curious Cargo.";
+                    }
                     return "Secrets Learned (Chaos +4)"; 
                 },
                 choices: [
@@ -795,7 +842,7 @@
                 text: "The men draw blades as you approach. 'One step closer and you're fish food!'",
                 journal: "Found the smugglers. They aren't friendly.",
                 choices: [
-                    { text: "Flash 'The Mariner's Sign' (Req: Chaos +3)", nextScene: 'smuggler_friend', type: 'action', reqSmuggler: 3 },
+                    { text: "Flash 'The Mariner's Sign' (Req: Chaos +3)", nextScene: 'smuggler_friend', type: 'dialogue', reqSmuggler: 3 },
                     { text: "Buy safe passage (5 Shillings)", nextScene: 'smuggler_pay', type: 'action', cost: 5 },
                     { text: "Run to Market", nextScene: 'market_crossroads', type: 'travel' }
                 ]
@@ -849,12 +896,29 @@
                 text: "The merchant eyes your gear. 'I can take some of that off your hands for a fair price.'",
                 journal: null,
                 choices: [
+                    // New Selling Option
+                    { text: "Sell Curious Cargo (+12s, Chaos +4)", nextScene: 'sell_cargo', type: 'action', reqItem: 'Curious Cargo' },
                     { text: "Sell Rope (+2s)", nextScene: 'sell_rope', type: 'action', reqItem: 'Rope' },
                     { text: "Sell Torch (+1s)", nextScene: 'sell_torch', type: 'action', reqItem: 'Torch' },
                     { text: "Sell Potion (+3s)", nextScene: 'sell_potion', type: 'action', reqItem: 'Healing Potion' },
                     { text: "Sell Rum (+2s)", nextScene: 'sell_rum', type: 'action', reqItem: 'Rum (Heal 5)' }, 
                     { text: "Back to Buying", nextScene: 'market_stall', type: 'travel' }
                 ]
+            },
+            // NEW SELL CARGO SCENE
+            'sell_cargo': {
+                title: "The Smuggler's Cut",
+                text: "The merchant lowers his voice, stuffing the shillings into your hand. 'This cargo... it marks you. You're one of them now.'",
+                journal: "Sold the Curious Cargo for a massive profit. The Chaos path grows stronger.",
+                onEnter: (state) => {
+                    const idx = state.inventory.indexOf("Curious Cargo");
+                    if (idx > -1) state.inventory.splice(idx, 1);
+                    state.shillings += 12;
+                    state.influence = Math.min(20, state.influence + 4);
+                    audioManager.playCoins();
+                    return "Sold Curious Cargo (+12s). Chaos +4.";
+                },
+                choices: [{ text: "Continue Selling", nextScene: 'market_sell', type: 'travel' }]
             },
             'sell_rope': {
                 title: "Sold",
@@ -980,18 +1044,16 @@
                     'bones': "Damp... dark... good place for mushrooms, bad for ankles."
                 },
                 choices: [
-                    // Change flow to new reward scene
                     { text: "Light Torch (Safe Passage)", nextScene: 'dark_caves_illuminated', type: 'action', reqItem: 'Torch', consume: true },
                     { text: "Stumble in Dark (Perception DC 14)", nextScene: 'dark_check', type: 'skill', dc: 14, skill: 'Perception' }
                 ]
             },
-            // NEW SCENE for Torch Reward
+            // Updated Mushroom Scene
             'dark_caves_illuminated': {
-                title: "Illuminated Grotto",
-                text: "As the fire from the torch goes out, a patch of smooth pale mushrooms provides an eerie illumination. Bones urges you to collect a specimen. '",
-                journal: "Bones was right. I used the torch to traverse the caves safely and found a Pearlescent Mushroom.",
+                title: "Torch's End",
+                text: "The fire dies, but not the light. A patch of pale, smooth mushrooms provides an eerie illumination. You remember Bones's banter and collect the specimen for its promised clarity.",
+                journal: "Bones was right. Used the torch and found the Pearlescent Mushroom.",
                 onEnter: (state) => {
-                    // Item was consumed in the choice logic (consume: true).
                     if (!state.inventory.includes("Pearlescent Mushroom")) {
                         state.inventory.push("Pearlescent Mushroom");
                         return "Torch expended. Found: Pearlescent Mushroom.";
@@ -1072,7 +1134,6 @@
                     
                     state.currentHP = state.maxHP;
                     Object.keys(state.crew).forEach(k => state.crew[k].used = false);
-                    state.crewUseFree = false; // Reset the free use
                     return "Mission Accepted: Find the Wolves of Valor.";
                 },
                 choices: [
@@ -1089,7 +1150,6 @@
                     addToHistory(restNote, 'entry');
                     state.currentHP = state.maxHP;
                     Object.keys(state.crew).forEach(k => state.crew[k].used = false);
-                    state.crewUseFree = false; // Reset the free use
                 },
                 choices: [
                     { text: "Search for the Wolves of Valor (End Demo)", type: 'reset' }
@@ -1250,6 +1310,7 @@
             const scene = scenes[sceneId];
             if (!scene) return;
 
+            // Check for death before rendering
             if (gameState.currentHP <= 0 && sceneId !== 'start' && !sceneId.includes('prologue')) {
                 document.getElementById('main-scene-text').innerHTML = 
                     `<div class="text-red-600 font-bold text-xl text-center cinzel">Edward has fallen.</div>
@@ -1261,27 +1322,44 @@
 
             if (scene.isLogic) {
                 let roll = Math.floor(Math.random() * 20) + 1;
+                let crewUsedName = "None";
                 let logMsg = `Check (DC ${gameState.lastDC || 10}): Rolled d20 (${roll})`;
                 
+                // Clear last used crew ID before a new check
+                gameState.lastCrewUsedId = null;
+
                 if (activeCrewMember) {
-                    const bonus = Math.floor(Math.random() * 4) + 1;
-                    roll += bonus;
-                    logMsg += ` + ${bonus} (${activeCrewMember.name})`;
-                    const crewKey = Object.keys(gameState.crew).find(k => gameState.crew[k].name === activeCrewMember.name);
+                    const isSkilled = getBonusForSkill(activeCrewMember, gameState.lastSkillType);
                     
-                    // Check for FREE use from Pearlescent Mushroom
-                    if (gameState.crewUseFree) {
-                        logMsg += ` [FREE USE: Mushroom Clarity]`;
-                        gameState.crewUseFree = false; // Consume the "free use" opportunity
+                    if (isSkilled || gameState.crewUseFree) {
+                        const bonus = Math.floor(Math.random() * 4) + 1;
+                        roll += bonus;
+                        crewUsedName = activeCrewMember.name;
+                        logMsg += ` + ${bonus} (${crewUsedName})`;
+
+                        const crewKey = activeCrewMember.id;
+                        
+                        // If it's not a free use, mark as used
+                        if (!gameState.crewUseFree) {
+                            gameState.crew[crewKey].used = true;
+                            // Store the ID of the crew member used on this successful check
+                            if (roll >= gameState.lastDC) {
+                                gameState.lastCrewUsedId = crewKey;
+                            }
+                        }
+                        gameState.crewUseFree = false; // Consume the free use if it existed
                     } else {
-                        gameState.crew[crewKey].used = true; // Mark as used, normal cost
+                        crewUsedName = activeCrewMember.name;
+                        logMsg += ` + 0 (${crewUsedName} - Invalid Skill)`;
+                        // Do not mark as used if skill was invalid
                     }
-                    
                     activeCrewMember = null;
                 }
 
                 addToHistory(`${logMsg} = ${roll}`, 'roll');
-                const nextId = scene.resolve(roll, gameState); // Passing state to resolve for influence checks
+                
+                // Resolve logic scene immediately based on this roll
+                const nextId = scene.resolve(roll, gameState); 
                 saveGame();
                 renderScene(nextId); 
                 return;
@@ -1309,10 +1387,8 @@
             let finalHtml = `<h2 class="text-2xl cinzel text-amber-500 mb-2">${scene.title}</h2><p class="text-lg leading-relaxed text-gray-300 fade-in">${scene.text}</p>`;
             
             // --- BANTER INJECTION (AUTOMATIC) ---
-            // Check if this scene has banter for ANY available crew member
             if (scene.banter) {
                 Object.keys(scene.banter).forEach(crewId => {
-                    // Only show if the crew member has NOT been used yet
                     if (gameState.crew[crewId] && !gameState.crew[crewId].used) {
                          finalHtml += `<div class="mt-4 text-blue-400 italic border-l-2 border-blue-500 pl-3 fade-in">
                                 <span class="font-bold text-xs uppercase block mb-1">${gameState.crew[crewId].name}:</span>
@@ -1353,7 +1429,6 @@
                         return;
                     }
 
-                    // Item consumption logic (happens before scene change)
                     if (choice.consume && choice.reqItem) {
                         const idx = gameState.inventory.indexOf(choice.reqItem);
                         if (idx > -1) {
@@ -1370,48 +1445,15 @@
 
                     if (choice.cost) gameState.shillings -= choice.cost;
                     
-                    // --- SKILL CHECK LOGIC WITH FREE-USE FLAG ---
+                    // --- SKILL CHECK LOGIC WITH COMPLEX CREW TRACKING ---
                     if (choice.type === 'skill') {
-                        let roll = Math.floor(Math.random() * 20) + 1;
-                        let logMsg = `Check (DC ${choice.dc}): Rolled d20 (${roll})`;
+                        // Store required skill type and DC for the logic scene resolution
+                        gameState.lastSkillType = choice.skill;
                         gameState.lastDC = choice.dc;
-
-                        if (activeCrewMember) {
-                            // Check if the selected crew member is SKILLED in this specific check
-                            const isSkilled = getBonusForSkill(activeCrewMember, choice.skill);
-                            
-                            if (isSkilled) {
-                                // SUCCESS: Add bonus
-                                const bonus = Math.floor(Math.random() * 4) + 1;
-                                roll += bonus;
-                                logMsg += ` + ${bonus} (${activeCrewMember.name})`;
-
-                                // ** NEW LOGIC: Check for FREE use **
-                                if (gameState.crewUseFree) {
-                                    logMsg += ` [FREE USE: Mushroom Clarity]`;
-                                    gameState.crewUseFree = false; // Consume the "free use" opportunity
-                                } else {
-                                    // Normal Cost: Mark as used
-                                    const crewKey = activeCrewMember.id; 
-                                    gameState.crew[crewKey].used = true;
-                                }
-                            } else {
-                                // FAIL: No bonus, Crew NOT spent
-                                logMsg += ` + 0 (${activeCrewMember.name} - Invalid Skill)`;
-                                // Do not mark as used or consume free use
-                            }
-                            activeCrewMember = null; // Deselect after attempt
-                        }
                         
-                        addToHistory(`${logMsg} = ${roll}`, 'roll');
-                        
-                        // Resolve logic scene immediately based on this roll
-                        const logicScene = scenes[choice.nextScene];
-                        if (logicScene && logicScene.isLogic) {
-                            const nextId = logicScene.resolve(roll, gameState);
-                            renderScene(nextId);
-                            return;
-                        }
+                        // Handle the roll in the next scene to allow for complex logic checks (like Talon's Cargo)
+                        renderScene(choice.nextScene);
+                        return;
                     }
                     
                     // Non-skill choices or if logic flow differs
@@ -1521,41 +1563,39 @@
                 
                 let baseClass = "p-2 rounded border text-left transition-all relative overflow-hidden ";
                 
-                // Show FREE USE indicator
-                if (gameState.crewUseFree) {
-                    baseClass += " border-purple-400 ring-2 ring-purple-600 bg-purple-900/20 ";
-                }
+                // Add crew-active pulse if the free use is available and this crew member is selected
+                const isFreeUseActive = gameState.crewUseFree && isSelected;
                 
-                if (c.used && !gameState.crewUseFree) { // Don't show used if free use is active
+                if (c.used && !isFreeUseActive) {
                     baseClass += "bg-black/50 border-gray-800 text-gray-700 cursor-not-allowed opacity-50";
                 } else if (isSelected) {
                     baseClass += "bg-blue-900/40 border-blue-400 text-blue-100 crew-active ring-1 ring-blue-400";
+                    if (isFreeUseActive) {
+                         baseClass += " bg-purple-900/40 border-purple-400 crew-active";
+                    }
                 } else {
                     baseClass += "bg-gray-800 border-gray-600 text-gray-300 hover:border-gray-400 hover:bg-gray-700";
                 }
 
                 // --- TUTORIAL PULSE LOGIC ---
-                // If scene is 'start', Quinn is unused, and no crew is active -> pulse Amber
                 if (gameState.currentSceneId === 'start' && c.name === 'Quinn' && !c.used && !activeCrewMember) {
                     baseClass += " tutorial-pulse";
                 }
 
                 btn.className = baseClass;
-                // Only disable if USED AND NOT a free use opportunity
-                btn.disabled = c.used && !gameState.crewUseFree; 
+                // Only disable if USED and NOT free-use selected
+                btn.disabled = c.used && !isFreeUseActive;
                 btn.innerHTML = `
                     <div class="font-bold text-[12px] cinzel leading-tight">${c.name}</div>
                     <div class="text-[10px] ${isSelected ? 'text-blue-200' : 'text-gray-500'}">${c.skill}</div>
-                    ${(c.used && !gameState.crewUseFree) ? '<i class="fas fa-lock absolute top-1 right-1 text-[10px]"></i>' : ''}
-                    ${gameState.crewUseFree ? '<span class="absolute top-0 right-0 text-[8px] bg-purple-600 text-white px-1 py-0.5 rounded-bl-md font-bold">FREE USE</span>' : ''}
+                    ${c.used ? '<i class="fas fa-lock absolute top-1 right-1 text-[10px]"></i>' : ''}
+                    ${isFreeUseActive ? '<i class="fas fa-gift absolute top-1 right-1 text-[10px] text-purple-300"></i>' : ''}
                 `;
                 btn.onclick = () => {
-                    // Audio Hook for Crew Buttons
                     audioManager.playClick();
                     
                     if (isSelected) {
                         activeCrewMember = null;
-                        // No ghost sound here
                     } else {
                         activeCrewMember = c;
                         audioManager.playGhost(); // Only play when selecting
@@ -1589,7 +1629,7 @@
                     leftSide.className = 'flex items-center gap-3';
                     leftSide.innerHTML = `
                         <div class="text-lg w-5 text-center ${itemDef.color}"><i class="fas ${itemDef.icon}"></i></div>
-                        <span class="text-xs cinzel text-gray-300 group-hover:text-gray-100 transition-colors">${itemName.split('(')[0]}</span>
+                        <span class="text-xs cinzel text-gray-300 group-hover:text-gray-100 transition-colors">${itemName.split('(')[0].trim()}</span>
                     `;
                     itemRow.appendChild(leftSide);
 
