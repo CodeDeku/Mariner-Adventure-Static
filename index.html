@@ -584,7 +584,7 @@
                 type: 'key',
                 icon: 'fa-box-open', 
                 color: 'text-yellow-600',
-                desc: "Passive: A heavy crate of smuggled goods. Can be sold to the Merchant for coin or traded to the smugglers for influence.",
+                desc: "Passive: A heavy crate of mysterious goods.",
                 btnText: "SELL",
                 action: (state) => {
                     return "Must be sold at the Market or traded at the Cove.";
@@ -757,8 +757,8 @@
             // NEW SCENE for Talon's specific success (acquiring cargo)
             'trail_success_talon': {
                 title: "Smuggler's Route",
-                text: "Talon guides your movement, emphasizing silence and observation. You emerge near a hidden cove, spotting a marked crate abandoned near the tideline—Curious Cargo. You grab it just before noticing a group of men loading crates. <span class='memory-keyword' data-lore='The unseen veins of the coast. They value coin above law.'>Smugglers</span>.",
-                journal: "Talon's skill led me through the brush. Found Curious Cargo and reached a Smuggler's Cove unseen.",
+                text: "Talon guides your movement, emphasizing silence and observation. You emerge near a hidden cove, spotting a marked crate abandoned near the tideline. You grab it just before noticing a group of men loading crates. <span class='memory-keyword' data-lore='The unseen veins of the coast. They value coin above law.'>Smugglers</span>.",
+                journal: "Talon's skill led me through the brush. Found some mysterious Cargo and reached a Smuggler's Cove unseen.",
                 banter: {
                     'bones': "I smell rum... and unwashed men."
                 },
@@ -865,7 +865,7 @@
             'smuggler_cargo': {
                 title: "A Smuggler's Trust",
                 text: "The lead smuggler inspects the crate, nodding slowly. 'This is high-value. You've earned our trust, Mariner. Your loyalty is payment enough.'",
-                journal: "Traded Curious Cargo directly to the smugglers for high influence.",
+                journal: "Traded Curious Cargo directly to the smugglers.",
                 onEnter: (state) => {
                     const idx = state.inventory.indexOf("Curious Cargo");
                     if (idx > -1) state.inventory.splice(idx, 1);
