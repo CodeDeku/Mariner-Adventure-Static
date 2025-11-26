@@ -68,8 +68,8 @@
 
         /* --- LORE TOOLTIPS --- */
         .memory-keyword {
-            color: #60a5fa; 
-            text-shadow: 0 0 8px rgba(59, 130, 246, 0.5); 
+            color: #60a5fa; /* Blue-400 */
+            text-shadow: 0 0 8px rgba(59, 130, 246, 0.5); /* Soft Glow */
             cursor: help;
             position: relative;
             transition: all 0.3s ease;
@@ -77,17 +77,18 @@
             border-bottom: 1px solid transparent; 
         }
         .memory-keyword:hover {
-            text-shadow: 0 0 12px rgba(59, 130, 246, 0.9), 0 0 2px #fff; 
-            color: #bfdbfe; 
+            text-shadow: 0 0 12px rgba(59, 130, 246, 0.9), 0 0 2px #fff; /* Intense Glow */
+            color: #bfdbfe; /* Blue-200 */
         }
+        /* Tooltip Box */
         .memory-keyword:hover::after {
             content: attr(data-lore);
             position: absolute;
             bottom: 100%;
             left: 50%;
             transform: translateX(-50%) translateY(-8px);
-            background: #0f172a; 
-            border: 1px solid #3b82f6; 
+            background: #0f172a; /* Slate-900 */
+            border: 1px solid #3b82f6; /* Blue-500 */
             color: #e2e8f0;
             padding: 10px;
             border-radius: 4px;
@@ -105,6 +106,7 @@
         }
         @keyframes fadeInTooltip { to { opacity: 1; } }
 
+        /* Tooltip Arrow */
         .memory-keyword:hover::before {
             content: '';
             position: absolute;
@@ -151,7 +153,7 @@
 
         .water-stained {
             background-color: #1e293b;
-            background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23334155' fill-opacity='0.1' fill-rule='evenodd'/%3E%3C/svg%3E");
+            background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23334155' fill-opacity='0.1' fill-rule='evenodd'/%3E%3C/svg%3E");
         }
         
         .fade-in { animation: fadeIn 0.8s ease-in; }
@@ -646,12 +648,13 @@
                 text: "The forest looms ahead, trees twisted like grasping hands. You adjust the weight of the cutlass and logbook. The voices are a dull murmur, satisfied for the moment. A well-traveled road cuts through the center, but Talon notices a faint game trail disappearing into the brush.",
                 journal: "I reached the treeline with the Log and my gear. The voices are quieter now. Talon pointed out a hidden path.",
                 banter: {
+                    'gareth': "Stick to the road, lad. We need steady ground.",
                     'talon': "The road is watched. The wild is ours.",
                     'bones': "Game trail. Good eating, safe walking." // Added Bones
                 },
                 choices: [
                     { text: "Take the Main Road", nextScene: 'road_encounter', type: 'travel' },
-                    { text: "Take the Game Trail (Survival DC 12)", nextScene: 'trail_check', type: 'skill', dc: 12, skill: 'Survival' }
+                    { text: "Follow Talon's Lead (Survival DC 12 - Talon/Bones)", nextScene: 'trail_check', type: 'skill', dc: 12, skill: 'Survival' }
                 ]
             },
             'treeline': {
@@ -667,7 +670,7 @@
                 },
                 choices: [
                     { text: "Take the Main Road", nextScene: 'road_encounter', type: 'travel' },
-                    { text: "Take the Game Trail (Survival DC 12)", nextScene: 'trail_check', type: 'skill', dc: 12, skill: 'Survival' }
+                    { text: "Follow Talon's Lead (Survival DC 12 - Talon/Bones)", nextScene: 'trail_check', type: 'skill', dc: 12, skill: 'Survival' }
                 ]
             },
             'road_encounter': {
@@ -815,6 +818,9 @@
                 title: "The Merchant",
                 text: "A hooded figure displays goods on a crate. 'Coin for survival, traveler?'",
                 journal: null,
+                banter: {
+                    'quinn': "Supplies are the difference between a legend and a corpse. Buy what you can."
+                },
                 choices: [
                     { text: "Buy Healing Potion (5s)", nextScene: 'buy_potion', type: 'action', cost: 5 },
                     { text: "Buy Rope (3s)", nextScene: 'buy_rope', type: 'action', cost: 3 },
@@ -1225,21 +1231,19 @@
                 let logMsg = `Check (DC ${gameState.lastDC || 10}): Rolled d20 (${roll})`;
                 
                 if (activeCrewMember) {
-                    // LOGIC: Only give bonus if skilled
-                    // Since this runs after the user clicks a skill check,
-                    // we don't know WHICH skill they clicked here if there are multiple logic paths.
-                    // However, for this demo, logic scenes usually have one clear "skill" implied by previous button.
-                    // To properly restrict this, we need to pass the 'skillType' from the button click to here.
-                    // But for now, let's assume the bonus applies IF the logic scene resolves it.
-                    // The button click logic below ALREADY handles the filtering!
-                    // So if we are here, it means a valid (or invalid +0) roll was already processed?
-                    // Wait, renderScene(logic) is called recursively.
-                    // The button click calculates the bonus FIRST.
-                    // So this block is actually redundant/legacy if we move logic to button click.
-                    
-                    // Correction: The `isLogic` scenes generate a roll. 
-                    // We need to capture the active crew member bonus inside the button click instead.
+                    const bonus = Math.floor(Math.random() * 4) + 1;
+                    roll += bonus;
+                    logMsg += ` + ${bonus} (${activeCrewMember.name})`;
+                    const crewKey = Object.keys(gameState.crew).find(k => gameState.crew[k].name === activeCrewMember.name);
+                    gameState.crew[crewKey].used = true;
+                    activeCrewMember = null;
                 }
+
+                addToHistory(`${logMsg} = ${roll}`, 'roll');
+                const nextId = scene.resolve(roll, gameState); // Passing state to resolve for influence checks
+                saveGame();
+                renderScene(nextId); 
+                return;
             }
 
             gameState.currentSceneId = sceneId;
