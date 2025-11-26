@@ -996,8 +996,9 @@
                     const idx = state.inventory.indexOf("Rope");
                     if (idx > -1) state.inventory.splice(idx, 1);
                     state.shillings += 2;
+                    scenes['market_stall'].stock["Rope"] = (scenes['market_stall'].stock["Rope"] || 0) + 1; // INCREMENT STOCK
                     audioManager.playCoins();
-                    return "Sold Rope (+2s)";
+                    return "Sold Rope (+2s). Merchant stock increased.";
                 },
                 choices: [{ text: "Continue Selling", nextScene: 'market_sell', type: 'travel' }]
             },
@@ -1009,8 +1010,9 @@
                     const idx = state.inventory.indexOf("Torch");
                     if (idx > -1) state.inventory.splice(idx, 1);
                     state.shillings += 1;
+                    scenes['market_stall'].stock["Torch"] = (scenes['market_stall'].stock["Torch"] || 0) + 1; // INCREMENT STOCK
                     audioManager.playCoins();
-                    return "Sold Torch (+1s)";
+                    return "Sold Torch (+1s). Merchant stock increased.";
                 },
                 choices: [{ text: "Continue Selling", nextScene: 'market_sell', type: 'travel' }]
             },
@@ -1022,8 +1024,9 @@
                     const idx = state.inventory.indexOf("Healing Potion");
                     if (idx > -1) state.inventory.splice(idx, 1);
                     state.shillings += 3;
+                    scenes['market_stall'].stock["Healing Potion"] = (scenes['market_stall'].stock["Healing Potion"] || 0) + 1; // INCREMENT STOCK
                     audioManager.playCoins();
-                    return "Sold Potion (+3s)";
+                    return "Sold Potion (+3s). Merchant stock increased.";
                 },
                 choices: [{ text: "Continue Selling", nextScene: 'market_sell', type: 'travel' }]
             },
@@ -1035,8 +1038,11 @@
                     const idx = state.inventory.indexOf("Rum (Heal 5)");
                     if (idx > -1) state.inventory.splice(idx, 1);
                     state.shillings += 2; 
+                    // Rum is not defined in market_stall stock by default, but we should update it if sold
+                    // We'll treat Rum as adding to general stock, even if it wasn't bought initially
+                    scenes['market_stall'].stock["Rum (Heal 5)"] = (scenes['market_stall'].stock["Rum (Heal 5)"] || 0) + 1; // INCREMENT STOCK
                     audioManager.playCoins();
-                    return "Sold Rum (+2s)";
+                    return "Sold Rum (+2s). Merchant stock increased.";
                 },
                 choices: [{ text: "Continue Selling", nextScene: 'market_sell', type: 'travel' }]
             },
@@ -1582,10 +1588,13 @@
                 // 1. Generate Dynamic Buy Options
                 MARKET_BUY_OPTIONS.forEach(sale => {
                     const stock = currentSceneStock[sale.item] || 0;
-                    if (stock > 0) {
+                    // FIX: Check if the item has been added back to stock by selling (Rum)
+                    const actualStock = currentSceneStock[sale.item] !== undefined ? currentSceneStock[sale.item] : (sale.item === "Rum (Heal 5)" ? (currentSceneStock["Rum (Heal 5)"] || 0) : stock);
+
+                    if (actualStock > 0) {
                         processedChoices.push({
                             // MODIFIED: Removed redundant cost, just item name and stock
-                            text: `Buy ${sale.item.split('(')[0].trim()} (Stock: ${stock})`,
+                            text: `Buy ${sale.item.split('(')[0].trim()} (Stock: ${actualStock})`,
                             nextScene: sale.nextScene,
                             type: 'action',
                             cost: sale.cost,
@@ -1665,7 +1674,9 @@
                     // --- FINAL STOCK CHECK BEFORE TRANSACTION (Crucial Fix) ---
                     // 1. Check buying stock
                     if (choice.type === 'action' && currentSceneId === 'market_stall' && choice.stockItem) {
-                         if (currentSceneStock[choice.stockItem] <= 0) {
+                         // Check the *actual* current stock
+                         const currentStock = scenes['market_stall'].stock[choice.stockItem] || 0;
+                         if (currentStock <= 0) {
                             addToHistory(`${choice.stockItem} is out of stock.`, 'system');
                             updateUI();
                             return;
@@ -1722,7 +1733,7 @@
 
                 if (choice.type === 'skill') {
                     // Skill notation and dice icon are aligned immediately after the label
-                    // Increase skill text size to text-sm (MODIFIED)
+                    // Increase skill text size to text-sm 
                     supplementalText += ` <span class="text-blue-400 text-sm uppercase tracking-wider ml-2 mr-4">[${choice.skill} DC ${choice.dc}]</span>`;
                     icon = '<i class="fas fa-dice-d20 text-blue-500"></i>';
                 }
@@ -1744,7 +1755,7 @@
                 }
 
                 if (transactionIndicator) {
-                    // Increase size to text-sm (MODIFIED)
+                    // Increase size to text-sm
                     supplementalText += ` <span class="${indicatorColor} text-sm ml-1">${transactionIndicator}</span>`;
                 }
                 // --- End Transaction Display ---
