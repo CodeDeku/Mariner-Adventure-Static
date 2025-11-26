@@ -53,7 +53,7 @@
             border-color: #60a5fa !important;
         }
 
-        /* Text Color for all spectral elements (Skill Check, Banter, Lore, Journal Links) */
+        /* Text Color for all spectral elements (Skill Check, Banter, Lore, Journal Links, Dice Icon) */
         .spectral-text-glow {
             color: #93c5fd; /* Light Blue-300: High contrast, ghostly tone */
             text-shadow: 0 0 5px rgba(59, 130, 246, 0.6);
@@ -269,8 +269,6 @@
                         
                         <div class="relative w-full h-3 bg-gray-800 rounded-full border border-gray-600 overflow-hidden">
                             <div class="absolute inset-0 bg-gradient-to-r from-blue-900 via-gray-800 to-emerald-900 opacity-60"></div>
-                            
-                            <div class="absolute left-1/2 top-0 bottom-0 w-px bg-gray-500 z-0"></div>
                             
                             <div id="inf-marker" class="absolute top-0 bottom-0 w-1.5 bg-white shadow-[0_0_10px_rgba(255,255,255,0.8)] z-10 rounded-full transform -translate-x-1/2" style="left: 50%;"></div>
                         </div>
@@ -862,11 +860,11 @@
             'guard_respect': {
                 title: "Order and Law",
                 text: "You salute with practiced discipline. 'Just a shipwrecked sailor, sir. Keeping to the road.' The Guard straightens, recognizing the posture. 'Carry on then. Watch for the cove rats.'",
-                journal: "I showed the Guard respect. He treated me like a man, not a rat.",
+                journal: "I showed the Guard respect (Order +4).",
                 onEnter: (state) => {
                     // APPLY NEGATIVE INFLUENCE SHIFT (Order)
                     state.influence = Math.max(-20, state.influence - 4); 
-                    return "Showed Respect (Order -4)";
+                    return "Showed Respect (+4 Order)";
                 },
                 choices: [{ text: "Head to Market Crossroads", nextScene: 'market_crossroads', type: 'travel' }]
             },
@@ -1256,7 +1254,7 @@
                 journal: null,
                 onEnter: (state) => {
                     const shanty = `The shanty holds the truth. I must find the Ring and the Blade to save my crew. I am the Captain now.<br><br>
-                      <i class='text-blue-300 spectral-text-glow'>“There’s a tax for the coin and a tax for the bread,<br>
+                      <i class='spectral-text-glow'>“There’s a tax for the coin and a tax for the bread,<br>
                       But who pays the toll for the army of dead?<br>
                       The Wolf King did, so the legends say,<br>
 					  To call back the souls who lost their way.<br><br>
@@ -1476,12 +1474,13 @@
         function addToHistory(text, type = 'entry') {
             let html = '';
             if (type === 'entry') {
-                // Apply spectral-text-glow to journal links/names
+                // Apply spectral-text-glow to crew names in the journal
                 const processedText = text.replace(/(Captain Gareth|Quinn|Talon|Bones|Wolf King|Ring|Blade)/g, '<span class="spectral-text-glow">$1</span>');
                 html = `<div class="journal-font pb-4 border-b border-gray-700/30 text-gray-400 fade-in">${processedText}</div>`;
             } else if (type === 'system') {
                 html = `<div class="text-xs text-amber-500 font-mono mb-2 fade-in">> ${text}</div>`;
             } else if (type === 'roll') {
+                // Apply spectral-text-glow to roll results
                 html = `<div class="text-xs spectral-text-glow font-bold mb-2 fade-in font-serif">${text}</div>`;
             }
             gameState.history.push(html);
@@ -1586,7 +1585,7 @@
             if (scene.banter) {
                 Object.keys(scene.banter).forEach(crewId => {
                     if (gameState.crew[crewId] && !gameState.crew[crewId].used) {
-                        // Apply spectral glow to banter text
+                        // Apply spectral glow to banter text (MODIFIED)
                          finalHtml += `<div class="mt-4 spectral-text-glow italic border-l-2 border-blue-500 pl-3 fade-in">
                                 <span class="font-bold text-xs uppercase block mb-1">${gameState.crew[crewId].name}:</span>
                                 "${scene.banter[crewId]}"
@@ -1779,7 +1778,8 @@
                     // Skill notation and dice icon are aligned immediately after the label
                     // Apply spectral glow effect (MODIFIED)
                     supplementalText += ` <span class="spectral-text-glow text-sm uppercase tracking-wider ml-2 mr-4">[${choice.skill} DC ${choice.dc}]</span>`;
-                    icon = '<i class="fas fa-dice-d20 text-blue-500"></i>';
+                    // Dice icon also receives spectral glow (MODIFIED)
+                    icon = '<i class="fas fa-dice-d20 spectral-text-glow"></i>';
                 }
                 
                 // --- Consistent Currency/Value/Influence Display ---
@@ -1798,7 +1798,8 @@
                     indicatorColor = 'text-emerald-400';
                 } else if (choice.orderGain) {
                     // Order Gain (Negative Influence Shift) - Use primary blue-400 (MODIFIED)
-                    transactionIndicator = `(+${choice.orderGain} Order)`; // Displayed as positive RP gain
+                    // RP FIX: Display as +Gain
+                    transactionIndicator = `(+${choice.orderGain} Order)`; 
                     indicatorColor = 'text-blue-400'; // Primary Order Faction Color
                 }
 
