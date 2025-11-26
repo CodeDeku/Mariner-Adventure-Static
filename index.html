@@ -635,7 +635,8 @@
         const MARKET_BUY_OPTIONS = [
             { item: "Healing Potion", nextScene: 'buy_potion', cost: 5 },
             { item: "Rope", nextScene: 'buy_rope', cost: 3 },
-            { item: "Torch", nextScene: 'buy_torch', cost: 2 }
+            { item: "Torch", nextScene: 'buy_torch', cost: 2 },
+            { item: "Rum (Heal 5)", nextScene: 'buy_rum', cost: 4 } // NEW: Rum is now a purchasable blueprint item
         ];
 
         const MARKET_SELL_OPTIONS = [
@@ -952,7 +953,8 @@
                     "Healing Potion": 1,
                     "Rope": 1,
                     "Torch": 1,
-                    "Curious Cargo": 1 // Tracks how many times this merchant will buy the cargo
+                    "Curious Cargo": 1, // Tracks how many times this merchant will buy the cargo
+                    "Rum (Heal 5)": 0 // Rum starts at zero stock
                 },
                 // --- END LOCAL STOCK ---
                 banter: {
@@ -1038,13 +1040,24 @@
                     const idx = state.inventory.indexOf("Rum (Heal 5)");
                     if (idx > -1) state.inventory.splice(idx, 1);
                     state.shillings += 2; 
-                    // Rum is not defined in market_stall stock by default, but we should update it if sold
-                    // We'll treat Rum as adding to general stock, even if it wasn't bought initially
                     scenes['market_stall'].stock["Rum (Heal 5)"] = (scenes['market_stall'].stock["Rum (Heal 5)"] || 0) + 1; // INCREMENT STOCK
                     audioManager.playCoins();
                     return "Sold Rum (+2s). Merchant stock increased.";
                 },
                 choices: [{ text: "Continue Selling", nextScene: 'market_sell', type: 'travel' }]
+            },
+            // NEW SCENE: buy_rum (for dynamic repurchasing)
+             'buy_rum': {
+                title: "Purchase",
+                text: "You exchange coin for the bottle of grog.",
+                journal: "I bought a bottle of rum.",
+                onEnter: (state) => { 
+                    state.inventory.push("Rum (Heal 5)"); 
+                    scenes['market_stall'].stock["Rum (Heal 5)"] -= 1; // Decrease local stock
+                    audioManager.playCoins();
+                    return "Bought Rum."; 
+                },
+                choices: [{ text: "Return to Merchant", nextScene: 'market_stall', type: 'travel' }]
             },
             'buy_potion': {
                 title: "Purchase",
@@ -1269,7 +1282,8 @@
             "Healing Potion": 1,
             "Rope": 1,
             "Torch": 1,
-            "Curious Cargo": 1 // Tracks how many times this merchant will buy the cargo (1 max)
+            "Curious Cargo": 1, // Tracks how many times this merchant will buy the cargo
+            "Rum (Heal 5)": 0 // Rum starts at zero stock
         };
         
         async function generateSceneImage(sceneId) {
@@ -1416,7 +1430,8 @@
                 "Healing Potion": 1,
                 "Rope": 1,
                 "Torch": 1,
-                "Curious Cargo": 1 
+                "Curious Cargo": 1, 
+                "Rum (Heal 5)": 0 // Ensure Rum starts at 0 stock here
             };
 
             document.getElementById('journal-content').innerHTML = '';
@@ -1587,18 +1602,17 @@
 
                 // 1. Generate Dynamic Buy Options
                 MARKET_BUY_OPTIONS.forEach(sale => {
-                    const stock = currentSceneStock[sale.item] || 0;
-                    // FIX: Check if the item has been added back to stock by selling (Rum)
-                    const actualStock = currentSceneStock[sale.item] !== undefined ? currentSceneStock[sale.item] : (sale.item === "Rum (Heal 5)" ? (currentSceneStock["Rum (Heal 5)"] || 0) : stock);
-
+                    // Check local stock for this item name
+                    const actualStock = currentSceneStock[sale.item] || 0;
+                    
+                    // We only list items the merchant is willing to sell AND currently has stock for.
                     if (actualStock > 0) {
                         processedChoices.push({
-                            // MODIFIED: Removed redundant cost, just item name and stock
                             text: `Buy ${sale.item.split('(')[0].trim()} (Stock: ${actualStock})`,
                             nextScene: sale.nextScene,
                             type: 'action',
                             cost: sale.cost,
-                            stockItem: sale.item // Used for stock check in onclick
+                            stockItem: sale.item 
                         });
                     }
                 });
@@ -1621,14 +1635,16 @@
 
                 // Generate Dynamic Sell Options
                 MARKET_SELL_OPTIONS.forEach(sell => {
+                    // Check if the player has the item in inventory
                     if (gameState.inventory.includes(sell.item)) {
-                        // Special check for Curious Cargo: Merchant won't buy it if stock is 0
+                        
+                        // Special check for Curious Cargo: Merchant won't buy it if stock is 0 (one-time buy)
                         if (sell.item === 'Curious Cargo' && marketStock['Curious Cargo'] === 0) {
-                            return; // Merchant has already bought it once
+                            return; 
                         }
-
+                        
                         processedChoices.push({
-                            text: `Sell ${sell.item.split('(')[0].trim()}`, // MODIFIED: Removed (+Xs) here
+                            text: `Sell ${sell.item.split('(')[0].trim()}`, 
                             nextScene: sell.nextScene,
                             type: 'action',
                             reqItem: sell.item,
