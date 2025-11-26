@@ -860,7 +860,7 @@
             'guard_respect': {
                 title: "Order and Law",
                 text: "You salute with practiced discipline. 'Just a shipwrecked sailor, sir. Keeping to the road.' The Guard straightens, recognizing the posture. 'Carry on then. Watch for the cove rats.'",
-                journal: "I showed the Guard respect (+4 Order).",
+                journal: "I showed the Guard a little respect and he let me pass with ease.",
                 onEnter: (state) => {
                     // APPLY NEGATIVE INFLUENCE SHIFT (Order)
                     state.influence = Math.max(-20, state.influence - 4); 
@@ -871,7 +871,7 @@
             'guard_bribe': {
                 title: "The Toll",
                 text: "He bites the gold. 'Get moving. Head to the Market, don't linger here.'",
-                journal: "Paid the toll. I played the game and walked away neutral.",
+                journal: "Paid the toll. I played the game and walked away unscathed.",
                 onEnter: (state) => { 
                     audioManager.playCoins();
                     return "Bribed Guard (Neutral Act)."; 
@@ -1478,7 +1478,7 @@
             let html = '';
             if (type === 'entry') {
                 // Apply spectral-text-glow to crew names in the journal
-                const processedText = text.replace(/(Captain Gareth|Quinn|Talon|Bones|Wolf King|Ring|Blade)/g, '<span class="spectral-text-glow">$1</span>');
+                const processedText = text.replace(/(Captain Gareth|Gareth|Quinn|Talon|Bones|Wolf King|Ring|Blade)/g, '<span class="spectral-text-glow">$1</span>');
                 html = `<div class="journal-font pb-4 border-b border-gray-700/30 text-gray-400 fade-in">${processedText}</div>`;
             } else if (type === 'system') {
                 html = `<div class="text-xs text-amber-500 font-mono mb-2 fade-in">> ${text}</div>`;
