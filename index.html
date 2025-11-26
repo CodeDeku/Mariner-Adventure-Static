@@ -680,7 +680,7 @@
                     return null;
                 },
                 choices: [
-                    { text: "Search the debris (Investigation)", nextScene: 'wreckage_search', type: 'skill', dc: 8, skill: 'Investigation' },
+                    { text: "Search the debris", nextScene: 'wreckage_search', type: 'skill', dc: 8, skill: 'Investigation' }, // MODIFIED: Removed redundant skill text
                     { text: "Head toward the treeline", nextScene: 'treeline', type: 'travel' }
                 ]
             },
@@ -727,7 +727,7 @@
                 },
                 choices: [
                     { text: "Take the Main Road", nextScene: 'road_encounter', type: 'travel' },
-                    { text: "Follow Talon's Lead (Survival DC 12 - Talon/Bones)", nextScene: 'trail_check', type: 'skill', dc: 12, skill: 'Survival' }
+                    { text: "Follow Talon's Lead", nextScene: 'trail_check', type: 'skill', dc: 12, skill: 'Survival' } // MODIFIED: Removed redundant skill text
                 ]
             },
             'treeline': {
@@ -743,7 +743,7 @@
                 },
                 choices: [
                     { text: "Take the Main Road", nextScene: 'road_encounter', type: 'travel' },
-                    { text: "Follow Talon's Lead (Survival DC 12 - Talon/Bones)", nextScene: 'trail_check', type: 'skill', dc: 12, skill: 'Survival' }
+                    { text: "Follow Talon's Lead", nextScene: 'trail_check', type: 'skill', dc: 12, skill: 'Survival' } // MODIFIED: Removed redundant skill text
                 ]
             },
             'road_encounter': {
@@ -834,7 +834,7 @@
                 choices: [
                     { text: "Bribe him (5 Shillings)", nextScene: 'guard_bribe', type: 'action', cost: 5 },
                     { text: "Show Respect (Diplomacy)", nextScene: 'guard_respect', type: 'dialogue' },
-                    { text: "Intimidate him (Insight DC 13)", nextScene: 'guard_intimidate_check', type: 'skill', dc: 13, skill: 'Insight' },
+                    { text: "Intimidate him", nextScene: 'guard_intimidate_check', type: 'skill', dc: 13, skill: 'Insight' }, // MODIFIED: Removed redundant skill text
                     { text: "Attack", nextScene: 'combat_guard', type: 'combat' }
                 ]
             },
@@ -959,7 +959,6 @@
                 },
                 choices: [
                     // NOTE: Buy options are generated dynamically in renderChoices
-                    // "Sell Wares (Earn Coin)" changed to "Sell Wares"
                     { text: "Sell Wares", nextScene: 'market_sell', type: 'travel' }, 
                     { text: "Leave", nextScene: 'lighthouse_split', type: 'travel' }
                 ]
@@ -1090,7 +1089,7 @@
                 text: "The wind howls, threatening to tear you from the rock.",
                 choices: [
                     { text: "Use Rope (Safe Climb)", nextScene: 'lighthouse_arrival', type: 'action', reqItem: 'Rope', consume: true },
-                    { text: "Free Solo (Athletics DC 14)", nextScene: 'climb_check', type: 'skill', dc: 14, skill: 'Athletics' } 
+                    { text: "Free Solo", nextScene: 'climb_check', type: 'skill', dc: 14, skill: 'Athletics' } // MODIFIED: Removed redundant skill text
                 ]
             },
             'climb_check': {
@@ -1116,7 +1115,7 @@
                 },
                 choices: [
                     { text: "Light Torch (Safe Passage)", nextScene: 'dark_caves_illuminated', type: 'action', reqItem: 'Torch', consume: true },
-                    { text: "Stumble in Dark (Perception DC 14)", nextScene: 'dark_check', type: 'skill', dc: 14, skill: 'Perception' }
+                    { text: "Stumble in Dark", nextScene: 'dark_check', type: 'skill', dc: 14, skill: 'Perception' } // MODIFIED: Removed redundant skill text
                 ]
             },
             // Updated Mushroom Scene
@@ -1184,7 +1183,7 @@
                 journal: "The Lighthouse is sealed. I need to find the mechanism to enter.",
                 choices: [
                     // Insight DC 15 (Captain Gareth)
-                    { text: "Analyze the mechanism (Insight DC 15)", nextScene: 'neutral_lock_logic', type: 'skill', dc: 15, skill: 'Insight' }
+                    { text: "Analyze the mechanism", nextScene: 'neutral_lock_logic', type: 'skill', dc: 15, skill: 'Insight' } // MODIFIED: Removed redundant skill text
                 ]
             },
             'neutral_lock_logic': {
@@ -1584,7 +1583,7 @@
                     const stock = currentSceneStock[sale.item] || 0;
                     if (stock > 0) {
                         processedChoices.push({
-                            // FIX 1: Removed redundant cost (e.g., "(2s)")
+                            // FIX: Removed redundant cost, just item name and stock
                             text: `Buy ${sale.item.split('(')[0].trim()} (Stock: ${stock})`,
                             nextScene: sale.nextScene,
                             type: 'action',
@@ -1598,7 +1597,7 @@
                 // Find and rename the "Sell Wares (Earn Coin)" button.
                 const sellWaresChoice = choices.find(c => c.nextScene === 'market_sell');
                 if (sellWaresChoice) {
-                    // FIX 2: Renamed the selling button text
+                    // FIX: Renamed the selling button text
                     sellWaresChoice.text = "Sell Wares"; 
                     processedChoices.push(sellWaresChoice);
                 }
@@ -1714,9 +1713,15 @@
                 let icon = '<i class="fas fa-chevron-right text-gray-600 group-hover:text-amber-500"></i>';
 
                 if (choice.type === 'skill') {
+                    // MODIFIED: Removed redundant text from the main label
+                    label = `<span class="cinzel font-bold text-gray-300 group-hover:text-amber-100">${label}</span>`;
                     label += ` <span class="text-blue-400 text-xs uppercase tracking-wider ml-1">[${choice.skill} DC ${choice.dc}]</span>`;
                     icon = '<i class="fas fa-dice-d20 text-blue-500"></i>';
+                } else {
+                    label = `<span class="cinzel font-bold text-gray-300 group-hover:text-amber-100">${label}</span>`;
                 }
+
+
                 if (choice.cost) {
                     label += ` <span class="text-amber-500 text-xs ml-1">(-${choice.cost}s)</span>`;
                 }
@@ -1725,7 +1730,7 @@
                      btn.className += " border-amber-900/50";
                 }
 
-                btn.innerHTML = `<span class="cinzel font-bold text-gray-300 group-hover:text-amber-100">${label}</span>${icon}`;
+                btn.innerHTML = `${label}${icon}`;
                 container.appendChild(btn);
             });
         }
