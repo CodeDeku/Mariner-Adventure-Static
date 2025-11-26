@@ -1486,7 +1486,8 @@
 
             // --- LOCAL STOCK UTILITY ---
             const currentSceneId = gameState.currentSceneId;
-            const currentSceneStock = scenes[currentSceneId] ? scenes[currentId].stock : {};
+            // FIX: Corrected the reference from currentId to currentSceneId
+            const currentSceneStock = scenes[currentSceneId] ? scenes[currentSceneId].stock : {};
             const marketStock = scenes['market_stall'].stock; // Reference for selling logic
             
             // Pre-calculate items available to BUY from this merchant
