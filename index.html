@@ -57,6 +57,13 @@
             color: #f3e8ff !important;
         }
 
+        /* --- SPECTRAL GLOW for Skill Check Text --- */
+        .spectral-skill-text {
+            color: #93c5fd; /* Light Blue-300 */
+            text-shadow: 0 0 5px rgba(59, 130, 246, 0.6);
+            font-weight: 700;
+        }
+
 
         /* --- TUTORIAL PULSE (AMBER) --- */
         @keyframes pulse-amber {
@@ -835,7 +842,7 @@
                 },
                 choices: [
                     { text: "Bribe him", nextScene: 'guard_bribe', type: 'action', cost: 5 }, 
-                    // ADDED orderGain property to Show Respect action
+                    // Order Gain Choice
                     { text: "Show Respect (Diplomacy)", nextScene: 'guard_respect', type: 'dialogue', orderGain: 4 },
                     { text: "Intimidate him", nextScene: 'guard_intimidate_check', type: 'skill', dc: 13, skill: 'Insight' },
                     { text: "Attack", nextScene: 'combat_guard', type: 'combat' }
@@ -888,7 +895,7 @@
                     state.influence = 20; // Max Chaos
                     return `Took ${dmg} damage. Became Outlaw (Max Chaos).`;
                 },
-                choices: [{ text: "Limp to Market Crossroads", nextScene: 'market_crossroads', type: 'travel' }]
+                choices: [{ text: "Limp to Market Crossroads", type: 'travel' }]
             },
             'smuggler_meet': {
                 title: "The Cove",
@@ -915,7 +922,7 @@
                     state.influence = Math.min(20, state.influence + 6); // High Chaos gain
                     return "Gave Cargo. Chaos +6.";
                 },
-                choices: [{ text: "Head to Market Crossroads", nextScene: 'market_crossroads', type: 'travel' }]
+                choices: [{ text: "Head to Market Crossroads", type: 'travel' }]
             },
             'smuggler_friend': {
                 title: "Old Alliances",
@@ -925,7 +932,7 @@
                      state.inventory.push("Rum (Heal 5)");
                      return "Received Rum.";
                 },
-                choices: [{ text: "Head to Market Crossroads", nextScene: 'market_crossroads', type: 'travel' }]
+                choices: [{ text: "Head to Market Crossroads", type: 'travel' }]
             },
             'smuggler_pay': {
                 title: "Business",
@@ -935,7 +942,7 @@
                     audioManager.playCoins();
                     return "Paid Smugglers.";
                 },
-                choices: [{ text: "Head to Market Crossroads", nextScene: 'market_crossroads', type: 'travel' }]
+                choices: [{ text: "Head to Market Crossroads", type: 'travel' }]
             },
             'market_crossroads': {
                 title: "The Port of Shadows",
@@ -1668,7 +1675,7 @@
                 if (choice.reqItem && !gameState.inventory.includes(choice.reqItem)) return;
 
                 const btn = document.createElement('button');
-                // Use flex and justify-start for skill/cost buttons, and justify-between for pure travel/dialogue
+                // Use flex and justify-start for skill/cost/influence buttons, and justify-between for pure travel/dialogue
                 const alignmentClass = (choice.type === 'skill' || choice.cost || choice.value || choice.chaosGain || choice.orderGain) ? 'justify-start' : 'justify-between';
                 
                 btn.className = `btn-game w-full p-3 bg-gray-800 border border-gray-600 hover:border-amber-500 hover:bg-gray-750 text-left rounded shadow flex items-center ${alignmentClass} group`;
@@ -1727,7 +1734,8 @@
                     // --- APPLY ACTIONS ---
                     if (choice.cost) gameState.shillings -= choice.cost;
                     if (choice.chaosGain) gameState.influence = Math.min(20, gameState.influence + choice.chaosGain);
-                    // NOTE: Order gain is negative influence shift, so we subtract the positive orderGain value.
+                    
+                    // RP FIX: Player perceives Order gain, even though it's technically negative influence shift
                     if (choice.orderGain) gameState.influence = Math.max(-20, gameState.influence - choice.orderGain); 
                     
                     // --- SKILL CHECK LOGIC WITH COMPLEX CREW TRACKING ---
@@ -1755,8 +1763,8 @@
 
                 if (choice.type === 'skill') {
                     // Skill notation and dice icon are aligned immediately after the label
-                    // Increase skill text size to text-sm 
-                    supplementalText += ` <span class="text-blue-400 text-sm uppercase tracking-wider ml-2 mr-4">[${choice.skill} DC ${choice.dc}]</span>`;
+                    // Apply spectral glow effect (MODIFIED)
+                    supplementalText += ` <span class="spectral-skill-text text-sm uppercase tracking-wider ml-2 mr-4">[${choice.skill} DC ${choice.dc}]</span>`;
                     icon = '<i class="fas fa-dice-d20 text-blue-500"></i>';
                 }
                 
@@ -1775,9 +1783,9 @@
                     transactionIndicator = `(+${choice.chaosGain} Chaos)`;
                     indicatorColor = 'text-emerald-400';
                 } else if (choice.orderGain) {
-                    // Order Gain (Negative Influence Shift) - Using soft blue for contrast
-                    transactionIndicator = `(-${choice.orderGain} Order)`; // Displayed as negative influence shift
-                    indicatorColor = 'text-blue-300';
+                    // Order Gain (Negative Influence Shift) - Using Deep Indigo/Blue-400 (MODIFIED)
+                    transactionIndicator = `(+${choice.orderGain} Order)`; // Displayed as positive RP gain
+                    indicatorColor = 'text-blue-400';
                 }
 
                 if (transactionIndicator) {
