@@ -317,6 +317,11 @@
                     icon.classList.add('fa-volume-high'); // Active Speaker Icon
                     btn.classList.add('text-amber-500', 'border-amber-500');
                     btn.classList.remove('text-gray-400', 'border-gray-600');
+                    
+                    // Resume vulnerable sound if active
+                    if(this.playedVulnerable) {
+                        this.vulnerableSound.play().catch(e => console.log("Audio play blocked"));
+                    }
                 } else {
                     // Muted State
                     this.ambience.pause();
@@ -613,7 +618,7 @@
                 journal: "Had to fight the Guard. I am an outlaw now.",
                 onEnter: (state) => { 
                     audioManager.playClash();
-                    const dmg = Math.floor(Math.random() * 6) + 10; // Increased damage: 10-15
+                    const dmg = Math.floor(Math.random() * 6) + 8; // 1d6+8
                     state.currentHP -= dmg;
                     state.influence = 20; // Max Chaos
                     return `Took ${dmg} damage. Became Outlaw (Max Chaos).`;
@@ -929,6 +934,7 @@
         async function init() {
             // Initialize Firebase directly with the config object defined above.
             window.confirmReset = confirmReset;
+            window.resetGame = resetGame; // Added this
 
             onAuthStateChanged(auth, async (u) => {
                 if (u) {
@@ -1052,7 +1058,7 @@
                     `<div class="text-red-600 font-bold text-xl text-center cinzel">Edward has fallen.</div>
                      <div class="text-center mt-4">The voices consume you.</div>`;
                 document.getElementById('choices-area').innerHTML = 
-                    `<button onclick="window.location.reload()" class="w-full p-4 bg-red-900 text-white rounded cinzel border border-red-500 hover:bg-red-800">Resurrect (Restart)</button>`;
+                    `<button onclick="window.resetGame()" class="w-full p-4 bg-red-900 text-white rounded cinzel border border-red-500 hover:bg-red-800">Resurrect (Restart)</button>`;
                 return;
             }
 
@@ -1258,6 +1264,7 @@
                     
                     if (isSelected) {
                         activeCrewMember = null;
+                        // No ghost sound here
                     } else {
                         activeCrewMember = c;
                         audioManager.playGhost(); // Only play when selecting
