@@ -680,7 +680,7 @@
                     return null;
                 },
                 choices: [
-                    { text: "Search the debris", nextScene: 'wreckage_search', type: 'skill', dc: 8, skill: 'Investigation' }, // MODIFIED: Removed redundant skill text
+                    { text: "Search the debris", nextScene: 'wreckage_search', type: 'skill', dc: 8, skill: 'Investigation' },
                     { text: "Head toward the treeline", nextScene: 'treeline', type: 'travel' }
                 ]
             },
@@ -727,7 +727,7 @@
                 },
                 choices: [
                     { text: "Take the Main Road", nextScene: 'road_encounter', type: 'travel' },
-                    { text: "Follow Talon's Lead", nextScene: 'trail_check', type: 'skill', dc: 12, skill: 'Survival' } // MODIFIED: Removed redundant skill text
+                    { text: "Follow Talon's Lead", nextScene: 'trail_check', type: 'skill', dc: 12, skill: 'Survival' }
                 ]
             },
             'treeline': {
@@ -743,7 +743,7 @@
                 },
                 choices: [
                     { text: "Take the Main Road", nextScene: 'road_encounter', type: 'travel' },
-                    { text: "Follow Talon's Lead", nextScene: 'trail_check', type: 'skill', dc: 12, skill: 'Survival' } // MODIFIED: Removed redundant skill text
+                    { text: "Follow Talon's Lead", nextScene: 'trail_check', type: 'skill', dc: 12, skill: 'Survival' }
                 ]
             },
             'road_encounter': {
@@ -832,9 +832,9 @@
                     'gareth': "Stand tall. Authority respects strength, or gold."
                 },
                 choices: [
-                    { text: "Bribe him (5 Shillings)", nextScene: 'guard_bribe', type: 'action', cost: 5 },
+                    { text: "Bribe him", nextScene: 'guard_bribe', type: 'action', cost: 5 }, // MODIFIED: Removed "(5 Shillings)"
                     { text: "Show Respect (Diplomacy)", nextScene: 'guard_respect', type: 'dialogue' },
-                    { text: "Intimidate him", nextScene: 'guard_intimidate_check', type: 'skill', dc: 13, skill: 'Insight' }, // MODIFIED: Removed redundant skill text
+                    { text: "Intimidate him", nextScene: 'guard_intimidate_check', type: 'skill', dc: 13, skill: 'Insight' },
                     { text: "Attack", nextScene: 'combat_guard', type: 'combat' }
                 ]
             },
@@ -1089,7 +1089,7 @@
                 text: "The wind howls, threatening to tear you from the rock.",
                 choices: [
                     { text: "Use Rope (Safe Climb)", nextScene: 'lighthouse_arrival', type: 'action', reqItem: 'Rope', consume: true },
-                    { text: "Free Solo", nextScene: 'climb_check', type: 'skill', dc: 14, skill: 'Athletics' } // MODIFIED: Removed redundant skill text
+                    { text: "Free Solo", nextScene: 'climb_check', type: 'skill', dc: 14, skill: 'Athletics' } 
                 ]
             },
             'climb_check': {
@@ -1115,7 +1115,7 @@
                 },
                 choices: [
                     { text: "Light Torch (Safe Passage)", nextScene: 'dark_caves_illuminated', type: 'action', reqItem: 'Torch', consume: true },
-                    { text: "Stumble in Dark", nextScene: 'dark_check', type: 'skill', dc: 14, skill: 'Perception' } // MODIFIED: Removed redundant skill text
+                    { text: "Stumble in Dark", nextScene: 'dark_check', type: 'skill', dc: 14, skill: 'Perception' } 
                 ]
             },
             // Updated Mushroom Scene
@@ -1183,7 +1183,7 @@
                 journal: "The Lighthouse is sealed. I need to find the mechanism to enter.",
                 choices: [
                     // Insight DC 15 (Captain Gareth)
-                    { text: "Analyze the mechanism", nextScene: 'neutral_lock_logic', type: 'skill', dc: 15, skill: 'Insight' } // MODIFIED: Removed redundant skill text
+                    { text: "Analyze the mechanism", nextScene: 'neutral_lock_logic', type: 'skill', dc: 15, skill: 'Insight' } 
                 ]
             },
             'neutral_lock_logic': {
@@ -1583,7 +1583,7 @@
                     const stock = currentSceneStock[sale.item] || 0;
                     if (stock > 0) {
                         processedChoices.push({
-                            // FIX: Removed redundant cost, just item name and stock
+                            // MODIFIED: Removed redundant cost (e.g., "(2s)")
                             text: `Buy ${sale.item.split('(')[0].trim()} (Stock: ${stock})`,
                             nextScene: sale.nextScene,
                             type: 'action',
@@ -1639,8 +1639,10 @@
                 if (choice.reqItem && !gameState.inventory.includes(choice.reqItem)) return;
 
                 const btn = document.createElement('button');
-                // Removed justify-between for skill checks to allow left alignment
-                btn.className = `btn-game w-full p-3 bg-gray-800 border border-gray-600 hover:border-amber-500 hover:bg-gray-750 text-left rounded shadow flex items-center ${(choice.type === 'skill' || choice.cost) ? 'justify-start' : 'justify-between'} group`;
+                // Use flex and justify-start for skill/cost buttons, and justify-between for pure travel/dialogue
+                const alignmentClass = (choice.type === 'skill' || choice.cost) ? 'justify-start' : 'justify-between';
+                
+                btn.className = `btn-game w-full p-3 bg-gray-800 border border-gray-600 hover:border-amber-500 hover:bg-gray-750 text-left rounded shadow flex items-center ${alignmentClass} group`;
                 
                 btn.onclick = (e) => {
                     audioManager.playClick();
@@ -1710,32 +1712,36 @@
                     }
                 };
                 
-                let label = `<span class="cinzel font-bold text-gray-300 group-hover:text-amber-100">${choice.text}</span>`;
-                let icon = '';
+                // Default icon for travel/dialogue buttons
+                let icon = '<i class="fas fa-chevron-right text-gray-600 group-hover:text-amber-500"></i>';
+                let content = `<span class="cinzel font-bold text-gray-300 group-hover:text-amber-100">${choice.text}</span>`;
+
 
                 if (choice.type === 'skill') {
                     // Skill notation and dice icon are aligned immediately after the label
-                    label += ` <span class="text-blue-400 text-xs uppercase tracking-wider ml-2 mr-4">[${choice.skill} DC ${choice.dc}]</span>`;
+                    content = `<span class="cinzel font-bold text-gray-300 group-hover:text-amber-100">${choice.text}</span>`;
+                    // Increase skill text size to text-sm
+                    content += ` <span class="text-blue-400 text-sm uppercase tracking-wider ml-2 mr-4">[${choice.skill} DC ${choice.dc}]</span>`;
                     icon = '<i class="fas fa-dice-d20 text-blue-500"></i>';
-                } else {
-                    icon = '<i class="fas fa-chevron-right text-gray-600 group-hover:text-amber-500"></i>';
                 }
-
+                
                 if (choice.cost) {
-                    label += ` <span class="text-amber-500 text-xs ml-1">(-${choice.cost}s)</span>`;
+                    // Increase cost text size to text-sm
+                    content += ` <span class="text-amber-500 text-sm ml-1">(-${choice.cost}s)</span>`;
                 }
+                
                 if (choice.type === 'reset') {
                      icon = '<i class="fas fa-undo text-amber-500"></i>';
                      btn.className += " border-amber-900/50";
                 }
                 
-                // For non-skill checks that don't have a cost, we re-apply justify-between
-                if (choice.type !== 'skill' && !choice.cost) {
-                     btn.innerHTML = `<span class="cinzel font-bold text-gray-300 group-hover:text-amber-100">${choice.text}</span>${icon}`;
-                     btn.classList.add('justify-between');
-                     btn.classList.remove('justify-start');
+                // For skill/cost buttons, the icon needs to be positioned separately due to the justify-start class
+                if (choice.type === 'skill' || choice.cost) {
+                     // Wrap content in a flex container for the left side, then append the icon
+                     btn.innerHTML = `${content} <span class="ml-auto">${icon}</span>`;
                 } else {
-                     btn.innerHTML = `${label}${icon}`;
+                     // Default travel/dialogue button using justify-between
+                     btn.innerHTML = `${content}${icon}`;
                 }
 
 
