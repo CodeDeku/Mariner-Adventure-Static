@@ -835,7 +835,8 @@
                 },
                 choices: [
                     { text: "Bribe him", nextScene: 'guard_bribe', type: 'action', cost: 5 }, 
-                    { text: "Show Respect (Diplomacy)", nextScene: 'guard_respect', type: 'dialogue' },
+                    // ADDED orderGain property to Show Respect action
+                    { text: "Show Respect (Diplomacy)", nextScene: 'guard_respect', type: 'dialogue', orderGain: 4 },
                     { text: "Intimidate him", nextScene: 'guard_intimidate_check', type: 'skill', dc: 13, skill: 'Insight' },
                     { text: "Attack", nextScene: 'combat_guard', type: 'combat' }
                 ]
@@ -845,6 +846,7 @@
                 text: "You salute with practiced discipline. 'Just a shipwrecked sailor, sir. Keeping to the road.' The Guard straightens, recognizing the posture. 'Carry on then. Watch for the cove rats.'",
                 journal: "I showed the Guard respect. He treated me like a man, not a rat.",
                 onEnter: (state) => {
+                    // APPLY NEGATIVE INFLUENCE SHIFT (Order)
                     state.influence = Math.max(-20, state.influence - 4); 
                     return "Showed Respect (Order -4)";
                 },
@@ -1667,7 +1669,7 @@
 
                 const btn = document.createElement('button');
                 // Use flex and justify-start for skill/cost buttons, and justify-between for pure travel/dialogue
-                const alignmentClass = (choice.type === 'skill' || choice.cost || choice.value || choice.chaosGain) ? 'justify-start' : 'justify-between';
+                const alignmentClass = (choice.type === 'skill' || choice.cost || choice.value || choice.chaosGain || choice.orderGain) ? 'justify-start' : 'justify-between';
                 
                 btn.className = `btn-game w-full p-3 bg-gray-800 border border-gray-600 hover:border-amber-500 hover:bg-gray-750 text-left rounded shadow flex items-center ${alignmentClass} group`;
                 
@@ -1722,7 +1724,11 @@
                         addToHistory(entryText, 'entry');
                     }
 
+                    // --- APPLY ACTIONS ---
                     if (choice.cost) gameState.shillings -= choice.cost;
+                    if (choice.chaosGain) gameState.influence = Math.min(20, gameState.influence + choice.chaosGain);
+                    // NOTE: Order gain is negative influence shift, so we subtract the positive orderGain value.
+                    if (choice.orderGain) gameState.influence = Math.max(-20, gameState.influence - choice.orderGain); 
                     
                     // --- SKILL CHECK LOGIC WITH COMPLEX CREW TRACKING ---
                     if (choice.type === 'skill') {
@@ -1768,6 +1774,10 @@
                     // Chaos Gain (Positive) for Smuggler trade (Emerald color for Chaos)
                     transactionIndicator = `(+${choice.chaosGain} Chaos)`;
                     indicatorColor = 'text-emerald-400';
+                } else if (choice.orderGain) {
+                    // Order Gain (Negative Influence Shift) - Using soft blue for contrast
+                    transactionIndicator = `(-${choice.orderGain} Order)`; // Displayed as negative influence shift
+                    indicatorColor = 'text-blue-300';
                 }
 
                 if (transactionIndicator) {
