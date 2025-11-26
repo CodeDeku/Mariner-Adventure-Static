@@ -39,11 +39,28 @@
         .btn-game:active { transform: translateY(1px); }
         .text-shadow { text-shadow: 0 2px 4px rgba(0,0,0,0.8); }
         
-        @keyframes pulse-glow {
-            0%, 100% { box-shadow: 0 0 5px rgba(59, 130, 246, 0.2); border-color: #3b82f6; }
-            50% { box-shadow: 0 0 15px rgba(59, 130, 246, 0.5); border-color: #60a5fa; }
+        /* SPECTRAL BLUE/GLOW DEFINITIONS (Centralized Theme) */
+        
+        /* Crew Selection Active Glow (Border/Shadow) */
+        @keyframes spectral-pulse {
+            0%, 100% { box-shadow: 0 0 5px rgba(59, 130, 246, 0.5); border-color: #3b82f6; }
+            50% { box-shadow: 0 0 15px rgba(59, 130, 246, 0.8); border-color: #60a5fa; }
         }
-        .crew-active { animation: pulse-glow 2s infinite; background-color: rgba(30, 58, 138, 0.3); }
+        /* Applies to crew box and active crew indicator */
+        .spectral-active { 
+            animation: spectral-pulse 2s infinite; 
+            background-color: rgba(30, 58, 138, 0.3); /* Dark Blue Background */
+            border-color: #60a5fa !important;
+        }
+
+        /* Text Color for all spectral elements (Skill Check, Banter, Lore, Journal Links) */
+        .spectral-text-glow {
+            color: #93c5fd; /* Light Blue-300: High contrast, ghostly tone */
+            text-shadow: 0 0 5px rgba(59, 130, 246, 0.6);
+            font-weight: 700;
+        }
+        /* End Spectral Definitions */
+
 
         /* Custom glow for FREE USE / Mushroom */
         @keyframes pulse-purple {
@@ -55,13 +72,6 @@
             background-color: rgba(88, 28, 135, 0.5); /* deep violet */
             border-color: #a855f7 !important;
             color: #f3e8ff !important;
-        }
-
-        /* --- SPECTRAL GLOW for Skill Check Text --- */
-        .spectral-skill-text {
-            color: #93c5fd; /* Light Blue-300 */
-            text-shadow: 0 0 5px rgba(59, 130, 246, 0.6);
-            font-weight: 700;
         }
 
 
@@ -88,8 +98,9 @@
         #inf-marker { transition: left 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
 
         /* --- LORE TOOLTIPS --- */
+        /* Updated LORE Tooltip styling to use SPECTRAL GLOW for consistency */
         .memory-keyword {
-            color: #60a5fa; /* Blue-400 */
+            color: #93c5fd; /* Spectral text color */
             text-shadow: 0 0 8px rgba(59, 130, 246, 0.5); /* Soft Glow */
             cursor: help;
             position: relative;
@@ -99,7 +110,7 @@
         }
         .memory-keyword:hover {
             text-shadow: 0 0 12px rgba(59, 130, 246, 0.9), 0 0 2px #fff; /* Intense Glow */
-            color: #bfdbfe; /* Blue-200 */
+            color: #bfdbfe; /* Lighter Spectral Blue */
         }
         /* Tooltip Box */
         .memory-keyword:hover::after {
@@ -1245,7 +1256,7 @@
                 journal: null,
                 onEnter: (state) => {
                     const shanty = `The shanty holds the truth. I must find the Ring and the Blade to save my crew. I am the Captain now.<br><br>
-                      <i class='text-blue-300'>“There’s a tax for the coin and a tax for the bread,<br>
+                      <i class='text-blue-300 spectral-text-glow'>“There’s a tax for the coin and a tax for the bread,<br>
                       But who pays the toll for the army of dead?<br>
                       The Wolf King did, so the legends say,<br>
 					  To call back the souls who lost their way.<br><br>
@@ -1465,11 +1476,13 @@
         function addToHistory(text, type = 'entry') {
             let html = '';
             if (type === 'entry') {
-                html = `<div class="journal-font pb-4 border-b border-gray-700/30 text-gray-400 fade-in">${text}</div>`;
+                // Apply spectral-text-glow to journal links/names
+                const processedText = text.replace(/(Captain Gareth|Quinn|Talon|Bones|Wolf King|Ring|Blade)/g, '<span class="spectral-text-glow">$1</span>');
+                html = `<div class="journal-font pb-4 border-b border-gray-700/30 text-gray-400 fade-in">${processedText}</div>`;
             } else if (type === 'system') {
                 html = `<div class="text-xs text-amber-500 font-mono mb-2 fade-in">> ${text}</div>`;
             } else if (type === 'roll') {
-                html = `<div class="text-xs text-blue-400 font-bold mb-2 fade-in font-serif">${text}</div>`;
+                html = `<div class="text-xs spectral-text-glow font-bold mb-2 fade-in font-serif">${text}</div>`;
             }
             gameState.history.push(html);
             rebuildJournal();
@@ -1573,7 +1586,8 @@
             if (scene.banter) {
                 Object.keys(scene.banter).forEach(crewId => {
                     if (gameState.crew[crewId] && !gameState.crew[crewId].used) {
-                         finalHtml += `<div class="mt-4 text-blue-400 italic border-l-2 border-blue-500 pl-3 fade-in">
+                        // Apply spectral glow to banter text
+                         finalHtml += `<div class="mt-4 spectral-text-glow italic border-l-2 border-blue-500 pl-3 fade-in">
                                 <span class="font-bold text-xs uppercase block mb-1">${gameState.crew[crewId].name}:</span>
                                 "${scene.banter[crewId]}"
                               </div>`;
@@ -1764,7 +1778,7 @@
                 if (choice.type === 'skill') {
                     // Skill notation and dice icon are aligned immediately after the label
                     // Apply spectral glow effect (MODIFIED)
-                    supplementalText += ` <span class="spectral-skill-text text-sm uppercase tracking-wider ml-2 mr-4">[${choice.skill} DC ${choice.dc}]</span>`;
+                    supplementalText += ` <span class="spectral-text-glow text-sm uppercase tracking-wider ml-2 mr-4">[${choice.skill} DC ${choice.dc}]</span>`;
                     icon = '<i class="fas fa-dice-d20 text-blue-500"></i>';
                 }
                 
@@ -1783,9 +1797,9 @@
                     transactionIndicator = `(+${choice.chaosGain} Chaos)`;
                     indicatorColor = 'text-emerald-400';
                 } else if (choice.orderGain) {
-                    // Order Gain (Negative Influence Shift) - Using Deep Indigo/Blue-400 (MODIFIED)
+                    // Order Gain (Negative Influence Shift) - Use primary blue-400 (MODIFIED)
                     transactionIndicator = `(+${choice.orderGain} Order)`; // Displayed as positive RP gain
-                    indicatorColor = 'text-blue-400';
+                    indicatorColor = 'text-blue-400'; // Primary Order Faction Color
                 }
 
                 if (transactionIndicator) {
@@ -1912,7 +1926,8 @@
                     }
                 } else if (isSelected) {
                     // Standard selection glow
-                    baseClass += "bg-blue-900/40 border-blue-400 text-blue-100 crew-active ring-1 ring-blue-400";
+                    // Use new spectral-active class (MODIFIED)
+                    baseClass += "spectral-active text-blue-100 ring-1 ring-blue-400";
                 } else {
                     baseClass += "bg-gray-800 border-gray-600 text-gray-300 hover:border-gray-400 hover:bg-gray-700";
                 }
