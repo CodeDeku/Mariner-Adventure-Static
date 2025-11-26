@@ -515,6 +515,14 @@
                 influence: 0, 
                 crewUseFree: false, 
                 lastCrewUsedId: null, 
+                // NEW: Stock inventory for merchant
+                itemStock: {
+                    "Healing Potion": 1,
+                    "Rope": 1,
+                    "Torch": 1,
+                    "Rum (Heal 5)": 1,
+                    "Curious Cargo": 1 // Tracks how many times the player can sell cargo
+                },
                 crew: {
                     gareth: { id: 'gareth', name: 'Captain Gareth', skill: 'Insight', used: false, desc: 'Add +1d4 to Initiative & Insight' },
                     quinn: { id: 'quinn', name: 'Quinn', skill: 'Investigation', used: false, desc: 'Add +1d4 to Investigation & History' },
@@ -579,7 +587,7 @@
                 type: 'key',
                 icon: 'fa-box-open', 
                 color: 'text-yellow-600',
-                desc: "Passive: A heavy crate of mysterious goods.",
+                desc: "Passive: A heavy crate of smuggled goods. Can be sold to the Merchant for coin or traded to the smugglers for influence.",
                 btnText: "SELL",
                 action: (state) => {
                     return "Must be sold at the Market or traded at the Cove.";
@@ -752,8 +760,8 @@
             // NEW SCENE for Talon's specific success (acquiring cargo)
             'trail_success_talon': {
                 title: "Smuggler's Route",
-                text: "Talon guides your movement, emphasizing silence and observation. You emerge near a hidden cove, spotting a marked crate abandoned near the tideline. You grab it just before noticing a group of men loading crates. <span class='memory-keyword' data-lore='The unseen veins of the coast. They value coin above law.'>Smugglers</span>.",
-                journal: "Talon's skill led me through the brush. Found some mysterious cargo and reached a Smuggler's Cove unseen.",
+                text: "Talon guides your movement, emphasizing silence and observation. You emerge near a hidden cove, spotting a marked crate abandoned near the tideline—Curious Cargo. You grab it just before noticing a group of men loading crates. <span class='memory-keyword' data-lore='The unseen veins of the coast. They value coin above law.'>Smugglers</span>.",
+                journal: "Talon's skill led me through the brush. Found Curious Cargo and reached a Smuggler's Cove unseen.",
                 banter: {
                     'bones': "I smell rum... and unwashed men."
                 },
@@ -864,6 +872,7 @@
                 onEnter: (state) => {
                     const idx = state.inventory.indexOf("Curious Cargo");
                     if (idx > -1) state.inventory.splice(idx, 1);
+                    state.itemStock["Curious Cargo"] = 0; // Consume stock
                     // No Shilling gain
                     state.influence = Math.min(20, state.influence + 6); // High Chaos gain
                     return "Gave Cargo. Chaos +6.";
@@ -907,9 +916,11 @@
                     'quinn': "Supplies are the difference between a legend and a corpse. Buy what you can."
                 },
                 choices: [
-                    { text: "Buy Healing Potion (5s)", nextScene: 'buy_potion', type: 'action', cost: 5 },
-                    { text: "Buy Rope (3s)", nextScene: 'buy_rope', type: 'action', cost: 3 },
-                    { text: "Buy Torch (2s)", nextScene: 'buy_torch', type: 'action', cost: 2 },
+                    // Conditional Buy Options checking stock
+                    ...(gameState.itemStock["Healing Potion"] > 0 ? [{ text: `Buy Healing Potion (5s, Stock: ${gameState.itemStock["Healing Potion"]})`, nextScene: 'buy_potion', type: 'action', cost: 5 }] : []),
+                    ...(gameState.itemStock["Rope"] > 0 ? [{ text: `Buy Rope (3s, Stock: ${gameState.itemStock["Rope"]})`, nextScene: 'buy_rope', type: 'action', cost: 3 }] : []),
+                    ...(gameState.itemStock["Torch"] > 0 ? [{ text: `Buy Torch (2s, Stock: ${gameState.itemStock["Torch"]})`, nextScene: 'buy_torch', type: 'action', cost: 2 }] : []),
+                    
                     { text: "Sell Wares (Earn Coin)", nextScene: 'market_sell', type: 'travel' },
                     { text: "Leave", nextScene: 'lighthouse_split', type: 'travel' }
                 ]
@@ -919,8 +930,9 @@
                 text: "The merchant eyes your gear. 'I can take some of that off your hands for a fair price.'",
                 journal: null,
                 choices: [
-                    // Selling Option to Merchant (Coin only)
-                    { text: "Sell Curious Cargo (+10s)", nextScene: 'sell_cargo', type: 'action', reqItem: 'Curious Cargo' },
+                    // Selling Option to Merchant (Coin only) - checks player inventory AND merchant stock for this item type
+                    ...(gameState.inventory.includes("Curious Cargo") && gameState.itemStock["Curious Cargo"] > 0 ? [{ text: "Sell Curious Cargo (+10s)", nextScene: 'sell_cargo', type: 'action', reqItem: 'Curious Cargo' }] : []),
+                    
                     { text: "Sell Rope (+2s)", nextScene: 'sell_rope', type: 'action', reqItem: 'Rope' },
                     { text: "Sell Torch (+1s)", nextScene: 'sell_torch', type: 'action', reqItem: 'Torch' },
                     { text: "Sell Potion (+3s)", nextScene: 'sell_potion', type: 'action', reqItem: 'Healing Potion' },
@@ -936,6 +948,7 @@
                 onEnter: (state) => {
                     const idx = state.inventory.indexOf("Curious Cargo");
                     if (idx > -1) state.inventory.splice(idx, 1);
+                    state.itemStock["Curious Cargo"] = 0; // Consume stock
                     state.shillings += 10; 
                     audioManager.playCoins();
                     return "Sold Curious Cargo (+10s).";
@@ -1000,6 +1013,7 @@
                 journal: "I bought a healing potion.",
                 onEnter: (state) => { 
                     state.inventory.push("Healing Potion"); 
+                    state.itemStock["Healing Potion"] -= 1; // Decrease Stock
                     audioManager.playCoins();
                     return "Bought Potion."; 
                 },
@@ -1011,6 +1025,7 @@
                 journal: "I bought a coil of rope.",
                 onEnter: (state) => { 
                     state.inventory.push("Rope"); 
+                    state.itemStock["Rope"] -= 1; // Decrease Stock
                     audioManager.playCoins();
                     return "Bought Rope."; 
                 },
@@ -1022,6 +1037,7 @@
                 journal: "I bought a torch.",
                 onEnter: (state) => { 
                     state.inventory.push("Torch"); 
+                    state.itemStock["Torch"] -= 1; // Decrease Stock
                     audioManager.playCoins();
                     return "Bought Torch."; 
                 },
@@ -1248,7 +1264,16 @@
                         delete data.guardInfluence;
                         delete data.smugglerInfluence;
                     }
-                    gameState = { ...createInitialState(), ...data }; 
+                    // Merge saved data with default to ensure new fields (like itemStock) exist
+                    const savedState = { ...createInitialState(), ...data }; 
+                    gameState = savedState;
+
+                    // Ensure stock for Curious Cargo is 0 if it was already sold or traded
+                    if (!gameState.inventory.includes("Curious Cargo") && gameState.itemStock["Curious Cargo"] === undefined) {
+                        gameState.itemStock["Curious Cargo"] = 0;
+                    }
+
+
                     renderScene(gameState.currentSceneId, false);
                     rebuildJournal();
                 }
@@ -1437,6 +1462,21 @@
             container.innerHTML = '';
 
             choices.forEach(choice => {
+                // Check stock for purchasing/selling Curious Cargo at the market for coin
+                if (choice.type === 'action' && choice.reqItem === 'Curious Cargo' && gameState.currentSceneId === 'market_sell' && gameState.itemStock["Curious Cargo"] === 0) {
+                    return; // Skip if sold to Merchant or Smuggler
+                }
+                
+                // Check stock for purchasing consumables
+                if (choice.nextScene && choice.nextScene.startsWith('buy_') && itemRegistry[choice.nextScene.replace('buy_', '').replace(/_/g, ' ')] && gameState.itemStock[itemRegistry[choice.nextScene.replace('buy_', '').replace(/_/g, ' ')].name] === 0) {
+                    // This is too complex. Use simple string mapping instead.
+                    const itemKey = choice.nextScene.replace('buy_', '').replace(/_/g, ' ').trim();
+                    if (itemKey === 'potion' && gameState.itemStock['Healing Potion'] === 0) return;
+                    if (itemKey === 'rope' && gameState.itemStock['Rope'] === 0) return;
+                    if (itemKey === 'torch' && gameState.itemStock['Torch'] === 0) return;
+                }
+                
+                // Re-check general requirements
                 if (choice.reqSmuggler && gameState.influence < choice.reqSmuggler) return;
                 if (choice.reqGuard && gameState.influence > -choice.reqGuard) return;
                 if (choice.cost && gameState.shillings < choice.cost) return;
