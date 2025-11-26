@@ -838,7 +838,6 @@
                 text: "The undergrowth fights you. You stumble out of the brush, loud and covered in burrs, right in front of a Royal Guard.",
                 journal: "Tried the hidden path, but made too much noise. Stumbled right into a Guard.",
                 onEnter: (state) => { 
-                    // Use helper to apply damage and clamp HP at 0
                     state.currentHP = applyDamage(state.currentHP, 2); 
                     fxManager.flashRed();
                     return "Took 2 Scratch Damage."; 
@@ -1146,6 +1145,7 @@
                     fxManager.flashRed();
                     return "Took 5 Damage."; 
                 },
+                // Redirects to death scene if HP hit 0, otherwise continues
                 choices: [{ text: "Keep Climbing", nextScene: 'lighthouse_arrival', type: 'travel' }]
             },
             'dark_caves': {
@@ -1295,10 +1295,10 @@
                     { text: "Search for the Wolves of Valor (End Demo)", type: 'reset' }
                 ]
             },
-            // MODIFIED SCENE: Dedicated Death Scene
+            // MODIFIED SCENE: Dedicated Death Scene (Dark, dramatic styling)
             'edward_death': {
                 title: "The Mariner's End",
-                text: "<span class='text-red-500 font-bold'>The voices fall silent, only to surge back in a deafening, cold chorus that rips through your mind.</span> The debt is paid. The Planar Storm claims its last crewman, pulling you into the abyss. You feel the crushing presence of the Leviathan one final time.",
+                text: "The voices fall silent, only to surge back in a deafening, cold chorus that rips through your mind. The debt is paid. The Planar Storm claims its last crewman, pulling you into the abyss. You feel the crushing presence of the Leviathan one final time.",
                 journal: "Edward Jones is lost to the deep. The voices of the damned are finally silenced.",
                 choices: [
                     { text: "Awaken (Restart Game)", type: 'reset' }
@@ -1606,8 +1606,12 @@
             // Check if we are in the Death scene to apply unique styling
             const isDeathScene = sceneId === 'edward_death';
             
-            let finalHtml = `<h2 class="2xl cinzel ${isDeathScene ? 'text-red-500' : 'text-amber-500'} mb-2">${scene.title}</h2>
-                             <p class="text-lg leading-relaxed ${isDeathScene ? 'text-red-300' : 'text-gray-300'} fade-in">${scene.text}</p>`;
+            // Restore default text styling for normal scenes, use red only for death scene
+            let titleClass = isDeathScene ? 'text-red-500' : 'text-amber-500';
+            let textClass = isDeathScene ? 'text-red-300' : 'text-gray-300';
+
+            
+            let finalHtml = `<h2 class="2xl cinzel ${titleClass} mb-2">${scene.title}</h2><p class="text-lg leading-relaxed ${textClass} fade-in">${scene.text}</p>`;
             
             // --- BANTER INJECTION (AUTOMATIC) ---
             if (scene.banter) {
@@ -1723,8 +1727,8 @@
                 let btnClass = `btn-game w-full p-3 text-left rounded shadow flex items-center ${alignmentClass} cinzel font-bold `;
 
                 if (isDeathScene) {
-                    // Apply distinct red style for the Restart button
-                    btnClass += 'bg-red-700 border-red-500 hover:bg-red-600 text-white';
+                    // Apply deep red style for the Restart button (MODIFIED)
+                    btnClass += 'bg-red-900 border-red-700 hover:bg-red-800 text-white text-xl text-center';
                 } else {
                     // Standard active button style
                     btnClass += 'bg-gray-800 border-gray-600 hover:border-amber-500 hover:bg-gray-750 text-gray-300 group';
@@ -1851,11 +1855,7 @@
                 
                 if (choice.type === 'reset') {
                      icon = '<i class="fas fa-undo text-white"></i>'; // Ensure reset button icon is white/visible
-                     btn.className += " border-red-500";
-                     // Content is already set to the red button style above
-                } else {
-                    // Standard button icon setup
-                    content = `<span class="cinzel font-bold text-gray-300 group-hover:text-amber-100">${choice.text}</span>`;
+                     // Content is already set in death scene to Awaken (Restart Game)
                 }
                 
                 // If there is supplemental text (skill/cost/value), merge it with the main content
