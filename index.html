@@ -29,67 +29,6 @@
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #0f172a; }
         ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #475569; }
-        
-        .btn-game {
-            transition: all 0.2s;
-            position: relative;
-            overflow: hidden;
-        }
-        .btn-game:active { transform: translateY(1px); }
-        .text-shadow { text-shadow: 0 2px 4px rgba(0,0,0,0.8); }
-        
-        @keyframes pulse-glow {
-            0%, 100% { box-shadow: 0 0 5px rgba(59, 130, 246, 0.2); border-color: #3b82f6; }
-            50% { box-shadow: 0 0 15px rgba(59, 130, 246, 0.5); border-color: #60a5fa; }
-        }
-        .crew-active { animation: pulse-glow 2s infinite; background-color: rgba(30, 58, 138, 0.3); }
-
-        /* Custom glow for FREE USE / Mushroom */
-        @keyframes pulse-purple {
-            0%, 100% { box-shadow: 0 0 8px rgba(168, 85, 247, 0.5); border-color: #a855f7; }
-            50% { box-shadow: 0 0 18px rgba(192, 132, 252, 0.8); border-color: #c084fc; }
-        }
-        .crew-free-use-glow {
-            animation: pulse-purple 2s infinite;
-            background-color: rgba(88, 28, 135, 0.5); /* deep violet */
-            border-color: #a855f7 !important;
-            color: #f3e8ff !important;
-        }
-
-
-        /* --- TUTORIAL PULSE --- */
-        @keyframes pulse-amber {
-            0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); border-color: #f59e0b; }
-            70% { box-shadow: 0 0 0 10px rgba(245, 158, 11, 0); border-color: #fbbf24; }
-            100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); border-color: #f59e0b; }
-        }
-        .tutorial-pulse { 
-            animation: pulse-amber 2s infinite; 
-            border-color: #f59e0b !important; 
-            z-index: 10;
-        }
-
-        @keyframes item-pulse {
-            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.4); }
-            50% { box-shadow: 0 0 10px 0 rgba(16, 185, 129, 0.2); border-color: rgba(16, 185, 129, 0.8); }
-            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.4); }
-        }
-        .item-consumable { animation: item-pulse 3s infinite; }
-
-        #inf-marker { transition: left 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
-
-        /* --- LORE TOOLTIPS --- */
-        .memory-keyword {
-            color: #60a5fa; /* Blue-400 */
-            text-shadow: 0 0 8px rgba(59, 130, 246, 0.5); /* Soft Glow */
-            cursor: help;
-            position: relative;
-            transition: all 0.3s ease;
-            font-weight: 600;
-            border-bottom: 1px solid transparent; 
-        }
-        .memory-keyword:hover {
             text-shadow: 0 0 12px rgba(59, 130, 246, 0.9), 0 0 2px #fff; /* Intense Glow */
             color: #bfdbfe; /* Blue-200 */
         }
@@ -832,7 +771,7 @@
                     'gareth': "Stand tall. Authority respects strength, or gold."
                 },
                 choices: [
-                    { text: "Bribe him", nextScene: 'guard_bribe', type: 'action', cost: 5 }, // MODIFIED: Removed "(5 Shillings)"
+                    { text: "Bribe him", nextScene: 'guard_bribe', type: 'action', cost: 5 }, 
                     { text: "Show Respect (Diplomacy)", nextScene: 'guard_respect', type: 'dialogue' },
                     { text: "Intimidate him", nextScene: 'guard_intimidate_check', type: 'skill', dc: 13, skill: 'Insight' },
                     { text: "Attack", nextScene: 'combat_guard', type: 'combat' }
@@ -893,7 +832,7 @@
                 choices: [
                     { text: "Flash 'The Mariner's Sign' (Req: Chaos +3)", nextScene: 'smuggler_friend', type: 'dialogue', reqSmuggler: 3 },
                     // CHOICE: Offer Curious Cargo (Chaos Only)
-                    { text: "Offer Curious Cargo (+6 Chaos)", nextScene: 'smuggler_cargo', type: 'action', reqItem: 'Curious Cargo' },
+                    { text: "Offer Curious Cargo", nextScene: 'smuggler_cargo', type: 'action', reqItem: 'Curious Cargo', chaosGain: 6 },
                     { text: "Buy safe passage (5 Shillings)", nextScene: 'smuggler_pay', type: 'action', cost: 5 },
                     { text: "Run to Market", nextScene: 'market_crossroads', type: 'travel' }
                 ]
@@ -1583,7 +1522,7 @@
                     const stock = currentSceneStock[sale.item] || 0;
                     if (stock > 0) {
                         processedChoices.push({
-                            // MODIFIED: Removed redundant cost (e.g., "(2s)")
+                            // MODIFIED: Removed redundant cost, just item name and stock
                             text: `Buy ${sale.item.split('(')[0].trim()} (Stock: ${stock})`,
                             nextScene: sale.nextScene,
                             type: 'action',
@@ -1618,10 +1557,11 @@
                         }
 
                         processedChoices.push({
-                            text: `Sell ${sell.item.split('(')[0].trim()} (+${sell.value}s)`,
+                            text: `Sell ${sell.item.split('(')[0].trim()}`, // MODIFIED: Removed (+Xs) here
                             nextScene: sell.nextScene,
                             type: 'action',
-                            reqItem: sell.item
+                            reqItem: sell.item,
+                            value: sell.value // Value is now passed separately
                         });
                     }
                 });
@@ -1640,7 +1580,7 @@
 
                 const btn = document.createElement('button');
                 // Use flex and justify-start for skill/cost buttons, and justify-between for pure travel/dialogue
-                const alignmentClass = (choice.type === 'skill' || choice.cost) ? 'justify-start' : 'justify-between';
+                const alignmentClass = (choice.type === 'skill' || choice.cost || choice.value || choice.chaosGain) ? 'justify-start' : 'justify-between';
                 
                 btn.className = `btn-game w-full p-3 bg-gray-800 border border-gray-600 hover:border-amber-500 hover:bg-gray-750 text-left rounded shadow flex items-center ${alignmentClass} group`;
                 
@@ -1715,30 +1655,44 @@
                 // Default icon for travel/dialogue buttons
                 let icon = '<i class="fas fa-chevron-right text-gray-600 group-hover:text-amber-500"></i>';
                 let content = `<span class="cinzel font-bold text-gray-300 group-hover:text-amber-100">${choice.text}</span>`;
+                let supplementalText = '';
 
 
                 if (choice.type === 'skill') {
                     // Skill notation and dice icon are aligned immediately after the label
-                    content = `<span class="cinzel font-bold text-gray-300 group-hover:text-amber-100">${choice.text}</span>`;
-                    // Increase skill text size to text-sm
-                    content += ` <span class="text-blue-400 text-sm uppercase tracking-wider ml-2 mr-4">[${choice.skill} DC ${choice.dc}]</span>`;
+                    // Increase skill text size to text-sm (MODIFIED)
+                    supplementalText += ` <span class="text-blue-400 text-sm uppercase tracking-wider ml-2 mr-4">[${choice.skill} DC ${choice.dc}]</span>`;
                     icon = '<i class="fas fa-dice-d20 text-blue-500"></i>';
                 }
                 
+                // --- Consistent Currency/Value/Influence Display ---
+                let transactionIndicator = '';
                 if (choice.cost) {
-                    // Increase cost text size to text-sm
-                    content += ` <span class="text-amber-500 text-sm ml-1">(-${choice.cost}s)</span>`;
+                    // Cost (Negative) for Buy/Bribe
+                    transactionIndicator = `(-${choice.cost}s)`;
+                } else if (choice.value) {
+                    // Value (Positive) for Sell actions
+                    transactionIndicator = `(+${choice.value}s)`;
+                } else if (choice.chaosGain) {
+                    // Chaos Gain (Positive) for Smuggler trade
+                    transactionIndicator = `(+${choice.chaosGain} Chaos)`;
                 }
+
+                if (transactionIndicator) {
+                    // Increase size to text-sm (MODIFIED)
+                    supplementalText += ` <span class="text-amber-500 text-sm ml-1">${transactionIndicator}</span>`;
+                }
+                // --- End Transaction Display ---
                 
                 if (choice.type === 'reset') {
                      icon = '<i class="fas fa-undo text-amber-500"></i>';
                      btn.className += " border-amber-900/50";
                 }
                 
-                // For skill/cost buttons, the icon needs to be positioned separately due to the justify-start class
-                if (choice.type === 'skill' || choice.cost) {
-                     // Wrap content in a flex container for the left side, then append the icon
-                     btn.innerHTML = `${content} <span class="ml-auto">${icon}</span>`;
+                // If there is supplemental text (skill/cost/value), merge it with the main content
+                if (supplementalText) {
+                    content += supplementalText;
+                    btn.innerHTML = `${content} <span class="ml-auto">${icon}</span>`;
                 } else {
                      // Default travel/dialogue button using justify-between
                      btn.innerHTML = `${content}${icon}`;
