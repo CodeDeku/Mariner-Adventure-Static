@@ -197,6 +197,14 @@
 
                 <img id="scene-image" src="" alt="Scene Visualization" class="w-full h-full object-cover opacity-0 transition-opacity duration-1000">
                 
+                <!-- NEW IMAGE LOADER STRUCTURE FIX -->
+                <div id="image-loader" class="absolute inset-0 flex items-center justify-center bg-gray-800 text-gray-500">
+                    <div class="flex flex-col items-center">
+                        <i class="fas fa-circle-notch fa-spin text-2xl mb-2 text-amber-600"></i>
+                        <span class="text-xs cinzel tracking-widest text-amber-600">Manifesting Vision...</span>
+                    </div>
+                </div>
+
                 <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/80 to-transparent p-4">
                     <h2 id="scene-title" class="text-xl cinzel text-amber-500 text-shadow"></h2>
                 </div>
@@ -479,6 +487,7 @@
             'sell_cargo': 'images/merchant.jpg', 
 			'sell_potion': 'images/merchant.jpg',
 			'sell_rum': 'images/merchant.jpg',
+            'hand_in_cargo': 'images/smuggler_pay.jpg', // New scene for Smuggler hand-in
 			'lighthouse_split': 'images/lighthouse_far.jpg',
 			'cliff_climb': 'images/cliff.jpg',
 			'climb_fail': 'images/fall_cliff.jpg', 
@@ -505,7 +514,6 @@
                 inventory: [], 
                 influence: 0, 
                 crewUseFree: false, 
-                // We track which crew member was used on the LAST successful check for complex flows
                 lastCrewUsedId: null, 
                 crew: {
                     gareth: { id: 'gareth', name: 'Captain Gareth', skill: 'Insight', used: false, desc: 'Add +1d4 to Initiative & Insight' },
@@ -571,11 +579,10 @@
                 type: 'key',
                 icon: 'fa-box-open', 
                 color: 'text-yellow-600',
-                desc: "Passive: A heavy crate of smuggled goods. The Merchant will pay well, but it marks you as a friend of Chaos.",
+                desc: "Passive: A heavy crate of smuggled goods. Can be sold for coin or traded to the smugglers for influence.",
                 btnText: "SELL",
                 action: (state) => {
-                    // This item is meant to be sold via the market_sell scene, not used from inventory
-                    return "Must be sold at the Market.";
+                    return "Must be sold at the Market or traded at the Cove.";
                 }
             },
             "Rusted Cutlass": { type: 'key', icon: 'fa-khanda', color: 'text-gray-400', desc: "Passive: A reliable blade. Required for certain combat events." },
@@ -710,11 +717,10 @@
             'trail_check': {
                 isLogic: true,
                 resolve: (roll, state) => {
-                    // Pass the last crew used for conditional scene resolution
                     const success = roll >= state.lastDC;
                     
                     if (success) {
-                        // If successful AND Talon was used, send to special cargo scene
+                        // If successful AND Talon was the crew used, go to special cargo scene
                         if (state.lastCrewUsedId === 'talon') {
                             return 'trail_success_talon';
                         }
@@ -725,11 +731,11 @@
                     return 'trail_fail';
                 }
             },
-            // Original trail_success text is now for Bones or no crew
+            // Original trail_success text is now for Bones or no crew (no cargo)
             'trail_success': {
                 title: "Hidden Signs",
-                text: "Talon helps you navigate the thorns effortlessly. You emerge near a hidden cove, overlooking a group of men loading crates. <span class='memory-keyword' data-lore='The unseen veins of the coast. They value coin above law.'>Smugglers</span>.",
-                journal: "Talon led me through the brush. We found a Smuggler's Cove unseen.",
+                text: "You struggle through the thorns but emerge near a hidden cove, overlooking a group of men loading crates. <span class='memory-keyword' data-lore='The unseen veins of the coast. They value coin above law.'>Smugglers</span>.",
+                journal: "The trail was tough, but we found a Smuggler's Cove unseen.",
                 banter: {
                     'bones': "I smell rum... and unwashed men."
                 },
@@ -745,7 +751,6 @@
             // NEW SCENE for Talon's specific success (acquiring cargo)
             'trail_success_talon': {
                 title: "Smuggler's Route",
-                // Updated text to reflect finding the Cargo
                 text: "Talon guides your movement, emphasizing silence and observation. You emerge near a hidden cove, spotting a marked crate abandoned near the tideline—Curious Cargo. You grab it just before noticing a group of men loading crates. <span class='memory-keyword' data-lore='The unseen veins of the coast. They value coin above law.'>Smugglers</span>.",
                 journal: "Talon's skill led me through the brush. Found Curious Cargo and reached a Smuggler's Cove unseen.",
                 banter: {
@@ -843,9 +848,26 @@
                 journal: "Found the smugglers. They aren't friendly.",
                 choices: [
                     { text: "Flash 'The Mariner's Sign' (Req: Chaos +3)", nextScene: 'smuggler_friend', type: 'dialogue', reqSmuggler: 3 },
+                    // New choice to hand in the Cargo for Influence
+                    { text: "Offer Curious Cargo (+6 Chaos, +5s)", nextScene: 'hand_in_cargo', type: 'action', reqItem: 'Curious Cargo' },
                     { text: "Buy safe passage (5 Shillings)", nextScene: 'smuggler_pay', type: 'action', cost: 5 },
                     { text: "Run to Market", nextScene: 'market_crossroads', type: 'travel' }
                 ]
+            },
+            // NEW SCENE for Smuggler Hand-in
+            'hand_in_cargo': {
+                title: "A Smuggler's Trust",
+                text: "The lead smuggler inspects the crate, nodding slowly. 'This is high-value. You've earned our trust, Mariner. Take this coin, and remember who helped you get here.'",
+                journal: "Traded the Curious Cargo directly to the smugglers.",
+                onEnter: (state) => {
+                    const idx = state.inventory.indexOf("Curious Cargo");
+                    if (idx > -1) state.inventory.splice(idx, 1);
+                    state.shillings += 5;
+                    state.influence = Math.min(20, state.influence + 6); // High Chaos gain
+                    audioManager.playCoins();
+                    return "Gave Cargo (+5s). Chaos +6.";
+                },
+                choices: [{ text: "Head to Market Crossroads", nextScene: 'market_crossroads', type: 'travel' }]
             },
             'smuggler_friend': {
                 title: "Old Alliances",
@@ -896,8 +918,8 @@
                 text: "The merchant eyes your gear. 'I can take some of that off your hands for a fair price.'",
                 journal: null,
                 choices: [
-                    // New Selling Option
-                    { text: "Sell Curious Cargo (+12s, Chaos +4)", nextScene: 'sell_cargo', type: 'action', reqItem: 'Curious Cargo' },
+                    // Selling Option to Merchant (Coin only)
+                    { text: "Sell Curious Cargo (+10s, No Influence)", nextScene: 'sell_cargo', type: 'action', reqItem: 'Curious Cargo' },
                     { text: "Sell Rope (+2s)", nextScene: 'sell_rope', type: 'action', reqItem: 'Rope' },
                     { text: "Sell Torch (+1s)", nextScene: 'sell_torch', type: 'action', reqItem: 'Torch' },
                     { text: "Sell Potion (+3s)", nextScene: 'sell_potion', type: 'action', reqItem: 'Healing Potion' },
@@ -905,18 +927,17 @@
                     { text: "Back to Buying", nextScene: 'market_stall', type: 'travel' }
                 ]
             },
-            // NEW SELL CARGO SCENE
+            // Merchant Sale Scene (Coin Only)
             'sell_cargo': {
-                title: "The Smuggler's Cut",
-                text: "The merchant lowers his voice, stuffing the shillings into your hand. 'This cargo... it marks you. You're one of them now.'",
-                journal: "Sold the Curious Cargo for a massive profit. The Chaos path grows stronger.",
+                title: "The Transaction",
+                text: "The merchant accepts the crate without comment, paying the agreed price.",
+                journal: "Sold the Curious Cargo for coin.",
                 onEnter: (state) => {
                     const idx = state.inventory.indexOf("Curious Cargo");
                     if (idx > -1) state.inventory.splice(idx, 1);
-                    state.shillings += 12;
-                    state.influence = Math.min(20, state.influence + 4);
+                    state.shillings += 10; // Lowered to 10s
                     audioManager.playCoins();
-                    return "Sold Curious Cargo (+12s). Chaos +4.";
+                    return "Sold Curious Cargo (+10s).";
                 },
                 choices: [{ text: "Continue Selling", nextScene: 'market_sell', type: 'travel' }]
             },
@@ -1160,38 +1181,40 @@
         // --- CORE FUNCTIONS ---
 
         async function generateSceneImage(sceneId) {
-            // Simple mapping: If scene exists in our map, use it. Else use default.
-            // If sceneId is undefined (e.g. first load), default to 'prologue_storm' or 'default'
             const key = sceneId || 'default';
             const url = sceneImages[key] || sceneImages['default'];
             
             const imgEl = document.getElementById('scene-image');
             const loader = document.getElementById('image-loader');
             
-            // Hide image, show loader
+            // Hide image, show loader immediately for visual feedback
             imgEl.style.opacity = 0;
             loader.style.display = 'flex';
+            imgEl.src = ''; // Clear previous image
 
-            // Simulate network delay for effect, or load immediately
-            setTimeout(() => {
+            // Use a temporary image object to manage loading state reliably
+            const tempImg = new Image();
+            tempImg.src = url;
+
+            tempImg.onload = () => {
+                // Once loaded, apply source, hide loader, and fade in
                 imgEl.src = url;
-                imgEl.onload = () => {
-                    loader.style.display = 'none';
-                    imgEl.style.opacity = 1;
-                };
-                // Handle broken links by falling back to placeholder
-                imgEl.onerror = () => {
-                    loader.style.display = 'none';
-                    imgEl.src = sceneImages['default'];
-                    imgEl.style.opacity = 1;
-                }
-            }, 100);
+                loader.style.display = 'none';
+                imgEl.style.opacity = 1;
+            };
+
+            tempImg.onerror = () => {
+                // Fallback to placeholder on error
+                console.warn(`Failed to load image for scene: ${sceneId}. Falling back to placeholder.`);
+                imgEl.src = sceneImages['default'];
+                loader.style.display = 'none';
+                imgEl.style.opacity = 1;
+            };
         }
 
         async function init() {
-            // Initialize Firebase directly with the config object defined above.
             window.confirmReset = confirmReset;
-            window.resetGame = resetGame; // Added this
+            window.resetGame = resetGame; 
 
             onAuthStateChanged(auth, async (u) => {
                 if (u) {
