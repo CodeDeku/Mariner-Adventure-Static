@@ -29,6 +29,68 @@
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #0f172a; }
         ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+        
+        .btn-game {
+            transition: all 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+        .btn-game:active { transform: translateY(1px); }
+        .text-shadow { text-shadow: 0 2px 4px rgba(0,0,0,0.8); }
+        
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 5px rgba(59, 130, 246, 0.2); border-color: #3b82f6; }
+            50% { box-shadow: 0 0 15px rgba(59, 130, 246, 0.5); border-color: #60a5fa; }
+        }
+        .crew-active { animation: pulse-glow 2s infinite; background-color: rgba(30, 58, 138, 0.3); }
+
+        /* Custom glow for FREE USE / Mushroom */
+        @keyframes pulse-purple {
+            0%, 100% { box-shadow: 0 0 8px rgba(168, 85, 247, 0.5); border-color: #a855f7; }
+            50% { box-shadow: 0 0 18px rgba(192, 132, 252, 0.8); border-color: #c084fc; }
+        }
+        .crew-free-use-glow {
+            animation: pulse-purple 2s infinite;
+            background-color: rgba(88, 28, 135, 0.5); /* deep violet */
+            border-color: #a855f7 !important;
+            color: #f3e8ff !important;
+        }
+
+
+        /* --- TUTORIAL PULSE (AMBER) --- */
+        @keyframes pulse-amber {
+            0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); border-color: #f59e0b; }
+            70% { box-shadow: 0 0 0 10px rgba(245, 158, 11, 0); border-color: #fbbf24; }
+            100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); border-color: #f59e0b; }
+        }
+        .tutorial-pulse { 
+            animation: pulse-amber 2s infinite; 
+            border: 2px solid #f59e0b !important; 
+            background-color: rgba(180, 83, 9, 0.4); /* Dark Amber background */
+            z-index: 10;
+        }
+
+        @keyframes item-pulse {
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.4); }
+            50% { box-shadow: 0 0 10px 0 rgba(16, 185, 129, 0.2); border-color: rgba(16, 185, 129, 0.8); }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.4); }
+        }
+        .item-consumable { animation: item-pulse 3s infinite; }
+
+        #inf-marker { transition: left 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+
+        /* --- LORE TOOLTIPS --- */
+        .memory-keyword {
+            color: #60a5fa; /* Blue-400 */
+            text-shadow: 0 0 8px rgba(59, 130, 246, 0.5); /* Soft Glow */
+            cursor: help;
+            position: relative;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            border-bottom: 1px solid transparent; 
+        }
+        .memory-keyword:hover {
             text-shadow: 0 0 12px rgba(59, 130, 246, 0.9), 0 0 2px #fff; /* Intense Glow */
             color: #bfdbfe; /* Blue-200 */
         }
@@ -830,10 +892,10 @@
                 text: "The men draw blades as you approach. 'One step closer and you're fish food!'",
                 journal: "Found the smugglers. They aren't friendly.",
                 choices: [
-                    { text: "Flash 'The Mariner's Sign' (Req: Chaos +3)", nextScene: 'smuggler_friend', type: 'dialogue', reqSmuggler: 3 },
+                    { text: "Flash 'The Mariner's Sign'", nextScene: 'smuggler_friend', type: 'dialogue', reqSmuggler: 3 },
                     // CHOICE: Offer Curious Cargo (Chaos Only)
                     { text: "Offer Curious Cargo", nextScene: 'smuggler_cargo', type: 'action', reqItem: 'Curious Cargo', chaosGain: 6 },
-                    { text: "Buy safe passage (5 Shillings)", nextScene: 'smuggler_pay', type: 'action', cost: 5 },
+                    { text: "Buy safe passage", nextScene: 'smuggler_pay', type: 'action', cost: 5 },
                     { text: "Run to Market", nextScene: 'market_crossroads', type: 'travel' }
                 ]
             },
@@ -1667,6 +1729,8 @@
                 
                 // --- Consistent Currency/Value/Influence Display ---
                 let transactionIndicator = '';
+                let indicatorColor = 'text-amber-500';
+
                 if (choice.cost) {
                     // Cost (Negative) for Buy/Bribe
                     transactionIndicator = `(-${choice.cost}s)`;
@@ -1674,13 +1738,14 @@
                     // Value (Positive) for Sell actions
                     transactionIndicator = `(+${choice.value}s)`;
                 } else if (choice.chaosGain) {
-                    // Chaos Gain (Positive) for Smuggler trade
+                    // Chaos Gain (Positive) for Smuggler trade (Emerald color for Chaos)
                     transactionIndicator = `(+${choice.chaosGain} Chaos)`;
+                    indicatorColor = 'text-emerald-400';
                 }
 
                 if (transactionIndicator) {
                     // Increase size to text-sm (MODIFIED)
-                    supplementalText += ` <span class="text-amber-500 text-sm ml-1">${transactionIndicator}</span>`;
+                    supplementalText += ` <span class="${indicatorColor} text-sm ml-1">${transactionIndicator}</span>`;
                 }
                 // --- End Transaction Display ---
                 
@@ -1807,10 +1872,12 @@
                     baseClass += "bg-gray-800 border-gray-600 text-gray-300 hover:border-gray-400 hover:bg-gray-700";
                 }
 
-                // --- TUTORIAL PULSE LOGIC ---
+                // --- TUTORIAL PULSE LOGIC FIX ---
+                // Only pulse Quinn at the start if he is not used AND no one is selected
                 if (gameState.currentSceneId === 'start' && c.name === 'Quinn' && !c.used && !activeCrewMember) {
                     baseClass += " tutorial-pulse";
                 }
+                // --- END TUTORIAL PULSE FIX ---
 
                 btn.className = baseClass;
                 // Only disable if USED
