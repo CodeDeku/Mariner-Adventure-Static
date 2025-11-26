@@ -512,8 +512,7 @@
             'lighthouse_neutralized': 'images/lighthouse_door.jpg', 
 			'ending_order': 'images/guards_win.jpg',
 			'ending_chaos': 'images/smugglers_win.jpg',
-			'ending_neutral': 'images/lockpick.jpg', 
-            'ending_neutral_check': 'images/lockpick.jpg', // New scene for the mushroom test
+			'ending_neutral_check': 'images/lockpick.jpg', 
             'ending_neutral_success': 'images/lockpick.jpg',
 			'lighthouse_vigil': 'images/dream.jpg',
 			'lighthouse_rest': 'images/dream.jpg',
@@ -1201,21 +1200,14 @@
             },
             'ending_neutral_fail': {
                 title: "The Shadow Fails",
-                text: "Your attempt to understand the mechanism jams the lock further. The noise echoes in the wind, and you must hurry before someone investigates.",
-                journal: "I failed to pick the lock. I needed the practice anyway.",
+                text: "Your attempt to understand the mechanism jams the lock further. The noise echoes in the wind, and you must hurry before someone investigates. You quickly force the door, abandoning subtlety.",
+                journal: "I failed the mechanism check. I forced the door and entered the lighthouse.",
                 onEnter: (state) => { 
                     state.currentHP -= 2; 
                     fxManager.flashRed();
                     return "Took 2 Damage (Hurry)."; 
                 },
                 // REDIRECTED to Lighthouse Vigil
-                choices: [{ text: "Force the Door Open (Risk)", nextScene: 'lighthouse_vigil', type: 'travel' }]
-            },
-            'ending_neutral': {
-                // REDUNDANT SCENE REMOVED
-                title: "The Shadow",
-                text: "The door is barred. No one is here to welcome you. You must pick the lock yourself, slipping in like a ghost, unseen by Guard or Smuggler alike.",
-                journal: "I arrived alone. I enter alone. No allies, no enemies.",
                 choices: [{ text: "Enter and Rest", nextScene: 'lighthouse_vigil', type: 'rest' }]
             },
             'lighthouse_vigil': {
@@ -1477,20 +1469,21 @@
                 if (activeCrewMember) {
                     const isSkilled = getBonusForSkill(activeCrewMember, gameState.lastSkillType);
                     
-                    if (isSkilled || gameState.crewUseFree) {
+                    if (isSkilled) { // Only grant bonus if skill is matched OR free use is active
                         const bonus = Math.floor(Math.random() * 4) + 1;
                         roll += bonus;
                         crewUsedName = activeCrewMember.name;
                         logMsg += ` + ${bonus} (${crewUsedName})`;
-
+                        
                         const crewKey = activeCrewMember.id;
                         
-                        // If it's not a free use, mark as used
-                        if (!gameState.crewUseFree) {
-                            gameState.crew[crewKey].used = true;
-                        } else {
-                            // MUSHROOM LOGIC: Log free use but DO NOT mark crew member as used.
+                        // MUSHROOM LOGIC CHECK (APPLY COST OR FREE USE)
+                        if (gameState.crewUseFree) {
+                            // Free use: DO NOT mark as used, but consume the mushroom effect.
                             addToHistory(`*Pearlescent Mushroom consumed for FREE GUIDANCE.*`, 'system');
+                        } else {
+                            // Normal use: Mark as used.
+                            gameState.crew[crewKey].used = true;
                         }
                         
                         // Store the ID of the crew member used on this check (used for Talon Cargo logic)
@@ -1498,14 +1491,21 @@
                             gameState.lastCrewUsedId = crewKey;
                         }
                         
-                        // CONSUME MUSHROOM EFFECT after the attempt
-                        gameState.crewUseFree = false; 
-                        
+                    } else if (gameState.crewUseFree) {
+                         // Crew selected, mushroom active, but SKILL DOESN'T MATCH.
+                         // Per D&D, no bonus is granted. Do not consume mushroom or crew use.
+                        crewUsedName = activeCrewMember.name;
+                        logMsg += ` + 0 (${crewUsedName} - Invalid Skill, Mushroom conserved)`;
+                        addToHistory(`*Mushroom conserved: ${crewUsedName} doesn't have expertise in ${gameState.lastSkillType}.*`, 'system');
                     } else {
+                        // Crew selected, mushroom inactive, skill doesn't match.
                         crewUsedName = activeCrewMember.name;
                         logMsg += ` + 0 (${crewUsedName} - Invalid Skill)`;
                         // Do not mark as used if skill was invalid
                     }
+                    
+                    // Always consume the mushroom effect if it was active and the roll was executed
+                    gameState.crewUseFree = false; 
                     activeCrewMember = null;
                 }
 
@@ -1806,14 +1806,19 @@
                 let baseClass = "p-2 rounded border text-left transition-all relative overflow-hidden ";
                 
                 
-                if (c.used && !isAvailableForFreeUse) { // Note: c.used will be false if mushroom is active
+                if (c.used) { 
                     // Used crew members are disabled
                     baseClass += "bg-black/50 border-gray-800 text-gray-700 cursor-not-allowed opacity-50";
-                } else if (isAvailableForFreeUse) { 
-                     // NEW: Purple glow for available crew members when mushroom is active
+                } else if (isAvailableForFreeUse && !isSelected) { 
+                     // NEW: Purple glow for available crew members when mushroom is active, pre-selection
                     baseClass += "crew-free-use-glow";
                 } else if (isSelected) {
-                    baseClass += "bg-blue-900/40 border-blue-400 text-blue-100 crew-active ring-1 ring-blue-400";
+                    // SELECTED: Standard selection glow (blue) OR persistent purple glow (if free use is active on the selected one)
+                    if (isAvailableForFreeUse) {
+                         baseClass += "crew-free-use-glow"; // Keep purple glow on selected member if mushroom is active
+                    } else {
+                         baseClass += "bg-blue-900/40 border-blue-400 text-blue-100 crew-active ring-1 ring-blue-400";
+                    }
                 } else {
                     baseClass += "bg-gray-800 border-gray-600 text-gray-300 hover:border-gray-400 hover:bg-gray-700";
                 }
@@ -1825,7 +1830,7 @@
 
                 btn.className = baseClass;
                 // Only disable if USED
-                btn.disabled = c.used && !isAvailableForFreeUse; 
+                btn.disabled = c.used; 
                 btn.innerHTML = `
                     <div class="font-bold text-[12px] cinzel leading-tight">${c.name}</div>
                     <div class="text-[10px] ${isSelected || isAvailableForFreeUse ? 'text-white' : 'text-gray-500'}">${c.skill}</div>
