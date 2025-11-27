@@ -303,6 +303,12 @@
         .fx-vignette-low {
             box-shadow: inset 0 0 80px 30px rgba(127, 29, 29, 0.3);
         }
+        
+        /* NEW: RIFT COLLAPSE VIOLET VIGNETTE */
+        .fx-rift-collapse {
+            box-shadow: inset 0 0 100px 50px rgba(88, 28, 135, 0.5); /* Deep Violet Vignette */
+            background-color: rgba(88, 28, 135, 0.05);
+        }
 
         .water-stained {
             background-color: #1e293b;
@@ -380,7 +386,7 @@
                 <div id="doom-counter-display" class="bg-gray-900 p-2 rounded border border-gray-700 flex flex-col text-[10px] gap-2 relative hidden">
                     <div class="flex justify-between items-center cinzel text-xs uppercase tracking-wider font-bold">
                         <span class="text-purple-400"><i class="fas fa-bolt mr-1"></i>Rift Stability</span>
-                        <span id="doom-timer-text" class="text-yellow-500">15 Turns</span>
+                        <span id="doom-timer-text"></span>
                     </div>
                     <div class="relative w-full h-1 bg-gray-800 rounded-full border border-gray-600 overflow-hidden">
                         <div id="doom-bar" class="absolute inset-0 bg-purple-600 transition-all duration-500"></div>
@@ -600,7 +606,7 @@
 
             clearEffects() {
                 // Remove all effects except flash animations (they remove themselves)
-                this.overlay.classList.remove('fx-pulse-violet', 'fx-vignette-low');
+                this.overlay.classList.remove('fx-pulse-violet', 'fx-vignette-low', 'fx-rift-collapse'); // ADDED fx-rift-collapse
             }
 
             flashRed() {
@@ -616,6 +622,12 @@
             setVignette(active) {
                 if(active) this.overlay.classList.add('fx-vignette-low');
                 else this.overlay.classList.remove('fx-vignette-low');
+            }
+            
+            // NEW: Rift Collapse Visual
+            setRiftCollapseVignette(active) {
+                if (active) this.overlay.classList.add('fx-rift-collapse');
+                else this.overlay.classList.remove('fx-rift-collapse');
             }
         }
         
@@ -717,8 +729,8 @@
                 // NEW: Information Flags for Act 1 Shortcuts
                 knowsSmelterSecret: false,
                 knowsChapelSecret: false,
-                // NEW: Doom Counter (Starts at 15)
-                doomTimer: 15,
+                // NEW: Doom Counter (Starts at 20 - INCREASED MAX STABILITY)
+                doomTimer: 20,
                 act1Started: false,
                 // NEW: Status Flags for Boss Fights
                 isAbsorbCharged: false, // For Absorb Elements
@@ -749,6 +761,22 @@
                     const idx = state.inventory.indexOf("Rum (Heal 5)");
                     if (idx > -1) state.inventory.splice(idx, 1);
                     return `Drank Rum. Healed ${state.currentHP - oldHP} HP.`;
+                }
+            },
+            "Gruel": { // NEW ITEM: Gruel
+                name: "Gruel",
+                type: 'consumable',
+                icon: 'fa-bowl-food',
+                color: 'text-gray-400',
+                btnText: "EAT",
+                desc: "Consumable: Cheap, watery sustenance. Restores 2 HP immediately.",
+                action: (state) => {
+                    const healAmount = 2;
+                    const oldHP = state.currentHP;
+                    state.currentHP = Math.min(state.maxHP, state.currentHP + healAmount);
+                    const idx = state.inventory.indexOf("Gruel");
+                    if (idx > -1) state.inventory.splice(idx, 1);
+                    return `Ate Gruel. Healed ${state.currentHP - oldHP} HP.`;
                 }
             },
             "Healing Potion": {
@@ -812,7 +840,7 @@
                 icon: 'fa-heart',
                 color: 'text-gray-300',
                 btnText: "SELL",
-                desc: "Passive: A sentimental item. Can be sold for a high price at the Alchemist Triage.",
+                desc: "Passive: A sentimental item. Might be worth something.",
                 action: (state) => {
                     return "Requires a suitable buyer, such as Madam Alara.";
                 }
@@ -949,6 +977,11 @@
             { item: "Flash Powder", nextScene: 'buy_powder', cost: 10 },
             { item: "Alchemical Fire", nextScene: 'buy_fire', cost: 12 }, // Alchemist sells boss counters
             { item: "Holy Water", nextScene: 'buy_water', cost: 12 }
+        ];
+        
+        // NEW: Tavern Gruel Stock Definition
+        const TAVERN_BUY_OPTIONS = [
+             { item: "Gruel", nextScene: 'buy_gruel', cost: 1 } // NEW GRUEL OPTION
         ];
 
         const MARKET_SELL_OPTIONS = [
@@ -1596,9 +1629,18 @@
                 journal: null,
                 isRest: true, // Tag as rest scene to prevent doom counter decrement
                 onEnter: (state) => {
+                    // UPDATED SHANTY TEXT TO INCLUDE ALL VERSES
                     const shanty = `The shanty holds the truth. I must find the Ring and the Blade to save my crew. I am the Captain now.<br><br>
-                      <i class='spectral-text-glow'>“He found the Ring of ancient Brass,<br>
+                      <i class='spectral-text-glow'>“There’s a tax for the coin and a tax for the bread,<br>
+                      But who pays the toll for the army of dead?<br>
+                      The Wolf King did, so the legends say,<br>
+                      To call back the souls who lost their way.<br><br>
+                      He found the Ring of ancient Brass,<br>
 					  And the Blade that lets no Vampire pass.<br>
+                      He gave them a home and a people to keep,<br>
+                      And woke the crew from their deep cold sleep.<br><br>
+                      The dead stood fast 'til the war was won,<br>
+                      Then vanished like mist in the morning sun.<br>
                       Now the Ring and the Blade are lost at sea,<br>
                       Waiting for a Captain as cursed as he.“</i>`;
                     
@@ -1762,7 +1804,7 @@
                         customClass: 'btn-shadow-glow'						
                     },
                     { text: "Visit The Triage Alchemist", nextScene: 'alchemist_triage', type: 'travel', doomCost: 0 },
-                    { text: "Rest at The Blackwater Tavern", nextScene: 'blackwater_tavern', type: 'travel, doomCost: 0' },
+                    { text: "Rest at The Blackwater Tavern", nextScene: 'blackwater_tavern', type: 'travel', doomCost: 0 },
                     { text: "Explore the Docks", nextScene: 'town_docks', type: 'travel', doomCost: 0 } // NEW DOCKS BUTTON
                 ],
                 onEnter: (state) => {
@@ -1834,7 +1876,7 @@
                 text: "The sea is black and restless. The skeletal remains of piers stretch into the cold water. Sailors work in silence, hauling heavy crates. You see a shifty-eyed <span class='memory-keyword' data-lore='The unseen veins of the coast. They value coin above law.'>Smuggler</span> checking his manifest.",
                 journal: "Arrived at the docks. Hard work available, and maybe something more illicit.",
                 choices: [
-                    // NEW CHOICE: Sell Curious Cargo directly here for a premium (+15s)
+                    // NEW CHOICE: Sell Curious Cargo directly here for a premium (+15s). This button is now handled by renderChoices visibility.
                     { text: "Sell Curious Cargo to Smuggler", nextScene: 'docks_sell_cargo', type: 'action', reqItem: 'Curious Cargo', value: 15 },
                     // FIX: Updated button text to be concise. Added shillingGain for correct parsing.
                     { text: "Work the Lines", nextScene: 'docks_work', type: 'action', costHP: 2, chaosGain: 1, shillingGain: 3 }, 
@@ -1844,7 +1886,7 @@
                         nextScene: 'docks_dive_check', 
                         type: 'skill', 
                         dc: 16, 
-                        skill: 'Athletics' 
+                        skill: 'Survival' 
                     },
                     { 
                         text: "Search for Smuggler's Drop (Ring of Brass Required)", 
@@ -1944,9 +1986,14 @@
 				text: "The interior is dim, smelling of stale brine and fear. Men speak in hushed tones, glancing at the door. This is where the broken come to hide. Rest is costly, but information is sometimes free.",
 				journal: "The Blackwater. Even the ale tastes like defeat here. But the walls have ears, and I need to listen.",
                 isRest: true, // Tag as rest scene to prevent doom counter decrement if player leaves without resting
+                stock: { // NEW STOCK FOR GRUEL
+                    "Gruel": 5 
+                },
                 choices: [
-                    // PAID REST OPTION
+                    // PAID REST OPTION (Now always visible, handled by renderChoices for cost)
                     { text: "Pay 10 Shillings for a Cot (Full Rest)", nextScene: 'tavern_rest_success', type: 'action', cost: 10 },
+                    // NEW: BUY GRUEL OPTION
+                    { text: "Buy Gruel (1s, +2 HP)", nextScene: 'buy_gruel', type: 'action', cost: 1, stockItem: 'Gruel' },
                     // INFORMATION GATHERING
                     { text: "Listen to Engineer's Rumors (Smelter)", nextScene: 'gather_info_smelter', type: 'dialogue' },
                     { text: "Listen to Gravedigger's Warnings (Chapel)", nextScene: 'gather_info_chapel', type: 'dialogue' },
@@ -1960,6 +2007,21 @@
                     }, 
                     { text: "Return to Port Square", nextScene: 'town_square', type: 'travel', doomCost: 0 }
                 ]
+            },
+            // NEW SCENE: Buy Gruel
+            'buy_gruel': {
+                title: "Purchase",
+                text: "You receive a bowl of thin, tasteless gruel.",
+                journal: "I bought and ate gruel.",
+                onEnter: (state) => { 
+                    const healAmount = 2;
+                    const oldHP = state.currentHP;
+                    state.currentHP = Math.min(state.maxHP, state.currentHP + healAmount);
+                    scenes['blackwater_tavern'].stock["Gruel"] -= 1; // Decrease local stock
+                    audioManager.playCoins();
+                    return `Bought Gruel. Healed ${state.currentHP - oldHP} HP.`;
+                },
+                choices: [{ text: "Return to Tavern", nextScene: 'blackwater_tavern', type: 'travel', doomCost: 0 }]
             },
             'tavern_gambler': {
 				title: "Keen Senses at the Table",
@@ -2010,10 +2072,10 @@
 				journal: "Madam Alara. She'd distill her own mother if it made a potent tonic. Her prices are robbery, but her potions might be the only reason I survive the night.",
                 stock: {
                     "Vitality Tincture": 2,
-                    "Smelling Salts": 2,
+                    "Smelling Salts": 3,
                     "Flash Powder": 1,
-                    "Alchemical Fire": 0, 
-                    "Holy Water": 0 
+                    "Alchemical Fire": 1, 
+                    "Holy Water": 1 
                 },
                 choices: [
                     { text: "Sell Wares", nextScene: 'alchemist_sell', type: 'travel', doomCost: 0 },
@@ -2333,7 +2395,8 @@
                         text: "Channel Absorb Elements", 
                         nextScene: 'smelter_stage2_clean', 
                         type: 'action', 
-                        reqSkill: 'Absorb Elements',
+                        reqSkill: 'Absorb Elements', 
+                        doomCost: 0,
                         customClass: 'btn-fire-glow' 
                     },
                     // COUNTER 3: Brute Force (High Damage)
@@ -2747,7 +2810,8 @@
                         customClass: 'btn-shadow-glow'
                     },
                     { text: "Engage in Psychic Struggle (Brute Force)", nextScene: 'chapel_victory_brute', type: 'combat' }
-                ],
+                ]
+                ,
                 onEnter: (state) => {
                     // Apply the damage calculated in the logic scene
                     state.currentHP = applyDamage(state.currentHP, state.pendingDamage || 0);
@@ -2846,7 +2910,7 @@
             "Rope": 1,
             "Torch": 1,
             "Curious Cargo": 1, // Tracks how many times this merchant will buy the cargo
-            "Rum (Heal 5)": 0 // Rum starts at zero stock
+            "Rum (Heal 5)": 0 
         };
         // NEW: Alchemist stock initialization
         scenes['alchemist_triage'].stock = {
@@ -2855,6 +2919,10 @@
             "Flash Powder": 1,
             "Alchemical Fire": 1, 
             "Holy Water": 1 
+        };
+        // NEW: Tavern stock initialization
+        scenes['blackwater_tavern'].stock = {
+            "Gruel": 5 
         };
         
         async function generateSceneImage(sceneId) {
@@ -2937,6 +3005,10 @@
                     if (data.alchemist_triage_stock) {
                         scenes['alchemist_triage'].stock = data.alchemist_triage_stock;
                     }
+                    // NEW: Tavern Stock Persistence
+                    if (data.blackwater_tavern_stock) {
+                        scenes['blackwater_tavern'].stock = data.blackwater_tavern_stock;
+                    }
                     
                     renderScene(gameState.currentSceneId, false);
                     rebuildJournal();
@@ -2960,6 +3032,11 @@
                             scenes['alchemist_triage'].stock = data.alchemist_triage_stock;
                             delete data.alchemist_triage_stock;
                         }
+                        // NEW: Tavern Stock Persistence
+                        if (data.blackwater_tavern_stock) {
+                            scenes['blackwater_tavern'].stock = data.blackwater_tavern_stock;
+                            delete data.blackwater_tavern_stock;
+                        }
 
                         gameState = { ...gameState, ...data };
                         updateUI();
@@ -2976,6 +3053,7 @@
             // --- ATTACH SCENE STOCK TO SAVED STATE ---
             safeState.market_stall_stock = scenes['market_stall'].stock;
             safeState.alchemist_triage_stock = scenes['alchemist_triage'].stock;
+            safeState.blackwater_tavern_stock = scenes['blackwater_tavern'].stock; // NEW: Tavern Stock Save
 
             await setDoc(docRef, safeState);
         }
@@ -3019,6 +3097,9 @@
                 "Alchemical Fire": 1, 
                 "Holy Water": 1 
             };
+            scenes['blackwater_tavern'].stock = { // NEW: Tavern Stock Reset
+                "Gruel": 5 
+            };
             // Clear boss flags which may persist in the scene definitions (if not explicitly cleared on win/loss)
             gameState.isAbsorbCharged = false;
             gameState.isSurpriseRound = false;
@@ -3048,7 +3129,7 @@
             let html = '';
             if (type === 'entry') {
                 // Apply spectral-text-glow to crew names in the journal
-                const processedText = text.replace(/(Captain Gareth|Gareth|Quinn|Talon|Bones|Wolf King|Ring|Blade|Sword|Smelter|Chapel|Absorb Elements|Primeval Awareness)/g, '<span class="spectral-text-glow">$1</span>');
+                const processedText = text.replace(/(Captain Gareth|Gareth|Quinn|Talon|Bones|Wolf King|Ring of Brass|Sword of Valor|Smelter|Chapel|Absorb Elements|Primeval Awareness)/g, '<span class="spectral-text-glow">$1</span>');
                 html = `<div class="journal-font pb-4 border-b border-gray-700/30 text-gray-400 fade-in">${processedText}</div>`;
             } else if (type === 'system') {
                 html = `<div class="text-xs text-amber-500 font-mono mb-2 fade-in">> ${text}</div>`;
@@ -3343,19 +3424,49 @@
                 // Add back the navigation choices
                 processedChoices = processedChoices.concat(permanentChoices);
             }
-            // NEW: Blackwater Tavern Rest Logic (Only appears if current HP < Max HP)
+            // NEW: Blackwater Tavern Rest/Gruel Logic
             else if (currentSceneId === 'blackwater_tavern') {
-                const restOption = processedChoices.find(c => c.nextScene === 'tavern_rest_success');
-                if (restOption && gameState.currentHP === gameState.maxHP) {
-                    // Filter out the rest option if at full HP
-                    processedChoices = processedChoices.filter(c => c.nextScene !== 'tavern_rest_success');
-                } else if (restOption) {
-                    // Rename the rest option to include current cost
-                    restOption.text = `Pay ${restOption.cost} Shillings for a Cot (Full Rest)`;
+                const restOption = choices.find(c => c.nextScene === 'tavern_rest_success');
+                const returnOption = choices.find(c => c.nextScene === 'town_square');
+                const gamblerOption = choices.find(c => c.nextScene === 'tavern_gambler');
+                const infoSmelter = choices.find(c => c.nextScene === 'gather_info_smelter');
+                const infoChapel = choices.find(c => c.nextScene === 'gather_info_chapel');
+
+                // Clear base choices to rebuild
+                processedChoices = []; 
+                
+                // Add Gruel option
+                TAVERN_BUY_OPTIONS.forEach(sale => {
+                    const actualStock = currentSceneStock[sale.item] || 0;
+                    if (actualStock > 0) {
+                         processedChoices.push({
+                            text: `Buy Gruel (1s, +2 HP) (Stock: ${actualStock})`,
+                            nextScene: 'buy_gruel',
+                            type: 'action',
+                            cost: sale.cost,
+                            stockItem: sale.item 
+                        });
+                    }
+                });
+
+                // Add Rest option (always visible, disabled if unaffordable)
+                if (restOption) {
+                    // Only add the rest button if not at full HP OR if rest restores more than just HP (which this does - crew)
+                    // We keep it always visible as requested, but disable it.
+                    processedChoices.push(restOption);
                 }
                 
-                // NEW: Hide Observe Gambler if Ring of Brass is not owned (reqItem check handles this, but needed here if we change requirements later)
-                // Let the reqItem check handle it for now.
+                // Add Info/Gambler options (non-cost options)
+                if (infoSmelter) processedChoices.push(infoSmelter);
+                if (infoChapel) processedChoices.push(infoChapel);
+                if (gamblerOption) processedChoices.push(gamblerOption);
+                if (returnOption) processedChoices.push(returnOption);
+
+            }
+            // NEW: Docks Cargo Check (Curious Cargo is checked via reqItem in the main loop, but we need to ensure the other options are not missed)
+            else if (currentSceneId === 'town_docks') {
+                 // We keep the original choices array, but the visibility check below handles the Curious Cargo button specifically.
+                 // Ensure the 'Curious Cargo' button's visibility is tied to reqItem
             }
 
 
@@ -3365,12 +3476,13 @@
                 // --- VISIBILITY (OMIT) CHECKS: Apply OMIT logic first ---
                 
                 // FIX: Only hide non-skill/non-trade buttons if a required item is MISSING.
+                // NOTE: For 'docks_sell_cargo', reqItem check works perfectly here.
                 if (choice.reqItem && !choice.cost && !choice.value && !gameState.inventory.includes(choice.reqItem)) {
                      // If it requires an item, and is NOT a trade/sell button, hide it if item missing
                      return;
                 }
                 
-                // --- GENERAL REQUIREMENTS CHECK ---
+                // --- GENERAL REQUIREMENTS CHECK (Non-item reqs) ---
                 if (choice.reqSmuggler && gameState.influence < choice.reqSmuggler) return;
                 if (choice.reqGuard && gameState.influence > -choice.reqGuard) return;
                 
@@ -3396,18 +3508,19 @@
                     isDisabled = true;
                     disabledClass = 'btn-disabled-cost';
                 }
+                // Check 3: Stock availability (For buy actions only, visibility is mostly handled by rebuild logic)
+                if (choice.stockItem && (currentSceneStock[choice.stockItem] || 0) <= 0) {
+                     isDisabled = true;
+                     disabledClass = 'btn-disabled-cost';
+                }
                 
-                // Note: Item requirement checks for visibility were moved up. 
-                // We leave a residual check here in case an item-requiring button was somehow generated, 
-                // but for non-merchant scenes, the item checks now block generation entirely.
-
-
+                
                 const btn = document.createElement('button');
                 
                 // Determine styling: Is this a Hero/Skill moment?
                 let isHeroButton = choice.reqSkill ? true : false;
                 let isCustomClassButton = choice.customClass ? true : false;
-                let isTradeButton = choice.cost || choice.value;
+                let isTradeButton = choice.cost || choice.value || choice.shillingGain; // Added shillingGain for dock work/gruel
                 let isSkillCheck = choice.type === 'skill';
 
                 const alignmentClass = (isSkillCheck || isTradeButton || choice.chaosGain || choice.orderGain || choice.costHP || choice.shillingGain || choice.reqFlag) ? 'justify-start' : 'justify-between';
@@ -3458,7 +3571,7 @@
 
                     // --- FINAL STOCK CHECK BEFORE TRANSACTION (Crucial Fix) ---
                     // This is still needed for asynchronous stock changes (e.g., two players buying the last item in MP mode)
-                    if (choice.type === 'action' && (currentSceneId === 'market_stall' || currentSceneId === 'alchemist_triage') && choice.stockItem) {
+                    if (choice.type === 'action' && (currentSceneId === 'market_stall' || currentSceneId === 'alchemist_triage' || currentSceneId === 'blackwater_tavern') && choice.stockItem) {
                          const currentStock = scenes[currentSceneId].stock[choice.stockItem] || 0;
                          if (currentStock <= 0) {
                             addToHistory(`${choice.stockItem} is out of stock.`, 'system');
@@ -3503,6 +3616,7 @@
                     // Decrement only if Act 1 has started AND the choice does NOT have doomCost: 0 (or is implicitly 1)
                     if (gameState.act1Started && choice.doomCost !== 0) {
                         gameState.doomTimer -= 1;
+                        // NEW: Check for Rift Collapse status here
                         if (gameState.doomTimer > 0) {
                             addToHistory(`Rift Stability: ${gameState.doomTimer} turns remaining.`, 'system');
                         }
@@ -3685,7 +3799,14 @@
             const doomDisplay = document.getElementById('doom-counter-display');
             const doomText = document.getElementById('doom-timer-text');
             const doomBar = document.getElementById('doom-bar');
-            const maxDoom = 15;
+            const maxDoom = 20; // UPDATED MAX RIFT STABILITY
+
+            // NEW: Rift Collapse Visual Application
+            if (gameState.isRiftCollapse) {
+                fxManager.setRiftCollapseVignette(true);
+            } else {
+                fxManager.setRiftCollapseVignette(false);
+            }
 
             if (gameState.act1Started) {
                 doomDisplay.classList.remove('hidden'); // Show the doom counter
