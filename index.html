@@ -97,6 +97,34 @@
 
         #inf-marker { transition: left 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
 
+        /* --- HERO / ABILITY BUTTON STYLING (NEW) --- */
+        @keyframes hero-pulse {
+            0% { box-shadow: 0 0 5px rgba(59, 130, 246, 0.3); border-color: #60a5fa; }
+            50% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.6); border-color: #93c5fd; }
+            100% { box-shadow: 0 0 5px rgba(59, 130, 246, 0.3); border-color: #60a5fa; }
+        }
+
+        .btn-hero {
+            background: linear-gradient(90deg, rgba(30, 58, 138, 0.4) 0%, rgba(15, 23, 42, 0.6) 100%); /* Blue gradient */
+            border: 1px solid #60a5fa;
+            color: #dbeafe; /* Very light blue text */
+            animation: hero-pulse 2s infinite;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .btn-hero:hover {
+            background: linear-gradient(90deg, rgba(30, 58, 138, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%);
+            box-shadow: 0 0 25px rgba(59, 130, 246, 0.8);
+            transform: translateY(-1px);
+        }
+        
+        /* Icon styling for hero buttons */
+        .hero-icon {
+            color: #60a5fa;
+            filter: drop-shadow(0 0 5px rgba(59, 130, 246, 0.8));
+        }
+
         /* --- LORE TOOLTIPS --- */
         /* Updated LORE Tooltip styling to use SPECTRAL GLOW for consistency */
         .memory-keyword {
@@ -510,7 +538,7 @@
 			'smuggler_pay': 'images/smuggler_pay.jpg', 
 			'market_crossroads': 'images/market.jpg',
 			'market_stall': 'images/merchant.jpg',
-			'market_sell': 'images/merchant.jpg', 
+			'market_sell': 'images/merchant.jpg',
 			'buy_potion': 'images/merchant.jpg',
 			'buy_rope': 'images/merchant.jpg',
 			'buy_torch': 'images/merchant.jpg',
@@ -533,6 +561,11 @@
             'ending_neutral_success': 'images/lockpick.jpg',
 			'lighthouse_vigil': 'images/dream.jpg',
 			'lighthouse_rest': 'images/dream.jpg',
+            // --- ACT 1 SCENE IMAGES ---
+            'lighthouse_morning': 'images/lighthouse_morning.jpg', // Placeholder for new scene
+            'town_descent': 'images/town_descent.jpg', // Placeholder
+            'town_square': 'images/town_square.jpg', // Placeholder
+            // --- END ACT 1 SCENE IMAGES ---
 			'default': 'https://placehold.co/600x400/0f172a/1e293b?text=The+Void' 
 		};
         
@@ -545,6 +578,7 @@
                 maxHP: 20,
                 shillings: 0, 
                 inventory: [], 
+                skills: [], // NEW: Hidden tracking for Absorb Elements / Primeval Awareness
                 influence: 0, 
                 crewUseFree: false, 
                 lastCrewUsedId: null, 
@@ -633,6 +667,8 @@
             "Torch": { type: 'key', icon: 'fa-fire', color: 'text-orange-500', desc: "Passive: Illuminates dark caves." },
             "Strange Coin": { type: 'key', icon: 'fa-circle-notch', color: 'text-yellow-600', desc: "Passive: Ancient currency. May open doors not made of wood." },
             "Compass": { type: 'key', icon: 'fa-compass', color: 'text-indigo-400', desc: "Passive: Seems to vibrate near planar energy." },
+            "Ring of Brass": { type: 'key', icon: 'fa-ring', color: 'text-orange-500', desc: "Legendary Item: The Wolves of Valor set. Grants fire resistance." },
+            "Sword of Valor": { type: 'key', icon: 'fa-sword', color: 'text-blue-500', desc: "Legendary Item: The Wolves of Valor set. Deals extra damage to undead." },
         };
         
         function getBonusForSkill(crewMember, skillType) {
@@ -718,7 +754,7 @@
             },
 			'wreckage_success': {
                 title: "Salvage",
-                text: "Quinn guides your hand to a buried chest partially exposed by the tide. Inside, you find a heavy pouch of Shillings and a Rusted Cutlass. You strap the blade to your belt—it feels like an extension of your arm. As you turn to leave, Quinn points frantically to a damp book lying nearby—the Ship's Log.",
+                text: "Quinn guides your hand to a buried chest partially exposed by the tide. Inside, you find a small pouch of Shillings and a Rusted Cutlass. You strap the blade to your belt—it feels like an extension of your arm. As you turn to leave, Quinn points frantically to a damp book lying nearby—the Ship's Log.",
                 journal: "Scavenged a blade, coin, and the Logbook from the wreckage.",
                 onEnter: (state) => {
                     const items = ["Rusted Cutlass", "Ship's Log"];
@@ -1305,7 +1341,7 @@
                     return "Mission Accepted: Find the Wolves of Valor.";
                 },
                 choices: [
-                    { text: "Search for the Wolves of Valor (End Demo)", type: 'reset' },
+                    { text: "Continue to Act 1", nextScene: 'lighthouse_morning', type: 'travel' }, // MODIFIED
 					{ text: "Rest one more night", nextScene: 'lighthouse_rest', type: 'rest' }
                 ]
             },
@@ -1318,12 +1354,135 @@
                     addToHistory(restNote, 'entry');
                     state.currentHP = state.maxHP;
                     Object.keys(state.crew).forEach(k => state.crew[k].used = false);
+                    return "Rested. HP and Crew Use Restored.";
                 },
                 choices: [
-                    { text: "Search for the Wolves of Valor (End Demo)", type: 'reset' }
+                    { text: "Continue to Act 1", nextScene: 'lighthouse_morning', type: 'travel' } // MODIFIED
                 ]
             },
-            // MODIFIED SCENE: Dedicated Death Scene (Dark, dramatic styling)
+            // --- ACT 1: LEVEL UP SEQUENCE (SKILL UNLOCK) ---
+            'lighthouse_morning': {
+                title: "The First Morning",
+                text: "Dawn breaks over the ocean, but the light is sickly and grey. Gareth and Talon manifest on the lighthouse balcony, staring down at the island.<br><br>'The town is bleeding,' Gareth warns, pointing to the thick black smoke rising from the Smelter District. 'Fire and ruin.'<br><br>Talon points to the supernatural fog shrouding the Sunken Chapel. 'And things that refuse to stay dead hide in the mist.'<br><br>They offer to teach you one technique to channel your planar energy before you descend.",
+                journal: "The crew warned me of Fire and Shadow. I must choose how to prepare.",
+                choices: [
+                    { 
+                        text: "Learn to Endure (Absorb Elements)", 
+                        nextScene: 'learn_absorb', 
+                        type: 'dialogue' 
+                    }, 
+                    { 
+                        text: "Learn to See (Primeval Awareness)", 
+                        nextScene: 'learn_primeval', 
+                        type: 'dialogue'
+                    }
+                ]
+            },
+            'learn_absorb': {
+                title: "Gareth's Lesson",
+                text: "Gareth grips your shoulder. 'Fire burns only if you let it in. Capture it.' You feel a cold resilience settle in your veins. You understand now how to turn the elements against themselves.",
+                journal: "I learned Absorb Elements. I am ready for the fire.",
+                onEnter: (state) => {
+                    if (!state.skills.includes("Absorb Elements")) {
+                        state.skills.push("Absorb Elements");
+                    }
+                    state.currentHP = state.maxHP;
+                    return "Unlocked: Absorb Elements. HP Restored.";
+                },
+                choices: [{ text: "Descend to the Town", nextScene: 'town_descent', type: 'travel' }]
+            },
+            'learn_primeval': {
+                title: "Talon's Lesson",
+                text: "Talon covers your eyes. 'The dead leave a wake in the ether. Look with your mind.' When you open your eyes, the world hums with hidden outlines. The unseen is now visible to you.",
+                journal: "I learned Primeval Awareness. The undead cannot hide from me.",
+                onEnter: (state) => {
+                    if (!state.skills.includes("Primeval Awareness")) {
+                        state.skills.push("Primeval Awareness");
+                    }
+                    state.currentHP = state.maxHP;
+                    return "Unlocked: Primeval Awareness. HP Restored.";
+                },
+                choices: [{ text: "Descend to the Town", nextScene: 'town_descent', type: 'travel' }]
+            },
+            // --- ACT 1: THE HUB SETUP ---
+            'town_descent': {
+                title: "The Descent",
+                text: "The path to the Port of Shadows is treacherous. As you near the city gates, your Compass vibrates violently. You pull it out, and the needle splits in two.<br><br>One ghostly needle glows <span class='text-orange-500'>Orange</span>, pointing toward the burning Smelter District.<br><br>The other needle turns <span class='text-gray-500'>Black</span>, pointing toward the fog of the Sunken Chapel.",
+                journal: "The Compass has split. It tracks two distinct threats: Fire and Shadow.",
+                choices: [
+                    { text: "Enter the Port of Shadows", nextScene: 'town_square', type: 'travel' }
+                ]
+            },
+            'town_square': {
+                title: "Port of Shadows",
+                text: "", // Dynamic text populated by onEnter
+                onEnter: (state) => {
+                    const hasRing = state.inventory.includes("Ring of Brass");
+                    const hasBlade = state.inventory.includes("Sword of Valor");
+                    
+                    // STATE 2: FINALE UNLOCKED
+                    if (hasRing && hasBlade) {
+                        scenes['town_square'].text = "The Rift is tearing the sky apart. Violet lightning strikes the cobblestones. You have the Ring and the Blade. The Wolf King's ritual is the only way to close this wound.";
+                        return "Finale Unlocked.";
+                    } 
+                    // STATE 1: ONE ARTIFACT FOUND
+                    else if (hasRing) {
+                        scenes['town_square'].text = "You return with the Ring of Brass, but the air has grown deathly cold. Fog from the Sunken Chapel is flooding the streets, choking the light. The Shadow threat has escalated while you were away.";
+                    } 
+                    else if (hasBlade) {
+                        scenes['town_square'].text = "You return with the Sword of Valor, but the cobblestones are scorching hot under your boots. Ash falls from the Smelter District like gray snow. The Fire threat has escalated while you were away.";
+                    } 
+                    // STATE 0: ARRIVAL
+                    else {
+                        scenes['town_square'].text = "The Port is in chaos. Civilians flee toward the docks. To the East, the Smelter District burns with an unnatural heat. To the West, the Sunken Chapel lies in a pool of dark fog. Your Compass tracks both.";
+                    }
+                },
+                choices: [
+                    // Dynamic Choices (will hide if item is found)
+                    { 
+                        text: "Investigate Smelter (Fire Path)", 
+                        nextScene: 'smelter_entry', 
+                        type: 'travel', 
+                        reqNotItem: 'Ring of Brass' 
+                    },
+                    { 
+                        text: "Investigate Chapel (Shadow Path)", 
+                        nextScene: 'chapel_entry', 
+                        type: 'travel',
+                        reqNotItem: 'Sword of Valor' 
+                    },
+                    // Tavern/Merchant TBD
+                    { text: "Return to Market", nextScene: 'market_crossroads', type: 'travel' }
+                ]
+            },
+            // --- TBD SCENES (Placeholders for next steps) ---
+            'smelter_entry': {
+                title: "Smelter District Entry",
+                text: "The path is blocked by a burst steam pipe spitting magical fire. You need to use your abilities here.",
+                choices: [
+                    // Hero Button will appear if Absorb Elements is unlocked
+                    { text: "Channel Absorb Elements", nextScene: 'smelter_safe', type: 'action', reqSkill: 'Absorb Elements' },
+                    { text: "Attempt Constitution Save", nextScene: 'smelter_roll', type: 'skill', dc: 14, skill: 'Constitution' }
+                ]
+            },
+            'smelter_safe': { title: "Safe Passage", text: "You pass safely.", choices: [{ text: "Continue", nextScene: 'town_square', type: 'travel' }] },
+            'smelter_roll': { isLogic: true, resolve: (roll) => roll >= 14 ? 'smelter_safe' : 'smelter_damage' },
+            'smelter_damage': { title: "Burned", text: "You take a burn.", onEnter: (s) => { s.currentHP = applyDamage(s.currentHP, 5); return "Took 5 Fire Damage."; }, choices: [{ text: "Continue", nextScene: 'town_square', type: 'travel' }] },
+
+            'chapel_entry': {
+                title: "Sunken Chapel Entry",
+                text: "The cemetery is covered in unnatural fog. You cannot see.",
+                choices: [
+                    // Hero Button will appear if Primeval Awareness is unlocked
+                    { text: "Channel Primeval Awareness", nextScene: 'chapel_safe', type: 'action', reqSkill: 'Primeval Awareness' },
+                    { text: "Attempt Perception Save", nextScene: 'chapel_roll', type: 'skill', dc: 14, skill: 'Perception' }
+                ]
+            },
+            'chapel_safe': { title: "Found Path", text: "You navigate the fog safely.", choices: [{ text: "Continue", nextScene: 'town_square', type: 'travel' }] },
+            'chapel_roll': { isLogic: true, resolve: (roll) => roll >= 14 ? 'chapel_safe' : 'chapel_damage' },
+            'chapel_damage': { title: "Ambushed", text: "A shadow creature ambushes you.", onEnter: (s) => { s.currentHP = applyDamage(s.currentHP, 6); return "Took 6 Shadow Damage."; }, choices: [{ text: "Continue", nextScene: 'town_square', type: 'travel' }] },
+
+
             'edward_death': {
                 title: "The Mariner's End",
                 text: "The voices fall silent, only to surge back in a deafening, cold chorus that rips through your mind. The debt is paid. The Planar Storm claims its last crewman, pulling you into the abyss. You feel the crushing presence of the Leviathan one final time.",
@@ -1746,22 +1905,28 @@
                 if (choice.reqGuard && gameState.influence > -choice.reqGuard) return;
                 if (choice.cost && gameState.shillings < choice.cost) return;
                 if (choice.reqItem && !gameState.inventory.includes(choice.reqItem)) return;
+                
+                // SKILL CHECK: If choice requires a skill, hide it if player doesn't have it
+                if (choice.reqSkill && !gameState.skills.includes(choice.reqSkill)) return;
 
                 const btn = document.createElement('button');
-                // Use flex and justify-start for skill/cost/influence buttons, and justify-between for pure travel/dialogue
+                
+                // Determine styling: Is this a Hero/Skill moment?
+                let isHeroButton = choice.reqSkill ? true : false;
+
                 const alignmentClass = (choice.type === 'skill' || choice.cost || choice.value || choice.chaosGain || choice.orderGain) ? 'justify-start' : 'justify-between';
                 
-                // Base class for buttons
-                let btnClass = `btn-game w-full p-3 text-left rounded shadow flex items-center ${alignmentClass} cinzel font-bold `;
-
+                let btnClass = "";
+                
                 if (isDeathScene) {
-                    // Apply deep red style for the Restart button (MODIFIED)
-                    btnClass += 'bg-red-900 border-red-700 hover:bg-red-800 hover:border-amber-500 text-white text-xl text-center';
+                    btnClass = `btn-game w-full p-3 text-left rounded shadow flex items-center ${alignmentClass} cinzel font-bold bg-red-900 border-red-700 hover:bg-red-800 hover:border-amber-500 text-white text-xl text-center`;
+                } else if (isHeroButton) {
+                    // APPLY HERO STYLING (NEW)
+                    btnClass = `btn-hero w-full p-4 text-left rounded shadow flex items-center ${alignmentClass} cinzel font-bold mb-2`; 
                 } else {
-                    // Standard active button style
-                    btnClass += 'bg-gray-800 border-gray-600 hover:border-amber-500 hover:bg-gray-750 text-gray-300 group';
+                    // STANDARD STYLING
+                    btnClass = `btn-game w-full p-3 text-left rounded shadow flex items-center ${alignmentClass} cinzel font-bold bg-gray-800 border-gray-600 hover:border-amber-500 hover:bg-gray-750 text-gray-300 group`;
                 }
-
 
                 btn.className = btnClass;
                 
@@ -1852,6 +2017,9 @@
                     supplementalText += ` <span class="spectral-text-glow text-sm uppercase tracking-wider ml-2 mr-4">[${choice.skill} DC ${choice.dc}]</span>`;
                     // Dice icon also receives spectral glow (MODIFIED)
                     icon = '<i class="fas fa-dice-d20 spectral-text-glow"></i>';
+                } else if (isHeroButton) {
+                    // Hero Button Icon (NEW)
+                    icon = '<i class="fas fa-star hero-icon"></i>'; 
                 }
                 
                 // --- Consistent Currency/Value/Influence Display ---
@@ -1888,8 +2056,7 @@
                 
                 // If there is supplemental text (skill/cost/value), merge it with the main content
                 if (supplementalText) {
-                    content += supplementalText;
-                    btn.innerHTML = `${content} <span class="ml-auto">${icon}</span>`;
+                    btn.innerHTML = `${content} ${supplementalText}<span class="ml-auto">${icon}</span>`;
                 } else {
                      // Default travel/dialogue button using justify-between
                      btn.innerHTML = `${content}${icon}`;
