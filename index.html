@@ -304,11 +304,10 @@
             box-shadow: inset 0 0 80px 30px rgba(127, 29, 29, 0.3);
         }
         
-        /* FIX 1: UPDATED RIFT COLLAPSE VIOLET VIGNETTE - Increased intensity */
+        /* UPDATED: RIFT COLLAPSE VIOLET VIGNETTE (Task 1) */
         .fx-rift-collapse {
-            /* Increased intensity for better noticeability */
-            box-shadow: inset 0 0 120px 50px rgba(139, 92, 246, 0.6); 
-            background-color: rgba(139, 92, 246, 0.15);
+            /* Matching intensity of .fx-vignette-low but with violet color */
+            box-shadow: inset 0 0 80px 30px rgba(139, 92, 246, 0.3); /* Purple-500 @ 30% opacity for low HP style */
         }
 
         .water-stained {
@@ -1880,7 +1879,7 @@
                 text: "The sea is black and restless. The skeletal remains of piers stretch into the cold water. Sailors work in silence, hauling heavy crates. You see a shifty-eyed <span class='memory-keyword' data-lore='The unseen veins of the coast. They value coin above law.'>Smuggler</span> checking his manifest.",
                 journal: "Arrived at the docks. Hard work available, and maybe something more illicit.",
                 choices: [
-                    // FIX 5: Added reqItem: 'Curious Cargo' to hide the button if the item is missing
+                    // NEW CHOICE: Sell Curious Cargo directly here for a premium (+15s). This button is now handled by renderChoices visibility.
                     { text: "Sell Curious Cargo to Smuggler", nextScene: 'docks_sell_cargo', type: 'action', reqItem: 'Curious Cargo', value: 15 },
                     // FIX: Updated button text to be concise. Added shillingGain for correct parsing.
                     { text: "Work the Lines", nextScene: 'docks_work', type: 'action', costHP: 2, chaosGain: 1, shillingGain: 3 }, 
@@ -1893,6 +1892,7 @@
                         skill: 'Survival' 
                     },
                     { 
+                        // FIX: reqItem is handled by the check below to ensure visibility is tied to Ring of Brass.
                         text: "Search for Smuggler's Drop", 
                         nextScene: 'docks_smuggler_check', 
                         type: 'skill', 
@@ -1995,16 +1995,28 @@
                 },
                 choices: [
                     // PAID REST OPTION (Now always visible, handled by renderChoices for cost)
-                    // FIX 3: Added doomCost: 3
+                    // Task 3 Fix: Added doomCost: 3
                     { text: "Pay for a Cot (Full Rest)", nextScene: 'tavern_rest_success', type: 'action', cost: 10, doomCost: 3 },
                     // NEW: EAT GRUEL (Instant Consume, checks HP)
                     { text: "Eat Gruel Now", nextScene: 'eat_gruel_instant', type: 'action', cost: 1, stockItem: 'Gruel' },
                     // NEW: BUY GRUEL (To Go, adds to inventory)
                     { text: "Buy Gruel (To Go)", nextScene: 'buy_gruel_to_go', type: 'action', cost: 1, stockItem: 'Gruel' },
                     // INFORMATION GATHERING
-                    // FIX 4: Added reqNotFlag to hide buttons once secret is known
-                    { text: "Listen to Engineer's Rumors (Smelter)", nextScene: 'gather_info_smelter', type: 'dialogue', reqNotFlag: 'knowsSmelterSecret' },
-                    { text: "Listen to Gravedigger's Warnings (Chapel)", nextScene: 'gather_info_chapel', type: 'dialogue', reqNotFlag: 'knowsChapelSecret' },
+                    // Task 4 Fix: Added reqNotFlag for visibility
+                    { 
+                        text: "Listen to Engineer's Rumors (Smelter)", 
+                        nextScene: 'gather_info_smelter', 
+                        type: 'dialogue', 
+                        reqNotFlag: 'knowsSmelterSecret',
+                        doomCost: 0
+                    },
+                    { 
+                        text: "Listen to Gravedigger's Warnings (Chapel)", 
+                        nextScene: 'gather_info_chapel', 
+                        type: 'dialogue', 
+                        reqNotFlag: 'knowsChapelSecret',
+                        doomCost: 0
+                    },
                     { 
                         // FIX: Updated button text to be concise. Added shillingGain property.
                         text: "Observe the Card Game", 
@@ -3510,7 +3522,7 @@
                 // Add back the navigation choices
                 processedChoices = processedChoices.concat(permanentChoices);
             }
-            // NEW: Blackwater Tavern Rest/Gruel Logic (Task 3)
+            // NEW: Blackwater Tavern Rest/Gruel Logic (Task 2 & 3)
             else if (currentSceneId === 'blackwater_tavern') {
                 const restOption = choices.find(c => c.nextScene === 'tavern_rest_success');
                 const returnOption = choices.find(c => c.nextScene === 'town_square');
@@ -3529,39 +3541,43 @@
                 
                 // 1. Instant Eat Gruel (conditional visibility/disability)
                 if (instantEat) {
-                    // FIX 2: Removed "(1s)" from the button text
+                    // Task 2 Fix: Removed (1s) from the text
                     let instantEatText = `Eat Gruel Now (Stock: ${gruelStock})`;
                     let instantEatDisabled = !canHeal || gruelStock <= 0 || !canAfford;
 
                     processedChoices.push({
                         ...instantEat, 
                         text: instantEatText, 
-                        cost: instantEat.cost,
+                        // Cost property remains for the indicator logic
+                        cost: instantEat.cost, 
                         isDisabled: instantEatDisabled,
                     });
                 }
 
                 // 2. Buy Gruel (To Go)
                 if (buyToGo) {
-                    // FIX 2: Removed "(1s)" from the button text
+                    // Task 2 Fix: Removed (1s) from the text
                     let buyToGoText = `Buy Gruel (To Go) (Stock: ${gruelStock})`;
                     let buyToGoDisabled = gruelStock <= 0 || !canAfford;
 
                     processedChoices.push({
                         ...buyToGo,
                         text: buyToGoText,
-                        cost: buyToGo.cost,
+                        // Cost property remains for the indicator logic
+                        cost: buyToGo.cost, 
                         isDisabled: buyToGoDisabled
                     });
                 }
 
 
-                // 3. Rest Option (always visible)
+                // 3. Rest Option (Task 3 Fix: doomCost: 3 added in scene definition)
                 if (restOption) processedChoices.push(restOption);
                 
                 // 4. Info/Gambler options (non-cost options)
-                if (infoSmelter) processedChoices.push(infoSmelter);
-                if (infoChapel) processedChoices.push(infoChapel);
+                // Task 4 Fix: Use reqNotFlag for visibility
+                if (infoSmelter && !gameState.knowsSmelterSecret) processedChoices.push(infoSmelter);
+                if (infoChapel && !gameState.knowsChapelSecret) processedChoices.push(infoChapel);
+                
                 if (gamblerOption) processedChoices.push(gamblerOption);
                 if (returnOption) processedChoices.push(returnOption);
 
@@ -3578,12 +3594,10 @@
                 
                 // --- VISIBILITY (OMIT) CHECKS: Apply OMIT logic first ---
                 
-                // Check for required item (used for Sell Cargo at Docks and the new Path bypasses)
+                // Task 5 Fix: Check for required items (reqItem) and omit if missing.
                 if (choice.reqItem && !gameState.inventory.includes(choice.reqItem)) {
-                    // Only hide if the choice is NOT a generic skill/dialogue/travel option (i.e., hide if it's an action/trade button)
-                    if (choice.type === 'action' || choice.type === 'combat') {
-                        return;
-                    }
+                     // This correctly handles: Sell Curious Cargo, Search Smuggler's Drop (Ring of Brass), Use Rope, Use Torch
+                     return;
                 }
                 
                 // --- GENERAL REQUIREMENTS CHECK (Non-item reqs) ---
@@ -3591,13 +3605,9 @@
                 if (choice.reqGuard && gameState.influence > -choice.reqGuard) return;
                 
                 if (choice.reqNotItem && gameState.inventory.includes(choice.reqNotItem)) return; // NEW NOT ITEM CHECK
-                // NEW: Information Flag Check (Used for Smelter/Chapel bypass options)
+                // NEW: Information Flag Check
                 if (choice.reqFlag && !gameState[choice.reqFlag]) return;
-                
-                // FIX 4: Hide Listen buttons after secret is learned
-                if (choice.reqNotFlag === 'knowsSmelterSecret' && gameState.knowsSmelterSecret) return;
-                if (choice.reqNotFlag === 'knowsChapelSecret' && gameState.knowsChapelSecret) return;
-                
+                if (choice.reqNotFlag && gameState[choice.reqNotFlag]) return; // Task 4: Reverse logic check
 
                 // SKILL CHECK: If choice requires a skill, hide it if player doesn't have it
                 if (choice.reqSkill && !gameState.skills.includes(choice.reqSkill) && choice.type !== 'skill') return;
@@ -3632,7 +3642,7 @@
                 let isTradeButton = choice.cost || choice.value || choice.shillingGain; // Added shillingGain for dock work/gruel
                 let isSkillCheck = choice.type === 'skill';
 
-                const alignmentClass = (isSkillCheck || isTradeButton || choice.chaosGain || choice.orderGain || choice.costHP || choice.shillingGain || choice.reqFlag) ? 'justify-start' : 'justify-between';
+                const alignmentClass = (isSkillCheck || isTradeButton || choice.chaosGain || choice.orderGain || choice.costHP || choice.shillingGain || choice.doomCost !== undefined || choice.reqFlag) ? 'justify-start' : 'justify-between';
                 
                 let btnClass = "";
                 
@@ -3734,12 +3744,11 @@
                     // --- DOOM COUNTER DECREMENT ON CLICK (Conditional) ---
                     // Decrement only if Act 1 has started AND the choice does NOT have doomCost: 0 (or is implicitly 1)
                     if (gameState.act1Started && choice.doomCost !== 0) {
-                        // Determine cost: default 1, unless specified
+                        // Use explicit doomCost from the choice, or default to 1 for generic travel/skill checks
                         const cost = choice.doomCost !== undefined ? choice.doomCost : 1; 
                         
                         gameState.doomTimer -= cost;
                         
-                        // NEW: Check for Rift Collapse status here
                         if (gameState.doomTimer > 0) {
                             addToHistory(`Rift Stability: ${gameState.doomTimer} turns remaining.`, 'system');
                         }
@@ -3781,7 +3790,10 @@
                 
                 // Default icon for travel/dialogue buttons
                 let icon = '<i class="fas fa-chevron-right text-gray-300 group-hover:text-amber-100"></i>';
-                let rawText = choice.text; // Use the choice's raw text for the button label
+                
+                // Task 2 Fix: Get the *raw* button text without cost duplication.
+                let rawText = choice.text; 
+                
                 let content = `<span class="cinzel font-bold text-gray-300 group-hover:text-amber-100">${rawText}</span>`;
                 let supplementalText = '';
                 
@@ -3820,6 +3832,7 @@
                 let indicators = [];
 
                 // 1. Shilling Cost/Value/Gain (Money Indicators)
+                // Use a separate tracker to ensure cost is only included once
                 if (choice.cost) {
                     indicators.push({ text: `-${choice.cost}s`, color: 'text-amber-500' });
                 } else if (choice.value) {
@@ -3840,13 +3853,20 @@
                     indicators.push({ text: `+${choice.orderGain} Order`, color: 'text-blue-400' });
                 }
                 
-                // 4. Doom Cost (If cost is explicit)
+                // 4. Doom Cost (Task 3 Fix: Displaying Turn Cost)
                 if (gameState.act1Started && !scenes[currentSceneId].isBoss && !scenes[currentSceneId].isRest) {
-                    const cost = choice.doomCost !== undefined ? choice.doomCost : 1;
-                    if (cost === 0) {
-                         indicators.push({ text: `0 Turns`, color: 'text-purple-400' });
-                    } else if (cost > 0) {
-                         indicators.push({ text: `-${cost} Turn`, color: 'text-purple-400' });
+                    // Check for explicit doomCost or implicit 1 (default travel)
+                    const cost = choice.doomCost === undefined && choice.type !== 'dialogue' && choice.type !== 'action' ? 1 : choice.doomCost;
+                    
+                    if (cost !== undefined) {
+                        if (cost === 0) {
+                            // Don't show (0 Turns) unless it's a dedicated 0 turn action like an info scene
+                            if (choice.doomCost === 0) {
+                                indicators.push({ text: `0 Turns`, color: 'text-purple-400' });
+                            }
+                        } else if (cost > 0) {
+                             indicators.push({ text: `-${cost} Turns`, color: 'text-purple-400' });
+                        }
                     }
                 }
 
@@ -3925,8 +3945,6 @@
             const maxDoom = 20; // UPDATED MAX RIFT STABILITY
 
             // NEW: Rift Collapse Visual Application (Task 1: Persistence Fix)
-            // Apply collapse vignette if the game has started, the collapse flag is true, 
-            // and the player hasn't acquired both artifacts (which would trigger the finale flow)
             const hasBothArtifacts = gameState.inventory.includes("Ring of Brass") && gameState.inventory.includes("Sword of Valor");
             
             if (gameState.isRiftCollapse && gameState.act1Started && !hasBothArtifacts) {
