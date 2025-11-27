@@ -181,6 +181,20 @@
             box-shadow: 0 0 15px rgba(52, 211, 153, 0.8);
         }
 
+        /* --- UNAFFORDABLE STYLING (New) --- */
+        .btn-disabled-cost {
+            opacity: 0.4;
+            cursor: not-allowed;
+            /* Override hover effects for visual feedback */
+            background-color: #1f2937 !important; /* Dark slate */
+            border-color: #475569 !important; /* Slate-600 */
+        }
+        .btn-disabled-cost:hover {
+             transform: none; /* No lift effect on hover */
+             box-shadow: none;
+        }
+
+
         /* --- LORE TOOLTIPS --- */
         /* Updated LORE Tooltip styling to use SPECTRAL GLOW for consistency */
         .memory-keyword {
@@ -1489,16 +1503,8 @@
                 journal: null,
                 onEnter: (state) => {
                     const shanty = `The shanty holds the truth. I must find the Ring and the Blade to save my crew. I am the Captain now.<br><br>
-                      <i class='spectral-text-glow'>“There’s a tax for the coin and a tax for the bread,<br>
-                      But who pays the toll for the army of dead?<br>
-                      The Wolf King did, so the legends say,<br>
-					  To call back the souls who lost their way.<br><br>
-					  He found the Ring of ancient Brass,<br>
+                      <i class='spectral-text-glow'>“He found the Ring of ancient Brass,<br>
 					  And the Blade that lets no Vampire pass.<br>
-					  He gave them a home and a people to keep,<br>
-					  And woke the crew from their deep cold sleep.<br><br>
-					  The dead stood fast 'til the war was won,<br>
-					  Then vanished like mist in the morning sun.<br>
                       Now the Ring and the Blade are lost at sea,<br>
                       Waiting for a Captain as cursed as he.“</i>`;
                     
@@ -2294,7 +2300,6 @@
             const currentSceneId = gameState.currentSceneId;
             const currentSceneStock = scenes[currentSceneId] ? scenes[currentSceneId].stock : {};
             const marketStock = scenes['market_stall'].stock; // Reference for selling logic
-            const alchemistStock = scenes['alchemist_triage'].stock; // Reference for alchemist selling logic
             
             // Collect all choices, starting with static ones
             let processedChoices = [...choices]; 
@@ -2360,7 +2365,7 @@
                 processedChoices = processedChoices.concat(permanentChoices);
             } else if (currentSceneId === 'alchemist_triage') {
                  // Isolate navigation choices and prepare to regenerate buy options
-                const permanentChoices = processedChoices.filter(c => c.nextScene === 'alchemist_sell' || c.nextScene === 'town_square' || c.nextScene === 'market_crossroads');
+                const permanentChoices = processedChoices.filter(c => c.nextScene === 'alchemist_sell' || c.nextScene === 'town_square');
                 processedChoices = []; 
 
                 // 1. Generate Dynamic Buy Options
@@ -2368,6 +2373,7 @@
                     const itemText = sale.item.split('(')[0].trim();
                     const actualStock = currentSceneStock[sale.item] || 0;
                     
+                    // RULE: Only display if in stock (actualStock > 0)
                     if (actualStock > 0) {
                         processedChoices.push({
                             text: `Buy ${itemText} (${sale.cost}s)`,
@@ -2383,7 +2389,7 @@
                 const sellWaresChoice = permanentChoices.find(c => c.nextScene === 'alchemist_sell');
                 if (sellWaresChoice) {
                     sellWaresChoice.text = "Sell Wares (Premium)"; 
-                    processedChoices.push(sellWaresChoice);
+                    processedChoices.push(sellWwaresChoice);
                 }
                 
                 processedChoices.push(permanentChoices.find(c => c.nextScene === 'town_square'));
@@ -2395,20 +2401,16 @@
                 
                 // Generate Dynamic Sell Options (Alchemist Stock)
                 ALCHEMIST_SELL_OPTIONS.forEach(sell => {
+                    // RULE: Only display if player has the item in inventory
                     if (gameState.inventory.includes(sell.item)) {
                         
-                        // Check if item is already in inventory to ensure it can be sold
-                        if (gameState.inventory.includes(sell.item)) {
-                            
-                            // Note: We are no longer applying special coloring, keeping it consistent.
-                            processedChoices.push({
-                                text: `Sell ${sell.item.split('(')[0].trim()} (+${sell.value}s)`, 
-                                nextScene: sell.nextScene,
-                                type: 'action',
-                                reqItem: sell.item,
-                                value: sell.value,
-                            });
-                        }
+                        processedChoices.push({
+                            text: `Sell ${sell.item.split('(')[0].trim()} (+${sell.value}s)`, 
+                            nextScene: sell.nextScene,
+                            type: 'action',
+                            reqItem: sell.item,
+                            value: sell.value,
+                        });
                     }
                 });
                 // Add back the navigation choices
@@ -2433,8 +2435,9 @@
                 // --- GENERAL REQUIREMENTS CHECK ---
                 if (choice.reqSmuggler && gameState.influence < choice.reqSmuggler) return;
                 if (choice.reqGuard && gameState.influence > -choice.reqGuard) return;
-                if (choice.cost && gameState.shillings < choice.cost) return;
-                if (choice.reqItem && !gameState.inventory.includes(choice.reqItem)) return;
+                
+                // NOTE: We no longer return/hide the button if cost/item is missing. We display and disable it below.
+                
                 if (choice.reqNotItem && gameState.inventory.includes(choice.reqNotItem)) return; // NEW NOT ITEM CHECK
                 // NEW: Information Flag Check
                 if (choice.reqFlag && !gameState[choice.reqFlag]) return;
@@ -2444,11 +2447,26 @@
 
                 const btn = document.createElement('button');
                 
+                // --- DISABILITY & AFFORDABILITY CHECK ---
+                let isDisabled = false;
+                let disabledClass = '';
+                
+                // Check 1: Affordability (Cost is defined for this choice AND player can't afford it)
+                if (choice.cost && gameState.shillings < choice.cost) {
+                    isDisabled = true;
+                    disabledClass = 'btn-disabled-cost';
+                }
+                
+                // Check 2: Item requirement (Item is required for this choice AND player doesn't have it)
+                if (choice.reqItem && !gameState.inventory.includes(choice.reqItem)) {
+                    isDisabled = true;
+                    // Note: We don't use the disabled-cost class here, sticking to standard graying for item requirements
+                }
+                
                 // Determine styling: Is this a Hero/Skill moment?
                 let isHeroButton = choice.reqSkill ? true : false;
                 let isCustomClassButton = choice.customClass ? true : false;
-                let isSecretBypass = choice.reqFlag; // Info Bypass buttons are also custom styled
-                let isTradeButton = choice.cost || choice.value; // Determine if it's a trade button
+                let isTradeButton = choice.cost || choice.value;
 
                 const alignmentClass = (choice.type === 'skill' || isTradeButton || choice.chaosGain || choice.orderGain) ? 'justify-start' : 'justify-between';
                 
@@ -2465,9 +2483,23 @@
                     btnClass = `btn-game w-full text-left rounded shadow flex items-center ${alignmentClass} cinzel font-bold bg-gray-800 border-gray-600 hover:border-amber-500 hover:bg-gray-750 text-gray-300 group`;
                 }
                 
+                // Apply disability visual override if necessary
+                if (isDisabled) {
+                    btnClass += ` ${disabledClass}`;
+                    btn.disabled = true;
+                }
+
                 btn.className = btnClass;
                 
+                // --- ONCLICK HANDLER ---
                 btn.onclick = (e) => {
+                    // If disabled, just play click sound and stop execution
+                    if (btn.disabled) {
+                         audioManager.playClick();
+                         return;
+                    }
+                    
+                    // ... (rest of the action logic remains the same)
                     audioManager.playClick();
                     
                     if (choice.type === 'reset') {
@@ -2481,23 +2513,13 @@
                         // Do NOT consume the free use, just continue the scene flow
                     }
 
-
                     // --- FINAL STOCK CHECK BEFORE TRANSACTION (Crucial Fix) ---
-                    // 1. Check buying stock (Market)
-                    if (choice.type === 'action' && currentSceneId === 'market_stall' && choice.stockItem) {
-                         const currentStock = scenes['market_stall'].stock[choice.stockItem] || 0;
+                    // This is still needed for asynchronous stock changes (e.g., two players buying the last item in MP mode)
+                    if (choice.type === 'action' && (currentSceneId === 'market_stall' || currentSceneId === 'alchemist_triage') && choice.stockItem) {
+                         const currentStock = scenes[currentSceneId].stock[choice.stockItem] || 0;
                          if (currentStock <= 0) {
                             addToHistory(`${choice.stockItem} is out of stock.`, 'system');
-                            updateUI();
-                            return;
-                        }
-                    }
-                    // 2. Check buying stock (Alchemist)
-                    if (choice.type === 'action' && currentSceneId === 'alchemist_triage' && choice.stockItem) {
-                         const currentStock = scenes['alchemist_triage'].stock[choice.stockItem] || 0;
-                         if (currentStock <= 0) {
-                            addToHistory(`${choice.stockItem} is out of stock.`, 'system');
-                            updateUI();
+                            renderScene(currentSceneId); // Reload scene to update choices
                             return;
                         }
                     }
@@ -2505,7 +2527,7 @@
                     if (choice.type === 'action' && choice.reqItem === 'Curious Cargo' && currentSceneId === 'market_sell') {
                          if (marketStock['Curious Cargo'] <= 0) {
                             addToHistory(`The Market Merchant has no need for another Curious Cargo.`, 'system');
-                            updateUI();
+                            renderScene(currentSceneId);
                             return;
                         }
                     }
