@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -2372,8 +2371,6 @@
                             type: 'action',
                             cost: sale.cost,
                             stockItem: sale.item,
-                            // Use standard btn-game class to ensure correct sizing
-                            customClass: 'btn-game bg-gray-900 border-purple-500/50 hover:bg-gray-700 text-purple-300'
                         });
                     }
                 });
@@ -2385,8 +2382,8 @@
                     processedChoices.push(sellWaresChoice);
                 }
                 
-                processedChoices.push(permanentChoices.find(c => c.nextScene === 'market_crossroads'));
                 processedChoices.push(permanentChoices.find(c => c.nextScene === 'town_square'));
+
             } else if (currentSceneId === 'alchemist_sell') {
                 // Isolate navigation choices and prepare to regenerate sell options
                 const permanentChoices = choices.filter(c => c.nextScene === 'alchemist_triage' || c.nextScene === 'town_square');
@@ -2399,19 +2396,13 @@
                         // Check if item is already in inventory to ensure it can be sold
                         if (gameState.inventory.includes(sell.item)) {
                             
-                            let customClass = 'btn-game';
-                            if (sell.item === 'Alchemical Fire' || sell.item === 'Holy Water') {
-                                // Artifacts are highlighted to warn player, but using the base size
-                                customClass = 'btn-game bg-red-900/50 border-red-700/50 hover:bg-red-700 text-red-300';
-                            }
-
+                            // Note: We are no longer applying special coloring, keeping it consistent.
                             processedChoices.push({
                                 text: `Sell ${sell.item.split('(')[0].trim()} (+${sell.value}s)`, 
                                 nextScene: sell.nextScene,
                                 type: 'action',
                                 reqItem: sell.item,
                                 value: sell.value,
-                                customClass: customClass
                             });
                         }
                     }
@@ -2452,37 +2443,22 @@
                 // Determine styling: Is this a Hero/Skill moment?
                 let isHeroButton = choice.reqSkill ? true : false;
                 let isCustomClassButton = choice.customClass ? true : false;
-                let isNormalButton = !isHeroButton && !isCustomClassButton;
                 let isSecretBypass = choice.reqFlag; // Info Bypass buttons are also custom styled
+                let isTradeButton = choice.cost || choice.value; // Determine if it's a trade button
 
-                const alignmentClass = (choice.type === 'skill' || choice.cost || choice.value || choice.chaosGain || choice.orderGain) ? 'justify-start' : 'justify-between';
+                const alignmentClass = (choice.type === 'skill' || isTradeButton || choice.chaosGain || choice.orderGain) ? 'justify-start' : 'justify-between';
                 
                 let btnClass = "";
                 
                 if (isDeathScene) {
                     // Death button is always full red and large
                     btnClass = `btn-game w-full p-3 text-left rounded shadow flex items-center ${alignmentClass} cinzel font-bold bg-red-900 border-red-700 hover:bg-red-800 hover:border-amber-500 text-white text-xl text-center`;
-                } else if (isNormalButton) {
-                    // STANDARD STYLING (Default grey button)
-                    btnClass = `btn-game w-full text-left rounded shadow flex items-center ${alignmentClass} cinzel font-bold bg-gray-800 border-gray-600 hover:border-amber-500 hover:bg-gray-750 text-gray-300 group`;
+                } else if (isCustomClassButton) {
+                    // HERO/PATH/SECRET BUTTONS: Use the dedicated custom classes for color/glow
+                    btnClass = `w-full text-left rounded shadow flex items-center ${alignmentClass} cinzel font-bold mb-2 ${choice.customClass}`;
                 } else {
-                    // HERO/CUSTOM STYLING (Uses the unified custom CSS definitions)
-                    // Note: We deliberately use 'btn-game' here IF the user provided a custom class that isn't a hero button,
-                    // otherwise the full custom glow class is used.
-                    
-                    if (isHeroButton) {
-                         // Hero abilities/Finale button
-                         btnClass = `w-full text-left rounded shadow flex items-center ${alignmentClass} cinzel font-bold mb-2 btn-hero`;
-                    } else if (isSecretBypass) {
-                         // Info bypass/Secret button (green glow)
-                         btnClass = `w-full text-left rounded shadow flex items-center ${alignmentClass} cinzel font-bold mb-2 btn-success-glow`;
-                    } else if (isCustomClassButton) {
-                        // Path selection buttons (Fire/Shadow) or merchant items with special coloring
-                        btnClass = `w-full text-left rounded shadow flex items-center ${alignmentClass} cinzel font-bold mb-2 ${choice.customClass}`;
-                    } else {
-                        // Fallback to generic, should not be hit if logic is correct
-                         btnClass = `btn-game w-full text-left rounded shadow flex items-center ${alignmentClass} cinzel font-bold bg-gray-800 border-gray-600 hover:border-amber-500 hover:bg-gray-750 text-gray-300 group`;
-                    }
+                    // STANDARD NARRATIVE/TRADE BUTTONS (Default grey button)
+                    btnClass = `btn-game w-full text-left rounded shadow flex items-center ${alignmentClass} cinzel font-bold bg-gray-800 border-gray-600 hover:border-amber-500 hover:bg-gray-750 text-gray-300 group`;
                 }
                 
                 btn.className = btnClass;
@@ -2575,12 +2551,16 @@
                 let supplementalText = '';
                 
                 // Check if button is colored and adjust default icon color
-                if (isHeroButton || isSecretBypass || isCustomClassButton) {
-                    // For custom color buttons, the icon should be white/light color, not gray-300
+                if (isCustomClassButton) {
+                    // For custom color buttons (path/hero/secret), the icon and text should be white/light color
                     icon = '<i class="fas fa-chevron-right text-white"></i>';
                     content = `<span class="cinzel font-bold text-white">${choice.text}</span>`;
                 }
-
+                
+                // Override icon for trade buttons
+                if (isTradeButton) {
+                    icon = '<i class="fas fa-coins text-amber-500"></i>';
+                }
 
                 if (choice.type === 'skill') {
                     // Skill notation and dice icon are aligned immediately after the label
