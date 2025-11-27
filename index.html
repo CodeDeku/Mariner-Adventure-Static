@@ -3971,16 +3971,6 @@
             const doomBar = document.getElementById('doom-bar');
             const maxDoom = 20; // UPDATED MAX RIFT STABILITY
 
-            // NEW: Rift Collapse Visual Application (Task 1: Persistence Fix)
-            const isFinaleCompleted = gameState.currentSceneId === 'finale_completed';
-            
-            // The vignette is active if the collapse has happened AND Act 1 is running AND the finale is NOT completed.
-            if (gameState.isRiftCollapse && gameState.act1Started && !isFinaleCompleted) {
-                fxManager.setRiftCollapseVignette(true);
-            } else {
-                fxManager.setRiftCollapseVignette(false);
-            }
-
             if (gameState.act1Started) {
                 doomDisplay.classList.remove('hidden'); // Show the doom counter
                 doomText.textContent = `${gameState.doomTimer} Turns`;
