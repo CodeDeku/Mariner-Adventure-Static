@@ -1164,9 +1164,9 @@
                     'gareth': "Stand tall. Authority respects strength, or gold."
                 },
                 choices: [
-                    { text: "Bribe him (Cost 5s)", nextScene: 'guard_bribe', type: 'action', cost: 5 }, 
+                    { text: "Bribe him", nextScene: 'guard_bribe', type: 'action', cost: 5 }, 
                     // Order Gain Choice
-                    { text: "Show Respect (+4 Order)", nextScene: 'guard_respect', type: 'dialogue', orderGain: 4 },
+                    { text: "Show Respect", nextScene: 'guard_respect', type: 'dialogue', orderGain: 4 },
                     { text: "Intimidate him", nextScene: 'guard_intimidate_check', type: 'skill', dc: 13, skill: 'Insight' }, // Clean text
                     { text: "Attack", nextScene: 'combat_guard', type: 'combat' }
                 ]
@@ -1250,8 +1250,8 @@
                     // FIX: Changed type to 'dialogue' for max visibility of conditional travel
                     { text: "Flash 'The Mariner's Sign'", nextScene: 'smuggler_friend', type: 'dialogue', reqSmuggler: 3 },
                     // FIX: Ensure 'Curious Cargo' button is only available if player has the item (reqItem is the correct check here)
-                    { text: "Offer Curious Cargo (+6 Chaos)", nextScene: 'smuggler_cargo', type: 'action', reqItem: 'Curious Cargo', chaosGain: 6 },
-                    { text: "Buy safe passage (Cost 5s)", nextScene: 'smuggler_pay', type: 'action', cost: 5 },
+                    { text: "Offer Curious Cargo", nextScene: 'smuggler_cargo', type: 'action', reqItem: 'Curious Cargo', chaosGain: 6 },
+                    { text: "Buy safe passage", nextScene: 'smuggler_pay', type: 'action', cost: 5 },
                     // FIX: Changed type to 'dialogue' for max visibility of non-conditional travel
                     { text: "Run to Market", nextScene: 'market_crossroads', type: 'dialogue' }
                 ]
@@ -1525,7 +1525,7 @@
                     return "Took 4 Damage."; 
                 },
                 // Redirects to lighthouse_arrival to proceed to faction_check
-                choices: [{ text: "Limp to the Exit (Arrive at Lighthouse)", nextScene: 'lighthouse_arrival', type: 'travel' }]
+                choices: [{ text: "Limp to the Exit)", nextScene: 'lighthouse_arrival', type: 'travel' }]
             },
             'lighthouse_arrival': {
                 title: "The Beacon",
@@ -1835,9 +1835,9 @@
                 journal: "Arrived at the docks. Hard work available, and maybe something more illicit.",
                 choices: [
                     // NEW CHOICE: Sell Curious Cargo directly here for a premium (+15s)
-                    { text: "Sell Curious Cargo to Smuggler (+15s)", nextScene: 'docks_sell_cargo', type: 'action', reqItem: 'Curious Cargo', value: 15 },
+                    { text: "Sell Curious Cargo to Smuggler", nextScene: 'docks_sell_cargo', type: 'action', reqItem: 'Curious Cargo', value: 15 },
                     // FIX: Updated button text to be concise. Added shillingGain for correct parsing.
-                    { text: "Work the Lines (+3s, -2 HP, +1 Chaos)", nextScene: 'docks_work', type: 'action', costHP: 2, chaosGain: 1, shillingGain: 3 }, 
+                    { text: "Work the Lines", nextScene: 'docks_work', type: 'action', costHP: 2, chaosGain: 1, shillingGain: 3 }, 
                     // NEW ECONOMIC FIX: High risk/reward dive
                     { 
                         text: "Dive for Sunken Treasure", 
@@ -1967,8 +1967,8 @@
 				journal: "The Ring showed me a dead man winning a living man's game. The rot in this town goes deeper than the flooded cellars.",
                 choices: [
                     // FIX: Updated button text to be concise. Added shillingGain property.
-                    { text: "Blackmail him (+10s, +3 Chaos)", nextScene: 'tavern_payout', type: 'action', chaosGain: 3, shillingGain: 10 },
-                    { text: "Expose him (+3 Order)", nextScene: 'tavern_expose_check', type: 'skill', dc: 16, skill: 'Insight', orderGain: 3 }, // Removed redundant skill text
+                    { text: "Blackmail him", nextScene: 'tavern_payout', type: 'action', chaosGain: 3, shillingGain: 10 },
+                    { text: "Expose him", nextScene: 'tavern_expose_check', type: 'skill', dc: 16, skill: 'Insight', orderGain: 3 }, // Removed redundant skill text
                     { text: "Leave him alone", nextScene: 'blackwater_tavern', type: 'travel' }
                 ]
             },
@@ -2265,7 +2265,7 @@
                 choices: [
                     // ORDER PATH: INCURS DOOM COST (Default 1) - Takes time
                     { 
-                        text: "Save the Workers (+5 Order)", 
+                        text: "Save the Workers", 
                         nextScene: 'smelter_save_workers_check', 
                         type: 'skill', 
                         dc: 15, 
@@ -2274,7 +2274,7 @@
                     },
                     // CHAOS PATH: NO DOOM COST - Saves time
                     { 
-                        text: "Bypass the Scene (+3 Chaos, 0 Turns)", 
+                        text: "Bypass the Scene", 
                         nextScene: 'smelter_stage1_start', // DIRECT TO BOSS
                         type: 'travel',
                         chaosGain: 3,
@@ -2321,7 +2321,7 @@
                 choices: [
                     // COUNTER 1: Item Bypass
                     { 
-                        text: "Throw Holy Water (Radiant Burst)", 
+                        text: "Throw Holy Water", 
                         nextScene: 'smelter_victory_item', // Skip directly to victory
                         type: 'action', 
                         reqItem: 'Holy Water',
@@ -2330,7 +2330,7 @@
                     },
                     // COUNTER 2: Skill Mitigation (Absorb Elements) - Sets flag for stage 2
                     { 
-                        text: "Channel Absorb Elements (Negate Fire Damage)", 
+                        text: "Channel Absorb Elements", 
                         nextScene: 'smelter_stage2_clean', 
                         type: 'action', 
                         reqSkill: 'Absorb Elements',
@@ -2367,7 +2367,7 @@
                 choices: [
                     // COUNTER 1: Industrial Lubricant (Worker reward)
                     { 
-                        text: "Douse with Industrial Lubricant (Thermal Shock)",
+                        text: "Douse with Industrial Lubricant",
                         nextScene: 'smelter_victory_lubricant', 
                         type: 'action',
                         reqItem: 'Industrial Lubricant',
@@ -2376,7 +2376,7 @@
                     },
                     // COUNTER 2: Ring of Brass (If Shadow Path was done first)
                     { 
-                        text: "Activate Ring of Brass (Cold Breath)", 
+                        text: "Activate Ring of Brass", 
                         nextScene: 'smelter_victory_ring', 
                         type: 'action', 
                         reqItem: 'Ring of Brass',
@@ -2401,7 +2401,7 @@
                 choices: [
                     // SAME CHOICES as stage 2 clean, just with less HP
                     { 
-                        text: "Douse with Industrial Lubricant (Thermal Shock)",
+                        text: "Douse with Industrial Lubricant",
                         nextScene: 'smelter_victory_lubricant', 
                         type: 'action',
                         reqItem: 'Industrial Lubricant',
@@ -2409,7 +2409,7 @@
                         customClass: 'btn-success-glow'
                     },
                     { 
-                        text: "Activate Ring of Brass (Cold Breath)", 
+                        text: "Activate Ring of Brass", 
                         nextScene: 'smelter_victory_ring', 
                         type: 'action', 
                         reqItem: 'Ring of Brass',
@@ -2422,7 +2422,7 @@
                         reqFlag: 'isAbsorbCharged',
                         customClass: 'btn-fire-glow'
                     },
-                    { text: "Hack at the Shell (Brute Force)", nextScene: 'smelter_victory_brute', type: 'combat' }
+                    { text: "Hack at the Shell", nextScene: 'smelter_victory_brute', type: 'combat' }
                 ],
                 onEnter: (state) => {
                     // Apply the damage calculated in the logic scene
@@ -2504,7 +2504,7 @@
                 choices: [
                     // OPTION 1: INFO CHECK (Automatic Success) - DOOM COST 0
                     { 
-                        text: "Follow the Weeping Angel Statues (Secret)", 
+                        text: "Follow the Weeping Angel Statues", 
                         nextScene: 'chapel_safe', 
                         type: 'dialogue', 
                         reqFlag: 'knowsChapelSecret',
@@ -2513,7 +2513,7 @@
                     },
                     // OPTION 2: HERO BUTTON (Primeval Awareness) - DOOM COST 0
                     { 
-                        text: "Channel Primeval Awareness (See Ambushers)", 
+                        text: "Channel Primeval Awareness", 
                         nextScene: 'chapel_safe_surprise', 
                         type: 'action', 
                         reqSkill: 'Primeval Awareness', 
@@ -2555,7 +2555,7 @@
                 choices: [
                     // ORDER PATH: INCURS DOOM COST (Default 1) - Takes time
                     { 
-                        text: "Attempt Rescue (+4 Order)", 
+                        text: "Attempt Rescue", 
                         nextScene: 'chapel_rescue_check', 
                         type: 'skill', 
                         dc: 14, 
@@ -2564,7 +2564,7 @@
                     },
                     // CHAOS PATH: NO DOOM COST - Saves time
                     { 
-                        text: "Ignore the Screams and Search for Loot (+4 Chaos, 0 Turns)", 
+                        text: "Ignore the Screams and Search for Loot", 
                         nextScene: 'chapel_ignore_drowning', 
                         type: 'dialogue',
                         chaosGain: 4,
@@ -2623,7 +2623,7 @@
                 choices: [
                     // COUNTER 1: Item Bypass (If Fire Path was done first)
                     { 
-                        text: "Strike with Sword of Valor (Force Damage)", 
+                        text: "Strike with Sword of Valor", 
                         nextScene: 'chapel_victory_sword', // Skip directly to victory
                         type: 'action', 
                         reqItem: 'Sword of Valor',
@@ -2631,7 +2631,7 @@
                     },
                     // COUNTER 2: Skill Mitigation (Primeval Awareness)
                     { 
-                        text: "Channel Primeval Awareness (See The Undead)", 
+                        text: "Channel Primeval Awareness", 
                         nextScene: 'chapel_stage2_finish', 
                         type: 'action', 
                         reqSkill: 'Primeval Awareness',
@@ -2639,7 +2639,7 @@
                     },
                     // COUNTER 3: Ring of Brass Passive (Keen Senses)
                     { 
-                        text: "Use Ring of Brass Passive (Listen for Ripples)", 
+                        text: "Use Ring of Brass", 
                         nextScene: 'chapel_stage2_finish', // Go to finish phase clean
                         type: 'action', 
                         reqItem: 'Ring of Brass',
@@ -2676,7 +2676,7 @@
                 choices: [
                     // COUNTER 1: Alchemical Fire
                     { 
-                        text: "Throw Alchemical Fire (Immolate)", 
+                        text: "Throw Alchemical Fire", 
                         nextScene: 'chapel_victory_item', 
                         type: 'action', 
                         reqItem: 'Alchemical Fire',
@@ -2702,7 +2702,7 @@
                 choices: [
                     // SAME CHOICES as stage 2 clean
                     { 
-                        text: "Throw Alchemical Fire (Immolate)", 
+                        text: "Throw Alchemical Fire", 
                         nextScene: 'chapel_victory_item', 
                         type: 'action', 
                         reqItem: 'Alchemical Fire',
@@ -2732,7 +2732,7 @@
                 choices: [
                     // SAME CHOICES as stage 2 clean
                     { 
-                        text: "Throw Alchemical Fire (Immolate)", 
+                        text: "Throw Alchemical Fire", 
                         nextScene: 'chapel_victory_item', 
                         type: 'action', 
                         reqItem: 'Alchemical Fire',
