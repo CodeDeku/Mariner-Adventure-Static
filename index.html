@@ -125,6 +125,34 @@
             filter: drop-shadow(0 0 5px rgba(59, 130, 246, 0.8));
         }
 
+        /* --- FIRE ELEMENTAL GLOW (Absorb Elements) --- */
+        @keyframes fire-pulse {
+            0%, 100% { box-shadow: 0 0 8px rgba(239, 68, 68, 0.4); border-color: #f87171; }
+            50% { box-shadow: 0 0 20px rgba(248, 113, 113, 0.8); border-color: #fca5a5; }
+        }
+        .btn-fire-glow {
+            background: linear-gradient(90deg, rgba(185, 28, 28, 0.4) 0%, rgba(15, 23, 42, 0.6) 100%);
+            border: 1px solid #f87171;
+            color: #fecaca;
+            animation: fire-pulse 2s infinite;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* --- SHADOW/VOID GLOW (Primeval Awareness) --- */
+        @keyframes shadow-pulse {
+            0%, 100% { box-shadow: 0 0 8px rgba(139, 92, 246, 0.4); border-color: #a78bfa; }
+            50% { box-shadow: 0 0 20px rgba(167, 139, 250, 0.8); border-color: #d8b4fe; }
+        }
+        .btn-shadow-glow {
+            background: linear-gradient(90deg, rgba(88, 28, 135, 0.4) 0%, rgba(15, 23, 42, 0.6) 100%);
+            border: 1px solid #a78bfa;
+            color: #e9d5ff;
+            animation: shadow-pulse 2s infinite;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
         /* --- LORE TOOLTIPS --- */
         /* Updated LORE Tooltip styling to use SPECTRAL GLOW for consistency */
         .memory-keyword {
@@ -851,7 +879,7 @@
                 },
                 choices: [
                     { text: "Approach them", nextScene: 'smuggler_meet', type: 'travel' },
-                    { text: "Head to the Market Crossroads", nextScene: 'market_crossroads', type: 'travel' }
+                    { text: "Head to the Crossroads", nextScene: 'market_crossroads', type: 'travel' }
                 ]
             },
             // NEW SCENE for Talon's specific success (acquiring cargo)
@@ -873,7 +901,7 @@
                 },
                 choices: [
                     { text: "Approach them", nextScene: 'smuggler_meet', type: 'travel' },
-                    { text: "Head to the Market Crossroads", nextScene: 'market_crossroads', type: 'travel' }
+                    { text: "Head to the Crossroads", nextScene: 'market_crossroads', type: 'travel' }
                 ]
             },
             'trail_fail': {
@@ -913,7 +941,7 @@
                     audioManager.playCoins();
                     return "Showed Respect (+4 Order). Received 2 Shillings.";
                 },
-                choices: [{ text: "Head to Market Crossroads", nextScene: 'market_crossroads', type: 'travel' }]
+                choices: [{ text: "Head to The Crossroads", nextScene: 'market_crossroads', type: 'travel' }]
             },
             'guard_bribe': {
                 title: "The Toll",
@@ -923,7 +951,7 @@
                     audioManager.playCoins();
                     return "Bribed Guard (Neutral Act)."; 
                 },
-                choices: [{ text: "Head to Market Crossroads", nextScene: 'market_crossroads', type: 'travel' }]
+                choices: [{ text: "Head to The Crossroads", nextScene: 'market_crossroads', type: 'travel' }]
             },
 			'guard_intimidate_check': {
                 isLogic: true,
@@ -948,7 +976,7 @@
                     state.influence = Math.min(20, state.influence + 4); 
                     return "Guard Terrified (Chaos +4)."; 
                 },
-                choices: [{ text: "Head to Market Crossroads", nextScene: 'market_crossroads', type: 'travel' }]
+                choices: [{ text: "Head to The Crossroads", nextScene: 'market_crossroads', type: 'travel' }]
             },
 			'combat_guard': {
                 title: "The Clash",
@@ -971,7 +999,7 @@
                     state.influence = 20; // Max Chaos
                     return `Took ${dmg} damage. Became Outlaw (Max Chaos).`;
                 },
-                choices: [{ text: "Limp to Market Crossroads", nextScene: 'market_crossroads', type: 'travel' }]
+                choices: [{ text: "Limp to The Crossroads", nextScene: 'market_crossroads', type: 'travel' }]
             },
             'smuggler_meet': {
                 title: "The Cove",
@@ -998,7 +1026,7 @@
                     state.influence = Math.min(20, state.influence + 6); // High Chaos gain
                     return "Gave Cargo. Chaos +6.";
                 },
-                choices: [{ text: "Head to Market Crossroads", nextScene: 'market_crossroads', type: 'travel' }]
+                choices: [{ text: "Head to The Crossroads", nextScene: 'market_crossroads', type: 'travel' }]
             },
             'smuggler_friend': {
                 title: "Old Alliances",
@@ -1008,7 +1036,7 @@
                      state.inventory.push("Rum (Heal 5)");
                      return "Received Rum.";
                 },
-                choices: [{ text: "Head to Market Crossroads", nextScene: 'market_crossroads', type: 'travel' }]
+                choices: [{ text: "Head to The Crossroads", nextScene: 'market_crossroads', type: 'travel' }]
             },
             'smuggler_pay': {
                 title: "Business",
@@ -1018,10 +1046,10 @@
                     audioManager.playCoins();
                     return "Paid Smugglers.";
                 },
-                choices: [{ text: "Head to Market Crossroads", nextScene: 'market_crossroads', type: 'travel' }]
+                choices: [{ text: "Head to The Crossroads", nextScene: 'market_crossroads', type: 'travel' }]
             },
             'market_crossroads': {
-                title: "The Port of Shadows",
+                title: "The Crossroads", // RENAMED
                 text: "You arrive at the edge of the ramshackle port town. Merchants hawk their wares under tattered awnings. The Lighthouse looms in the distance, but the path is treacherous.",
                 journal: "Reached the Port Market. I should stock up before the final push.",
                 choices: [
@@ -1312,7 +1340,6 @@
                     fxManager.flashRed();
                     return "Took 2 Damage (Hurry)."; 
                 },
-                // REDIRECTED to Lighthouse Vigil
                 choices: [{ text: "Enter and Rest", nextScene: 'lighthouse_vigil', type: 'rest' }]
             },
             'lighthouse_vigil': {
@@ -1363,18 +1390,24 @@
             // --- ACT 1: LEVEL UP SEQUENCE (SKILL UNLOCK) ---
             'lighthouse_morning': {
                 title: "The First Morning",
-                text: "Dawn breaks over the ocean, but the light is sickly and grey. Gareth and Talon manifest on the lighthouse balcony, staring down at the island.<br><br>'The town is bleeding,' Gareth warns, pointing to the thick black smoke rising from the Smelter District. 'Fire and ruin.'<br><br>Talon points to the supernatural fog shrouding the Sunken Chapel. 'And things that refuse to stay dead hide in the mist.'<br><br>They offer to teach you one technique to channel your planar energy before you descend.",
+                text: "Dawn breaks over the ocean, but the light is sickly and grey. You survived the night, but the crew knows the calm is a lie.",
                 journal: "The crew warned me of Fire and Shadow. I must choose how to prepare.",
+                banter: { // Now uses the built-in Banter system
+                    'gareth': "The town is bleeding. Fire and ruin in the Smelter District.",
+                    'talon': "Things that refuse to stay dead hide in the fog of the Sunken Chapel."
+                },
                 choices: [
                     { 
                         text: "Learn to Endure (Absorb Elements)", 
                         nextScene: 'learn_absorb', 
-                        type: 'dialogue' 
+                        type: 'dialogue',
+                        customClass: 'btn-fire-glow' // NEW: Custom Class for Fire Style
                     }, 
                     { 
                         text: "Learn to See (Primeval Awareness)", 
                         nextScene: 'learn_primeval', 
-                        type: 'dialogue'
+                        type: 'dialogue',
+                        customClass: 'btn-shadow-glow' // NEW: Custom Class for Shadow Style
                     }
                 ]
             },
@@ -1420,39 +1453,61 @@
                     const hasRing = state.inventory.includes("Ring of Brass");
                     const hasBlade = state.inventory.includes("Sword of Valor");
                     
-                    // STATE 2: FINALE UNLOCKED
+                    // Base choices for the hub
+                    let newChoices = [
+                        { 
+                            text: "Investigate Smelter (Fire Path)", 
+                            nextScene: 'smelter_entry', 
+                            type: 'travel', 
+                            reqNotItem: 'Ring of Brass',
+                            customClass: 'btn-fire-glow' 
+                        },
+                        { 
+                            text: "Investigate Chapel (Shadow Path)", 
+                            nextScene: 'chapel_entry', 
+                            type: 'travel',
+                            reqNotItem: 'Sword of Valor',
+                            customClass: 'btn-shadow-glow' 
+                        },
+                        // Renamed and rerouted to the Crossroads Hub
+                        { text: "Visit The Crossroads", nextScene: 'market_crossroads', type: 'travel' } 
+                    ];
+
+                    // STATE 2: FINALE UNLOCKED - Remove exploration choices, force ritual preparation
                     if (hasRing && hasBlade) {
                         scenes['town_square'].text = "The Rift is tearing the sky apart. Violet lightning strikes the cobblestones. You have the Ring and the Blade. The Wolf King's ritual is the only way to close this wound.";
+                        // Only offer the ritual button and the Tavern/Crossroads link (for supplies)
+                        newChoices = [
+                            { text: "Prepare the Wolf King's Ritual", nextScene: 'finale_ritual_start', type: 'combat', customClass: 'btn-hero' },
+                            { text: "Visit The Crossroads (Check Supplies)", nextScene: 'market_crossroads', type: 'travel' }
+                        ];
+                        // Finale scene TBD: finale_ritual_start
                         return "Finale Unlocked.";
                     } 
-                    // STATE 1: ONE ARTIFACT FOUND
-                    else if (hasRing) {
+                    
+                    // Dynamic Text Logic
+                    if (hasRing) {
                         scenes['town_square'].text = "You return with the Ring of Brass, but the air has grown deathly cold. Fog from the Sunken Chapel is flooding the streets, choking the light. The Shadow threat has escalated while you were away.";
                     } 
                     else if (hasBlade) {
                         scenes['town_square'].text = "You return with the Sword of Valor, but the cobblestones are scorching hot under your boots. Ash falls from the Smelter District like gray snow. The Fire threat has escalated while you were away.";
                     } 
-                    // STATE 0: ARRIVAL
                     else {
                         scenes['town_square'].text = "The Port is in chaos. Civilians flee toward the docks. To the East, the Smelter District burns with an unnatural heat. To the West, the Sunken Chapel lies in a pool of dark fog. Your Compass tracks both.";
                     }
+                    
+                    // Filter choices based on acquired items
+                    scenes['town_square'].choices = newChoices.filter(choice => {
+                        // Hide Fire Path if Ring is acquired
+                        if (choice.nextScene === 'smelter_entry' && hasRing) return false;
+                        // Hide Shadow Path if Blade is acquired
+                        if (choice.nextScene === 'chapel_entry' && hasBlade) return false;
+                        return true;
+                    });
+                    
                 },
                 choices: [
-                    // Dynamic Choices (will hide if item is found)
-                    { 
-                        text: "Investigate Smelter (Fire Path)", 
-                        nextScene: 'smelter_entry', 
-                        type: 'travel', 
-                        reqNotItem: 'Ring of Brass' 
-                    },
-                    { 
-                        text: "Investigate Chapel (Shadow Path)", 
-                        nextScene: 'chapel_entry', 
-                        type: 'travel',
-                        reqNotItem: 'Sword of Valor' 
-                    },
-                    // Tavern/Merchant TBD
-                    { text: "Return to Market", nextScene: 'market_crossroads', type: 'travel' }
+                    // Base choices populated by onEnter
                 ]
             },
             // --- TBD SCENES (Placeholders for next steps) ---
@@ -1461,7 +1516,7 @@
                 text: "The path is blocked by a burst steam pipe spitting magical fire. You need to use your abilities here.",
                 choices: [
                     // Hero Button will appear if Absorb Elements is unlocked
-                    { text: "Channel Absorb Elements", nextScene: 'smelter_safe', type: 'action', reqSkill: 'Absorb Elements' },
+                    { text: "Channel Absorb Elements (Negate Damage)", nextScene: 'smelter_safe', type: 'action', reqSkill: 'Absorb Elements', customClass: 'btn-fire-glow' },
                     { text: "Attempt Constitution Save", nextScene: 'smelter_roll', type: 'skill', dc: 14, skill: 'Constitution' }
                 ]
             },
@@ -1474,13 +1529,15 @@
                 text: "The cemetery is covered in unnatural fog. You cannot see.",
                 choices: [
                     // Hero Button will appear if Primeval Awareness is unlocked
-                    { text: "Channel Primeval Awareness", nextScene: 'chapel_safe', type: 'action', reqSkill: 'Primeval Awareness' },
+                    { text: "Channel Primeval Awareness (See in Fog)", nextScene: 'chapel_safe', type: 'action', reqSkill: 'Primeval Awareness', customClass: 'btn-shadow-glow' },
                     { text: "Attempt Perception Save", nextScene: 'chapel_roll', type: 'skill', dc: 14, skill: 'Perception' }
                 ]
             },
             'chapel_safe': { title: "Found Path", text: "You navigate the fog safely.", choices: [{ text: "Continue", nextScene: 'town_square', type: 'travel' }] },
             'chapel_roll': { isLogic: true, resolve: (roll) => roll >= 14 ? 'chapel_safe' : 'chapel_damage' },
             'chapel_damage': { title: "Ambushed", text: "A shadow creature ambushes you.", onEnter: (s) => { s.currentHP = applyDamage(s.currentHP, 6); return "Took 6 Shadow Damage."; }, choices: [{ text: "Continue", nextScene: 'town_square', type: 'travel' }] },
+            
+            'finale_ritual_start': { title: "The Ritual", text: "Ritual start scene.", choices: [{ text: "End", type: 'reset' }] },
 
 
             'edward_death': {
@@ -1905,7 +1962,8 @@
                 if (choice.reqGuard && gameState.influence > -choice.reqGuard) return;
                 if (choice.cost && gameState.shillings < choice.cost) return;
                 if (choice.reqItem && !gameState.inventory.includes(choice.reqItem)) return;
-                
+                if (choice.reqNotItem && gameState.inventory.includes(choice.reqNotItem)) return; // NEW NOT ITEM CHECK
+
                 // SKILL CHECK: If choice requires a skill, hide it if player doesn't have it
                 if (choice.reqSkill && !gameState.skills.includes(choice.reqSkill)) return;
 
@@ -1921,13 +1979,20 @@
                 if (isDeathScene) {
                     btnClass = `btn-game w-full p-3 text-left rounded shadow flex items-center ${alignmentClass} cinzel font-bold bg-red-900 border-red-700 hover:bg-red-800 hover:border-amber-500 text-white text-xl text-center`;
                 } else if (isHeroButton) {
-                    // APPLY HERO STYLING (NEW)
+                    // HERO STYLING (The original generic blue glow)
                     btnClass = `btn-hero w-full p-4 text-left rounded shadow flex items-center ${alignmentClass} cinzel font-bold mb-2`; 
                 } else {
                     // STANDARD STYLING
                     btnClass = `btn-game w-full p-3 text-left rounded shadow flex items-center ${alignmentClass} cinzel font-bold bg-gray-800 border-gray-600 hover:border-amber-500 hover:bg-gray-750 text-gray-300 group`;
                 }
-
+                
+                // NEW: Apply CUSTOM glow class if provided (overrides base coloring/animation)
+                if (choice.customClass) {
+                    // Clear existing btn styles (removes the default grey/blue styling)
+                    btnClass = btnClass.replace('btn-hero', '').replace('btn-game', ''); 
+                    btnClass += ` ${choice.customClass} w-full p-4 text-left rounded shadow flex items-center ${alignmentClass} cinzel font-bold mb-2`;
+                }
+                
                 btn.className = btnClass;
                 
                 btn.onclick = (e) => {
