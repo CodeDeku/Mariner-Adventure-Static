@@ -1928,7 +1928,6 @@
                 choices: [{ text: "Return to Docks", nextScene: 'town_docks', type: 'travel', doomCost: 0 }],
                 onEnter: (state) => {
                     state.shillings += 3;
-                    state.currentHP = applyDamage(state.currentHP, 2); 
                     // Negative influence is applied, as working the docks usually involves ignoring official mandates
                     state.influence = Math.min(20, state.influence + 1); 
                     audioManager.playCoins();
@@ -3528,20 +3527,22 @@
                 const permanentChoices = choices.filter(c => c.nextScene === 'alchemist_triage' || c.nextScene === 'town_square');
                 processedChoices = []; 
                 
-                // Generate Dynamic Sell Options (Alchemist Stock)
-                ALCHEMIST_SELL_OPTIONS.forEach(sell => {
-                    // RULE: Only display if player has the item in inventory
-                    if (gameState.inventory.includes(sell.item)) {
-                        
-                        processedChoices.push({
-                            text: `Sell ${sell.item.split('(')[0].trim()} (+${sell.value}s)`, 
-                            nextScene: sell.nextScene,
-                            type: 'action',
-                            reqItem: sell.item,
-                            value: sell.value,
-                        });
-                    }
-                });
+				// Generate Dynamic Sell Options (Alchemist Stock)
+				ALCHEMIST_SELL_OPTIONS.forEach(sell => {
+					// RULE: Only display if player has the item in inventory
+					if (gameState.inventory.includes(sell.item)) {
+						
+						processedChoices.push({
+							// FIX: Removed manual (+${sell.value}s) string to avoid duplication
+							text: `Sell ${sell.item.split('(')[0].trim()}`, 
+							nextScene: sell.nextScene,
+							type: 'action',
+							reqItem: sell.item,
+							value: sell.value,
+							doomCost: 1 // FIX: Explicitly add 1 turn cost to selling
+						});
+					}
+				});
                 // Add back the navigation choices
                 processedChoices = processedChoices.concat(permanentChoices);
             }
@@ -3877,18 +3878,23 @@
                     indicators.push({ text: `+${choice.orderGain} Order`, color: 'text-blue-400' });
                 }
                 
-                // 4. Doom Cost (Task 3 Fix: Displaying Turn Cost)
-                if (gameState.act1Started && !scenes[currentSceneId].isBoss && !scenes[currentSceneId].isRest) {
-                    // Determine cost based on explicit definition or default to 1 for generic travel/skill checks.
-                    const cost = choice.doomCost !== undefined ? choice.doomCost : (choice.type === 'travel' || choice.type === 'skill' ? 1 : 0);
+				// 4. Doom Cost
+				// FIX: Check if we are in Act 1. Then, show cost if it is explicitly defined on the button, 
+				// OR if it's a standard scene (not boss/rest) which implies a default cost.
+				const isStandardAct1Scene = gameState.act1Started && !scenes[currentSceneId].isBoss && !scenes[currentSceneId].isRest;
+				const hasExplicitCost = choice.doomCost !== undefined;
 
-                    if (cost > 0) {
-                        indicators.push({ text: `-${cost} Turns`, color: 'text-purple-400' });
-                    } else if (cost === 0 && choice.doomCost === 0) {
-                        // Only display if explicitly set to zero (like info scenes)
-                        indicators.push({ text: `0 Turns`, color: 'text-purple-400' });
-                    }
-                }
+				if (gameState.act1Started && (isStandardAct1Scene || hasExplicitCost)) {
+					// Determine cost based on explicit definition or default to 1 for generic travel/skill checks.
+					const cost = choice.doomCost !== undefined ? choice.doomCost : (choice.type === 'travel' || choice.type === 'skill' ? 1 : 0);
+
+					if (cost > 0) {
+						indicators.push({ text: `-${cost} Turns`, color: 'text-purple-400' });
+					} else if (cost === 0 && choice.doomCost === 0) {
+						// Only display if explicitly set to zero (like info scenes)
+						indicators.push({ text: `0 Turns`, color: 'text-purple-400' });
+					}
+				}
 
                 // Build supplemental text string using all indicators
                 let indicatorString = '';
