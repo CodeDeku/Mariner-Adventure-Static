@@ -1059,7 +1059,7 @@
 				},
                 choices: [
                     { text: "Take the Main Road", nextScene: 'road_encounter', type: 'travel' },
-                    { text: "Follow Talon's Lead (Talon/Survival DC 12)", nextScene: 'trail_check', type: 'skill', dc: 12, skill: 'Survival' }
+                    { text: "Follow Talon's Lead", nextScene: 'trail_check', type: 'skill', dc: 12, skill: 'Survival' } // Removed redundant text
                 ]
             },
             'treeline': {
@@ -1075,7 +1075,7 @@
                 },
                 choices: [
                     { text: "Take the Main Road", nextScene: 'road_encounter', type: 'travel' },
-                    { text: "Follow Talon's Lead (Talon/Survival DC 12)", nextScene: 'trail_check', type: 'skill', dc: 12, skill: 'Survival' }
+                    { text: "Follow Talon's Lead", nextScene: 'trail_check', type: 'skill', dc: 12, skill: 'Survival' } // Removed redundant text
                 ]
             },
             'road_encounter': {
@@ -1167,7 +1167,7 @@
                     { text: "Bribe him (Cost 5s)", nextScene: 'guard_bribe', type: 'action', cost: 5 }, 
                     // Order Gain Choice
                     { text: "Show Respect (+4 Order)", nextScene: 'guard_respect', type: 'dialogue', orderGain: 4 },
-                    { text: "Intimidate him (Gareth/Insight DC 13)", nextScene: 'guard_intimidate_check', type: 'skill', dc: 13, skill: 'Insight' },
+                    { text: "Intimidate him", nextScene: 'guard_intimidate_check', type: 'skill', dc: 13, skill: 'Insight' }, // Removed redundant text
                     { text: "Attack", nextScene: 'combat_guard', type: 'combat' }
                 ]
             },
@@ -1465,7 +1465,7 @@
                 choices: [
                     // FIX: Direct successful path to faction_check to ensure button visibility
                     { text: "Use Rope (Safe Climb)", nextScene: 'faction_check', type: 'action', reqItem: 'Rope', consume: true },
-                    { text: "Free Solo (Gareth/Athletics DC 14)", nextScene: 'climb_check', type: 'skill', dc: 14, skill: 'Athletics' } 
+                    { text: "Free Solo", nextScene: 'climb_check', type: 'skill', dc: 14, skill: 'Athletics' } // Removed redundant text
                 ]
             },
             'climb_check': {
@@ -1493,7 +1493,7 @@
                 },
                 choices: [
                     { text: "Light Torch (Safe Passage)", nextScene: 'dark_caves_illuminated', type: 'action', reqItem: 'Torch', consume: true },
-                    { text: "Stumble in Dark (Talon/Perception DC 14)", nextScene: 'dark_check', type: 'skill', dc: 14, skill: 'Perception' } 
+                    { text: "Stumble in Dark", nextScene: 'dark_check', type: 'skill', dc: 14, skill: 'Perception' } // Removed redundant text
                 ]
             },
             // Updated Mushroom Scene
@@ -1563,7 +1563,7 @@
                 journal: "The Lighthouse is sealed. I need to find the mechanism to enter.",
                 choices: [
                     // Insight DC 15 (Captain Gareth)
-                    { text: "Analyze the mechanism (Gareth/Insight DC 15)", nextScene: 'neutral_lock_logic', type: 'skill', dc: 15, skill: 'Insight' } 
+                    { text: "Analyze the mechanism", nextScene: 'neutral_lock_logic', type: 'skill', dc: 15, skill: 'Insight' } // Removed redundant text
                 ]
             },
             'neutral_lock_logic': {
@@ -1676,14 +1676,14 @@
                 journal: "Reached the overlook. The Port is a warzone. Must be cautious.",
                 choices: [
                     { 
-                        text: "Scan the Road for Guards and Loot (Talon/Perception DC 14, -1 Turn)", 
+                        text: "Scan the Road for Guards and Loot", // Removed redundant skill text
                         nextScene: 'overlook_scan_check', 
                         type: 'skill', 
                         dc: 14, 
                         skill: 'Perception' 
                     },
                     { 
-                        text: "Hasten Descent (Gareth/Athletics DC 10, 0 Turns)", 
+                        text: "Hasten Descent", // Removed redundant skill/doom cost text
                         nextScene: 'overlook_hasten_check', 
                         type: 'skill', 
                         dc: 10, 
@@ -1840,7 +1840,7 @@
                     { text: "Work the Lines (+3s, -2 HP, +1 Chaos)", nextScene: 'docks_work', type: 'action', costHP: 2, chaosGain: 1, shillingGain: 3 }, 
                     // NEW ECONOMIC FIX: High risk/reward dive
                     { 
-                        text: "Dive for Sunken Treasure (Gareth/Athletics DC 16)", 
+                        text: "Dive for Sunken Treasure", 
                         nextScene: 'docks_dive_check', 
                         type: 'skill', 
                         dc: 16, 
@@ -1968,7 +1968,7 @@
                 choices: [
                     // FIX: Updated button text to be concise. Added shillingGain property.
                     { text: "Blackmail him (+10s, +3 Chaos)", nextScene: 'tavern_payout', type: 'action', chaosGain: 3, shillingGain: 10 },
-                    { text: "Expose him (Gareth/Insight DC 16, +3 Order)", nextScene: 'tavern_expose_check', type: 'skill', dc: 16, skill: 'Insight', orderGain: 3 },
+                    { text: "Expose him (+3 Order)", nextScene: 'tavern_expose_check', type: 'skill', dc: 16, skill: 'Insight', orderGain: 3 }, // Removed redundant skill text
                     { text: "Leave him alone", nextScene: 'blackwater_tavern', type: 'travel' }
                 ]
             },
@@ -2214,7 +2214,7 @@
                 choices: [
                     // OPTION 1: INFO CHECK (Automatic Success) - DOOM COST 0
                     { 
-                        text: "Attempt Counter-Clockwise Double-Turn (Secret, 0 Turns)", 
+                        text: "Attempt Counter-Clockwise Double-Turn (Secret)", 
                         nextScene: 'smelter_safe', 
                         type: 'dialogue', 
                         reqFlag: 'knowsSmelterSecret',
@@ -2223,7 +2223,7 @@
                     },
                     // OPTION 2: HERO BUTTON (Absorb Elements) - DOOM COST 0
                     { 
-                        text: "Channel Absorb Elements (Absorb Heat, 0 Turns)", 
+                        text: "Channel Absorb Elements (Absorb Heat)", 
                         nextScene: 'smelter_safe_charged', 
                         type: 'action', 
                         reqSkill: 'Absorb Elements', 
@@ -2231,7 +2231,7 @@
                         customClass: 'btn-fire-glow' 
                     },
                     // OPTION 3: SKILL CHECK (Quinn/Investigation) - DOOM COST 1 (Default)
-                    { text: "Analyze & Attempt to Turn Valve (Quinn/Investigation DC 15)", nextScene: 'smelter_roll', type: 'skill', dc: 15, skill: 'Investigation' }
+                    { text: "Analyze & Attempt to Turn Valve", nextScene: 'smelter_roll', type: 'skill', dc: 15, skill: 'Investigation' }
                 ]
             },
             'smelter_safe_charged': { 
@@ -2265,7 +2265,7 @@
                 choices: [
                     // ORDER PATH: INCURS DOOM COST (Default 1) - Takes time
                     { 
-                        text: "Save the Workers (Gareth/Athletics DC 15, +5 Order, -1 Turn)", 
+                        text: "Save the Workers (+5 Order)", 
                         nextScene: 'smelter_save_workers_check', 
                         type: 'skill', 
                         dc: 15, 
@@ -2338,7 +2338,7 @@
                     },
                     // COUNTER 3: Brute Force (High Damage)
                     { 
-                        text: "Dodge the Magma Wave (Gareth/Dexterity DC 14)", 
+                        text: "Dodge the Magma Wave", 
                         nextScene: 'smelter_dodge_logic', 
                         type: 'skill', 
                         dc: 14, 
@@ -2504,7 +2504,7 @@
                 choices: [
                     // OPTION 1: INFO CHECK (Automatic Success) - DOOM COST 0
                     { 
-                        text: "Follow the Weeping Angel Statues (Secret, 0 Turns)", 
+                        text: "Follow the Weeping Angel Statues (Secret)", 
                         nextScene: 'chapel_safe', 
                         type: 'dialogue', 
                         reqFlag: 'knowsChapelSecret',
@@ -2513,7 +2513,7 @@
                     },
                     // OPTION 2: HERO BUTTON (Primeval Awareness) - DOOM COST 0
                     { 
-                        text: "Channel Primeval Awareness (See Ambushers, 0 Turns)", 
+                        text: "Channel Primeval Awareness (See Ambushers)", 
                         nextScene: 'chapel_safe_surprise', 
                         type: 'action', 
                         reqSkill: 'Primeval Awareness', 
@@ -2521,7 +2521,7 @@
                         customClass: 'btn-shadow-glow' 
                     },
                     // OPTION 3: SKILL CHECK (Talon/Perception) - DOOM COST 1 (Default)
-                    { text: "Attempt to Track Movement (Talon/Perception DC 15)", nextScene: 'chapel_roll', type: 'skill', dc: 15, skill: 'Perception' }
+                    { text: "Attempt to Track Movement", nextScene: 'chapel_roll', type: 'skill', dc: 15, skill: 'Perception' }
                 ]
             },
             'chapel_safe_surprise': { 
@@ -2555,7 +2555,7 @@
                 choices: [
                     // ORDER PATH: INCURS DOOM COST (Default 1) - Takes time
                     { 
-                        text: "Attempt Rescue (Gareth/Athletics DC 14, +4 Order, -1 Turn)", 
+                        text: "Attempt Rescue (+4 Order)", 
                         nextScene: 'chapel_rescue_check', 
                         type: 'skill', 
                         dc: 14, 
@@ -2647,7 +2647,7 @@
                     },
                     // COUNTER 4: Brute Force (High Damage)
                     { 
-                        text: "Swing Wildly into the Fog (Talon/Perception DC 14)", 
+                        text: "Swing Wildly into the Fog", 
                         nextScene: 'chapel_attack_logic', 
                         type: 'skill', 
                         dc: 14, 
@@ -3408,8 +3408,9 @@
                 let isHeroButton = choice.reqSkill ? true : false;
                 let isCustomClassButton = choice.customClass ? true : false;
                 let isTradeButton = choice.cost || choice.value;
+                let isSkillCheck = choice.type === 'skill';
 
-                const alignmentClass = (choice.type === 'skill' || isTradeButton || choice.chaosGain || choice.orderGain || choice.costHP || choice.shillingGain || choice.reqFlag) ? 'justify-start' : 'justify-between';
+                const alignmentClass = (isSkillCheck || isTradeButton || choice.chaosGain || choice.orderGain || choice.costHP || choice.shillingGain || choice.reqFlag) ? 'justify-start' : 'justify-between';
                 
                 let btnClass = "";
                 
@@ -3543,14 +3544,15 @@
                 
                 // Default icon for travel/dialogue buttons
                 let icon = '<i class="fas fa-chevron-right text-gray-300 group-hover:text-amber-100"></i>';
-                let content = `<span class="cinzel font-bold text-gray-300 group-hover:text-amber-100">${choice.text}</span>`;
+                let rawText = choice.text; // Use the choice's raw text for the button label
+                let content = `<span class="cinzel font-bold text-gray-300 group-hover:text-amber-100">${rawText}</span>`;
                 let supplementalText = '';
                 
                 // Check if button is colored and adjust default icon color
                 if (isCustomClassButton) {
                     // For custom color buttons (path/hero/secret), the icon and text should be white/light color
                     // Ensure text color is set to white for custom buttons
-                    content = `<span class="cinzel font-bold text-white">${choice.text}</span>`;
+                    content = `<span class="cinzel font-bold text-white">${rawText}</span>`;
                     
                     // Custom Icon Logic for Keen Senses
                     if (choice.customClass === 'btn-keen-senses') {
@@ -3566,7 +3568,7 @@
                     icon = '<i class="fas fa-coins text-amber-500"></i>';
                 }
 
-                if (choice.type === 'skill') {
+                if (isSkillCheck) {
                     // Skill notation and dice icon are aligned immediately after the label
                     // Apply spectral glow effect (MODIFIED)
                     supplementalText += ` <span class="spectral-text-glow text-sm uppercase tracking-wider ml-2 mr-4">[${choice.skill} DC ${choice.dc}]</span>`;
