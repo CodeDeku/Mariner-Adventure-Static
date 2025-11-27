@@ -1745,7 +1745,7 @@
                     { text: "Listen to Engineer's Rumors (Smelter)", nextScene: 'gather_info_smelter', type: 'dialogue' },
                     { text: "Listen to Gravedigger's Warnings (Chapel)", nextScene: 'gather_info_chapel', type: 'dialogue' },
                     { 
-                        text: "Observe the Card Game", 
+                        text: "Observe the Card Game (Keen Senses)", 
                         nextScene: 'tavern_gambler', 
                         type: 'action', 
                         reqItem: 'Ring of Brass',
@@ -1796,7 +1796,6 @@
                 journal: "Failed to expose the cheater. Embarrassing.",
                 choices: [{ text: "Return to Tavern", nextScene: 'blackwater_tavern', type: 'travel' }]
             },
-            // ... (Rest of Alchemist/Tavern scenes are kept the same) ...
             'alchemist_triage': {
                 title: "Madam Alara, Triage Alchemist",
                 text: "Madam Alara, encased in her beaked mask, tends to the wounded with clinical detachment. Her prices are steep, but her wares are potent—she deals only in true survival.",
@@ -1847,7 +1846,6 @@
                 },
                 choices: [{ text: "Return to Alchemist", nextScene: 'alchemist_triage', type: 'travel' }]
             },
-            // ... (rest of the alchemist buy/sell scenes) ...
             'buy_tincture': {
                 title: "Purchase",
                 text: "The Vitality Tincture burns cold in your hand.",
@@ -3208,3 +3206,20 @@
                     itemRow.onmouseenter = () => {
                         descArea.innerText = itemDef.desc || defaultText;
                         descArea.classList.add('text-amber-400');
+                        descArea.classList.remove('text-gray-400');
+                    };
+                    itemRow.onmouseleave = () => {
+                        descArea.innerText = defaultText;
+                        descArea.classList.remove('text-amber-400');
+                        descArea.classList.add('text-gray-400');
+                    };
+
+                    invContainer.appendChild(itemRow);
+                });
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>
