@@ -1759,11 +1759,11 @@
                         nextScene: 'chapel_entry', 
                         type: 'travel',
                         reqNotItem: 'Ring of Brass', // Ring from Shadow Path
-                        customClass: 'btn-shadow-glow' 
+                        customClass: 'btn-shadow-glow'						
                     },
-                    { text: "Visit The Triage Alchemist", nextScene: 'alchemist_triage', type: 'travel' },
-                    { text: "Rest at The Blackwater Tavern", nextScene: 'blackwater_tavern', type: 'travel' },
-                    { text: "Explore the Docks", nextScene: 'town_docks', type: 'travel' } // NEW DOCKS BUTTON
+                    { text: "Visit The Triage Alchemist", nextScene: 'alchemist_triage', type: 'travel', doomCost: 0 },
+                    { text: "Rest at The Blackwater Tavern", nextScene: 'blackwater_tavern', type: 'travel, doomCost: 0' },
+                    { text: "Explore the Docks", nextScene: 'town_docks', type: 'travel', doomCost: 0 } // NEW DOCKS BUTTON
                 ],
                 onEnter: (state) => {
                     const hasRing = state.inventory.includes("Ring of Brass");
@@ -1785,9 +1785,9 @@
                             reqNotItem: 'Ring of Brass', // Ring from Shadow Path
                             customClass: 'btn-shadow-glow' 
                         },
-                        { text: "Visit The Triage Alchemist", nextScene: 'alchemist_triage', type: 'travel' },
-                        { text: "Rest at The Blackwater Tavern", nextScene: 'blackwater_tavern', type: 'travel' },
-                        { text: "Explore the Docks", nextScene: 'town_docks', type: 'travel' } // NEW DOCKS BUTTON
+                        { text: "Visit The Triage Alchemist", nextScene: 'alchemist_triage', type: 'travel', doomCost: 0 },
+                        { text: "Rest at The Blackwater Tavern", nextScene: 'blackwater_tavern', type: 'travel', doomCost: 0 },
+                        { text: "Explore the Docks", nextScene: 'town_docks', type: 'travel', doomCost: 0 } // NEW DOCKS BUTTON
                     ];
 
                     // STATE 2: FINALE UNLOCKED - Remove exploration choices, force ritual preparation
@@ -1796,8 +1796,8 @@
                         // Only offer the ritual button and the Tavern/Crossroads link (for supplies)
                         newChoices = [
                             { text: "Prepare the Wolf King's Ritual", nextScene: 'finale_ritual_start', type: 'combat', customClass: 'btn-hero' },
-                            { text: "Visit Madam Alara, The Triage Alchemist", nextScene: 'alchemist_triage', type: 'travel' },
-                            { text: "Find Rest at The Blackwater Tavern", nextScene: 'blackwater_tavern', type: 'travel' }
+                            { text: "Visit Madam Alara, The Triage Alchemist", nextScene: 'alchemist_triage', type: 'travel', doomCost: 0 },
+                            { text: "Rest at The Blackwater Tavern", nextScene: 'blackwater_tavern', type: 'travel', doomCost: 0 }
                         ];
                         // Finale scene TBD: finale_ritual_start
                         return "Finale Unlocked.";
@@ -1855,7 +1855,7 @@
                         reqItem: 'Ring of Brass', // Keen Senses check to find hidden goods
                         customClass: 'btn-keen-senses' 
                     }, 
-                    { text: "Return to Port Square", nextScene: 'town_square', type: 'travel' }
+                    { text: "Return to Port Square", nextScene: 'town_square', type: 'travel', doomCost: 0 }
                 ]
             },
             // NEW SCENE: DOCKS SELL CARGO (Premium Payout)
@@ -1863,7 +1863,7 @@
                 title: "Smuggler's Trade",
                 text: "The Smuggler nods approvingly at the quality of the cargo. 'Good eye, Mariner. Here's your cut, a little extra for your trouble.'",
                 journal: "Sold the Curious Cargo to a Smuggler for a premium.",
-                choices: [{ text: "Return to Docks", nextScene: 'town_docks', type: 'travel' }],
+                choices: [{ text: "Return to Docks", nextScene: 'town_docks', type: 'travel', doomCost: 0 }],
                 onEnter: (state) => {
                     const idx = state.inventory.indexOf("Curious Cargo");
                     if (idx > -1) state.inventory.splice(idx, 1);
@@ -1876,7 +1876,7 @@
             'docks_work': {
                 title: "Hard Labor",
                 text: "You haul crates and tie lines until your muscles ache and your hands blister.",
-                choices: [{ text: "Return to Docks", nextScene: 'town_docks', type: 'travel' }],
+                choices: [{ text: "Return to Docks", nextScene: 'town_docks', type: 'travel', doomCost: 0 }],
                 onEnter: (state) => {
                     state.shillings += 3;
                     state.currentHP = applyDamage(state.currentHP, 2); 
@@ -1901,7 +1901,7 @@
                     audioManager.playCoins();
                     return "Found Gems (+15s).";
                 },
-                choices: [{ text: "Surface", nextScene: 'town_docks', type: 'travel' }]
+                choices: [{ text: "Surface", nextScene: 'town_docks', type: 'travel', doomCost: 0 }]
             },
             'docks_dive_fail': {
                 title: "The Undertow",
@@ -1929,13 +1929,13 @@
                     }
                     return "Found Holy Water!";
                 },
-                choices: [{ text: "Return to Docks", nextScene: 'town_docks', type: 'travel' }]
+                choices: [{ text: "Return to Docks", nextScene: 'town_docks', type: 'travel', doomCost: 0 }]
             },
             'docks_smuggler_fail': {
                 title: "Nothing But Wood",
                 text: "The search yields nothing but wet splinters. You wasted time.",
                 journal: "The search was fruitless.",
-                choices: [{ text: "Return to Docks", nextScene: 'town_docks', type: 'travel' }]
+                choices: [{ text: "Return to Docks", nextScene: 'town_docks', type: 'travel', doomCost: 0 }]
             },
             
             // TAVERN KEEN SENSES (NEW)
@@ -1958,7 +1958,7 @@
                         reqItem: 'Ring of Brass',
                         customClass: 'btn-keen-senses' 
                     }, 
-                    { text: "Return to Port Square", nextScene: 'town_square', type: 'travel' }
+                    { text: "Return to Port Square", nextScene: 'town_square', type: 'travel', doomCost: 0 }
                 ]
             },
             'tavern_gambler': {
@@ -1969,14 +1969,14 @@
                     // FIX: Updated button text to be concise. Added shillingGain property.
                     { text: "Blackmail him", nextScene: 'tavern_payout', type: 'action', chaosGain: 3, shillingGain: 10 },
                     { text: "Expose him", nextScene: 'tavern_expose_check', type: 'skill', dc: 16, skill: 'Insight', orderGain: 3 }, // Removed redundant skill text
-                    { text: "Leave him alone", nextScene: 'blackwater_tavern', type: 'travel' }
+                    { text: "Leave him alone", nextScene: 'blackwater_tavern', type: 'travel', doomCost: 0 }
                 ]
             },
             'tavern_payout': {
                 title: "A Quiet Exchange",
                 text: "The man's eyes flicker to the spectral light of your Ring. He slips a heavy purse into your hand without a word. He's gone before you can count it.",
                 journal: "Blackmailed the undead gambler.",
-                choices: [{ text: "Return to Tavern", nextScene: 'blackwater_tavern', type: 'travel' }],
+                choices: [{ text: "Return to Tavern", nextScene: 'blackwater_tavern', type: 'travel', doomCost: 0 }],
                 onEnter: (state) => {
                     state.shillings += 10;
                     state.influence = Math.min(20, state.influence + 3); 
@@ -1992,7 +1992,7 @@
                 title: "Justice Served",
                 text: "Gareth's clear, authoritative voice rings in your mind. You slam your hand on the table and cite the exact law he broke. The man is forced to return his winnings and flees. Order is restored, and the others buy you a drink.",
                 journal: "Exposed the cheater. Gained 3 Order influence.",
-                choices: [{ text: "Return to Tavern", nextScene: 'blackwater_tavern', type: 'travel' }],
+                choices: [{ text: "Return to Tavern", nextScene: 'blackwater_tavern', type: 'travel', doomCost: 0 }],
                 onEnter: (state) => {
                     state.influence = Math.max(-20, state.influence - 3); 
                     return "Exposed Cheater. Order +3.";
@@ -2002,7 +2002,7 @@
                 title: "Public Scorn",
                 text: "You accuse the man, but your words are muddled. The other patrons laugh at you. The cheater remains, simply smiling.",
                 journal: "Failed to expose the cheater. Embarrassing.",
-                choices: [{ text: "Return to Tavern", nextScene: 'blackwater_tavern', type: 'travel' }]
+                choices: [{ text: "Return to Tavern", nextScene: 'blackwater_tavern', type: 'travel', doomCost: 0 }]
             },
             'alchemist_triage': {
 				title: "Madam Alara, Triage Alchemist",
@@ -2016,8 +2016,8 @@
                     "Holy Water": 0 
                 },
                 choices: [
-                    { text: "Sell Wares", nextScene: 'alchemist_sell', type: 'travel' },
-                    { text: "Return to Port Square", nextScene: 'town_square', type: 'travel' }
+                    { text: "Sell Wares", nextScene: 'alchemist_sell', type: 'travel', doomCost: 0 },
+                    { text: "Return to Port Square", nextScene: 'town_square', type: 'travel', doomCost: 0 }
                 ]
             },
             'alchemist_sell': {
@@ -2025,8 +2025,8 @@
                 text: "Alara inspects your items, sometimes offering a premium for rare components. 'Speak your price, Mariner. Time is coin.'",
                 journal: null,
                 choices: [
-                    { text: "Back to Buying", nextScene: 'alchemist_triage', type: 'travel' },
-                    { text: "Return to Port Square", nextScene: 'town_square', type: 'travel' }
+                    { text: "Back to Buying", nextScene: 'alchemist_triage', type: 'travel', doomCost: 0 },
+                    { text: "Return to Port Square", nextScene: 'town_square', type: 'travel', doomCost: 0 }
                 ]
             },
             // NEW SELL SCENE: Selling the Locket
@@ -2034,7 +2034,7 @@
                 title: "Sentiment's Price",
                 text: "Madam Alara cleans the silver locket with a sterile cloth. 'Sentiment holds value in chaos,' she remarks, sliding you the promised coin.",
                 journal: "Sold the Silver Locket for 10 Shillings.",
-                choices: [{ text: "Continue Selling", nextScene: 'alchemist_sell', type: 'travel' }],
+                choices: [{ text: "Continue Selling", nextScene: 'alchemist_sell', type: 'travel', doomCost: 0 }],
                 onEnter: (state) => {
                     const idx = state.inventory.indexOf("Silver Locket");
                     if (idx > -1) state.inventory.splice(idx, 1);
@@ -2048,7 +2048,7 @@
                 title: "Purchase",
                 text: "The Alchemical Fire is hot to the touch. A deadly weapon for the Shadow path.",
                 journal: "I purchased Alchemical Fire.",
-                choices: [{ text: "Return to Alchemist", nextScene: 'alchemist_triage', type: 'travel' }],
+                choices: [{ text: "Return to Alchemist", nextScene: 'alchemist_triage', type: 'travel', doomCost: 0 }],
                 onEnter: (state) => { 
                     state.inventory.push("Alchemical Fire"); 
                     scenes['alchemist_triage'].stock["Alchemical Fire"] -= 1;
@@ -2060,7 +2060,7 @@
                 title: "Purchase",
                 text: "The Holy Water is cold and consecrated. A deadly weapon for the Fire path.",
                 journal: "I purchased Holy Water.",
-                choices: [{ text: "Return to Alchemist", nextScene: 'alchemist_triage', type: 'travel' }],
+                choices: [{ text: "Return to Alchemist", nextScene: 'alchemist_triage', type: 'travel', doomCost: 0 }],
                 onEnter: (state) => { 
                     state.inventory.push("Holy Water"); 
                     scenes['alchemist_triage'].stock["Holy Water"] -= 1;
@@ -2072,7 +2072,7 @@
                 title: "Purchase",
                 text: "The Vitality Tincture burns cold in your hand.",
                 journal: "I purchased a high-grade Vitality Tincture.",
-                choices: [{ text: "Return to Alchemist", nextScene: 'alchemist_triage', type: 'travel' }],
+                choices: [{ text: "Return to Alchemist", nextScene: 'alchemist_triage', type: 'travel', doomCost: 0 }],
                 onEnter: (state) => { 
                     state.inventory.push("Vitality Tincture"); 
                     scenes['alchemist_triage'].stock["Vitality Tincture"] -= 1;
@@ -2084,7 +2084,7 @@
                 title: "Purchase",
                 text: "Smelling Salts. A desperate measure for desperate times.",
                 journal: "I purchased Smelling Salts.",
-                choices: [{ text: "Return to Alchemist", nextScene: 'alchemist_triage', type: 'travel' }],
+                choices: [{ text: "Return to Alchemist", nextScene: 'alchemist_triage', type: 'travel', doomCost: 0 }],
                 onEnter: (state) => { 
                     state.inventory.push("Smelling Salts"); 
                     scenes['alchemist_triage'].stock["Smelling Salts"] -= 1;
@@ -2096,7 +2096,7 @@
                 title: "Purchase",
                 text: "Flash Powder. Quick, loud, and effective.",
                 journal: "I purchased Flash Powder.",
-                choices: [{ text: "Return to Alchemist", nextScene: 'alchemist_triage', type: 'travel' }],
+                choices: [{ text: "Return to Alchemist", nextScene: 'alchemist_triage', type: 'travel', doomCost: 0 }],
                 onEnter: (state) => { 
                     state.inventory.push("Flash Powder"); 
                     scenes['alchemist_triage'].stock["Flash Powder"] -= 1;
@@ -2108,7 +2108,7 @@
                 title: "Sold for Premium",
                 text: "The Alchemist pays a premium for the components in your standard Potion.",
                 journal: "Sold a Healing Potion for 4 Shillings to the Alchemist.",
-                choices: [{ text: "Continue Selling", nextScene: 'alchemist_sell', type: 'travel' }],
+                choices: [{ text: "Continue Selling", nextScene: 'alchemist_sell', type: 'travel', doomCost: 0 }],
                 onEnter: (state) => {
                     const idx = state.inventory.indexOf("Healing Potion");
                     if (idx > -1) state.inventory.splice(idx, 1);
@@ -2121,7 +2121,7 @@
                 title: "Sold for Premium",
                 text: "The Alchemist recognizes the power in the Pearlescent Mushroom. 'A valuable specimen,' she murmurs.",
                 journal: "Sold the Pearlescent Mushroom for 12 Shillings to the Alchemist.",
-                choices: [{ text: "Continue Selling", nextScene: 'alchemist_sell', type: 'travel' }],
+                choices: [{ text: "Continue Selling", nextScene: 'alchemist_sell', type: 'travel', doomCost: 0 }],
                 onEnter: (state) => {
                     const idx = state.inventory.indexOf("Pearlescent Mushroom");
                     if (idx > -1) state.inventory.splice(idx, 1);
@@ -2134,7 +2134,7 @@
                 title: "Sold Path Artifact",
                 text: "A necessary sacrifice. The Alchemist gives you a heavy coin purse for the Alchemical Fire.",
                 journal: "I sold the Alchemical Fire artifact for 20 Shillings.",
-                choices: [{ text: "Continue Selling", nextScene: 'alchemist_sell', type: 'travel' }],
+                choices: [{ text: "Continue Selling", nextScene: 'alchemist_sell', type: 'travel', doomCost: 0 }],
                 onEnter: (state) => {
                     const idx = state.inventory.indexOf("Alchemical Fire");
                     if (idx > -1) state.inventory.splice(idx, 1);
@@ -2147,7 +2147,7 @@
                 title: "Sold Path Artifact",
                 text: "A necessary sacrifice. The Alchemist gives you a heavy coin purse for the Holy Water.",
                 journal: "I sold the Holy Water artifact for 20 Shillings.",
-                choices: [{ text: "Continue Selling", nextScene: 'alchemist_sell', type: 'travel' }],
+                choices: [{ text: "Continue Selling", nextScene: 'alchemist_sell', type: 'travel', doomCost: 0 }],
                 onEnter: (state) => {
                     const idx = state.inventory.indexOf("Holy Water");
                     if (idx > -1) state.inventory.splice(idx, 1);
@@ -2160,7 +2160,7 @@
                 title: "Sold Back",
                 text: "The Alchemist buys back her own tincture at a loss.",
                 journal: "Sold Vitality Tincture at a loss.",
-                choices: [{ text: "Continue Selling", nextScene: 'alchemist_sell', type: 'travel' }],
+                choices: [{ text: "Continue Selling", nextScene: 'alchemist_sell', type: 'travel', doomCost: 0 }],
                 onEnter: (state) => {
                     const idx = state.inventory.indexOf("Vitality Tincture");
                     if (idx > -1) state.inventory.splice(idx, 1);
@@ -2175,7 +2175,7 @@
                 journal: "Paid 10 Shillings for a good night's rest. The voices are quiet.",
                 isRest: true, // Tag as rest scene to prevent doom counter decrement
                 choices: [
-                    { text: "Return to Port Square", nextScene: 'town_square', type: 'travel' }
+                    { text: "Return to Port Square", nextScene: 'town_square', type: 'travel', doomCost: 0 }
                 ],
                 onEnter: (state) => {
                     state.currentHP = state.maxHP;
@@ -2188,7 +2188,7 @@
                 title: "Smelter District Tip",
                 text: "The exhausted engineer whispers, 'The release valves are rusted shut. Quinn's knowledge won't work unless you know the **counter-clockwise, double-turn** trick. That'll save your life.'",
                 journal: "Learned the secret to bypassing the Smelter's Steam Hazard.",
-                choices: [{ text: "Return to Tavern", nextScene: 'blackwater_tavern', type: 'travel' }],
+                choices: [{ text: "Return to Tavern", nextScene: 'blackwater_tavern', type: 'travel', doomCost: 0 }],
                 onEnter: (state) => {
                     state.knowsSmelterSecret = true;
                     return "New Information Gained (Smelter Path).";
@@ -2198,7 +2198,7 @@
                 title: "Sunken Chapel Tip",
                 text: "The pale gravedigger warns you, 'Don't follow the sound; follow the silence. The paths are a maze, but the silent, **weeping angel statues** mark the safe, true route.'",
                 journal: "Learned the safe route through the Sunken Chapel's Fog Maze.",
-                choices: [{ text: "Return to Tavern", nextScene: 'blackwater_tavern', type: 'travel' }],
+                choices: [{ text: "Return to Tavern", nextScene: 'blackwater_tavern', type: 'travel', doomCost: 0 }],
                 onEnter: (state) => {
                     state.knowsChapelSecret = true;
                     return "New Information Gained (Chapel Path).";
@@ -2436,7 +2436,7 @@
                 title: "Slag Horror Defeated",
                 text: "The Slag Horror is shattered. The **Sword of Valor** is yours.",
                 journal: "Defeated the Slag Horror and claimed the Sword of Valor.",
-                choices: [{ text: "Return to Town Square", nextScene: 'town_square', type: 'travel' }],
+                choices: [{ text: "Return to Town Square", nextScene: 'town_square', type: 'travel', }],
                 onEnter: (state) => {
                     state.isAbsorbCharged = false; // Clear flag
                     if (!state.inventory.includes("Sword of Valor")) state.inventory.push("Sword of Valor");
@@ -2484,7 +2484,7 @@
                 title: "Slag Horror Defeated",
                 text: "The Slag Horror is shattered. The **Sword of Valor** is yours. You are heavily wounded.",
                 journal: "Brute force victory over the Slag Horror, taking heavy damage. Claimed the Sword of Valor.",
-                choices: [{ text: "Limp to Town Square", nextScene: 'town_square', type: 'travel' }],
+                choices: [{ text: "Limp to Town Square", nextScene: 'town_square', type: 'travel', doomCost: 2 }],
                 onEnter: (state) => {
                     state.isAbsorbCharged = false; // Clear flag
                     state.currentHP = applyDamage(state.currentHP, 10); // Major Damage
@@ -2810,7 +2810,7 @@
                 title: "Drowned Spectre Defeated",
                 text: "The Drowned Spectre is banished. The **Ring of Brass** is yours. Your mind is fractured by the psychic blow.",
                 journal: "Brute force victory over the Spectre, taking heavy sanity damage. Claimed the Ring of Brass.",
-                choices: [{ text: "Limp to Town Square", nextScene: 'town_square', type: 'travel' }],
+                choices: [{ text: "Limp to Town Square", nextScene: 'town_square', type: 'travel', doomCost: 2 }],
                 onEnter: (state) => {
                     state.isSurpriseRound = false; // Clear flag
                     state.currentHP = applyDamage(state.currentHP, 12); // Major Psychic Damage
