@@ -564,7 +564,7 @@
         // Interactive Items Definition
         const itemRegistry = {
             "Ship's Log": { type: 'key', icon: 'fa-book-skull', color: 'text-amber-700', desc: "Key Item: Records of the damned. Unlocks your history." },
-            "Captain's Tricorn": { type: 'key', icon: 'fa-hat-cowboy', color: 'text-blue-500', desc: "Passive: The heavy felt hat of your predecessor." },
+            "Captain's Tricorn": { type: 'key', icon: 'fa-hat-cowboy', color: 'text-blue-500', desc: "Passive:  A symbol of authority. +1 to Intimidation checks." },
             "Rum (Heal 5)": {
                 name: "Rum (Heal 5)",
                 type: 'consumable',
@@ -628,11 +628,11 @@
                     return "Must be sold at the Market or traded at the Cove.";
                 }
             },
-            "Rusted Cutlass": { type: 'key', icon: 'fa-khanda', color: 'text-gray-400', desc: "Passive: A reliable blade. Required for certain combat events." },
+            "Rusted Cutlass": { type: 'key', icon: 'fa-khanda', color: 'text-gray-400', desc: "Passive: Reduces damage taken in combat events." },
             "Rope": { type: 'key', icon: 'fa-om', color: 'text-yellow-700', desc: "Passive: Essential for climbing cliffs." },
             "Torch": { type: 'key', icon: 'fa-fire', color: 'text-orange-500', desc: "Passive: Illuminates dark caves." },
             "Strange Coin": { type: 'key', icon: 'fa-circle-notch', color: 'text-yellow-600', desc: "Passive: Ancient currency. May open doors not made of wood." },
-            "Compass": { type: 'key', icon: 'fa-compass', color: 'text-blue-400', desc: "Passive: Points not north, but towards something unholy." }
+            "Compass": { type: 'key', icon: 'fa-compass', color: 'text-blue-400', desc: "Passive: Vibrates near planar energy." },
         };
         
         function getBonusForSkill(crewMember, skillType) {
@@ -687,17 +687,25 @@
                     { text: "Gasp for air (Wake Up)", nextScene: 'start', type: 'travel' }
                 ]
             },
-            'start': {
+			'start': {
                 title: "The Wreckage",
-                text: "You gasp, lungs burning, and retch salt water onto the grey sand. The storm has passed. 'The Trident's Kiss' lies shattered across the shore. The voices are loud now—Gareth's command, Quinn's panic—bickering inside your head. You are alive, but you are a vessel for the dead.",
-                journal: "I awoke on the shore. Alive. But they are with me now. Bound to me.",
+                text: "You gasp, lungs burning, and retch salt water onto the grey sand. The storm has passed, but the silence of the beach is a lie. Inside your mind, the scream of the dying ship continue. Gareth is barking orders to hold the line; Quinn is sobbing over the manifest. They don't realize they are dead.<br><br>You find your hand cramping, clutching the Captain's Tricorn Hat with a death grip. Beside you, your Compass hums with a faint, violet vibration, its needle locking onto the cliffs ahead. You are alive, but you have become a life raft for the damned.",
+                journal: "I awoke on the shore clutching the Captain's Hat. My Compass is acting strange, vibrating against the sand. The crew's souls are bound to me. Confused, loud, and terrified.",
                 banter: {
                     'quinn': "The answers are in the debris, Edward. Dig."
                 },
                 onEnter: (state) => {
-                    // AUDIO: Gasp sound on wake up
                     audioManager.playGasp();
-                    return null;
+                    let msg = "";
+                    if (!state.inventory.includes("Captain's Tricorn")) {
+                        state.inventory.push("Captain's Tricorn");
+                        msg += "Started with Tricorn. ";
+                    }
+                    if (!state.inventory.includes("Compass")) {
+                        state.inventory.push("Compass");
+                        msg += "Found Compass. ";
+                    }
+                    return msg;
                 },
                 choices: [
                     { text: "Search the debris", nextScene: 'wreckage_search', type: 'skill', dc: 8, skill: 'Investigation' },
@@ -708,12 +716,12 @@
                 isLogic: true,
                 resolve: (roll) => roll >= 8 ? 'wreckage_success' : 'wreckage_fail'
             },
-            'wreckage_success': {
+			'wreckage_success': {
                 title: "Salvage",
-                text: "Quinn guides your hand to a buried chest. Inside, you find a Rusted Cutlass, a pouch of Shillings, and Captain Gareth's Tricorn Hat. You place the hat on your head, and the voices quiet slightly. Quinn then points frantically to a damp book nearby—the Ship's Log.",
-                journal: "Found a blade, coin, and the Captain's Hat. Quinn insisted I take the Logbook. It holds our history.",
+                text: "Quinn guides your hand to a buried chest partially exposed by the tide. Inside, you find a heavy pouch of Shillings and a Rusted Cutlass. You strap the blade to your belt—it feels like an extension of your arm.",
+                journal: "Scavenged a blade and coin from the wreckage.",
                 onEnter: (state) => {
-                    const items = ["Rusted Cutlass", "Captain's Tricorn", "Ship's Log"];
+                    const items = ["Rusted Cutlass"];
                     let found = false;
                     items.forEach(i => {
                         if(!state.inventory.includes(i)) {
@@ -721,19 +729,18 @@
                             found = true;
                         }
                     });
-                    if (found) {
-                        state.shillings += 7; 
-                        audioManager.playCoins();
-                        return "Found: Cutlass, Hat, Log & 7 Shillings.";
-                    }
-                    return null;
+                    state.shillings += 7; 
+                    audioManager.playCoins();
+                    
+                    if (found) return "Found: Cutlass & 7 Shillings.";
+                    return "Found: 7 Shillings.";
                 },
                 choices: [{ text: "Move to Treeline", nextScene: 'treeline_prepared', type: 'travel' }]
             },
             'wreckage_fail': {
                 title: "Empty Sands",
-                text: "You dig through the driftwood until your fingers bleed, but find nothing of value. The tide is rising.",
-                journal: "Scavenging yielded nothing but splinters.",
+                text: "You dig through the driftwood until your fingers bleed, but the tide has claimed the rest. You find nothing but wet sand and splinters.",
+                journal: "Scavenging yielded nothing. I am leaving the shore with empty pockets.",
                 choices: [{ text: "Move to Treeline", nextScene: 'treeline', type: 'travel' }]
             },
             'treeline_prepared': {
@@ -882,9 +889,16 @@
                 },
                 choices: [{ text: "Head to Market Crossroads", nextScene: 'market_crossroads', type: 'travel' }]
             },
-            'guard_intimidate_check': {
+			'guard_intimidate_check': {
                 isLogic: true,
-                resolve: (roll) => roll >= 13 ? 'guard_scared' : 'combat_guard'
+                resolve: (roll, state) => {
+                    let finalRoll = roll;
+                    // Passive Bonus: Captain's Tricorn (+1 Intimidation)
+                    if (state.inventory.includes("Captain's Tricorn")) {
+                        finalRoll += 1;
+                    }
+                    return finalRoll >= 13 ? 'guard_scared' : 'combat_guard';
+                }
             },
             'guard_scared': {
                 title: "Spectral Fear",
@@ -896,15 +910,24 @@
                 },
                 choices: [{ text: "Head to Market Crossroads", nextScene: 'market_crossroads', type: 'travel' }]
             },
-            'combat_guard': {
-                title: "Steel Clashes",
+			'combat_guard': {
+                title: "The Clash",
                 text: "He unhooks a heavy warhammer from his belt. You move to intercept him, driving the momentum into a brutal close-quarters struggle. You barely deflect the crushing weight of his strikes, fighting until he finally falls. You survive, but you are now an enemy of the crown.",
                 journal: "Had to fight the Guard. I am an outlaw now.",
                 onEnter: (state) => { 
                     audioManager.playClash();
-                    const dmg = Math.floor(Math.random() * 6) + 10; // Increased damage: 10-15
+                    let minDmg = 10;
+                    let varDmg = 6;
+                    
+                    // Passive Bonus: Rusted Cutlass (Reduces Damage)
+                    if (state.inventory.includes("Rusted Cutlass")) {
+                        minDmg = 6; // Reduced base damage
+                        addToHistory("Passive: Cutlass reduced combat damage.", 'system');
+                    }
+                    
+                    const dmg = Math.floor(Math.random() * varDmg) + minDmg; 
                     state.currentHP = applyDamage(state.currentHP, dmg);
-                    fxManager.flashRed(); // Trigger Visual Damage
+                    fxManager.flashRed(); 
                     state.influence = 20; // Max Chaos
                     return `Took ${dmg} damage. Became Outlaw (Max Chaos).`;
                 },
@@ -1212,9 +1235,9 @@
                 journal: "The Guards respect me. They let me pass without question. Order has its perks.",
                 choices: [{ text: "Enter and Rest", nextScene: 'lighthouse_vigil', type: 'rest' }]
             },
-            'ending_chaos': {
+			'ending_chaos': {
                 title: "Smuggler's Ally",
-                text: "Smugglers lounge by the entrance. They grin as you approach. 'The Mariner! We heard you made a fool of the Guard. This haven is open to you, brother.' They toss you a key.",
+                text: "Smugglers lounge by the entrance. They grin as you approach. 'The Mariner! Word travels fast on the tide. You walk the crooked path as well as any of us. This haven is open to you, brother.' They toss you a key.",
                 journal: "The smugglers see me as one of their own. They gave me the key.",
                 choices: [{ text: "Enter and Rest (Demo End)", nextScene: 'lighthouse_vigil', type: 'rest' }]
             },
