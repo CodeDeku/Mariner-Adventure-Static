@@ -376,7 +376,8 @@
                 </div>
                 
                 <!-- PLANAR INSTABILITY (DOOM COUNTER) DISPLAY -->
-                <div class="bg-gray-900 p-2 rounded border border-gray-700 flex flex-col text-[10px] gap-2 relative">
+                <!-- HIDE BY DEFAULT, ONLY SHOW IN ACT 1 -->
+                <div id="doom-counter-display" class="bg-gray-900 p-2 rounded border border-gray-700 flex flex-col text-[10px] gap-2 relative hidden">
                     <div class="flex justify-between items-center cinzel text-xs uppercase tracking-wider font-bold">
                         <span class="text-purple-400"><i class="fas fa-bolt mr-1"></i>Rift Stability</span>
                         <span id="doom-timer-text" class="text-yellow-500">15 Turns</span>
@@ -1675,18 +1676,19 @@
                 journal: "Reached the overlook. The Port is a warzone. Must be cautious.",
                 choices: [
                     { 
-                        text: "Scan the Road for Guards and Loot (Talon/Perception DC 14)", 
+                        text: "Scan the Road for Guards and Loot (Talon/Perception DC 14, -1 Turn)", 
                         nextScene: 'overlook_scan_check', 
                         type: 'skill', 
                         dc: 14, 
                         skill: 'Perception' 
                     },
                     { 
-                        text: "Hasten Descent (Gareth/Athletics DC 10)", 
+                        text: "Hasten Descent (Gareth/Athletics DC 10, 0 Turns)", 
                         nextScene: 'overlook_hasten_check', 
                         type: 'skill', 
                         dc: 10, 
-                        skill: 'Athletics' 
+                        skill: 'Athletics',
+                        doomCost: 0 // NO DOOM COST
                     }
                 ]
             },
@@ -1744,6 +1746,25 @@
             'town_square': {
                 title: "Port of Shadows",
                 text: "", // Dynamic text populated by onEnter
+                choices: [
+                    { 
+                        text: "Investigate Smelter District", 
+                        nextScene: 'smelter_entry', 
+                        type: 'travel', 
+                        reqNotItem: 'Sword of Valor', // Blade from Fire Path
+                        customClass: 'btn-fire-glow' 
+                    },
+                    { 
+                        text: "Investigate Sunken Chapel", 
+                        nextScene: 'chapel_entry', 
+                        type: 'travel',
+                        reqNotItem: 'Ring of Brass', // Ring from Shadow Path
+                        customClass: 'btn-shadow-glow' 
+                    },
+                    { text: "Visit The Triage Alchemist", nextScene: 'alchemist_triage', type: 'travel' },
+                    { text: "Rest at The Blackwater Tavern", nextScene: 'blackwater_tavern', type: 'travel' },
+                    { text: "Explore the Docks", nextScene: 'town_docks', type: 'travel' } // NEW DOCKS BUTTON
+                ],
                 onEnter: (state) => {
                     const hasRing = state.inventory.includes("Ring of Brass");
                     const hasBlade = state.inventory.includes("Sword of Valor");
@@ -1803,7 +1824,7 @@
                     });
                     
                 },
-                choices: []
+                // Choices now generated in onEnter
             },
             
             // --- NEW HUB SCENES ---
@@ -1856,6 +1877,7 @@
                 title: "Hard Labor",
                 text: "You haul crates and tie lines until your muscles ache and your hands blister.",
                 journal: "Traded sweat and blood for coin.",
+                choices: [{ text: "Return to Docks", nextScene: 'town_docks', type: 'travel' }],
                 onEnter: (state) => {
                     state.shillings += 3;
                     state.currentHP = applyDamage(state.currentHP, 2); 
@@ -1865,7 +1887,6 @@
                     // FIX: Ensure journal message reflects the correct 2 HP loss
                     return "Worked. +3 Shillings, -2 HP. Chaos +1.";
                 },
-                choices: [{ text: "Return to Docks", nextScene: 'town_docks', type: 'travel' }]
             },
             // NEW SCENE: DOCKS HIGH RISK DIVE
             'docks_dive_check': {
@@ -2168,21 +2189,21 @@
                 title: "Smelter District Tip",
                 text: "The exhausted engineer whispers, 'The release valves are rusted shut. Quinn's knowledge won't work unless you know the **counter-clockwise, double-turn** trick. That'll save your life.'",
                 journal: "Learned the secret to bypassing the Smelter's Steam Hazard.",
+                choices: [{ text: "Return to Tavern", nextScene: 'blackwater_tavern', type: 'travel' }],
                 onEnter: (state) => {
                     state.knowsSmelterSecret = true;
                     return "New Information Gained (Smelter Path).";
                 },
-                choices: [{ text: "Return to Tavern", nextScene: 'blackwater_tavern', type: 'travel' }]
             },
             'gather_info_chapel': {
                 title: "Sunken Chapel Tip",
                 text: "The pale gravedigger warns you, 'Don't follow the sound; follow the silence. The paths are a maze, but the silent, **weeping angel statues** mark the safe, true route.'",
                 journal: "Learned the safe route through the Sunken Chapel's Fog Maze.",
+                choices: [{ text: "Return to Tavern", nextScene: 'blackwater_tavern', type: 'travel' }],
                 onEnter: (state) => {
                     state.knowsChapelSecret = true;
                     return "New Information Gained (Chapel Path).";
                 },
-                choices: [{ text: "Return to Tavern", nextScene: 'blackwater_tavern', type: 'travel' }]
             },
             // --- END HUB SCENES ---
 
@@ -2192,23 +2213,25 @@
                 text: "The path is blocked by a burst steam pipe spitting magical fire. The main valve is screaming and rusted over. You need to use your abilities or brute force here.",
 				journal: "The heat hits like a physical blow. The air tastes of sulfur and ash. Even the ghosts in my head are quiet, drowned out by the roar of the vents.",
                 choices: [
-                    // OPTION 1: INFO CHECK (Automatic Success)
+                    // OPTION 1: INFO CHECK (Automatic Success) - DOOM COST 0
                     { 
-                        text: "Attempt Counter-Clockwise Double-Turn (Secret)", 
+                        text: "Attempt Counter-Clockwise Double-Turn (Secret, 0 Turns)", 
                         nextScene: 'smelter_safe', 
                         type: 'dialogue', 
                         reqFlag: 'knowsSmelterSecret',
+                        doomCost: 0,
                         customClass: 'btn-success-glow'
                     },
-                    // OPTION 2: HERO BUTTON (Absorb Elements)
+                    // OPTION 2: HERO BUTTON (Absorb Elements) - DOOM COST 0
                     { 
-                        text: "Channel Absorb Elements (Absorb Heat)", 
+                        text: "Channel Absorb Elements (Absorb Heat, 0 Turns)", 
                         nextScene: 'smelter_safe_charged', 
                         type: 'action', 
                         reqSkill: 'Absorb Elements', 
+                        doomCost: 0,
                         customClass: 'btn-fire-glow' 
                     },
-                    // OPTION 3: SKILL CHECK (Quinn/Investigation) - High DC because of rust
+                    // OPTION 3: SKILL CHECK (Quinn/Investigation) - DOOM COST 1 (Default)
                     { text: "Analyze & Attempt to Turn Valve (Quinn/Investigation DC 15)", nextScene: 'smelter_roll', type: 'skill', dc: 15, skill: 'Investigation' }
                 ]
             },
@@ -2241,6 +2264,7 @@
                 text: "You enter the main engine room. A heavy support beam has collapsed, trapping three exhausted workers near the pit. They beg for aid. If you stop, the Slag Horror will hear you. If you don't, they will burn.",
                 journal: "Found trapped workers in the smelter. A moral choice.",
                 choices: [
+                    // ORDER PATH: INCURS DOOM COST (Default 1) - Takes time
                     { 
                         text: "Save the Workers (Gareth/Athletics DC 15, +5 Order)", 
                         nextScene: 'smelter_save_workers_check', 
@@ -2249,11 +2273,13 @@
                         skill: 'Athletics',
                         orderGain: 5 
                     },
+                    // CHAOS PATH: NO DOOM COST - Saves time
                     { 
-                        text: "Bypass the Scene (+3 Chaos)", 
+                        text: "Bypass the Scene (+3 Chaos, 0 Turns)", 
                         nextScene: 'smelter_stage1_start', // DIRECT TO BOSS
                         type: 'travel',
-                        chaosGain: 3
+                        chaosGain: 3,
+                        doomCost: 0
                     }
                 ]
             },
@@ -2292,6 +2318,7 @@
             'smelter_stage1_start': {
                 title: "Slag Horror: Stage 1 - The Heat Wave",
                 text: "The <span class='text-red-500 font-bold'>Slag Horror</span> rises from the molten iron, its core glowing. It prepares to spew a wave of magma. You must find a way to mitigate the heat to get close enough to strike. You spot the hilt of the **Sword of Valor** suspended in its chest.",
+                isBoss: true, // Tag as boss scene (No doom cost)
                 choices: [
                     // COUNTER 1: Item Bypass
                     { 
@@ -2302,7 +2329,7 @@
                         consume: true,
                         customClass: 'btn-success-glow'
                     },
-                    // COUNTER 2: Skill Mitigation (Absorb Elements)
+                    // COUNTER 2: Skill Mitigation (Absorb Elements) - Sets flag for stage 2
                     { 
                         text: "Channel Absorb Elements (Negate Fire Damage)", 
                         nextScene: 'smelter_stage2_clean', 
@@ -2337,6 +2364,7 @@
             'smelter_stage2_clean': {
                 title: "Slag Horror: Stage 2 - The Shell",
                 text: "The magma wave was negated. The Horror's molten shell is now soft but thick, making a direct attack difficult. It's preparing a solidifying strike.",
+                isBoss: true, // Tag as boss scene (No doom cost)
                 choices: [
                     // COUNTER 1: Industrial Lubricant (Worker reward)
                     { 
@@ -2370,6 +2398,7 @@
             'smelter_stage2_damaged': {
                 title: "Slag Horror: Stage 2 - Scorched and Striking",
                 text: "You are scorched and bleeding from the magma wave, but you are close. The Horror's molten shell is thick. You must finish this now.",
+                isBoss: true, // Tag as boss scene (No doom cost)
                 onEnter: (state) => {
                     // Apply the damage calculated in the logic scene
                     state.currentHP = applyDamage(state.currentHP, state.pendingDamage || 0);
@@ -2474,23 +2503,25 @@
                 text: "The cemetery is covered in unnatural fog. The paths loop back on themselves, and you cannot see.",
 				journal: "The silence here is heavy. It presses against my ears. The fog moves like it has intent. I'd prefer the fire—at least fire is honest.",
                 choices: [
-                    // OPTION 1: INFO CHECK (Automatic Success)
+                    // OPTION 1: INFO CHECK (Automatic Success) - DOOM COST 0
                     { 
-                        text: "Follow the Weeping Angel Statues (Secret)", 
+                        text: "Follow the Weeping Angel Statues (Secret, 0 Turns)", 
                         nextScene: 'chapel_safe', 
                         type: 'dialogue', 
                         reqFlag: 'knowsChapelSecret',
+                        doomCost: 0,
                         customClass: 'btn-success-glow'
                     },
-                    // OPTION 2: HERO BUTTON (Primeval Awareness)
+                    // OPTION 2: HERO BUTTON (Primeval Awareness) - DOOM COST 0
                     { 
-                        text: "Channel Primeval Awareness (See Ambushers)", 
+                        text: "Channel Primeval Awareness (See Ambushers, 0 Turns)", 
                         nextScene: 'chapel_safe_surprise', 
                         type: 'action', 
                         reqSkill: 'Primeval Awareness', 
+                        doomCost: 0,
                         customClass: 'btn-shadow-glow' 
                     },
-                    // OPTION 3: SKILL CHECK (Talon/Perception)
+                    // OPTION 3: SKILL CHECK (Talon/Perception) - DOOM COST 1 (Default)
                     { text: "Attempt to Track Movement (Talon/Perception DC 15)", nextScene: 'chapel_roll', type: 'skill', dc: 15, skill: 'Perception' }
                 ]
             },
@@ -2523,6 +2554,7 @@
                 text: "The vestry is flooded with black, polluted water. A panicked man is caught in the undertow, struggling to keep his head above the foul tide. He screams for help.",
                 journal: "Found a drowning man in the Chapel vestry. A choice of mercy or self-interest.",
                 choices: [
+                    // ORDER PATH: INCURS DOOM COST (Default 1) - Takes time
                     { 
                         text: "Attempt Rescue (Gareth/Athletics DC 14, +4 Order)", 
                         nextScene: 'chapel_rescue_check', 
@@ -2531,11 +2563,13 @@
                         skill: 'Athletics',
                         orderGain: 4
                     },
+                    // CHAOS PATH: NO DOOM COST - Saves time
                     { 
-                        text: "Ignore the Screams and Search for Loot (+4 Chaos)", 
+                        text: "Ignore the Screams and Search for Loot (+4 Chaos, 0 Turns)", 
                         nextScene: 'chapel_ignore_drowning', 
                         type: 'dialogue',
-                        chaosGain: 4
+                        chaosGain: 4,
+                        doomCost: 0
                     }
                 ]
             },
@@ -2586,6 +2620,7 @@
             'chapel_stage1_reveal': {
                 title: "Drowned Spectre: Stage 1 - The Ambush",
                 text: "The crypt is flooded. The <span class='text-gray-400 font-bold'>Drowned Spectre</span> is present but invisible in the thick, churning black fog. It will strike from the dark unless you can pinpoint its true location. On its skeletal finger glints the **Ring of Brass**.",
+                isBoss: true, // Tag as boss scene (No doom cost)
                 choices: [
                     // COUNTER 1: Item Bypass (If Fire Path was done first)
                     { 
@@ -2638,6 +2673,7 @@
             'chapel_stage2_finish': {
                 title: "Drowned Spectre: Stage 2 - Banishment",
                 text: "The Spectre is revealed. It knows it's been found and lunges at you, attempting to possess your mind. You must banish it now.",
+                isBoss: true, // Tag as boss scene (No doom cost)
                 choices: [
                     // COUNTER 1: Alchemical Fire
                     { 
@@ -2663,6 +2699,7 @@
             'chapel_stage2_hit_damaged': {
                 title: "Drowned Spectre: Stage 2 - Found, But Wounded",
                 text: "Your wild strike grazed the Spectre, but it lashed out, dealing psychic damage. It's now revealed and attempts possession.",
+                isBoss: true, // Tag as boss scene (No doom cost)
                 onEnter: (state) => {
                     // Apply the damage calculated in the logic scene
                     state.currentHP = applyDamage(state.currentHP, state.pendingDamage || 0);
@@ -2692,6 +2729,7 @@
             'chapel_stage2_miss_damaged': {
                 title: "Drowned Spectre: Stage 2 - Missed and Drained",
                 text: "Your attack missed, and the Spectre drained a huge portion of your life force. It is revealed but you are heavily wounded. Finish this now!",
+                isBoss: true, // Tag as boss scene (No doom cost)
                 onEnter: (state) => {
                     // Apply the damage calculated in the logic scene
                     state.currentHP = applyDamage(state.currentHP, state.pendingDamage || 0);
@@ -2784,7 +2822,7 @@
             },
             // --- END MULTI-STAGE BOSS FIGHT: DROWNED SPECTRE ---
             
-            'finale_ritual_start': { title: "The Ritual", text: "Ritual start scene.", choices: [{ text: "End", type: 'reset' }] },
+            'finale_ritual_start': { title: "The Ritual", text: "Ritual start scene.", isBoss: true, choices: [{ text: "End", type: 'reset' }] },
 
             'edward_death': {
                 title: "The Mariner's End",
@@ -2986,6 +3024,7 @@
             gameState.isAbsorbCharged = false;
             gameState.isSurpriseRound = false;
             gameState.isRiftCollapse = false;
+            gameState.act1Started = false; // Ensure Act 1 starts false on reset
 
             document.getElementById('journal-content').innerHTML = '';
             await saveGame();
@@ -3114,13 +3153,45 @@
             }
 
             // --- DOOM COUNTER LOGIC (Planar Instability) ---
-            // Only decrement if Act 1 is started AND the scene is not a rest/boss scene
             const isBossScene = sceneId.includes('smelter_stage') || sceneId.includes('chapel_stage') || sceneId.includes('finale_ritual');
-            if (gameState.act1Started && !scene.isRest && !isBossScene) {
-                gameState.doomTimer -= 1;
-                // Only log if the timer has changed and is above 0
-                if (gameState.doomTimer > 0) {
-                    addToHistory(`Rift Stability: ${gameState.doomTimer} turns remaining.`, 'system');
+            
+            // Determine if DOOM cost should be applied
+            let applyDoomCost = true; // Default behavior is to cost 1 turn
+            
+            // 1. Check for explicit doomCost = 0 flag on the scene itself (usually used for information scenes)
+            if (scene.doomCost === 0) {
+                 applyDoomCost = false;
+            } else if (scene.choices) {
+                 // 2. Check if the PREVIOUS choice had doomCost = 0
+                 // This requires finding the choice that led to this scene.
+                 // Since we don't store the previous choice, we check the current scene's nature:
+                 // DO NOT cost a turn if it's a rest, boss fight, or the character creation flow.
+                 if (scene.isRest || isBossScene) {
+                     applyDoomCost = false;
+                 }
+                 // Special Case: The logic for overriding doomCost is handled below in the renderChoices logic.
+                 // Here, we just rely on the default behavior unless it's explicitly a rest or boss fight.
+            }
+            
+            // Actual Decrement Logic
+            if (gameState.act1Started && applyDoomCost && !scene.isRest && !isBossScene) {
+                // If this scene was reached via a choice that explicitly had doomCost: 0, 
+                // the doom counter logic would ideally be bypassed. 
+                // We handle this by checking if the previous button was a zero-cost button
+                // (which is implicitly handled by passing doomCost: 0 in the choice data)
+                
+                // *** IMPORTANT: The decrement logic must be moved to the onclick handler
+                // for choices that do *not* have doomCost: 0. ***
+                // Since this `renderScene` function is now executed *after* the click, 
+                // the doom decrement should happen *before* calling renderScene if doomCost != 0.
+                
+                // For now, we will add a flag to the scene logic for a clean implementation:
+                
+                if (scene.doomCost === undefined || scene.doomCost === 1) { // Normal cost scenes
+                    gameState.doomTimer -= 1;
+                    if (gameState.doomTimer > 0) {
+                        addToHistory(`Rift Stability: ${gameState.doomTimer} turns remaining.`, 'system');
+                    }
                 }
                 
                 if (gameState.doomTimer <= 0 && !gameState.isRiftCollapse) {
@@ -3455,6 +3526,25 @@
                     // RP FIX: Player perceives Order gain, even though it's technically negative influence shift
                     if (choice.orderGain) gameState.influence = Math.max(-20, gameState.influence - choice.orderGain); 
                     
+                    // --- DOOM COUNTER DECREMENT ON CLICK (Conditional) ---
+                    // Decrement only if Act 1 has started AND the choice does NOT have doomCost: 0
+                    if (gameState.act1Started && choice.doomCost !== 0) {
+                        gameState.doomTimer -= 1;
+                        if (gameState.doomTimer > 0) {
+                            addToHistory(`Rift Stability: ${gameState.doomTimer} turns remaining.`, 'system');
+                        }
+                        
+                        if (gameState.doomTimer <= 0 && !gameState.isRiftCollapse) {
+                            // Fail state: Apply penalty, set flag, and continue
+                            gameState.isRiftCollapse = true;
+                            gameState.maxHP = Math.max(1, gameState.maxHP - 5);
+                            gameState.currentHP = Math.min(gameState.currentHP, gameState.maxHP); // Clamp current HP
+                            addToHistory(`!!! RIFT COLLAPSE !!! The veil has ruptured. All Skill Check DCs are permanently increased by 2. Max HP reduced by 5 due to toxic air.`, 'system');
+                            // Note: renderScene will be called below, which will update the UI
+                        }
+                    }
+                    // --- END DOOM COUNTER DECREMENT ---
+                    
                     // --- SKILL CHECK LOGIC WITH COMPLEX CREW TRACKING ---
                     if (choice.type === 'skill') {
                         // Store required skill type and DC for the logic scene resolution
@@ -3538,6 +3628,18 @@
                 } else if (choice.orderGain) {
                     indicators.push({ text: `+${choice.orderGain} Order`, color: 'text-blue-400' });
                 }
+                
+                // 4. Doom Cost (If cost is explicit)
+                if (choice.doomCost !== undefined) {
+                    if (choice.doomCost === 0) {
+                         indicators.push({ text: `0 Turns`, color: 'text-purple-400' });
+                    } else {
+                         indicators.push({ text: `-${choice.doomCost} Turn`, color: 'text-purple-400' });
+                    }
+                } else if (!isBossScene && !scenes[currentSceneId].isRest) {
+                    // Show default cost of 1 if not explicitly set and not a boss/rest scene
+                     indicators.push({ text: `-1 Turn`, color: 'text-purple-400' });
+                }
 
                 // Build supplemental text string using all indicators
                 let indicatorString = '';
@@ -3547,19 +3649,9 @@
                 });
 
                 if (indicatorString) {
-                    supplementalText += indicatorString;
-                }
-                // --- End Consistent Currency/Value/Influence Display ---
-                
-                if (choice.type === 'reset') {
-                     icon = '<i class="fas fa-undo text-white"></i>'; // Ensure reset button icon is white/visible
-                     // Content is already set in death scene to Awaken (Restart Game)
-                }
-                
-                // If there is supplemental text (skill/cost/value), merge it with the main content
-                if (supplementalText) {
-                    content += supplementalText;
-                    btn.innerHTML = `${content} <span class="ml-auto">${icon}</span>`;
+                    content += supplementalText; // Append skill text first
+                    supplementalText = indicatorString; // Replace supplementalText with indicator string
+                    btn.innerHTML = `${content} ${supplementalText} <span class="ml-auto">${icon}</span>`;
                 } else {
                      // Default travel/dialogue button using justify-between
                      btn.innerHTML = `${content}${icon}`;
@@ -3609,11 +3701,13 @@
             }
             
             // --- DOOM COUNTER UI ---
+            const doomDisplay = document.getElementById('doom-counter-display');
             const doomText = document.getElementById('doom-timer-text');
             const doomBar = document.getElementById('doom-bar');
             const maxDoom = 15;
 
             if (gameState.act1Started) {
+                doomDisplay.classList.remove('hidden'); // Show the doom counter
                 doomText.textContent = `${gameState.doomTimer} Turns`;
                 const doomPct = (gameState.doomTimer / maxDoom) * 100;
                 doomBar.style.width = `${doomPct}%`;
@@ -3633,6 +3727,8 @@
                      doomBar.classList.add('bg-purple-600');
                      doomText.classList.remove('text-red-500');
                 }
+            } else {
+                doomDisplay.classList.add('hidden'); // Hide doom counter outside Act 1
             }
             
             // Money
