@@ -304,9 +304,10 @@
             box-shadow: inset 0 0 80px 30px rgba(127, 29, 29, 0.3);
         }
         
-        /* NEW: RIFT COLLAPSE VIOLET VIGNETTE */
+        /* UPDATED: RIFT COLLAPSE VIOLET VIGNETTE (Task 2) */
         .fx-rift-collapse {
-            box-shadow: inset 0 0 100px 50px rgba(88, 28, 135, 0.5); /* Deep Violet Vignette */
+            /* Adjusted to be similar to fx-vignette-low intensity */
+            box-shadow: inset 0 0 80px 30px rgba(88, 28, 135, 0.3); 
             background-color: rgba(88, 28, 135, 0.05);
         }
 
@@ -606,7 +607,7 @@
 
             clearEffects() {
                 // Remove all effects except flash animations (they remove themselves)
-                this.overlay.classList.remove('fx-pulse-violet', 'fx-vignette-low', 'fx-rift-collapse'); // ADDED fx-rift-collapse
+                this.overlay.classList.remove('fx-pulse-violet', 'fx-vignette-low', 'fx-rift-collapse'); 
             }
 
             flashRed() {
@@ -981,7 +982,7 @@
         
         // NEW: Tavern Gruel Stock Definition
         const TAVERN_BUY_OPTIONS = [
-             { item: "Gruel", nextScene: 'buy_gruel', cost: 1 } // NEW GRUEL OPTION
+             { item: "Gruel", nextScene: 'buy_gruel_to_go', cost: 1 } // Renamed 'Buy Gruel' to 'Buy Gruel (To Go)'
         ];
 
         const MARKET_SELL_OPTIONS = [
@@ -1586,7 +1587,7 @@
             },
 			'ending_chaos': {
                 title: "Checkpoint: Smuggler's Ally", // RENAMED
-                text: "Smugglers lounge by the entrance. They grin as you approach. 'The Mariner! Word travels fast on the tide. You walk the crooked path as well as any of us. This haven is open to you, brother.' They toss you a key.",
+                text: "Smugglers lounge by the entrance. They grin as you approach. 'The Mariner lives? Then you drink for free tonight.' They toss you a key.",
                 journal: "The smugglers see me as one of their own. They gave me the key.",
                 choices: [{ text: "Enter and Rest (Start Act 1)", nextScene: 'lighthouse_vigil', type: 'rest' }]
             },
@@ -1985,15 +1986,17 @@
 				title: "The Blackwater Tavern",
 				text: "The interior is dim, smelling of stale brine and fear. Men speak in hushed tones, glancing at the door. This is where the broken come to hide. Rest is costly, but information is sometimes free.",
 				journal: "The Blackwater. Even the ale tastes like defeat here. But the walls have ears, and I need to listen.",
-                isRest: true, // Tag as rest scene to prevent doom counter decrement if player leaves without resting
+                isRest: true, // Tag as rest scene to prevent doom counter decrement
                 stock: { // NEW STOCK FOR GRUEL
                     "Gruel": 5 
                 },
                 choices: [
                     // PAID REST OPTION (Now always visible, handled by renderChoices for cost)
                     { text: "Pay for a Cot (Full Rest)", nextScene: 'tavern_rest_success', type: 'action', cost: 10 },
-                    // NEW: BUY GRUEL OPTION
-                    { text: "Buy Gruel", nextScene: 'buy_gruel', type: 'action', cost: 1, stockItem: 'Gruel' },
+                    // NEW: EAT GRUEL (Instant Consume, checks HP)
+                    { text: "Eat Gruel Now", nextScene: 'eat_gruel_instant', type: 'action', cost: 1, stockItem: 'Gruel' },
+                    // NEW: BUY GRUEL (To Go, adds to inventory)
+                    { text: "Buy Gruel (To Go)", nextScene: 'buy_gruel_to_go', type: 'action', cost: 1, stockItem: 'Gruel' },
                     // INFORMATION GATHERING
                     { text: "Listen to Engineer's Rumors (Smelter)", nextScene: 'gather_info_smelter', type: 'dialogue' },
                     { text: "Listen to Gravedigger's Warnings (Chapel)", nextScene: 'gather_info_chapel', type: 'dialogue' },
@@ -2008,18 +2011,40 @@
                     { text: "Return to Port Square", nextScene: 'town_square', type: 'travel', doomCost: 0 }
                 ]
             },
-            // NEW SCENE: Buy Gruel
-            'buy_gruel': {
-                title: "Purchase",
-                text: "You receive a bowl of thin, tasteless gruel.",
-                journal: "I bought and ate gruel.",
-                onEnter: (state) => { 
+            // NEW SCENE (Task 1): Eat Gruel (Instant consumption, checks HP)
+            'eat_gruel_instant': {
+                title: "Gruel Consumed",
+                text: "You take a moment to consume the cheap gruel. It settles your stomach, but barely.",
+                journal: "I instantly consumed gruel for a small amount of healing.",
+                onEnter: (state) => {
+                    if (state.currentHP === state.maxHP) {
+                        // Refund the cost and stock, don't consume, but still advance scene
+                        state.shillings += 1; // Refund cost
+                        scenes['blackwater_tavern'].stock["Gruel"] += 1; // Refund stock
+                        audioManager.playCoins();
+                        return "You are already at full HP. Gruel was not consumed, Shilling refunded.";
+                    }
+                    
                     const healAmount = 2;
                     const oldHP = state.currentHP;
                     state.currentHP = Math.min(state.maxHP, state.currentHP + healAmount);
-                    scenes['blackwater_tavern'].stock["Gruel"] -= 1; // Decrease local stock
-                    audioManager.playCoins();
-                    return `Bought Gruel. Healed ${state.currentHP - oldHP} HP.`;
+                    scenes['blackwater_tavern'].stock["Gruel"] -= 1; // Consume stock
+                    
+                    // Note: Shilling is already consumed by the button logic (choice.cost: 1)
+                    return `Ate Gruel. Healed ${state.currentHP - oldHP} HP.`;
+                },
+                choices: [{ text: "Return to Tavern", nextScene: 'blackwater_tavern', type: 'travel', doomCost: 0 }]
+            },
+            // NEW SCENE (Task 1): Buy Gruel (To Go, adds to inventory)
+            'buy_gruel_to_go': {
+                title: "Gruel To Go",
+                text: "The server slides you a small, sealed pouch of dried gruel.",
+                journal: "I bought gruel to-go and added it to my inventory.",
+                onEnter: (state) => { 
+                    state.inventory.push("Gruel"); 
+                    scenes['blackwater_tavern'].stock["Gruel"] -= 1; // Consume stock
+                    // Note: Shilling is already consumed by the button logic (choice.cost: 1)
+                    return "Bought Gruel (To Go). Added to Inventory.";
                 },
                 choices: [{ text: "Return to Tavern", nextScene: 'blackwater_tavern', type: 'travel', doomCost: 0 }]
             },
@@ -2909,7 +2934,7 @@
             "Healing Potion": 1,
             "Rope": 1,
             "Torch": 1,
-            "Curious Cargo": 1, // Tracks how many times this merchant will buy the cargo
+            "Curious Cargo": 1, 
             "Rum (Heal 5)": 0 
         };
         // NEW: Alchemist stock initialization
@@ -3424,39 +3449,56 @@
                 // Add back the navigation choices
                 processedChoices = processedChoices.concat(permanentChoices);
             }
-            // NEW: Blackwater Tavern Rest/Gruel Logic
+            // NEW: Blackwater Tavern Rest/Gruel Logic (Task 1)
             else if (currentSceneId === 'blackwater_tavern') {
                 const restOption = choices.find(c => c.nextScene === 'tavern_rest_success');
                 const returnOption = choices.find(c => c.nextScene === 'town_square');
                 const gamblerOption = choices.find(c => c.nextScene === 'tavern_gambler');
                 const infoSmelter = choices.find(c => c.nextScene === 'gather_info_smelter');
                 const infoChapel = choices.find(c => c.nextScene === 'gather_info_chapel');
+                const instantEat = choices.find(c => c.nextScene === 'eat_gruel_instant');
+                const buyToGo = choices.find(c => c.nextScene === 'buy_gruel_to_go');
+
 
                 // Clear base choices to rebuild
                 processedChoices = []; 
+                const gruelStock = currentSceneStock['Gruel'] || 0;
+                const canHeal = gameState.currentHP < gameState.maxHP;
                 
-                // Add Gruel option
-                TAVERN_BUY_OPTIONS.forEach(sale => {
-                    const actualStock = currentSceneStock[sale.item] || 0;
-                    if (actualStock > 0) {
-                         processedChoices.push({
-                            text: `Buy Gruel (1s, +2 HP) (Stock: ${actualStock})`,
-                            nextScene: 'buy_gruel',
-                            type: 'action',
-                            cost: sale.cost,
-                            stockItem: sale.item 
-                        });
-                    }
-                });
+                // 1. Instant Eat Gruel (conditional visibility/disability)
+                if (instantEat) {
+                    let instantEatText = `Eat Gruel Now (1s, +2 HP)`;
+                    let instantEatDisabled = !canHeal || gruelStock <= 0;
+                    
+                    if (!canHeal) instantEatText += " (Max HP)";
 
-                // Add Rest option (always visible, disabled if unaffordable)
-                if (restOption) {
-                    // Only add the rest button if not at full HP OR if rest restores more than just HP (which this does - crew)
-                    // We keep it always visible as requested, but disable it.
-                    processedChoices.push(restOption);
+                    processedChoices.push({
+                        ...instantEat, 
+                        text: instantEatText, 
+                        // Overwrite cost/stock handling here to allow accurate labeling/disabling
+                        cost: instantEat.cost,
+                        isDisabled: instantEatDisabled // Use custom property for pre-disabling
+                    });
                 }
+
+                // 2. Buy Gruel (To Go)
+                if (buyToGo) {
+                    let buyToGoText = `Buy Gruel (To Go) (1s)`;
+                    let buyToGoDisabled = gruelStock <= 0;
+
+                    processedChoices.push({
+                        ...buyToGo,
+                        text: buyToGoText,
+                        cost: buyToGo.cost,
+                        isDisabled: buyToGoDisabled
+                    });
+                }
+
+
+                // 3. Rest Option (always visible)
+                if (restOption) processedChoices.push(restOption);
                 
-                // Add Info/Gambler options (non-cost options)
+                // 4. Info/Gambler options (non-cost options)
                 if (infoSmelter) processedChoices.push(infoSmelter);
                 if (infoChapel) processedChoices.push(infoChapel);
                 if (gamblerOption) processedChoices.push(gamblerOption);
@@ -3510,8 +3552,15 @@
                 }
                 // Check 3: Stock availability (For buy actions only, visibility is mostly handled by rebuild logic)
                 if (choice.stockItem && (currentSceneStock[choice.stockItem] || 0) <= 0) {
-                     isDisabled = true;
-                     disabledClass = 'btn-disabled-cost';
+                     // This is mostly handled in the Tavern/Market rebuild, but double-check here
+                     // for robustness.
+                     // IMPORTANT: Gruel options are now explicitly checked via the 'isDisabled' property
+                }
+
+                // Check 4: Custom disability flag (used for instant Gruel eat)
+                if (choice.isDisabled) {
+                    isDisabled = true;
+                    disabledClass = 'btn-disabled-cost';
                 }
                 
                 
@@ -3571,7 +3620,7 @@
 
                     // --- FINAL STOCK CHECK BEFORE TRANSACTION (Crucial Fix) ---
                     // This is still needed for asynchronous stock changes (e.g., two players buying the last item in MP mode)
-                    if (choice.type === 'action' && (currentSceneId === 'market_stall' || currentSceneId === 'alchemist_triage' || currentSceneId === 'blackwater_tavern') && choice.stockItem) {
+                    if (choice.type === 'action' && (currentSceneId === 'market_stall' || currentSceneId === 'alchemist_triage') && choice.stockItem) {
                          const currentStock = scenes[currentSceneId].stock[choice.stockItem] || 0;
                          if (currentStock <= 0) {
                             addToHistory(`${choice.stockItem} is out of stock.`, 'system');
@@ -3579,6 +3628,16 @@
                             return;
                         }
                     }
+                    // Handle Gruel stock check separately due to split buy/eat logic
+                    if (choice.type === 'action' && currentSceneId === 'blackwater_tavern' && choice.stockItem === 'Gruel') {
+                        const currentStock = scenes[currentSceneId].stock['Gruel'] || 0;
+                        if (currentStock <= 0) {
+                            addToHistory(`Gruel is out of stock.`, 'system');
+                            renderScene(currentSceneId); 
+                            return;
+                        }
+                    }
+
                     // 3. Check selling stock (Curious Cargo at Market)
                     if (choice.type === 'action' && choice.reqItem === 'Curious Cargo' && currentSceneId === 'market_sell') {
                          if (marketStock['Curious Cargo'] <= 0) {
@@ -3801,7 +3860,7 @@
             const doomBar = document.getElementById('doom-bar');
             const maxDoom = 20; // UPDATED MAX RIFT STABILITY
 
-            // NEW: Rift Collapse Visual Application
+            // NEW: Rift Collapse Visual Application (Task 2)
             if (gameState.isRiftCollapse) {
                 fxManager.setRiftCollapseVignette(true);
             } else {
