@@ -304,7 +304,7 @@
             box-shadow: inset 0 0 80px 30px rgba(127, 29, 29, 0.3);
         }
         
-        /* UPDATED: RIFT COLLAPSE VIOLET VIGNETTE (Task 2) */
+        /* UPDATED: RIFT COLLAPSE VIOLET VIGNETTE */
         .fx-rift-collapse {
             /* Adjusted to be similar to fx-vignette-low intensity */
             box-shadow: inset 0 0 80px 30px rgba(88, 28, 135, 0.3); 
@@ -695,6 +695,9 @@
             'cliffside_overlook': 'images/cliffside_overlook.jpg', // NEW: Descent Overlook
             'smelter_workers': 'images/smelter_workers.jpg', // NEW: Smelter Antechamber
             'chapel_vestry': 'images/chapel_vestry.jpg', // NEW: Chapel Antechamber
+            // Item Check Reward Scenes
+            'smelter_side_rope': 'images/smelter_workers.jpg', // Rope shortcut reward
+            'chapel_side_torch': 'images/chapel_vestry.jpg', // Torch shortcut reward
             // Boss Fight Images
             'smelter_foundry': 'images/slag_horror.jpg', // Fire Boss
             'chapel_crypt': 'images/drowned_spectre.jpg', // Shadow Boss
@@ -2298,7 +2301,21 @@
                 title: "Smelter District: Steam Vents",
                 text: "The path is blocked by a burst steam pipe spitting magical fire. The main valve is screaming and rusted over. You need to use your abilities or brute force here.",
 				journal: "The heat hits like a physical blow. The air tastes of sulfur and ash. Even the ghosts in my head are quiet, drowned out by the roar of the vents.",
+                banter: {
+                    // Talon Banter for Rope Check (New: Task 2)
+                    'talon': "That massive pipe network runs up the outside wall. It's steep, but if we could climb to the upper catwalk, we'd bypass these deadly vents entirely."
+                },
                 choices: [
+                    // NEW CHOICE: ROPE SIDE QUEST (Task 2)
+                    {
+                        text: "Use Rope to Climb to Upper Catwalk",
+                        nextScene: 'smelter_side_rope',
+                        type: 'action',
+                        reqItem: 'Rope',
+                        consume: true,
+                        customClass: 'btn-success-glow',
+                        doomCost: 0 // No doom cost for side path
+                    },
                     // OPTION 1: INFO CHECK (Automatic Success) - DOOM COST 0
                     { 
                         text: "Attempt Counter-Clockwise Double-Turn (Secret)", 
@@ -2320,6 +2337,20 @@
                     // OPTION 3: SKILL CHECK (Quinn/Investigation) - DOOM COST 1 (Default)
                     { text: "Analyze & Attempt to Turn Valve", nextScene: 'smelter_roll', type: 'skill', dc: 15, skill: 'Investigation' }
                 ]
+            },
+            // NEW SCENE: ROPE SIDE QUEST REWARD (Task 2)
+            'smelter_side_rope': {
+                title: "Catwalk Bypass",
+                text: "The Rope holds fast. You ascend quickly to the quieter upper catwalk, bypassing the deadly vents below. Tucked away in a maintenance crate, you find a glint of ancient metal: a Strange Coin.",
+                journal: "Used Rope to bypass the vents. Found a Strange Coin.",
+                choices: [{ text: "Continue to Smelter Antechamber", nextScene: 'smelter_workers', type: 'travel' }],
+                onEnter: (state) => { 
+                    if (!state.inventory.includes("Strange Coin")) {
+                        state.inventory.push("Strange Coin");
+                        return "Rope consumed. Found Strange Coin!"; 
+                    }
+                    return "Rope consumed. Found nothing else of value.";
+                },
             },
             'smelter_safe_charged': { 
                 title: "Absorbed Charge", 
@@ -2589,7 +2620,21 @@
                 title: "Sunken Chapel: The Fog Maze",
                 text: "The cemetery is covered in unnatural fog. The paths loop back on themselves, and you cannot see.",
 				journal: "The silence here is heavy. It presses against my ears. The fog moves like it has intent. I'd prefer the fire—at least fire is honest.",
+                banter: {
+                     // Bones Banter for Torch Check (New: Task 2)
+                    'bones': "The ground here is soaked, and the air is thick. You need a big, hot light, or you'll trip over the truly dead."
+                },
                 choices: [
+                    // NEW CHOICE: TORCH SIDE QUEST (Task 2)
+                    {
+                        text: "Use Torch to Illuminate the Vestry",
+                        nextScene: 'chapel_side_torch',
+                        type: 'action',
+                        reqItem: 'Torch',
+                        consume: true,
+                        customClass: 'btn-success-glow',
+                        doomCost: 0 // No doom cost for side path
+                    },
                     // OPTION 1: INFO CHECK (Automatic Success) - DOOM COST 0
                     { 
                         text: "Follow the Weeping Angel Statues", 
@@ -2611,6 +2656,20 @@
                     // OPTION 3: SKILL CHECK (Talon/Perception) - DOOM COST 1 (Default)
                     { text: "Attempt to Track Movement", nextScene: 'chapel_roll', type: 'skill', dc: 15, skill: 'Perception' }
                 ]
+            },
+            // NEW SCENE: TORCH SIDE QUEST REWARD (Task 2)
+            'chapel_side_torch': {
+                title: "A Sudden Brightness",
+                text: "The flame crackles, momentarily thinning the black fog. You see a set of stairs leading to an upper level—a quick path! On a dry shelf near the top, you find a Pearlescent Mushroom, left to dry.",
+                journal: "Used Torch to bypass the fog maze. Found a Pearlescent Mushroom.",
+                choices: [{ text: "Continue to Vestry Antechamber", nextScene: 'chapel_vestry', type: 'travel' }],
+                onEnter: (state) => { 
+                    if (!state.inventory.includes("Pearlescent Mushroom")) {
+                        state.inventory.push("Pearlescent Mushroom");
+                        return "Torch consumed. Found Pearlescent Mushroom!"; 
+                    }
+                    return "Torch consumed. Found nothing else of value.";
+                },
             },
             'chapel_safe_surprise': { 
                 title: "Ambush Avoided", 
@@ -3449,7 +3508,7 @@
                 // Add back the navigation choices
                 processedChoices = processedChoices.concat(permanentChoices);
             }
-            // NEW: Blackwater Tavern Rest/Gruel Logic (Task 1)
+            // NEW: Blackwater Tavern Rest/Gruel Logic (Task 3)
             else if (currentSceneId === 'blackwater_tavern') {
                 const restOption = choices.find(c => c.nextScene === 'tavern_rest_success');
                 const returnOption = choices.find(c => c.nextScene === 'town_square');
@@ -3464,27 +3523,25 @@
                 processedChoices = []; 
                 const gruelStock = currentSceneStock['Gruel'] || 0;
                 const canHeal = gameState.currentHP < gameState.maxHP;
+                const canAfford = gameState.shillings >= 1;
                 
                 // 1. Instant Eat Gruel (conditional visibility/disability)
                 if (instantEat) {
-                    let instantEatText = `Eat Gruel Now (1s, +2 HP)`;
-                    let instantEatDisabled = !canHeal || gruelStock <= 0;
-                    
-                    if (!canHeal) instantEatText += " (Max HP)";
+                    let instantEatText = `Eat Gruel Now (1s) (Stock: ${gruelStock})`;
+                    let instantEatDisabled = !canHeal || gruelStock <= 0 || !canAfford;
 
                     processedChoices.push({
                         ...instantEat, 
                         text: instantEatText, 
-                        // Overwrite cost/stock handling here to allow accurate labeling/disabling
                         cost: instantEat.cost,
-                        isDisabled: instantEatDisabled // Use custom property for pre-disabling
+                        isDisabled: instantEatDisabled,
                     });
                 }
 
                 // 2. Buy Gruel (To Go)
                 if (buyToGo) {
-                    let buyToGoText = `Buy Gruel (To Go) (1s)`;
-                    let buyToGoDisabled = gruelStock <= 0;
+                    let buyToGoText = `Buy Gruel (To Go) (1s) (Stock: ${gruelStock})`;
+                    let buyToGoDisabled = gruelStock <= 0 || !canAfford;
 
                     processedChoices.push({
                         ...buyToGo,
@@ -3550,14 +3607,7 @@
                     isDisabled = true;
                     disabledClass = 'btn-disabled-cost';
                 }
-                // Check 3: Stock availability (For buy actions only, visibility is mostly handled by rebuild logic)
-                if (choice.stockItem && (currentSceneStock[choice.stockItem] || 0) <= 0) {
-                     // This is mostly handled in the Tavern/Market rebuild, but double-check here
-                     // for robustness.
-                     // IMPORTANT: Gruel options are now explicitly checked via the 'isDisabled' property
-                }
-
-                // Check 4: Custom disability flag (used for instant Gruel eat)
+                // Check 3: Custom disability flag (used for instant Gruel eat and now Buy Gruel)
                 if (choice.isDisabled) {
                     isDisabled = true;
                     disabledClass = 'btn-disabled-cost';
@@ -3668,7 +3718,7 @@
                     if (choice.shillingGain) gameState.shillings += choice.shillingGain;
                     if (choice.chaosGain) gameState.influence = Math.min(20, gameState.influence + choice.chaosGain);
                     
-                    // RP FIX: Player perceives Order gain, even though it's technically negative influence shift
+                    // RP FIX: Player perceives Order gain, even though it.s technically negative influence shift
                     if (choice.orderGain) gameState.influence = Math.max(-20, gameState.influence - choice.orderGain); 
                     
                     // --- DOOM COUNTER DECREMENT ON CLICK (Conditional) ---
@@ -3860,8 +3910,12 @@
             const doomBar = document.getElementById('doom-bar');
             const maxDoom = 20; // UPDATED MAX RIFT STABILITY
 
-            // NEW: Rift Collapse Visual Application (Task 2)
-            if (gameState.isRiftCollapse) {
+            // NEW: Rift Collapse Visual Application (Task 1: Persistence Fix)
+            // Apply collapse vignette if the game has started, the collapse flag is true, 
+            // and the player hasn't acquired both artifacts (which would trigger the finale flow)
+            const hasBothArtifacts = gameState.inventory.includes("Ring of Brass") && gameState.inventory.includes("Sword of Valor");
+            
+            if (gameState.isRiftCollapse && gameState.act1Started && !hasBothArtifacts) {
                 fxManager.setRiftCollapseVignette(true);
             } else {
                 fxManager.setRiftCollapseVignette(false);
