@@ -632,7 +632,7 @@
             "Rope": { type: 'key', icon: 'fa-om', color: 'text-yellow-700', desc: "Passive: Essential for climbing cliffs." },
             "Torch": { type: 'key', icon: 'fa-fire', color: 'text-orange-500', desc: "Passive: Illuminates dark caves." },
             "Strange Coin": { type: 'key', icon: 'fa-circle-notch', color: 'text-yellow-600', desc: "Passive: Ancient currency. May open doors not made of wood." },
-            "Compass": { type: 'key', icon: 'fa-compass', color: 'text-indigo-400', desc: "Passive: Vibrates near planar energy." },
+            "Compass": { type: 'key', icon: 'fa-compass', color: 'text-indigo-400', desc: "Passive: Seems to vibrate near planar energy." },
         };
         
         function getBonusForSkill(crewMember, skillType) {
@@ -690,7 +690,7 @@
 			'start': {
                 title: "The Wreckage",
                 text: "You gasp, lungs burning, and retch salt water onto the grey sand. The storm has passed, but the silence of the beach is a lie. Inside your mind, the scream of the dying ship continue. Gareth is barking orders to hold the line; Quinn is sobbing over the manifest. They don't realize they are dead.<br><br>You find your hand cramping, clutching the Captain's Tricorn Hat with a death grip. Beside you, your Compass hums with a faint, violet vibration, its needle locking onto the cliffs ahead. You are alive, but you have become a life raft for the damned.",
-                journal: "I awoke on the shore clutching the Captain's Hat. My Compass is acting strange, vibrating against the sand. The crew's souls are bound to me. Confused, loud, and terrified.",
+                journal: "I awoke on the shore clutching the Captain Gareth's Tricorn Hat. My Compass is acting strange, vibrating against the sand. The crew's souls are bound to me. Confused, loud, and terrified.",
                 banter: {
                     'quinn': "The answers are in the debris, Edward. Dig."
                 },
@@ -893,10 +893,14 @@
                 isLogic: true,
                 resolve: (roll, state) => {
                     let finalRoll = roll;
+                    
                     // Passive Bonus: Captain's Tricorn (+1 Intimidation)
                     if (state.inventory.includes("Captain's Tricorn")) {
                         finalRoll += 1;
+                        // Passing 'roll' as the type makes this text Blue/Spectral to match the dice log
+                        addToHistory(`Passive Bonus (Captain's Tricorn): +1. Final Result: ${finalRoll}`, 'roll');
                     }
+                    
                     return finalRoll >= 13 ? 'guard_scared' : 'combat_guard';
                 }
             },
