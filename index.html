@@ -687,7 +687,7 @@
                 crew: {
                     gareth: { id: 'gareth', name: 'Captain Gareth', skill: 'Insight', used: false, desc: 'Add +1d4 to Initiative & Insight' },
                     quinn: { id: 'quinn', name: 'Quinn', skill: 'Investigation', used: false, desc: 'Add +1d4 to Investigation & History' },
-                    talon: { id: 'talon', name: 'Talon', skill: 'Survival', used: false, desc: 'Add +1d4 to Survival & Perception' },
+                    talon: { id: 'talon', name: 'Talon', skill: 'Perception', used: false, desc: 'Add +1d4 to Survival & Perception' },
                     bones: { id: 'bones', name: 'Bones', skill: 'Survival', used: false, desc: 'Add +1d4 to Nature & Foraging' }
                 },
                 history: [],
@@ -1649,22 +1649,22 @@
                     // Base choices for the hub
                     let newChoices = [
                         { 
-                            text: "Investigate Smelter (Fire Path)", 
+                            text: "Investigate Smelter", 
                             nextScene: 'smelter_entry', 
                             type: 'travel', 
                             reqNotItem: 'Sword of Valor', // Blade from Fire Path
                             customClass: 'btn-fire-glow' 
                         },
                         { 
-                            text: "Investigate Chapel (Shadow Path)", 
+                            text: "Investigate Chapel", 
                             nextScene: 'chapel_entry', 
                             type: 'travel',
                             reqNotItem: 'Ring of Brass', // Ring from Shadow Path
                             customClass: 'btn-shadow-glow' 
                         },
-                        { text: "Visit Madam Alara, The Triage Alchemist", nextScene: 'alchemist_triage', type: 'travel' },
-                        { text: "Find Rest at The Blackwater Tavern", nextScene: 'blackwater_tavern', type: 'travel' },
-                        { text: "Explore the Docks (Grind/Smugglers)", nextScene: 'town_docks', type: 'travel' } // NEW DOCKS BUTTON
+                        { text: "Visit The Triage Alchemist", nextScene: 'alchemist_triage', type: 'travel' },
+                        { text: "Rest at The Blackwater Tavern", nextScene: 'blackwater_tavern', type: 'travel' },
+                        { text: "Explore the Docks", nextScene: 'town_docks', type: 'travel' } // NEW DOCKS BUTTON
                     ];
 
                     // STATE 2: FINALE UNLOCKED - Remove exploration choices, force ritual preparation
