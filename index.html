@@ -2616,6 +2616,7 @@
                 if (choice.cost) {
                     // Cost (Negative) for Buy/Bribe
                     transactionIndicator = `(-${choice.cost}s)`;
+                    indicatorColor = isDisabled ? 'text-red-700' : 'text-amber-500'; // Make cost red if disabled
                 } else if (choice.value) {
                     // Value (Positive) for Sell actions
                     transactionIndicator = `(+${choice.value}s)`;
