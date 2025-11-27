@@ -1046,7 +1046,6 @@
                     'bones': "I smell rum... and unwashed men."
                 },
                 onEnter: (state) => { 
-                    // RE-IMPLEMENTED BASE CHAOS GAIN
                     state.influence = Math.min(20, state.influence + 4); 
                     if (!state.inventory.includes("Curious Cargo")) {
                         state.inventory.push("Curious Cargo");
@@ -1632,17 +1631,6 @@
                         // Finale scene TBD: finale_ritual_start
                         return "Finale Unlocked.";
                     } 
-                    
-                    // Dynamic Text Logic
-                    if (hasRing) {
-                        scenes['town_square'].text = "You return with the Ring of Brass. Fog from the Sunken Chapel is flooding the streets, choking the light. The Shadow threat has escalated while you were away. You must pursue the Fire Path now.";
-                    } 
-                    else if (hasBlade) {
-                        scenes['town_square'].text = "You return with the Sword of Valor. Ash falls from the Smelter District like gray snow. The Fire threat has escalated while you were away. You must pursue the Shadow Path now.";
-                    } 
-                    else {
-                        scenes['town_square'].text = "The Port is in chaos. Civilians flee toward the docks. To the East, the Smelter District burns with an unnatural heat. To the West, the Sunken Chapel lies in a pool of dark fog. Your Compass tracks both.";
-                    }
                     
                     // Filter choices based on acquired items
                     scenes['town_square'].choices = newChoices.filter(choice => {
@@ -2578,20 +2566,37 @@
                 };
                 
                 // Default icon for travel/dialogue buttons
-                let icon = '<i class="fas fa-chevron-right text-gray-300 group-hover:text-amber-100"></i>';
-                let content = `<span class="cinzel font-bold text-gray-300 group-hover:text-amber-100">${choice.text}</span>`;
-                let supplementalText = '';
+                // Determine hover state based on disability check
+                const hoverClass = isDisabled ? '' : 'group-hover:text-amber-100';
+                const baseTextColor = isDisabled ? 'text-gray-500' : 'text-gray-300';
+                
+                let icon = `<i class="fas fa-chevron-right ${baseTextColor} ${hoverClass}"></i>`;
+                let content = `<span class="cinzel font-bold ${baseTextColor} ${hoverClass}">${choice.text}</span>`;
                 
                 // Check if button is colored and adjust default icon color
                 if (isCustomClassButton) {
                     // For custom color buttons (path/hero/secret), the icon and text should be white/light color
-                    icon = '<i class="fas fa-chevron-right text-white"></i>';
-                    content = `<span class="cinzel font-bold text-white">${choice.text}</span>`;
+                    // Ensure hover effect is applied only if NOT disabled
+                    const customContentColor = isDisabled ? 'text-gray-500' : 'text-white';
+                    const customIconColor = isDisabled ? 'text-gray-500' : 'text-white';
+
+                    icon = `<i class="fas fa-chevron-right ${customIconColor} ${hoverClass}"></i>`;
+                    content = `<span class="cinzel font-bold ${customContentColor} ${hoverClass}">${choice.text}</span>`;
                 }
                 
                 // Override icon for trade buttons
                 if (isTradeButton) {
-                    icon = '<i class="fas fa-coins text-amber-500"></i>';
+                    // Trade buttons always have a coin icon and amber color base (but stripped on disability)
+                    const tradeIconColor = isDisabled ? 'text-gray-500' : 'text-amber-500';
+                    icon = `<i class="fas fa-coins ${tradeIconColor}"></i>`;
+                    
+                    // The text content needs the hover effect removed if disabled
+                    content = `<span class="cinzel font-bold ${baseTextColor} ${hoverClass}">${choice.text}</span>`;
+
+                    // Special case for skill checks with dice icon that use glow, need to reset icon back
+                    if (choice.type === 'skill') {
+                         icon = '<i class="fas fa-dice-d20 spectral-text-glow"></i>';
+                    }
                 }
 
                 if (choice.type === 'skill') {
