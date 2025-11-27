@@ -960,8 +960,8 @@
         const scenes = {
             'prologue_storm': {
                 title: "The Planar Storm",
-                text: "The deck of The Trident's Kiss heaves violently. Above, the sky isn't black, but a bleeding violet bruise. Captain Gareth stands at the wheel, singing against the gale. '...But who pays the toll for the army of dead?!' he roars, laughing at the violet sky. Quinn, the Quartermaster, is frantically tying down crates on the main deck.",
-                journal: "It started with the sky tearing open. Captain Gareth tried to hold the course. Quinn tried to save the cargo. I just tried to stand.",
+				text: "The deck of The Trident's Kiss heaves. The sky isn't just storming; it hates you. Above, the clouds are a bleeding violet bruise. Captain Gareth stands at the wheel, singing against the gale. '...But who pays the toll for the army of dead?!' he roars. Quinn is frantically tying down crates, screaming that the manifest is slipping away.",
+				journal: "The sky didn't just storm; it hated us. Gareth held the wheel until the wood splintered in his grip. I remember the sound of the mainmast snapping more than the thunder. The sea has come to collect.",
                 // REMOVED GARETH BANTER HERE
                 choices: [
                     { text: "Help Quinn secure the cargo", nextScene: 'prologue_abyss', type: 'travel' },
@@ -970,19 +970,19 @@
             },
             'prologue_abyss': {
                 title: "The God of the Deep",
-                text: "A wave of pure magical force shatters the hull like glass. The freezing dark claims you instantly. As you sink, drifting into the abyss, you see IT rising from the depths—a colossal shadow, vast as a mountain, with eyes like dying stars. The screams of Gareth, Quinn, Talon, and Bones are silenced by the water... then they echo *inside* your skull.",
-                journal: "The ship shattered. I sank. I saw a... Shadow... something ancient. And then the voices began.",
+				text: "A wave of pure magical force shatters the hull. The freezing dark claims you instantly. You sink, drifting into the abyss, and see IT rising—a colossal shadow, vast as a mountain. The screams of Gareth, Quinn, Talon, and Bones are silenced by the water... only to re-ignite inside your skull, burning hotter than the freezing deep.",
+				journal: "I died. I know I died. But the Shadow beneath the waves spat me back out. Now, I am not alone in my own skin.",
                 choices: [
                     { text: "Gasp for air (Wake Up)", nextScene: 'start', type: 'travel' }
                 ]
             },
 			'start': {
                 title: "The Wreckage",
-                text: "You gasp, lungs burning, and retch salt water onto the grey sand. The storm has passed, but the silence of the beach is a lie. Inside your mind, the scream of the dying ship continue. Gareth is barking orders to hold the line; Quinn is sobbing over the manifest. They don't realize they are dead.<br><br>You find your hand cramping, clutching the Captain's Tricorn Hat with a death grip. Beside you, your Compass hums with a faint, violet vibration, its needle locking onto the cliffs ahead. You are alive, but you have become a life raft for the damned.",
-                journal: "I awoke on the shore clutching the Captain Gareth's Tricorn Hat. My Compass is acting strange, vibrating against the sand. The crew's souls are bound to me. Confused, loud, and terrified.",
-                banter: {
-                    'quinn': "The answers are in the debris, Edward. Dig."
-                },
+				text: "You gasp, lungs burning, and retch salt water onto the grey sand. The storm has passed, but the silence of the beach is a lie. Inside your mind, the scream of the dying ship continues. They don't realize they are dead.<br><br>You find your hand cramping, clutching the Captain's Tricorn Hat with a death grip. Beside you, the Compass hums with a violet vibration. You are alive, but you have become a life raft for the damned.",
+				journal: "Woke up choking on sand. Gareth's hat is in my hand—I can't let go of it. The Compass is screaming, and the crew... they are loud. So loud. They don't know they're ghosts.",
+				banter: {
+					'quinn': "The manifest! The logs! We can't be erased, Edward. Find the records or we never existed!"
+				},
                 onEnter: (state) => {
                     audioManager.playGasp();
                     let msg = "";
@@ -1007,8 +1007,8 @@
             } ,
 			'wreckage_success': {
                 title: "Salvage",
-                text: "Quinn guides your hand to a buried chest partially exposed by the tide. Inside, you find a small pouch of Shillings and a Rusted Cutlass. You strap the blade to your belt—it feels like an extension of your arm. As you turn to leave, Quinn points frantically to a damp book lying nearby—the Ship's Log.",
-                journal: "Scavenged a blade, coin, and the Logbook from the wreckage.",
+				text: "Quinn guides your hand to a buried chest. Inside, a pouch of Shillings and a Rusted Cutlass. You strap the blade to your belt—the rust flakes away as your hand touches the hilt, remembering a fight you haven't fought yet. Quinn points frantically to a damp book lying nearby—the Ship's Log.",
+				journal: "Salvaged what I could. A rusted blade feels heavy, but Quinn finally shut up once I found the Log. Writing this down gives me something to focus on besides the voices.",
                 onEnter: (state) => {
                     const items = ["Rusted Cutlass", "Ship's Log"];
                     let found = false;
@@ -1033,14 +1033,14 @@
                 choices: [{ text: "Move to Treeline", nextScene: 'treeline', type: 'travel' }]
             },
             'treeline_prepared': {
-                title: "The Whispering Woods",
-                text: "The forest looms ahead, trees twisted like grasping hands. You adjust the weight of your gear, clutching the heavy Ship's Log against your side. The voices are a dull murmur, satisfied for the moment. A well-traveled road cuts through the center, but Talon notices a faint game trail disappearing into the brush.",
-                journal: "I reached the treeline with the Log and my gear. The voices are quieter now. Talon pointed out a hidden path.",
-                banter: {
-                    'gareth': "Stick to the road, lad. We need steady ground.",
-                    'talon': "The road is watched. The wild is ours.",
-                    'bones': "Game trail. Good eating, safe walking." 
-                },
+				title: "The Whispering Woods",
+				text: "The forest looms ahead, trees twisted like grasping hands. You adjust the weight of your gear. The voices are a dull murmur. A well-traveled road cuts through the center, but Talon notices a faint game trail disappearing into the brush.",
+				journal: "The forest is watching. Gareth wants to march like a soldier; Talon wants to skulk like a wolf. I have to decide who to listen to before I go mad.",
+				banter: {
+					'gareth': "The King's Road is the only path for a proper vessel. March on.",
+					'talon': "Roads are for sheep and slaughter. The brush hides us.",
+					'bones': "Dirt feels better than cobblestone on these tired feet."
+				},
                 choices: [
                     { text: "Take the Main Road", nextScene: 'road_encounter', type: 'travel' },
                     { text: "Follow Talon's Lead", nextScene: 'trail_check', type: 'skill', dc: 12, skill: 'Survival' }
@@ -1065,7 +1065,7 @@
             'road_encounter': {
                 title: "The King's Guard",
                 text: "A heavy-set <span class='memory-keyword' data-lore='The iron fist of the Crown. They despise the supernatural and govern with martial law.'>Royal Guard</span> in plate armor blocks the path. He's nailing a 'WANTED' poster to a tree. He spots you immediately. 'Halt! Identify yourself!'",
-                journal: "Ran into a Royal Guard on the main road. No way to hide now.",
+                journal: "Royal Guard. Shining armor covering a rotten core. He looks at me like driftwood that needs burning.",
                 choices: [
                     { text: "Speak diplomatically", nextScene: 'guard_talk', type: 'dialogue' },
                     { text: "Attack him", nextScene: 'combat_guard', type: 'combat' }
@@ -1158,7 +1158,7 @@
 			'guard_respect': {
                 title: "Order and Law",
                 text: "You salute with practiced discipline. 'Just a shipwrecked sailor, sir. Keeping to the road.' The Guard straightens, recognizing the posture. 'Carry on then. And take these—get yourself a warm meal.' He flicks two silver coins at you.",
-                journal: "I showed the Guard a little respect. He let me pass and gave me coin.",
+                journal: "Played the part of the good sailor. Saluted the uniform, not the man. It worked. Order has its uses, even if it tastes like bile.",
                 onEnter: (state) => {
                     // APPLY NEGATIVE INFLUENCE SHIFT (Order)
                     state.influence = Math.max(-20, state.influence - 4); 
@@ -1297,7 +1297,7 @@
                 },
                 // --- END LOCAL STOCK ---
                 banter: {
-                    'quinn': "Supplies are the difference between a legend and a corpse. Buy what you can."
+                    'quinn': "Buy what you can, but we need inventory, not junk."
                 },
                 choices: [
                     // NOTE: Buy/Sell options are generated dynamically in renderChoices
@@ -1726,13 +1726,12 @@
             // --- END NEW SCENES ---
             
             'town_descent': {
-                title: "The Descent",
-                text: "You arrive at the main city gate. The chaos here is raw and immediate. As you near the city gates, your Compass vibrates violently. You pull it out, and the needle splits in two.<br><br>One ghostly needle glows <span class='text-orange-500'>Orange</span>, pointing toward the burning Smelter District.<br><br>The other needle turns <span class='text-gray-500'>Black</span>, pointing toward the fog of the Sunken Chapel.",
-                journal: "The Compass has split. It tracks two distinct threats: Fire and Shadow.",
-                // NARRATIVE FIX: Added Gareth's warning to explain the choice structure
-                banter: {
-                    'gareth': "Divided attention is a sailor's death, Edward! Pick a course, or we founder here! We must focus on one threat at a time."
-                },
+				title: "The Descent",
+				text: "You arrive at the main city gate. The chaos here is raw. Your Compass vibrates violently, the needle splitting in two. One ghostly needle glows <span class='text-orange-500'>Orange</span> toward the Smelter. The other turns <span class='text-gray-500'>Black</span> toward the Chapel.",
+				journal: "The Compass cracked. It's pulling me apart. Smelter fire to the East, Chapel fog to the West. Gareth is right—I can't save everyone. I have to choose.",
+				banter: {
+					'gareth': "Hold fast! A Captain who chases two headings sails in circles! Choose a target, Mister Jones. Fire or Fog—pick your poison!"
+				},
                 choices: [
                     { text: "Enter the Port of Shadows", nextScene: 'town_square', type: 'travel' }
                 ]
@@ -1899,9 +1898,9 @@
             
             // TAVERN KEEN SENSES (NEW)
             'blackwater_tavern': {
-                title: "The Blackwater Tavern",
-                text: "The interior is dim and smells of stale brine and fear. This is where refugees and broken men hide. Rest is costly, but information is sometimes free.",
-                journal: "Arrived at the tavern. Looking for rest or information.",
+				title: "The Blackwater Tavern",
+				text: "The interior is dim, smelling of stale brine and fear. Men speak in hushed tones, glancing at the door. This is where the broken come to hide. Rest is costly, but information is sometimes free.",
+				journal: "The Blackwater. Even the ale tastes like defeat here. But the walls have ears, and I need to listen.",
                 choices: [
                     // PAID REST OPTION
                     { text: "Pay 10 Shillings for a Cot (Full Rest)", nextScene: 'tavern_rest_success', type: 'action', cost: 10 },
@@ -1920,9 +1919,9 @@
                 ]
             },
             'tavern_gambler': {
-                title: "Keen Senses at the Table",
-                text: "With the Ring's heightened senses, you hear the slow, measured heartbeat of the man in the corner—too slow for a living man. You spot the card up his sleeve, but he hasn't moved a muscle. He is cheating, and he is <span class='text-red-500'>undead</span>. You confront him.",
-                journal: "Used the Ring to spot a cheater.",
+				title: "Keen Senses at the Table",
+				text: "With the Ring's power, you hear it—or rather, you don't. The man in the corner has no heartbeat. The cards slide into his sleeve with supernatural grace. He is a corpse playing at life. You confront him.",
+				journal: "The Ring showed me a dead man winning a living man's game. The rot in this town goes deeper than the flooded cellars.",
                 choices: [
                     // FIX: Updated button text to be concise. Added shillingGain property.
                     { text: "Blackmail him", nextScene: 'tavern_payout', type: 'action', chaosGain: 3, shillingGain: 10 },
@@ -1963,15 +1962,15 @@
                 choices: [{ text: "Return to Tavern", nextScene: 'blackwater_tavern', type: 'travel' }]
             },
             'alchemist_triage': {
-                title: "Madam Alara, Triage Alchemist",
-                text: "Madam Alara, encased in her beaked mask, tends to the wounded with clinical detachment. Her prices are steep, but her wares are potent—she deals only in true survival.",
-                journal: "Arrived at the Alchemist's Triage. Expensive, but essential gear.",
+				title: "Madam Alara, Triage Alchemist",
+				text: "Madam Alara, encased in her beaked mask, tends to the wounded with the cold efficiency of a butcher. She doesn't offer comfort, only chemistry. Her wares are potent—she deals only in true survival.",
+				journal: "Madam Alara. She'd distill her own mother if it made a potent tonic. Her prices are robbery, but her potions might be the only reason I survive the night.",
                 stock: {
                     "Vitality Tincture": 2,
-                    "Smelling Salts": 3,
+                    "Smelling Salts": 2,
                     "Flash Powder": 1,
-                    "Alchemical Fire": 1, 
-                    "Holy Water": 1 
+                    "Alchemical Fire": 0, 
+                    "Holy Water": 0 
                 },
                 choices: [
                     { text: "Sell Wares", nextScene: 'alchemist_sell', type: 'travel' },
@@ -2167,6 +2166,7 @@
             'smelter_entry': {
                 title: "Smelter District: Steam Vents",
                 text: "The path is blocked by a burst steam pipe spitting magical fire. The main valve is screaming and rusted over. You need to use your abilities or brute force here.",
+				journal: "The heat hits like a physical blow. The air tastes of sulfur and ash. Even the ghosts in my head are quiet, drowned out by the roar of the vents.",
                 choices: [
                     // OPTION 1: INFO CHECK (Automatic Success)
                     { 
@@ -2263,7 +2263,7 @@
             'smelter_foundry': {
                 title: "The Slag Horror",
                 text: "The foundry is a cathedral of fire. In the center, rising from a pool of molten iron, is the <span class='text-red-500 font-bold'>Slag Horror</span>. It roars, spewing magma that melts the stone floor. In its chest, suspended in the heat, you see the hilt of a blade—the **Sword of Valor**.",
-                journal: "Face to face with the Slag Horror. It burns with the heat of the forge.",
+				journal: "The Slag Horror is dead. I ripped the Sword from its chest while my skin blistered. I smell like burnt hair and victory.",
                 choices: [
                     // CRITICAL COUNTER (If Player did Shadow Path first)
                     { 
@@ -2374,6 +2374,7 @@
             'chapel_entry': {
                 title: "Sunken Chapel: The Fog Maze",
                 text: "The cemetery is covered in unnatural fog. The paths loop back on themselves, and you cannot see.",
+				journal: "The silence here is heavy. It presses against my ears. The fog moves like it has intent. I'd prefer the fire—at least fire is honest.",
                 choices: [
                     // OPTION 1: INFO CHECK (Automatic Success)
                     { 
@@ -2484,7 +2485,7 @@
             'chapel_crypt': {
                 title: "The Drowned Spectre",
                 text: "The crypt is flooded with black water. The **Drowned Spectre** rises, its face a void of hunger. On its skeletal finger glints the **Ring of Brass**. It screams—a sound that tears at your sanity.",
-                journal: "The Spectre guards the Ring. It is incorporeal and deadly.",
+                journal: "The Spectre fell. It screamed a sound that I felt in my teeth. The Ring is mine, cold as the grave.",
                 choices: [
                     // CRITICAL COUNTER (If Player did Fire Path first)
                     { 
