@@ -2423,23 +2423,31 @@
                 
                 // --- VISIBILITY (OMIT) CHECKS: Apply OMIT logic first ---
                 
-                // OMIT 1: Non-Merchant Choices that require an item (Rope/Torch/etc.)
                 const isTradeButton = choice.cost || choice.value;
 
+                // OMIT 1: Non-Merchant Choices that require an item (Rope/Torch/etc.)
+                // Checks for specific item requirements (not cost/trade)
                 if (choice.reqItem && !isTradeButton && !gameState.inventory.includes(choice.reqItem)) {
                      // If it requires an item, and is NOT a trade button (i.e., consumption/puzzle), hide it if item missing
                      return;
                 }
                 
-                // --- GENERAL REQUIREMENTS CHECK ---
+                // OMIT 2: Check for Inverse Item Requirement (reqNotItem)
+                if (choice.reqNotItem && gameState.inventory.includes(choice.reqNotItem)) {
+                    return;
+                }
+
+                // OMIT 3: Check for Information Flag Requirement
+                if (choice.reqFlag && !gameState[choice.reqFlag]) {
+                    return;
+                }
+
+                // OMIT 4: Check for Influence Faction Requirements (Smuggler/Guard alignment)
                 if (choice.reqSmuggler && gameState.influence < choice.reqSmuggler) return;
                 if (choice.reqGuard && gameState.influence > -choice.reqGuard) return;
-                
-                if (choice.reqNotItem && gameState.inventory.includes(choice.reqNotItem)) return; // NEW NOT ITEM CHECK
-                // NEW: Information Flag Check
-                if (choice.reqFlag && !gameState[choice.reqFlag]) return;
 
-                // SKILL CHECK: If choice requires a skill, hide it if player doesn't have it
+
+                // OMIT 5: Check for Skill Requirement (if player hasn't learned the Hero Skill)
                 if (choice.reqSkill && !gameState.skills.includes(choice.reqSkill)) return;
 
 
@@ -2453,9 +2461,6 @@
                     disabledClass = 'btn-disabled-cost';
                 }
                 
-                // Note: Item requirement checks for visibility were moved up. 
-
-
                 const btn = document.createElement('button');
                 
                 // Determine styling: Is this a Hero/Skill moment?
