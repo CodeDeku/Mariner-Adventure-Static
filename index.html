@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -640,7 +639,12 @@
             'blackwater_tavern': 'images/tavern_dark.jpg', // Rest/Info Hub: Dark tavern interior
             'smelter_entry': 'images/steam_pipe.jpg', // Fire Path: Steam Hazard
             'chapel_entry': 'images/fog_cemetery.jpg', // Shadow Path: Fog Maze
-            // --- END ACT 1 SCENE IMAGES ---
+            'town_docks': 'images/docks.jpg', // NEW: Docks
+            'docks_work': 'images/docks_work.jpg', // NEW: Docks Work
+            'tavern_gambler': 'images/tavern_gambler.jpg', // NEW: Gambler/Keen Senses
+            // Boss Fight Images
+            'smelter_foundry': 'images/slag_horror.jpg', // Fire Boss
+            'chapel_crypt': 'images/drowned_spectre.jpg', // Shadow Boss
 			'default': 'https://placehold.co/600x400/0f172a/1e293b?text=The+Void' 
 		};
         
@@ -718,8 +722,6 @@
                 btnText: "EAT",
                 desc: "Consumable: A medicinal mushroom used for mental clarity. (Free Guiding Voice)",
                 action: (state) => {
-                    // Set flag to true. It is consumed on the next successful skill check, 
-                    // preventing accidental consumption without a skill check.
                     if (state.crewUseFree) {
                         return "The residual clarity remains. You can only benefit from one mushroom at a time.";
                     }
@@ -744,11 +746,23 @@
             "Rope": { type: 'key', icon: 'fa-om', color: 'text-yellow-700', desc: "Passive: Essential for climbing cliffs." },
             "Torch": { type: 'key', icon: 'fa-fire', color: 'text-orange-500', desc: "Passive: Illuminates dark caves." },
             "Strange Coin": { type: 'key', icon: 'fa-circle-notch', color: 'text-yellow-600', desc: "Passive: Ancient currency. May open doors not made of wood." },
-            "Ring of Brass": { type: 'key', icon: 'fa-ring', color: 'text-orange-500', desc: "Legendary Item: The Wolves of Valor set. Grants fire resistance." },
-            "Sword of Valor": { type: 'key', icon: 'fa-sword', color: 'text-blue-500', desc: "Legendary Item: The Wolves of Valor set. Deals extra damage to undead." },
+            
+            // --- LEGENDARY ARTIFACTS (WOLVES OF VALOR) ---
+            "Ring of Brass": { 
+                type: 'key', 
+                icon: 'fa-ring', 
+                color: 'text-amber-500', 
+                desc: "Legendary (Wolves of Valor): Doubles Primeval Awareness range. Grants Keen Senses (Perception advantage on hidden objects)." 
+            },
+            "Sword of Valor": { 
+                type: 'key', 
+                icon: 'fa-sword', 
+                color: 'text-blue-500', 
+                desc: "Legendary (Wolves of Valor): +1 to attack/damage. Deals extra Force damage to Undead. Required for the Ritual." 
+            },
 			"Compass": { type: 'key', icon: 'fa-compass', color: 'text-indigo-400', desc: "Passive: Violently hums near planar energy." },
             
-            // --- NEW ALCHEMIST ITEMS ---
+            // --- ALCHEMIST ITEMS ---
             "Vitality Tincture": { 
                 name: "Vitality Tincture",
                 type: 'consumable',
@@ -803,21 +817,19 @@
                 btnText: "THROW",
                 desc: "Consumable: Guarantees escape from current combat (if in combat).",
                 action: (state) => {
-                    // This item will require scene-specific logic to actually implement the escape,
-                    // but for now, it's a placeholder consumable.
                     const idx = state.inventory.indexOf("Flash Powder");
                     if (idx > -1) state.inventory.splice(idx, 1);
                     return `Used Flash Powder. Prepared for immediate escape. (Need to implement scene logic)`;
                 }
             },
-            // --- NEW ARTIFACT ITEMS ---
+            // --- NEW ARTIFACT CONSUMABLES (Boss Fight Counters) ---
             "Alchemical Fire": { 
                 name: "Alchemical Fire",
                 type: 'consumable',
                 icon: 'fa-fire-alt', 
                 color: 'text-orange-600',
                 btnText: "IGNITE",
-                desc: "Path Reward: Volatile mixture. Deals high Fire damage over time. Especially potent against Undead.",
+                desc: "Counter: Volatile mixture. Deals high Fire damage over time. Especially potent against Undead/Shadows.",
                 action: (state) => {
                     const idx = state.inventory.indexOf("Alchemical Fire");
                     if (idx > -1) state.inventory.splice(idx, 1);
@@ -830,7 +842,7 @@
                 icon: 'fa-cross', 
                 color: 'text-blue-200',
                 btnText: "SPLASH",
-                desc: "Path Reward: Consecrated water. Deals high Radiant damage. Especially potent against Fire Elementals.",
+                desc: "Counter: Consecrated water. Deals high Radiant damage. Especially potent against Elementals/Fire.",
                 action: (state) => {
                     const idx = state.inventory.indexOf("Holy Water");
                     if (idx > -1) state.inventory.splice(idx, 1);
@@ -865,7 +877,9 @@
         const ALCHEMIST_BUY_OPTIONS = [
             { item: "Vitality Tincture", nextScene: 'buy_tincture', cost: 15 },
             { item: "Smelling Salts", nextScene: 'buy_salts', cost: 8 },
-            { item: "Flash Powder", nextScene: 'buy_powder', cost: 10 }
+            { item: "Flash Powder", nextScene: 'buy_powder', cost: 10 },
+            { item: "Alchemical Fire", nextScene: 'buy_fire', cost: 12 }, // Alchemist sells boss counters
+            { item: "Holy Water", nextScene: 'buy_water', cost: 12 }
         ];
 
         const MARKET_SELL_OPTIONS = [
@@ -876,10 +890,11 @@
             { item: "Rum (Heal 5)", nextScene: 'sell_rum', value: 2 }
         ];
         
-        // NEW: Alchemist Sell Options (Can sell artifacts back for emergency cash)
+        // NEW: Alchemist Sell Options
         const ALCHEMIST_SELL_OPTIONS = [
             { item: "Alchemical Fire", nextScene: 'sell_fire', value: 20 },
             { item: "Holy Water", nextScene: 'sell_water', value: 20 },
+            { item: "Vitality Tincture", nextScene: 'sell_tincture', value: 7 }, // Can sell back the costly items at a loss
             // Can sell the demo's high-value items to the Alchemist for a higher price
             { item: "Healing Potion", nextScene: 'sell_potion_alch', value: 4 }, 
             { item: "Pearlescent Mushroom", nextScene: 'sell_mushroom_alch', value: 12 }
@@ -1464,7 +1479,6 @@
                 journal: "The smugglers see me as one of their own. They gave me the key.",
                 choices: [{ text: "Enter and Rest (Demo End)", nextScene: 'lighthouse_vigil', type: 'rest' }]
             },
-            // NEW SCENE: Skill check to enter neutral ending
             'ending_neutral_check': {
                 title: "The Locked Door",
                 text: "The clearing is empty. The presence you sensed was only the crew's anticipation screaming in your mind. There is no welcome party—just the wind and a barred door. You must find a way to breach the lock alone.",
@@ -1618,7 +1632,8 @@
                             customClass: 'btn-shadow-glow' 
                         },
                         { text: "Visit Madam Alara, The Triage Alchemist", nextScene: 'alchemist_triage', type: 'travel' },
-                        { text: "Find Rest at The Blackwater Tavern", nextScene: 'blackwater_tavern', type: 'travel' }, 
+                        { text: "Find Rest at The Blackwater Tavern", nextScene: 'blackwater_tavern', type: 'travel' },
+                        { text: "Explore the Docks (Grind/Smugglers)", nextScene: 'town_docks', type: 'travel' } // NEW DOCKS BUTTON
                     ];
 
                     // STATE 2: FINALE UNLOCKED - Remove exploration choices, force ritual preparation
@@ -1647,7 +1662,7 @@
                     
                     // Filter choices based on acquired items
                     scenes['town_square'].choices = newChoices.filter(choice => {
-                        // Hide Fire Path if Blade is acquired
+                        // Hide Fire Path if Blade is acquired (unless it's the Ritual scene)
                         if (choice.nextScene === 'smelter_entry' && hasBlade) return false;
                         // Hide Shadow Path if Ring is acquired
                         if (choice.nextScene === 'chapel_entry' && hasRing) return false;
@@ -1659,6 +1674,129 @@
             },
             
             // --- NEW HUB SCENES ---
+            // DOCKS SCENE (NEW)
+            'town_docks': {
+                title: "The Rotting Docks",
+                text: "The sea is black and restless. The skeletal remains of piers stretch into the cold water. Sailors work in silence, hauling heavy crates.",
+                journal: "Arrived at the docks. Hard work available, and maybe something more illicit.",
+                choices: [
+                    { text: "Work the Lines (+3 Shillings, -2 HP)", nextScene: 'docks_work', type: 'action', costHP: 2, chaosGain: 1 }, // Added costHP property
+                    { 
+                        text: "Search for Smuggler's Drop", 
+                        nextScene: 'docks_smuggler_check', 
+                        type: 'skill', 
+                        dc: 14, 
+                        skill: 'Perception', 
+                        reqItem: 'Ring of Brass' // Keen Senses check to find hidden goods
+                    }, 
+                    { text: "Return to Port Square", nextScene: 'town_square', type: 'travel' }
+                ]
+            },
+            // DOCKS WORK SCENE (NEW)
+            'docks_work': {
+                title: "Hard Labor",
+                text: "You haul crates and tie lines until your muscles ache and your hands blister.",
+                journal: "Traded sweat and blood for coin.",
+                onEnter: (state) => {
+                    state.shillings += 3;
+                    state.currentHP = applyDamage(state.currentHP, 2); 
+                    // Negative influence is applied, as working the docks usually involves ignoring official mandates
+                    state.influence = Math.min(20, state.influence + 1); 
+                    audioManager.playCoins();
+                    fxManager.flashRed();
+                    return "Worked. +3 Shillings, -2 HP. Chaos +1.";
+                },
+                choices: [{ text: "Return to Docks", nextScene: 'town_docks', type: 'travel' }]
+            },
+            // DOCKS SMUGGLER LOGIC (NEW)
+            'docks_smuggler_check': {
+                isLogic: true,
+                resolve: (roll) => roll >= 14 ? 'docks_smuggler_success' : 'docks_smuggler_fail'
+            },
+            'docks_smuggler_success': {
+                title: "Hidden Stash",
+                text: "The Ring of Brass magnifies your senses. You catch the faint smell of brine and tar. Behind a pile of old nets, you find a small, consecrated bottle. Holy Water—a counter to Fire.",
+                journal: "Keen Senses worked. Found Holy Water, likely smuggled.",
+                onEnter: (state) => {
+                    if (!state.inventory.includes("Holy Water")) {
+                        state.inventory.push("Holy Water");
+                        return "Found Holy Water!";
+                    }
+                    return "Found only empty crates.";
+                },
+                choices: [{ text: "Return to Docks", nextScene: 'town_docks', type: 'travel' }]
+            },
+            'docks_smuggler_fail': {
+                title: "Nothing But Wood",
+                text: "The search yields nothing but wet splinters. You wasted time.",
+                journal: "The search was fruitless.",
+                choices: [{ text: "Return to Docks", nextScene: 'town_docks', type: 'travel' }]
+            },
+            
+            // TAVERN KEEN SENSES (NEW)
+            'blackwater_tavern': {
+                title: "The Blackwater Tavern",
+                text: "The interior is dim and smells of stale brine and fear. This is where refugees and broken men hide. Rest is costly, but information is sometimes free.",
+                journal: null,
+                choices: [
+                    // PAID REST OPTION
+                    { text: "Pay 10 Shillings for a Cot (Full Rest)", nextScene: 'tavern_rest_success', type: 'action', cost: 10 },
+                    // INFORMATION GATHERING
+                    { text: "Listen to Engineer's Rumors (Smelter)", nextScene: 'gather_info_smelter', type: 'dialogue' },
+                    { text: "Listen to Gravedigger's Warnings (Chapel)", nextScene: 'gather_info_chapel', type: 'dialogue' },
+                    { 
+                        text: "Observe the Card Game", 
+                        nextScene: 'tavern_gambler', 
+                        type: 'action', 
+                        reqItem: 'Ring of Brass',
+                        customClass: 'spectral-text-glow'
+                    }, // KEEN SENSES CHECK
+                    { text: "Return to Port Square", nextScene: 'town_square', type: 'travel' }
+                ]
+            },
+            'tavern_gambler': {
+                title: "Keen Senses at the Table",
+                text: "With the Ring's heightened senses, you hear the slow, measured heartbeat of the man in the corner—too slow for a living man. You spot the card up his sleeve, but he hasn't moved a muscle. He is cheating, and he is <span class='text-red-500'>undead</span>. You confront him.",
+                journal: "Used the Ring to spot a cheater.",
+                choices: [
+                    { text: "Blackmail him (+10 Shillings)", nextScene: 'tavern_payout', type: 'action', chaosGain: 3 },
+                    { text: "Expose him (Gareth/Insight DC 16)", nextScene: 'tavern_expose_check', type: 'skill', dc: 16, skill: 'Insight', orderGain: 3 },
+                    { text: "Leave him alone", nextScene: 'blackwater_tavern', type: 'travel' }
+                ]
+            },
+            'tavern_payout': {
+                title: "A Quiet Exchange",
+                text: "The man's eyes flicker to the spectral light of your Ring. He slips a heavy purse into your hand without a word. He's gone before you can count it.",
+                journal: "Blackmailed the undead gambler.",
+                onEnter: (state) => {
+                    state.shillings += 10;
+                    state.influence = Math.min(20, state.influence + 3); 
+                    audioManager.playCoins();
+                    return "Blackmail Successful. +10 Shillings, Chaos +3.";
+                },
+                choices: [{ text: "Return to Tavern", nextScene: 'blackwater_tavern', type: 'travel' }]
+            },
+            'tavern_expose_check': {
+                isLogic: true,
+                resolve: (roll) => roll >= 16 ? 'tavern_expose_success' : 'tavern_expose_fail'
+            },
+            'tavern_expose_success': {
+                title: "Justice Served",
+                text: "Gareth's clear, authoritative voice rings in your mind. You slam your hand on the table and cite the exact law he broke. The man is forced to return his winnings and flees. Order is restored, and the others buy you a drink.",
+                journal: "Exposed the cheater. Gained 3 Order influence.",
+                onEnter: (state) => {
+                    state.influence = Math.max(-20, state.influence - 3); 
+                    return "Exposed Cheater. Order +3.";
+                },
+                choices: [{ text: "Return to Tavern", nextScene: 'blackwater_tavern', type: 'travel' }]
+            },
+            'tavern_expose_fail': {
+                title: "Public Scorn",
+                text: "You accuse the man, but your words are muddled. The other patrons laugh at you. The cheater remains, simply smiling.",
+                journal: "Failed to expose the cheater. Embarrassing.",
+                choices: [{ text: "Return to Tavern", nextScene: 'blackwater_tavern', type: 'travel' }]
+            },
+            // ... (Rest of Alchemist/Tavern scenes are kept the same) ...
             'alchemist_triage': {
                 title: "Madam Alara, Triage Alchemist",
                 text: "Madam Alara, encased in her beaked mask, tends to the wounded with clinical detachment. Her prices are steep, but her wares are potent—she deals only in true survival.",
@@ -1666,7 +1804,9 @@
                 stock: {
                     "Vitality Tincture": 2,
                     "Smelling Salts": 3,
-                    "Flash Powder": 1
+                    "Flash Powder": 1,
+                    "Alchemical Fire": 1, 
+                    "Holy Water": 1 
                 },
                 choices: [
                     { text: "Sell Wares", nextScene: 'alchemist_sell', type: 'travel' },
@@ -1682,7 +1822,32 @@
                     { text: "Return to Port Square", nextScene: 'town_square', type: 'travel' }
                 ]
             },
-            // NEW BUY SCENES FOR ALCHEMIST STOCK
+            // NEW BUY SCENES FOR ALCHEMIST STOCK (Boss Consumables)
+            'buy_fire': {
+                title: "Purchase",
+                text: "The Alchemical Fire is hot to the touch. A deadly weapon for the Shadow path.",
+                journal: "I purchased Alchemical Fire.",
+                onEnter: (state) => { 
+                    state.inventory.push("Alchemical Fire"); 
+                    scenes['alchemist_triage'].stock["Alchemical Fire"] -= 1;
+                    audioManager.playCoins();
+                    return "Bought Alchemical Fire."; 
+                },
+                choices: [{ text: "Return to Alchemist", nextScene: 'alchemist_triage', type: 'travel' }]
+            },
+            'buy_water': {
+                title: "Purchase",
+                text: "The Holy Water is cold and consecrated. A deadly weapon for the Fire path.",
+                journal: "I purchased Holy Water.",
+                onEnter: (state) => { 
+                    state.inventory.push("Holy Water"); 
+                    scenes['alchemist_triage'].stock["Holy Water"] -= 1;
+                    audioManager.playCoins();
+                    return "Bought Holy Water."; 
+                },
+                choices: [{ text: "Return to Alchemist", nextScene: 'alchemist_triage', type: 'travel' }]
+            },
+            // ... (rest of the alchemist buy/sell scenes) ...
             'buy_tincture': {
                 title: "Purchase",
                 text: "The Vitality Tincture burns cold in your hand.",
@@ -1719,7 +1884,6 @@
                 },
                 choices: [{ text: "Return to Alchemist", nextScene: 'alchemist_triage', type: 'travel' }]
             },
-            // NEW SELL SCENES FOR ALCHEMIST STOCK (Higher value for some items)
             'sell_potion_alch': {
                 title: "Sold for Premium",
                 text: "The Alchemist pays a premium for the components in your standard Potion.",
@@ -1772,20 +1936,18 @@
                 },
                 choices: [{ text: "Continue Selling", nextScene: 'alchemist_sell', type: 'travel' }]
             },
-
-            // --- BLACKWATER TAVERN SCENES (REST & INFO) ---
-            'blackwater_tavern': {
-                title: "The Blackwater Tavern",
-                text: "The interior is dim and smells of stale brine and fear. This is where refugees and broken men hide. Rest is costly, but information is sometimes free.",
-                journal: null,
-                choices: [
-                    // PAID REST OPTION
-                    { text: "Pay 10 Shillings for a Cot (Full Rest)", nextScene: 'tavern_rest_success', type: 'action', cost: 10 },
-                    // INFORMATION GATHERING
-                    { text: "Listen to Engineer's Rumors (Smelter)", nextScene: 'gather_info_smelter', type: 'dialogue' },
-                    { text: "Listen to Gravedigger's Warnings (Chapel)", nextScene: 'gather_info_chapel', type: 'dialogue' },
-                    { text: "Return to Port Square", nextScene: 'town_square', type: 'travel' }
-                ]
+             'sell_tincture': {
+                title: "Sold Back",
+                text: "The Alchemist buys back her own tincture at a loss.",
+                journal: "Sold Vitality Tincture at a loss.",
+                onEnter: (state) => {
+                    const idx = state.inventory.indexOf("Vitality Tincture");
+                    if (idx > -1) state.inventory.splice(idx, 1);
+                    state.shillings += 7; 
+                    audioManager.playCoins();
+                    return "Sold Tincture (+7s).";
+                },
+                choices: [{ text: "Continue Selling", nextScene: 'alchemist_sell', type: 'travel' }]
             },
             'tavern_rest_success': {
                 title: "A Night's Respite",
@@ -1823,7 +1985,7 @@
             },
             // --- END HUB SCENES ---
 
-            // --- TBD PATH SCENES (UPDATED FOR NEW LOGIC) ---
+            // --- FIRE PATH SCENES ---
             'smelter_entry': {
                 title: "Smelter District: Steam Vents",
                 text: "The path is blocked by a burst steam pipe spitting magical fire. The main valve is screaming and rusted over. You need to use your abilities or brute force here.",
@@ -1852,12 +2014,12 @@
                 title: "Absorbed Charge", 
                 text: "You pass safely, the fire damage absorbed. The excess heat now crackles on your blade, ready for the next fight.", 
                 journal: "Used Absorb Elements. Blade is Charged.",
-                choices: [{ text: "Continue to Foundry (Combat)", nextScene: 'smelter_foundry', type: 'travel' }] // TBD COMBAT SCENE
+                choices: [{ text: "Continue to Foundry (Combat)", nextScene: 'smelter_foundry', type: 'travel' }] 
             },
             'smelter_safe': { 
                 title: "Safe Passage", 
                 text: "You pass safely.", 
-                choices: [{ text: "Continue to Foundry (Combat)", nextScene: 'smelter_foundry', type: 'travel' }] // TBD COMBAT SCENE
+                choices: [{ text: "Continue to Foundry (Combat)", nextScene: 'smelter_foundry', type: 'travel' }] 
             },
             'smelter_roll': { isLogic: true, resolve: (roll) => roll >= 15 ? 'smelter_safe' : 'smelter_damage' },
             'smelter_damage': { 
@@ -1870,13 +2032,96 @@
                 }, 
                 choices: [{ text: "Continue to Foundry (Combat)", nextScene: 'smelter_foundry', type: 'travel' }] 
             },
-            // NEW SCENE: Placeholder for the combat encounter we discussed
             'smelter_foundry': {
-                title: "The Foundry",
-                text: "You find the Sword of Valor, but it is guarded by the Slag Horror (Fire Elemental). Prepare for combat.",
-                choices: [{ text: "Begin Combat", nextScene: 'town_square', type: 'travel' }] // Temporary return
+                title: "The Slag Horror",
+                text: "The foundry is a cathedral of fire. In the center, rising from a pool of molten iron, is the <span class='text-red-500 font-bold'>Slag Horror</span>. It roars, spewing magma that melts the stone floor. In its chest, suspended in the heat, you see the hilt of a blade—the **Sword of Valor**.",
+                journal: "Face to face with the Slag Horror. It burns with the heat of the forge.",
+                choices: [
+                    // CRITICAL COUNTER (If Player did Shadow Path first)
+                    { 
+                        text: "Activate Ring of Brass (Cold Breath)", 
+                        nextScene: 'smelter_victory_ring', 
+                        type: 'action', 
+                        reqItem: 'Ring of Brass',
+                        customClass: 'btn-hero' // Blue Hero Button
+                    },
+                    // CONSUMABLE COUNTER (Bought from Alchemist)
+                    { 
+                        text: "Throw Holy Water", 
+                        nextScene: 'smelter_victory_item', 
+                        type: 'action', 
+                        reqItem: 'Holy Water',
+                        consume: true,
+                        customClass: 'btn-success-glow'
+                    },
+                    // CLASS ABILITY (Mitigation)
+                    { 
+                        text: "Endure and Strike (Absorb Elements)", 
+                        nextScene: 'smelter_victory_skill', 
+                        type: 'action', 
+                        reqSkill: 'Absorb Elements',
+                        customClass: 'btn-fire-glow' 
+                    },
+                    // DESPERATE ATTACK (High Damage Taken)
+                    { text: "Charge the Beast (Brute Force)", nextScene: 'smelter_victory_brute', type: 'combat' }
+                ]
             },
+            'smelter_victory_ring': {
+                title: "Frozen Iron",
+                text: "You channel the Ring of Brass. A cone of freezing planar wind screams from your hand. The Slag Horror solidifies instantly, turning into brittle obsidian. You shatter its chest cavity and claim the prize.",
+                journal: "Flawless victory over the Slag Horror using the Ring's power.",
+                onEnter: (state) => {
+                    if (!state.inventory.includes("Sword of Valor")) {
+                        state.inventory.push("Sword of Valor");
+                    }
+                    return "Used Ring. Flawless Victory. Acquired Sword of Valor.";
+                },
+                choices: [{ text: "Return to Town Square", nextScene: 'town_square', type: 'travel' }]
+            },
+            'smelter_victory_item': {
+                title: "Consecrated Strike",
+                text: "You drench the Horror in Holy Water. The creature shrieks as the radiant energy evaporates its molten body, leaving only the Sword behind.",
+                journal: "Used Holy Water to defeat the Slag Horror.",
+                onEnter: (state) => {
+                    if (!state.inventory.includes("Sword of Valor")) {
+                        state.inventory.push("Sword of Valor");
+                    }
+                    return "Used Holy Water. Acquired Sword of Valor.";
+                },
+                choices: [{ text: "Return to Town Square", nextScene: 'town_square', type: 'travel' }]
+            },
+            'smelter_victory_skill': {
+                title: "Forged in Fire",
+                text: "You let the magma wash over you, channeling the heat into your own blade. You strike with the force of the fire itself. You are scorched, but victorious.",
+                journal: "Defeated the Slag Horror with Absorb Elements, taking minor wounds.",
+                onEnter: (state) => {
+                    state.currentHP = applyDamage(state.currentHP, 4); // Minor Damage
+                    fxManager.flashRed();
+                    if (!state.inventory.includes("Sword of Valor")) {
+                        state.inventory.push("Sword of Valor");
+                    }
+                    return "Used Absorb Elements. Took 4 DMG. Acquired Sword of Valor.";
+                },
+                choices: [{ text: "Return to Town Square", nextScene: 'town_square', type: 'travel' }]
+            },
+            'smelter_victory_brute': {
+                title: "A Costly Victory",
+                text: "You have no magic to shield you. You hack at the molten limbs, your skin blistering from the proximity. You rip the sword free, but you leave much of your blood on the foundry floor.",
+                journal: "Brute force victory over the Slag Horror, taking heavy damage.",
+                onEnter: (state) => {
+                    state.currentHP = applyDamage(state.currentHP, 10); // Major Damage
+                    fxManager.flashRed();
+                    if (!state.inventory.includes("Sword of Valor")) {
+                        state.inventory.push("Sword of Valor");
+                    }
+                    return "Brute Force. Took 10 DMG. Acquired Sword of Valor.";
+                },
+                choices: [{ text: "Limp to Town Square", nextScene: 'town_square', type: 'travel' }]
+            },
+            // --- END FIRE PATH SCENES ---
 
+
+            // --- SHADOW PATH SCENES ---
             'chapel_entry': {
                 title: "Sunken Chapel: The Fog Maze",
                 text: "The cemetery is covered in unnatural fog. The paths loop back on themselves, and you cannot see.",
@@ -1905,12 +2150,12 @@
                 title: "Ambush Avoided", 
                 text: "You bypass the maze and surprise the Spectre. You get a free hit.", 
                 journal: "Used Primeval Awareness. Gained Surprise Round.",
-                choices: [{ text: "Continue to Crypt (Combat)", nextScene: 'chapel_crypt', type: 'travel' }] // TBD COMBAT SCENE
+                choices: [{ text: "Continue to Crypt (Combat)", nextScene: 'chapel_crypt', type: 'travel' }] 
             },
             'chapel_safe': { 
                 title: "Found Path", 
                 text: "You navigate the fog safely.", 
-                choices: [{ text: "Continue to Crypt (Combat)", nextScene: 'chapel_crypt', type: 'travel' }] // TBD COMBAT SCENE
+                choices: [{ text: "Continue to Crypt (Combat)", nextScene: 'chapel_crypt', type: 'travel' }] 
             },
             'chapel_roll': { isLogic: true, resolve: (roll) => roll >= 15 ? 'chapel_safe' : 'chapel_damage' },
             'chapel_damage': { 
@@ -1923,14 +2168,93 @@
                 }, 
                 choices: [{ text: "Continue to Crypt (Combat)", nextScene: 'chapel_crypt', type: 'travel' }] 
             },
-            // NEW SCENE: Placeholder for the combat encounter we discussed
             'chapel_crypt': {
-                title: "The Flooded Crypt",
-                text: "You find the Ring of Brass, but it is guarded by the Drowned Spectre (Undead). Prepare for combat.",
-                choices: [{ text: "Begin Combat", nextScene: 'town_square', type: 'travel' }] // Temporary return
+                title: "The Drowned Spectre",
+                text: "The crypt is flooded with black water. The **Drowned Spectre** rises, its face a void of hunger. On its skeletal finger glints the **Ring of Brass**. It screams—a sound that tears at your sanity.",
+                journal: "The Spectre guards the Ring. It is incorporeal and deadly.",
+                choices: [
+                    // CRITICAL COUNTER (If Player did Fire Path first)
+                    { 
+                        text: "Strike with Sword of Valor (Force Damage)", 
+                        nextScene: 'chapel_victory_sword', 
+                        type: 'action', 
+                        reqItem: 'Sword of Valor',
+                        customClass: 'btn-hero' 
+                    },
+                    // CONSUMABLE COUNTER (Bought from Alchemist)
+                    { 
+                        text: "Throw Alchemical Fire", 
+                        nextScene: 'chapel_victory_item', 
+                        type: 'action', 
+                        reqItem: 'Alchemical Fire',
+                        consume: true,
+                        customClass: 'btn-fire-glow'
+                    },
+                    // CLASS ABILITY (Mitigation)
+                    { 
+                        text: "Track the Void (Primeval Awareness)", 
+                        nextScene: 'chapel_victory_skill', 
+                        type: 'action', 
+                        reqSkill: 'Primeval Awareness',
+                        customClass: 'btn-shadow-glow' 
+                    },
+                    // DESPERATE ATTACK (High Damage Taken)
+                    { text: "Hack at the Shadows (Brute Force)", nextScene: 'chapel_victory_brute', type: 'combat' }
+                ]
             },
-
-            // --- END TBD PATH SCENES ---
+            'chapel_victory_sword': {
+                title: "The Vampire Killer",
+                text: "The Sword of Valor glows with a pale light. It cuts through the ghost's ethereal form as if it were flesh. The Spectre dissolves with a final wail, dropping the Ring.",
+                journal: "Flawless victory over the Spectre using the Sword of Valor.",
+                onEnter: (state) => {
+                    if (!state.inventory.includes("Ring of Brass")) {
+                        state.inventory.push("Ring of Brass");
+                    }
+                    return "Used Sword. Flawless Victory. Acquired Ring of Brass.";
+                },
+                choices: [{ text: "Return to Town Square", nextScene: 'town_square', type: 'travel' }]
+            },
+            'chapel_victory_item': {
+                title: "Shadows Burn",
+                text: "The Alchemical Fire ignites on the black water, trapping the Spectre in a cage of hot, bright light. It is instantly immolated, leaving only the Ring.",
+                journal: "Used Alchemical Fire to defeat the Drowned Spectre.",
+                onEnter: (state) => {
+                    if (!state.inventory.includes("Ring of Brass")) {
+                        state.inventory.push("Ring of Brass");
+                    }
+                    return "Used Alchemical Fire. Acquired Ring of Brass.";
+                },
+                choices: [{ text: "Return to Town Square", nextScene: 'town_square', type: 'travel' }]
+            },
+            'chapel_victory_skill': {
+                title: "The Visible Dead",
+                text: "By focusing your senses, the Spectre's outline is made visible. You strike its center of power, disabling its spectral form just before it strikes. You are drained, but intact.",
+                journal: "Defeated the Spectre with Primeval Awareness, taking minor sanity drain.",
+                onEnter: (state) => {
+                    state.currentHP = applyDamage(state.currentHP, 5); // Minor Psychic Damage
+                    fxManager.flashRed();
+                    if (!state.inventory.includes("Ring of Brass")) {
+                        state.inventory.push("Ring of Brass");
+                    }
+                    return "Used Primeval Awareness. Took 5 DMG. Acquired Ring of Brass.";
+                },
+                choices: [{ text: "Return to Town Square", nextScene: 'town_square', type: 'travel' }]
+            },
+            'chapel_victory_brute': {
+                title: "A Vicious Toll",
+                text: "You swing wildly at the incorporeal shadow, feeling its cold touch tear at your sanity and flesh. The ethereal form finally breaks, but your mind feels fractured by the psychic blow.",
+                journal: "Brute force victory over the Spectre, taking heavy sanity damage.",
+                onEnter: (state) => {
+                    state.currentHP = applyDamage(state.currentHP, 12); // Major Psychic Damage
+                    fxManager.flashRed();
+                    if (!state.inventory.includes("Ring of Brass")) {
+                        state.inventory.push("Ring of Brass");
+                    }
+                    return "Brute Force. Took 12 DMG. Acquired Ring of Brass.";
+                },
+                choices: [{ text: "Limp to Town Square", nextScene: 'town_square', type: 'travel' }]
+            },
+            // --- END SHADOW PATH SCENES ---
             
             'finale_ritual_start': { title: "The Ritual", text: "Ritual start scene.", choices: [{ text: "End", type: 'reset' }] },
 
@@ -1963,7 +2287,9 @@
         scenes['alchemist_triage'].stock = {
             "Vitality Tincture": 2,
             "Smelling Salts": 3,
-            "Flash Powder": 1
+            "Flash Powder": 1,
+            "Alchemical Fire": 1, 
+            "Holy Water": 1 
         };
         
         async function generateSceneImage(sceneId) {
@@ -2124,7 +2450,9 @@
             scenes['alchemist_triage'].stock = {
                 "Vitality Tincture": 2,
                 "Smelling Salts": 3,
-                "Flash Powder": 1
+                "Flash Powder": 1,
+                "Alchemical Fire": 1, 
+                "Holy Water": 1 
             };
 
             document.getElementById('journal-content').innerHTML = '';
@@ -2150,7 +2478,7 @@
             let html = '';
             if (type === 'entry') {
                 // Apply spectral-text-glow to crew names in the journal
-                const processedText = text.replace(/(Captain Gareth|Gareth|Quinn|Talon|Bones|Wolf King|Ring|Blade)/g, '<span class="spectral-text-glow">$1</span>');
+                const processedText = text.replace(/(Captain Gareth|Gareth|Quinn|Talon|Bones|Wolf King|Ring|Blade|Sword|Smelter|Chapel|Absorb Elements|Primeval Awareness)/g, '<span class="spectral-text-glow">$1</span>');
                 html = `<div class="journal-font pb-4 border-b border-gray-700/30 text-gray-400 fade-in">${processedText}</div>`;
             } else if (type === 'system') {
                 html = `<div class="text-xs text-amber-500 font-mono mb-2 fade-in">> ${text}</div>`;
@@ -2428,6 +2756,9 @@
                     // Rename the rest option to include current cost
                     restOption.text = `Pay ${restOption.cost} Shillings for a Cot (Full Rest)`;
                 }
+                
+                // NEW: Hide Observe Gambler if Ring of Brass is not owned (reqItem check handles this, but needed here if we change requirements later)
+                // Let the reqItem check handle it for now.
             }
 
 
@@ -2452,7 +2783,7 @@
                 if (choice.reqFlag && !gameState[choice.reqFlag]) return;
 
                 // SKILL CHECK: If choice requires a skill, hide it if player doesn't have it
-                if (choice.reqSkill && !gameState.skills.includes(choice.reqSkill)) return;
+                if (choice.reqSkill && !gameState.skills.includes(choice.reqSkill) && choice.type !== 'skill') return;
 
 
                 // --- DISABILITY (GREY OUT) CHECKS ---
@@ -2461,6 +2792,11 @@
                 
                 // Check 1: Affordability (Cost is defined for this choice AND player can't afford it)
                 if (choice.cost && gameState.shillings < choice.cost) {
+                    isDisabled = true;
+                    disabledClass = 'btn-disabled-cost';
+                }
+                // Check 2: Health Cost (Docks)
+                if (choice.costHP && gameState.currentHP <= choice.costHP) {
                     isDisabled = true;
                     disabledClass = 'btn-disabled-cost';
                 }
@@ -2477,7 +2813,7 @@
                 let isCustomClassButton = choice.customClass ? true : false;
                 let isTradeButton = choice.cost || choice.value;
 
-                const alignmentClass = (choice.type === 'skill' || isTradeButton || choice.chaosGain || choice.orderGain) ? 'justify-start' : 'justify-between';
+                const alignmentClass = (choice.type === 'skill' || isTradeButton || choice.chaosGain || choice.orderGain || choice.costHP) ? 'justify-start' : 'justify-between';
                 
                 let btnClass = "";
                 
@@ -2558,6 +2894,7 @@
 
                     // --- APPLY ACTIONS ---
                     if (choice.cost) gameState.shillings -= choice.cost;
+                    if (choice.costHP) gameState.currentHP = applyDamage(gameState.currentHP, choice.costHP); // NEW HP COST APPLIED
                     if (choice.chaosGain) gameState.influence = Math.min(20, gameState.influence + choice.chaosGain);
                     
                     // RP FIX: Player perceives Order gain, even though it's technically negative influence shift
@@ -2615,6 +2952,10 @@
                 if (choice.cost) {
                     // Cost (Negative) for Buy/Bribe
                     transactionIndicator = `(-${choice.cost}s)`;
+                } else if (choice.costHP) {
+                    // HP Cost (Negative) for Docks Work
+                    transactionIndicator = `(-${choice.costHP} HP)`;
+                    indicatorColor = 'text-red-400';
                 } else if (choice.value) {
                     // Value (Positive) for Sell actions
                     transactionIndicator = `(+${choice.value}s)`;
@@ -2867,20 +3208,3 @@
                     itemRow.onmouseenter = () => {
                         descArea.innerText = itemDef.desc || defaultText;
                         descArea.classList.add('text-amber-400');
-                        descArea.classList.remove('text-gray-400');
-                    };
-                    itemRow.onmouseleave = () => {
-                        descArea.innerText = defaultText;
-                        descArea.classList.remove('text-amber-400');
-                        descArea.classList.add('text-gray-400');
-                    };
-
-                    invContainer.appendChild(itemRow);
-                });
-            }
-        }
-
-        init();
-    </script>
-</body>
-</html>
