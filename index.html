@@ -376,7 +376,8 @@
                 </div>
                 
                 <!-- PLANAR INSTABILITY (DOOM COUNTER) DISPLAY -->
-                <div class="bg-gray-900 p-2 rounded border border-gray-700 flex flex-col text-[10px] gap-2 relative">
+                <!-- HIDDEN BY DEFAULT, ONLY SHOW IN ACT 1 VIA JS -->
+                <div id="doom-counter-display" class="bg-gray-900 p-2 rounded border border-gray-700 flex flex-col text-[10px] gap-2 relative hidden">
                     <div class="flex justify-between items-center cinzel text-xs uppercase tracking-wider font-bold">
                         <span class="text-purple-400"><i class="fas fa-bolt mr-1"></i>Rift Stability</span>
                         <span id="doom-timer-text" class="text-yellow-500">15 Turns</span>
@@ -996,7 +997,7 @@
 				text: "You gasp, lungs burning, and retch salt water onto the grey sand. The storm has passed, but the silence of the beach is a lie. Inside your mind, the scream of the dying ship continues. They don't realize they are dead.<br><br>You find your hand cramping, clutching the Captain's Tricorn Hat with a death grip. Beside you, the Compass hums with a violet vibration. You are alive, but you have become a life raft for the damned.",
 				journal: "Woke up choking on sand. Gareth's hat is in my hand—I can't let go of it. The Compass is screaming, and the crew... they are loud. So loud. They don't know they're ghosts.",
 				banter: {
-					'quinn': "The manifest! The logs! We can't be erased, Edward. Find the records or we never existed."
+					'quinn': "The manifest! The logs! We can't be erased, Edward. Find the records or we never existed!"
 				},
                 onEnter: (state) => {
                     audioManager.playGasp();
@@ -1675,18 +1676,19 @@
                 journal: "Reached the overlook. The Port is a warzone. Must be cautious.",
                 choices: [
                     { 
-                        text: "Scan the Road for Guards and Loot (Talon/Perception DC 14)", 
+                        text: "Scan the Road for Guards and Loot (Talon/Perception DC 14, -1 Turn)", 
                         nextScene: 'overlook_scan_check', 
                         type: 'skill', 
                         dc: 14, 
                         skill: 'Perception' 
                     },
                     { 
-                        text: "Hasten Descent (Gareth/Athletics DC 10)", 
+                        text: "Hasten Descent (Gareth/Athletics DC 10, 0 Turns)", 
                         nextScene: 'overlook_hasten_check', 
                         type: 'skill', 
                         dc: 10, 
-                        skill: 'Athletics' 
+                        skill: 'Athletics',
+                        doomCost: 0 // NO DOOM COST
                     }
                 ]
             },
@@ -1744,6 +1746,25 @@
             'town_square': {
                 title: "Port of Shadows",
                 text: "", // Dynamic text populated by onEnter
+                choices: [
+                    { 
+                        text: "Investigate Smelter District", 
+                        nextScene: 'smelter_entry', 
+                        type: 'travel', 
+                        reqNotItem: 'Sword of Valor', // Blade from Fire Path
+                        customClass: 'btn-fire-glow' 
+                    },
+                    { 
+                        text: "Investigate Sunken Chapel", 
+                        nextScene: 'chapel_entry', 
+                        type: 'travel',
+                        reqNotItem: 'Ring of Brass', // Ring from Shadow Path
+                        customClass: 'btn-shadow-glow' 
+                    },
+                    { text: "Visit The Triage Alchemist", nextScene: 'alchemist_triage', type: 'travel' },
+                    { text: "Rest at The Blackwater Tavern", nextScene: 'blackwater_tavern', type: 'travel' },
+                    { text: "Explore the Docks", nextScene: 'town_docks', type: 'travel' } // NEW DOCKS BUTTON
+                ],
                 onEnter: (state) => {
                     const hasRing = state.inventory.includes("Ring of Brass");
                     const hasBlade = state.inventory.includes("Sword of Valor");
@@ -1803,7 +1824,7 @@
                     });
                     
                 },
-                choices: []
+                // Choices now generated in onEnter
             },
             
             // --- NEW HUB SCENES ---
@@ -1832,7 +1853,7 @@
                         dc: 14, 
                         skill: 'Perception', 
                         reqItem: 'Ring of Brass', // Keen Senses check to find hidden goods
-                        customClass: 'btn-keen-senses' // Custom class to highlight artifact use
+                        customClass: 'btn-keen-senses' 
                     }, 
                     { text: "Return to Port Square", nextScene: 'town_square', type: 'travel' }
                 ]
@@ -1842,6 +1863,7 @@
                 title: "Smuggler's Trade",
                 text: "The Smuggler nods approvingly at the quality of the cargo. 'Good eye, Mariner. Here's your cut, a little extra for your trouble.'",
                 journal: "Sold the Curious Cargo to a Smuggler for a premium.",
+                choices: [{ text: "Return to Docks", nextScene: 'town_docks', type: 'travel' }],
                 onEnter: (state) => {
                     const idx = state.inventory.indexOf("Curious Cargo");
                     if (idx > -1) state.inventory.splice(idx, 1);
@@ -1849,13 +1871,12 @@
                     audioManager.playCoins();
                     return "Sold Curious Cargo (+15s) to Smuggler.";
                 },
-                choices: [{ text: "Return to Docks", nextScene: 'town_docks', type: 'travel' }]
             },
             // DOCKS WORK SCENE (NEW)
             'docks_work': {
                 title: "Hard Labor",
                 text: "You haul crates and tie lines until your muscles ache and your hands blister.",
-                journal: "Traded sweat and blood for coin.",
+                choices: [{ text: "Return to Docks", nextScene: 'town_docks', type: 'travel' }],
                 onEnter: (state) => {
                     state.shillings += 3;
                     state.currentHP = applyDamage(state.currentHP, 2); 
@@ -1865,7 +1886,6 @@
                     // FIX: Ensure journal message reflects the correct 2 HP loss
                     return "Worked. +3 Shillings, -2 HP. Chaos +1.";
                 },
-                choices: [{ text: "Return to Docks", nextScene: 'town_docks', type: 'travel' }]
             },
             // NEW SCENE: DOCKS HIGH RISK DIVE
             'docks_dive_check': {
@@ -1956,13 +1976,13 @@
                 title: "A Quiet Exchange",
                 text: "The man's eyes flicker to the spectral light of your Ring. He slips a heavy purse into your hand without a word. He's gone before you can count it.",
                 journal: "Blackmailed the undead gambler.",
+                choices: [{ text: "Return to Tavern", nextScene: 'blackwater_tavern', type: 'travel' }],
                 onEnter: (state) => {
                     state.shillings += 10;
                     state.influence = Math.min(20, state.influence + 3); 
                     audioManager.playCoins();
                     return "Blackmail Successful. +10 Shillings, Chaos +3.";
                 },
-                choices: [{ text: "Return to Tavern", nextScene: 'blackwater_tavern', type: 'travel' }]
             },
             'tavern_expose_check': {
                 isLogic: true,
@@ -1972,11 +1992,11 @@
                 title: "Justice Served",
                 text: "Gareth's clear, authoritative voice rings in your mind. You slam your hand on the table and cite the exact law he broke. The man is forced to return his winnings and flees. Order is restored, and the others buy you a drink.",
                 journal: "Exposed the cheater. Gained 3 Order influence.",
+                choices: [{ text: "Return to Tavern", nextScene: 'blackwater_tavern', type: 'travel' }],
                 onEnter: (state) => {
                     state.influence = Math.max(-20, state.influence - 3); 
                     return "Exposed Cheater. Order +3.";
                 },
-                choices: [{ text: "Return to Tavern", nextScene: 'blackwater_tavern', type: 'travel' }]
             },
             'tavern_expose_fail': {
                 title: "Public Scorn",
@@ -2014,6 +2034,7 @@
                 title: "Sentiment's Price",
                 text: "Madam Alara cleans the silver locket with a sterile cloth. 'Sentiment holds value in chaos,' she remarks, sliding you the promised coin.",
                 journal: "Sold the Silver Locket for 10 Shillings.",
+                choices: [{ text: "Continue Selling", nextScene: 'alchemist_sell', type: 'travel' }],
                 onEnter: (state) => {
                     const idx = state.inventory.indexOf("Silver Locket");
                     if (idx > -1) state.inventory.splice(idx, 1);
@@ -2021,73 +2042,73 @@
                     audioManager.playCoins();
                     return "Sold Locket (+10s) to Alchemist.";
                 },
-                choices: [{ text: "Continue Selling", nextScene: 'alchemist_sell', type: 'travel' }]
             },
             // NEW BUY SCENES FOR ALCHEMIST STOCK (Boss Consumables)
             'buy_fire': {
                 title: "Purchase",
                 text: "The Alchemical Fire is hot to the touch. A deadly weapon for the Shadow path.",
                 journal: "I purchased Alchemical Fire.",
+                choices: [{ text: "Return to Alchemist", nextScene: 'alchemist_triage', type: 'travel' }],
                 onEnter: (state) => { 
                     state.inventory.push("Alchemical Fire"); 
                     scenes['alchemist_triage'].stock["Alchemical Fire"] -= 1;
                     audioManager.playCoins();
                     return "Bought Alchemical Fire."; 
                 },
-                choices: [{ text: "Return to Alchemist", nextScene: 'alchemist_triage', type: 'travel' }]
             },
             'buy_water': {
                 title: "Purchase",
                 text: "The Holy Water is cold and consecrated. A deadly weapon for the Fire path.",
                 journal: "I purchased Holy Water.",
+                choices: [{ text: "Return to Alchemist", nextScene: 'alchemist_triage', type: 'travel' }],
                 onEnter: (state) => { 
                     state.inventory.push("Holy Water"); 
                     scenes['alchemist_triage'].stock["Holy Water"] -= 1;
                     audioManager.playCoins();
                     return "Bought Holy Water."; 
                 },
-                choices: [{ text: "Return to Alchemist", nextScene: 'alchemist_triage', type: 'travel' }]
             },
             'buy_tincture': {
                 title: "Purchase",
                 text: "The Vitality Tincture burns cold in your hand.",
                 journal: "I purchased a high-grade Vitality Tincture.",
+                choices: [{ text: "Return to Alchemist", nextScene: 'alchemist_triage', type: 'travel' }],
                 onEnter: (state) => { 
                     state.inventory.push("Vitality Tincture"); 
                     scenes['alchemist_triage'].stock["Vitality Tincture"] -= 1;
                     audioManager.playCoins();
                     return "Bought Tincture."; 
                 },
-                choices: [{ text: "Return to Alchemist", nextScene: 'alchemist_triage', type: 'travel' }]
             },
             'buy_salts': {
                 title: "Purchase",
                 text: "Smelling Salts. A desperate measure for desperate times.",
                 journal: "I purchased Smelling Salts.",
+                choices: [{ text: "Return to Alchemist", nextScene: 'alchemist_triage', type: 'travel' }],
                 onEnter: (state) => { 
                     state.inventory.push("Smelling Salts"); 
                     scenes['alchemist_triage'].stock["Smelling Salts"] -= 1;
                     audioManager.playCoins();
                     return "Bought Smelling Salts."; 
                 },
-                choices: [{ text: "Return to Alchemist", nextScene: 'alchemist_triage', type: 'travel' }]
             },
             'buy_powder': {
                 title: "Purchase",
                 text: "Flash Powder. Quick, loud, and effective.",
                 journal: "I purchased Flash Powder.",
+                choices: [{ text: "Return to Alchemist", nextScene: 'alchemist_triage', type: 'travel' }],
                 onEnter: (state) => { 
                     state.inventory.push("Flash Powder"); 
                     scenes['alchemist_triage'].stock["Flash Powder"] -= 1;
                     audioManager.playCoins();
                     return "Bought Flash Powder."; 
                 },
-                choices: [{ text: "Return to Alchemist", nextScene: 'alchemist_triage', type: 'travel' }]
             },
             'sell_potion_alch': {
                 title: "Sold for Premium",
                 text: "The Alchemist pays a premium for the components in your standard Potion.",
                 journal: "Sold a Healing Potion for 4 Shillings to the Alchemist.",
+                choices: [{ text: "Continue Selling", nextScene: 'alchemist_sell', type: 'travel' }],
                 onEnter: (state) => {
                     const idx = state.inventory.indexOf("Healing Potion");
                     if (idx > -1) state.inventory.splice(idx, 1);
@@ -2095,12 +2116,12 @@
                     audioManager.playCoins();
                     return "Sold Potion (+4s) to Alchemist.";
                 },
-                choices: [{ text: "Continue Selling", nextScene: 'alchemist_sell', type: 'travel' }]
             },
              'sell_mushroom_alch': {
                 title: "Sold for Premium",
                 text: "The Alchemist recognizes the power in the Pearlescent Mushroom. 'A valuable specimen,' she murmurs.",
                 journal: "Sold the Pearlescent Mushroom for 12 Shillings to the Alchemist.",
+                choices: [{ text: "Continue Selling", nextScene: 'alchemist_sell', type: 'travel' }],
                 onEnter: (state) => {
                     const idx = state.inventory.indexOf("Pearlescent Mushroom");
                     if (idx > -1) state.inventory.splice(idx, 1);
@@ -2108,12 +2129,12 @@
                     audioManager.playCoins();
                     return "Sold Mushroom (+12s) to Alchemist.";
                 },
-                choices: [{ text: "Continue Selling", nextScene: 'alchemist_sell', type: 'travel' }]
             },
             'sell_fire': {
                 title: "Sold Path Artifact",
                 text: "A necessary sacrifice. The Alchemist gives you a heavy coin purse for the Alchemical Fire.",
                 journal: "I sold the Alchemical Fire artifact for 20 Shillings.",
+                choices: [{ text: "Continue Selling", nextScene: 'alchemist_sell', type: 'travel' }],
                 onEnter: (state) => {
                     const idx = state.inventory.indexOf("Alchemical Fire");
                     if (idx > -1) state.inventory.splice(idx, 1);
@@ -2121,12 +2142,12 @@
                     audioManager.playCoins();
                     return "Sold Alchemical Fire (+20s).";
                 },
-                choices: [{ text: "Continue Selling", nextScene: 'alchemist_sell', type: 'travel' }]
             },
             'sell_water': {
                 title: "Sold Path Artifact",
                 text: "A necessary sacrifice. The Alchemist gives you a heavy coin purse for the Holy Water.",
                 journal: "I sold the Holy Water artifact for 20 Shillings.",
+                choices: [{ text: "Continue Selling", nextScene: 'alchemist_sell', type: 'travel' }],
                 onEnter: (state) => {
                     const idx = state.inventory.indexOf("Holy Water");
                     if (idx > -1) state.inventory.splice(idx, 1);
@@ -2134,12 +2155,12 @@
                     audioManager.playCoins();
                     return "Sold Holy Water (+20s).";
                 },
-                choices: [{ text: "Continue Selling", nextScene: 'alchemist_sell', type: 'travel' }]
             },
             'sell_tincture': {
                 title: "Sold Back",
                 text: "The Alchemist buys back her own tincture at a loss.",
                 journal: "Sold Vitality Tincture at a loss.",
+                choices: [{ text: "Continue Selling", nextScene: 'alchemist_sell', type: 'travel' }],
                 onEnter: (state) => {
                     const idx = state.inventory.indexOf("Vitality Tincture");
                     if (idx > -1) state.inventory.splice(idx, 1);
@@ -2147,42 +2168,41 @@
                     audioManager.playCoins();
                     return "Sold Tincture (+7s).";
                 },
-                choices: [{ text: "Continue Selling", nextScene: 'alchemist_sell', type: 'travel' }]
             },
             'tavern_rest_success': {
                 title: "A Night's Respite",
                 text: "You find an empty cot in the dusty cellar. The gentle sway of your hoisted hammock lulls the bickering crew into a temporary, cohesive silence.",
                 journal: "Paid 10 Shillings for a good night's rest. The voices are quiet.",
                 isRest: true, // Tag as rest scene to prevent doom counter decrement
+                choices: [
+                    { text: "Return to Port Square", nextScene: 'town_square', type: 'travel' }
+                ],
                 onEnter: (state) => {
                     state.currentHP = state.maxHP;
                     Object.keys(state.crew).forEach(k => state.crew[k].used = false);
                     return "Paid 10s. HP and Crew Use Restored.";
                 },
-                choices: [
-                    { text: "Return to Port Square", nextScene: 'town_square', type: 'travel' }
-                ]
             },
             // NEW: INFORMATION SCENES
             'gather_info_smelter': {
                 title: "Smelter District Tip",
                 text: "The exhausted engineer whispers, 'The release valves are rusted shut. Quinn's knowledge won't work unless you know the **counter-clockwise, double-turn** trick. That'll save your life.'",
                 journal: "Learned the secret to bypassing the Smelter's Steam Hazard.",
+                choices: [{ text: "Return to Tavern", nextScene: 'blackwater_tavern', type: 'travel' }],
                 onEnter: (state) => {
                     state.knowsSmelterSecret = true;
                     return "New Information Gained (Smelter Path).";
                 },
-                choices: [{ text: "Return to Tavern", nextScene: 'blackwater_tavern', type: 'travel' }]
             },
             'gather_info_chapel': {
                 title: "Sunken Chapel Tip",
                 text: "The pale gravedigger warns you, 'Don't follow the sound; follow the silence. The paths are a maze, but the silent, **weeping angel statues** mark the safe, true route.'",
                 journal: "Learned the safe route through the Sunken Chapel's Fog Maze.",
+                choices: [{ text: "Return to Tavern", nextScene: 'blackwater_tavern', type: 'travel' }],
                 onEnter: (state) => {
                     state.knowsChapelSecret = true;
                     return "New Information Gained (Chapel Path).";
                 },
-                choices: [{ text: "Return to Tavern", nextScene: 'blackwater_tavern', type: 'travel' }]
             },
             // --- END HUB SCENES ---
 
@@ -2192,23 +2212,25 @@
                 text: "The path is blocked by a burst steam pipe spitting magical fire. The main valve is screaming and rusted over. You need to use your abilities or brute force here.",
 				journal: "The heat hits like a physical blow. The air tastes of sulfur and ash. Even the ghosts in my head are quiet, drowned out by the roar of the vents.",
                 choices: [
-                    // OPTION 1: INFO CHECK (Automatic Success)
+                    // OPTION 1: INFO CHECK (Automatic Success) - DOOM COST 0
                     { 
-                        text: "Attempt Counter-Clockwise Double-Turn (Secret)", 
+                        text: "Attempt Counter-Clockwise Double-Turn (Secret, 0 Turns)", 
                         nextScene: 'smelter_safe', 
                         type: 'dialogue', 
                         reqFlag: 'knowsSmelterSecret',
+                        doomCost: 0,
                         customClass: 'btn-success-glow'
                     },
-                    // OPTION 2: HERO BUTTON (Absorb Elements)
+                    // OPTION 2: HERO BUTTON (Absorb Elements) - DOOM COST 0
                     { 
-                        text: "Channel Absorb Elements (Absorb Heat)", 
+                        text: "Channel Absorb Elements (Absorb Heat, 0 Turns)", 
                         nextScene: 'smelter_safe_charged', 
                         type: 'action', 
                         reqSkill: 'Absorb Elements', 
+                        doomCost: 0,
                         customClass: 'btn-fire-glow' 
                     },
-                    // OPTION 3: SKILL CHECK (Quinn/Investigation) - High DC because of rust
+                    // OPTION 3: SKILL CHECK (Quinn/Investigation) - DOOM COST 1 (Default)
                     { text: "Analyze & Attempt to Turn Valve (Quinn/Investigation DC 15)", nextScene: 'smelter_roll', type: 'skill', dc: 15, skill: 'Investigation' }
                 ]
             },
@@ -2216,24 +2238,24 @@
                 title: "Absorbed Charge", 
                 text: "You pass safely, the fire damage absorbed. The excess heat now crackles on your blade, ready for the next fight.", 
                 journal: "Used Absorb Elements. Blade is Charged.",
+                choices: [{ text: "Continue to Smelter Antechamber", nextScene: 'smelter_workers', type: 'travel' }],
                 onEnter: (state) => { state.isAbsorbCharged = true; return "Absorb Elements Charged."; },
-                choices: [{ text: "Continue to Smelter Antechamber", nextScene: 'smelter_workers', type: 'travel' }] // MODIFIED: Next scene is antechamber
             },
             'smelter_safe': { 
                 title: "Safe Passage", 
                 text: "You pass safely.", 
-                choices: [{ text: "Continue to Smelter Antechamber", nextScene: 'smelter_workers', type: 'travel' }] // MODIFIED: Next scene is antechamber
+                choices: [{ text: "Continue to Smelter Antechamber", nextScene: 'smelter_workers', type: 'travel' }]
             },
             'smelter_roll': { isLogic: true, resolve: (roll) => roll >= 15 ? 'smelter_safe' : 'smelter_damage' },
             'smelter_damage': { 
                 title: "Burned", 
                 text: "You take a burn running past the valve.", 
+                choices: [{ text: "Continue to Smelter Antechamber", nextScene: 'smelter_workers', type: 'travel' }],
                 onEnter: (s) => { 
                     s.currentHP = applyDamage(s.currentHP, 5); 
                     fxManager.flashRed();
                     return "Took 5 Fire Damage."; 
                 }, 
-                choices: [{ text: "Continue to Smelter Antechamber", nextScene: 'smelter_workers', type: 'travel' }] // MODIFIED: Next scene is antechamber
             },
             // --- NEW SCENE: SMELTER ANTECHAMBER (Order/Chaos Choice) ---
             'smelter_workers': {
@@ -2241,19 +2263,22 @@
                 text: "You enter the main engine room. A heavy support beam has collapsed, trapping three exhausted workers near the pit. They beg for aid. If you stop, the Slag Horror will hear you. If you don't, they will burn.",
                 journal: "Found trapped workers in the smelter. A moral choice.",
                 choices: [
+                    // ORDER PATH: INCURS DOOM COST (Default 1) - Takes time
                     { 
-                        text: "Save the Workers (Gareth/Athletics DC 15, +5 Order)", 
+                        text: "Save the Workers (Gareth/Athletics DC 15, +5 Order, -1 Turn)", 
                         nextScene: 'smelter_save_workers_check', 
                         type: 'skill', 
                         dc: 15, 
                         skill: 'Athletics',
                         orderGain: 5 
                     },
+                    // CHAOS PATH: NO DOOM COST - Saves time
                     { 
-                        text: "Bypass the Scene (+3 Chaos)", 
+                        text: "Bypass the Scene (+3 Chaos, 0 Turns)", 
                         nextScene: 'smelter_stage1_start', // DIRECT TO BOSS
                         type: 'travel',
-                        chaosGain: 3
+                        chaosGain: 3,
+                        doomCost: 0
                     }
                 ]
             },
@@ -2265,6 +2290,7 @@
                 title: "Order Restored",
                 text: "You strain every muscle to lift the beam. The workers escape and quickly point to a bucket of Industrial Lubricant on a shelf—'If you can't beat the fire, blind the beast!' they shout before fleeing. You take the bucket.",
                 journal: "Saved the workers. Gained Order +5 and Industrial Lubricant.",
+                choices: [{ text: "Proceed to Foundry (Boss Fight)", nextScene: 'smelter_stage1_start', type: 'travel' }],
                 onEnter: (state) => {
                     if (!state.inventory.includes("Industrial Lubricant")) {
                         state.inventory.push("Industrial Lubricant");
@@ -2272,19 +2298,18 @@
                     state.influence = Math.max(-20, state.influence - 5);
                     return "Found Lubricant. Order +5.";
                 },
-                choices: [{ text: "Proceed to Foundry (Boss Fight)", nextScene: 'smelter_stage1_start', type: 'travel' }]
             },
             'smelter_save_workers_fail': {
                 title: "A Vicious Price",
                 text: "You strain yourself, but the beam won't budge. The Slag Horror's roar echoes closer. You must abandon them. The crew's anguish deals a psychic blow.",
                 journal: "Failed to save the workers. Took psychic damage from the crew's anguish.",
+                choices: [{ text: "Proceed to Foundry (Boss Fight)", nextScene: 'smelter_stage1_start', type: 'travel' }],
                 onEnter: (state) => {
                     state.currentHP = applyDamage(state.currentHP, 3);
                     fxManager.flashRed();
                     state.influence = Math.max(-20, state.influence - 2); // Minor Order loss from failure
                     return "Took 3 Psychic Damage. Order +2.";
                 },
-                choices: [{ text: "Proceed to Foundry (Boss Fight)", nextScene: 'smelter_stage1_start', type: 'travel' }]
             },
             // --- END SMELTER ANTECHAMBER ---
             
@@ -2292,6 +2317,7 @@
             'smelter_stage1_start': {
                 title: "Slag Horror: Stage 1 - The Heat Wave",
                 text: "The <span class='text-red-500 font-bold'>Slag Horror</span> rises from the molten iron, its core glowing. It prepares to spew a wave of magma. You must find a way to mitigate the heat to get close enough to strike. You spot the hilt of the **Sword of Valor** suspended in its chest.",
+                isBoss: true, // Tag as boss scene (No doom cost)
                 choices: [
                     // COUNTER 1: Item Bypass
                     { 
@@ -2302,7 +2328,7 @@
                         consume: true,
                         customClass: 'btn-success-glow'
                     },
-                    // COUNTER 2: Skill Mitigation (Absorb Elements)
+                    // COUNTER 2: Skill Mitigation (Absorb Elements) - Sets flag for stage 2
                     { 
                         text: "Channel Absorb Elements (Negate Fire Damage)", 
                         nextScene: 'smelter_stage2_clean', 
@@ -2337,6 +2363,7 @@
             'smelter_stage2_clean': {
                 title: "Slag Horror: Stage 2 - The Shell",
                 text: "The magma wave was negated. The Horror's molten shell is now soft but thick, making a direct attack difficult. It's preparing a solidifying strike.",
+                isBoss: true, // Tag as boss scene (No doom cost)
                 choices: [
                     // COUNTER 1: Industrial Lubricant (Worker reward)
                     { 
@@ -2370,12 +2397,7 @@
             'smelter_stage2_damaged': {
                 title: "Slag Horror: Stage 2 - Scorched and Striking",
                 text: "You are scorched and bleeding from the magma wave, but you are close. The Horror's molten shell is thick. You must finish this now.",
-                onEnter: (state) => {
-                    // Apply the damage calculated in the logic scene
-                    state.currentHP = applyDamage(state.currentHP, state.pendingDamage || 0);
-                    fxManager.flashRed();
-                    return `Took ${state.pendingDamage} Fire Damage approaching the boss.`;
-                },
+                isBoss: true, // Tag as boss scene (No doom cost)
                 choices: [
                     // SAME CHOICES as stage 2 clean, just with less HP
                     { 
@@ -2401,35 +2423,42 @@
                         customClass: 'btn-fire-glow'
                     },
                     { text: "Hack at the Shell (Brute Force)", nextScene: 'smelter_victory_brute', type: 'combat' }
-                ]
+                ],
+                onEnter: (state) => {
+                    // Apply the damage calculated in the logic scene
+                    state.currentHP = applyDamage(state.currentHP, state.pendingDamage || 0);
+                    fxManager.flashRed();
+                    return `Took ${state.pendingDamage} Fire Damage approaching the boss.`;
+                },
             },
             // Victory scenes consolidated (all grant Sword of Valor)
             'smelter_victory_lubricant': {
                 title: "Slag Horror Defeated",
                 text: "The Slag Horror is shattered. The **Sword of Valor** is yours.",
                 journal: "Defeated the Slag Horror and claimed the Sword of Valor.",
+                choices: [{ text: "Return to Town Square", nextScene: 'town_square', type: 'travel' }],
                 onEnter: (state) => {
                     state.isAbsorbCharged = false; // Clear flag
                     if (!state.inventory.includes("Sword of Valor")) state.inventory.push("Sword of Valor");
                     return "Acquired Sword of Valor.";
                 },
-                choices: [{ text: "Return to Town Square", nextScene: 'town_square', type: 'travel' }]
             },
             'smelter_victory_ring': {
                 title: "Slag Horror Defeated",
                 text: "The Slag Horror is shattered. The **Sword of Valor** is yours.",
                 journal: "Flawless victory over the Slag Horror using the Ring's power. Claimed the Sword of Valor.",
+                choices: [{ text: "Return to Town Square", nextScene: 'town_square', type: 'travel' }],
                 onEnter: (state) => {
                     state.isAbsorbCharged = false; // Clear flag
                     if (!state.inventory.includes("Sword of Valor")) state.inventory.push("Sword of Valor");
                     return "Acquired Sword of Valor.";
                 },
-                choices: [{ text: "Return to Town Square", nextScene: 'town_square', type: 'travel' }]
             },
             'smelter_victory_item': {
                 title: "Slag Horror Defeated",
                 text: "The Slag Horror is shattered. The **Sword of Valor** is yours.",
                 journal: "Used Holy Water to defeat the Slag Horror. Claimed the Sword of Valor.",
+                choices: [{ text: "Return to Town Square", nextScene: 'town_square', type: 'travel' }],
                 onEnter: (state) => {
                     state.isAbsorbCharged = false; // Clear flag
                     if (!state.inventory.includes("Sword of Valor")) state.inventory.push("Sword of Valor");
@@ -2437,12 +2466,12 @@
                     if (idx > -1) state.inventory.splice(idx, 1);
                     return "Used Holy Water. Acquired Sword of Valor.";
                 },
-                choices: [{ text: "Return to Town Square", nextScene: 'town_square', type: 'travel' }]
             },
             'smelter_victory_skill': {
                 title: "Slag Horror Defeated",
                 text: "The Slag Horror is shattered. The **Sword of Valor** is yours. You are scorched by the blast.",
                 journal: "Defeated the Slag Horror with Absorb Elements. Claimed the Sword of Valor.",
+                choices: [{ text: "Return to Town Square", nextScene: 'town_square', type: 'travel' }],
                 onEnter: (state) => {
                     state.isAbsorbCharged = false; // Clear flag
                     state.currentHP = applyDamage(state.currentHP, 4); // Minor Damage
@@ -2450,12 +2479,12 @@
                     if (!state.inventory.includes("Sword of Valor")) state.inventory.push("Sword of Valor");
                     return "Took 4 DMG. Acquired Sword of Valor.";
                 },
-                choices: [{ text: "Return to Town Square", nextScene: 'town_square', type: 'travel' }]
             },
             'smelter_victory_brute': {
                 title: "Slag Horror Defeated",
                 text: "The Slag Horror is shattered. The **Sword of Valor** is yours. You are heavily wounded.",
                 journal: "Brute force victory over the Slag Horror, taking heavy damage. Claimed the Sword of Valor.",
+                choices: [{ text: "Limp to Town Square", nextScene: 'town_square', type: 'travel' }],
                 onEnter: (state) => {
                     state.isAbsorbCharged = false; // Clear flag
                     state.currentHP = applyDamage(state.currentHP, 10); // Major Damage
@@ -2463,7 +2492,6 @@
                     if (!state.inventory.includes("Sword of Valor")) state.inventory.push("Sword of Valor");
                     return "Took 10 DMG. Acquired Sword of Valor.";
                 },
-                choices: [{ text: "Limp to Town Square", nextScene: 'town_square', type: 'travel' }]
             },
             // --- END MULTI-STAGE BOSS FIGHT: SLAG HORROR ---
 
@@ -2474,23 +2502,25 @@
                 text: "The cemetery is covered in unnatural fog. The paths loop back on themselves, and you cannot see.",
 				journal: "The silence here is heavy. It presses against my ears. The fog moves like it has intent. I'd prefer the fire—at least fire is honest.",
                 choices: [
-                    // OPTION 1: INFO CHECK (Automatic Success)
+                    // OPTION 1: INFO CHECK (Automatic Success) - DOOM COST 0
                     { 
-                        text: "Follow the Weeping Angel Statues (Secret)", 
+                        text: "Follow the Weeping Angel Statues (Secret, 0 Turns)", 
                         nextScene: 'chapel_safe', 
                         type: 'dialogue', 
                         reqFlag: 'knowsChapelSecret',
+                        doomCost: 0,
                         customClass: 'btn-success-glow'
                     },
-                    // OPTION 2: HERO BUTTON (Primeval Awareness)
+                    // OPTION 2: HERO BUTTON (Primeval Awareness) - DOOM COST 0
                     { 
-                        text: "Channel Primeval Awareness (See Ambushers)", 
+                        text: "Channel Primeval Awareness (See Ambushers, 0 Turns)", 
                         nextScene: 'chapel_safe_surprise', 
                         type: 'action', 
                         reqSkill: 'Primeval Awareness', 
+                        doomCost: 0,
                         customClass: 'btn-shadow-glow' 
                     },
-                    // OPTION 3: SKILL CHECK (Talon/Perception)
+                    // OPTION 3: SKILL CHECK (Talon/Perception) - DOOM COST 1 (Default)
                     { text: "Attempt to Track Movement (Talon/Perception DC 15)", nextScene: 'chapel_roll', type: 'skill', dc: 15, skill: 'Perception' }
                 ]
             },
@@ -2498,24 +2528,24 @@
                 title: "Ambush Avoided", 
                 text: "You bypass the maze and surprise the Spectre. You get a free hit.", 
                 journal: "Used Primeval Awareness. Gained Surprise Round.",
+                choices: [{ text: "Continue to Vestry Antechamber", nextScene: 'chapel_vestry', type: 'travel' }],
                 onEnter: (state) => { state.isSurpriseRound = true; return "Surprise Round advantage granted."; },
-                choices: [{ text: "Continue to Vestry Antechamber", nextScene: 'chapel_vestry', type: 'travel' }] // MODIFIED: Next scene is antechamber
             },
             'chapel_safe': { 
                 title: "Found Path", 
                 text: "You navigate the fog safely.", 
-                choices: [{ text: "Continue to Vestry Antechamber", nextScene: 'chapel_vestry', type: 'travel' }] // MODIFIED: Next scene is antechamber
+                choices: [{ text: "Continue to Vestry Antechamber", nextScene: 'chapel_vestry', type: 'travel' }]
             },
             'chapel_roll': { isLogic: true, resolve: (roll) => roll >= 15 ? 'chapel_safe' : 'chapel_damage' },
             'chapel_damage': { 
                 title: "Ambushed", 
                 text: "A shadow creature ambushes you.", 
+                choices: [{ text: "Continue to Vestry Antechamber", nextScene: 'chapel_vestry', type: 'travel' }],
                 onEnter: (s) => { 
                     s.currentHP = applyDamage(s.currentHP, 6); 
                     fxManager.flashRed();
                     return "Took 6 Shadow Damage."; 
                 }, 
-                choices: [{ text: "Continue to Vestry Antechamber", nextScene: 'chapel_vestry', type: 'travel' }] // MODIFIED: Next scene is antechamber
             },
             // --- NEW SCENE: CHAPEL ANTECHAMBER (Order/Chaos Choice) ---
             'chapel_vestry': {
@@ -2523,19 +2553,22 @@
                 text: "The vestry is flooded with black, polluted water. A panicked man is caught in the undertow, struggling to keep his head above the foul tide. He screams for help.",
                 journal: "Found a drowning man in the Chapel vestry. A choice of mercy or self-interest.",
                 choices: [
+                    // ORDER PATH: INCURS DOOM COST (Default 1) - Takes time
                     { 
-                        text: "Attempt Rescue (Gareth/Athletics DC 14, +4 Order)", 
+                        text: "Attempt Rescue (Gareth/Athletics DC 14, +4 Order, -1 Turn)", 
                         nextScene: 'chapel_rescue_check', 
                         type: 'skill', 
                         dc: 14, 
                         skill: 'Athletics',
                         orderGain: 4
                     },
+                    // CHAOS PATH: NO DOOM COST - Saves time
                     { 
-                        text: "Ignore the Screams and Search for Loot (+4 Chaos)", 
+                        text: "Ignore the Screams and Search for Loot (+4 Chaos, 0 Turns)", 
                         nextScene: 'chapel_ignore_drowning', 
                         type: 'dialogue',
-                        chaosGain: 4
+                        chaosGain: 4,
+                        doomCost: 0
                     }
                 ]
             },
@@ -2547,6 +2580,7 @@
                 title: "Mercy's Reward",
                 text: "You pull the panicked man from the black water. Gasping, he hands you a small, heavy silver heart—a family locket. 'Sell this, please. For my family.'",
                 journal: "Saved the man. Gained Order +4 and a Silver Locket.",
+                choices: [{ text: "Proceed to Crypt (Boss Fight)", nextScene: 'chapel_stage1_reveal', type: 'travel' }], // DIRECT TO BOSS
                 onEnter: (state) => {
                     if (!state.inventory.includes("Silver Locket")) {
                         state.inventory.push("Silver Locket");
@@ -2554,23 +2588,23 @@
                     state.influence = Math.max(-20, state.influence - 4);
                     return "Found Silver Locket. Order +4.";
                 },
-                choices: [{ text: "Proceed to Crypt (Boss Fight)", nextScene: 'chapel_stage1_reveal', type: 'travel' }] // DIRECT TO BOSS
             },
             'chapel_rescue_fail': {
                 title: "Overwhelmed",
                 text: "The black water and the man's panic are too much. He slips from your grasp and is pulled under. The undertow bruises your legs.",
                 journal: "Failed the rescue. Took damage from the undertow.",
+                choices: [{ text: "Proceed to Crypt (Boss Fight)", nextScene: 'chapel_stage1_reveal', type: 'travel' }], // DIRECT TO BOSS
                 onEnter: (state) => {
                     state.currentHP = applyDamage(state.currentHP, 3);
                     fxManager.flashRed();
                     return "Took 3 Damage.";
                 },
-                choices: [{ text: "Proceed to Crypt (Boss Fight)", nextScene: 'chapel_stage1_reveal', type: 'travel' }] // DIRECT TO BOSS
             },
             'chapel_ignore_drowning': {
                 title: "Looting the Drowned",
                 text: "You ignore the man's screams. He drowns quickly. You search his floating corpse and find only a damp, useless map, but Talon spots something shining behind the altar—a consecrated bottle of Holy Water, untouched by the black tide.",
                 journal: "Ignored the drowning man. Gained Chaos +4 and Holy Water.",
+                choices: [{ text: "Proceed to Crypt (Boss Fight)", nextScene: 'chapel_stage1_reveal', type: 'travel' }], // DIRECT TO BOSS
                 onEnter: (state) => {
                     if (!state.inventory.includes("Holy Water")) {
                         state.inventory.push("Holy Water");
@@ -2578,7 +2612,6 @@
                     state.influence = Math.min(20, state.influence + 4);
                     return "Found Holy Water. Chaos +4.";
                 },
-                choices: [{ text: "Proceed to Crypt (Boss Fight)", nextScene: 'chapel_stage1_reveal', type: 'travel' }] // DIRECT TO BOSS
             },
             // --- END CHAPEL ANTECHAMBER ---
             
@@ -2586,6 +2619,7 @@
             'chapel_stage1_reveal': {
                 title: "Drowned Spectre: Stage 1 - The Ambush",
                 text: "The crypt is flooded. The <span class='text-gray-400 font-bold'>Drowned Spectre</span> is present but invisible in the thick, churning black fog. It will strike from the dark unless you can pinpoint its true location. On its skeletal finger glints the **Ring of Brass**.",
+                isBoss: true, // Tag as boss scene (No doom cost)
                 choices: [
                     // COUNTER 1: Item Bypass (If Fire Path was done first)
                     { 
@@ -2638,6 +2672,7 @@
             'chapel_stage2_finish': {
                 title: "Drowned Spectre: Stage 2 - Banishment",
                 text: "The Spectre is revealed. It knows it's been found and lunges at you, attempting to possess your mind. You must banish it now.",
+                isBoss: true, // Tag as boss scene (No doom cost)
                 choices: [
                     // COUNTER 1: Alchemical Fire
                     { 
@@ -2663,12 +2698,7 @@
             'chapel_stage2_hit_damaged': {
                 title: "Drowned Spectre: Stage 2 - Found, But Wounded",
                 text: "Your wild strike grazed the Spectre, but it lashed out, dealing psychic damage. It's now revealed and attempts possession.",
-                onEnter: (state) => {
-                    // Apply the damage calculated in the logic scene
-                    state.currentHP = applyDamage(state.currentHP, state.pendingDamage || 0);
-                    fxManager.flashRed();
-                    return `Took ${state.pendingDamage} Psychic Damage. The Spectre is now visible.`;
-                },
+                isBoss: true, // Tag as boss scene (No doom cost)
                 choices: [
                     // SAME CHOICES as stage 2 clean
                     { 
@@ -2687,17 +2717,18 @@
                         customClass: 'btn-shadow-glow'
                     },
                     { text: "Engage in Psychic Struggle (Brute Force)", nextScene: 'chapel_victory_brute', type: 'combat' }
-                ]
-            },
-            'chapel_stage2_miss_damaged': {
-                title: "Drowned Spectre: Stage 2 - Missed and Drained",
-                text: "Your attack missed, and the Spectre drained a huge portion of your life force. It is revealed but you are heavily wounded. Finish this now!",
+                ],
                 onEnter: (state) => {
                     // Apply the damage calculated in the logic scene
                     state.currentHP = applyDamage(state.currentHP, state.pendingDamage || 0);
                     fxManager.flashRed();
-                    return `Took ${state.pendingDamage} Psychic Damage. The Spectre is visible, but you are drained.`;
+                    return `Took ${state.pendingDamage} Psychic Damage. The Spectre is now visible.`;
                 },
+            },
+            'chapel_stage2_miss_damaged': {
+                title: "Drowned Spectre: Stage 2 - Missed and Drained",
+                text: "Your attack missed, and the Spectre drained a huge portion of your life force. It is revealed but you are heavily wounded. Finish this now!",
+                isBoss: true, // Tag as boss scene (No doom cost)
                 choices: [
                     // SAME CHOICES as stage 2 clean
                     { 
@@ -2716,13 +2747,20 @@
                         customClass: 'btn-shadow-glow'
                     },
                     { text: "Engage in Psychic Struggle (Brute Force)", nextScene: 'chapel_victory_brute', type: 'combat' }
-                ]
+                ],
+                onEnter: (state) => {
+                    // Apply the damage calculated in the logic scene
+                    state.currentHP = applyDamage(state.currentHP, state.pendingDamage || 0);
+                    fxManager.flashRed();
+                    return `Took ${state.pendingDamage} Psychic Damage. The Spectre is visible, but you are drained.`;
+                },
             },
             // Victory scenes consolidated (all grant Ring of Brass)
              'chapel_victory_water': {
                 title: "Drowned Spectre Defeated",
                 text: "The Drowned Spectre is banished. The **Ring of Brass** is yours. You are drenched, but victorious.",
                 journal: "Used Holy Water to defeat the Drowned Spectre. Claimed the Ring of Brass.",
+                choices: [{ text: "Return to Town Square", nextScene: 'town_square', type: 'travel' }],
                 onEnter: (state) => {
                     state.isSurpriseRound = false; // Clear flag
                     if (!state.inventory.includes("Ring of Brass")) state.inventory.push("Ring of Brass");
@@ -2730,23 +2768,23 @@
                     if (idx > -1) state.inventory.splice(idx, 1);
                     return "Used Holy Water. Acquired Ring of Brass.";
                 },
-                choices: [{ text: "Return to Town Square", nextScene: 'town_square', type: 'travel' }]
             },
             'chapel_victory_sword': {
                 title: "Drowned Spectre Defeated",
                 text: "The Drowned Spectre is banished. The **Ring of Brass** is yours. The Sword cuts through the void.",
                 journal: "Flawless victory over the Spectre using the Sword of Valor. Claimed the Ring of Brass.",
+                choices: [{ text: "Return to Town Square", nextScene: 'town_square', type: 'travel' }],
                 onEnter: (state) => {
                     state.isSurpriseRound = false; // Clear flag
                     if (!state.inventory.includes("Ring of Brass")) state.inventory.push("Ring of Brass");
                     return "Acquired Ring of Brass.";
                 },
-                choices: [{ text: "Return to Town Square", nextScene: 'town_square', type: 'travel' }]
             },
             'chapel_victory_item': {
                 title: "Drowned Spectre Defeated",
                 text: "The Drowned Spectre is banished. The **Ring of Brass** is yours. The Alchemical fire burns away the shadows.",
                 journal: "Used Alchemical Fire to defeat the Drowned Spectre. Claimed the Ring of Brass.",
+                choices: [{ text: "Return to Town Square", nextScene: 'town_square', type: 'travel' }],
                 onEnter: (state) => {
                     state.isSurpriseRound = false; // Clear flag
                     if (!state.inventory.includes("Ring of Brass")) state.inventory.push("Ring of Brass");
@@ -2754,12 +2792,12 @@
                     if (idx > -1) state.inventory.splice(idx, 1);
                     return "Used Alchemical Fire. Acquired Ring of Brass.";
                 },
-                choices: [{ text: "Return to Town Square", nextScene: 'town_square', type: 'travel' }]
             },
             'chapel_victory_skill': {
                 title: "Drowned Spectre Defeated",
                 text: "The Drowned Spectre is banished. The **Ring of Brass** is yours. You are drained but intact.",
                 journal: "Defeated the Spectre with Primeval Awareness. Claimed the Ring of Brass.",
+                choices: [{ text: "Return to Town Square", nextScene: 'town_square', type: 'travel' }],
                 onEnter: (state) => {
                     state.isSurpriseRound = false; // Clear flag
                     state.currentHP = applyDamage(state.currentHP, 5); // Minor Psychic Damage
@@ -2767,12 +2805,12 @@
                     if (!state.inventory.includes("Ring of Brass")) state.inventory.push("Ring of Brass");
                     return "Took 5 DMG. Acquired Ring of Brass.";
                 },
-                choices: [{ text: "Return to Town Square", nextScene: 'town_square', type: 'travel' }]
             },
             'chapel_victory_brute': {
                 title: "Drowned Spectre Defeated",
                 text: "The Drowned Spectre is banished. The **Ring of Brass** is yours. Your mind is fractured by the psychic blow.",
                 journal: "Brute force victory over the Spectre, taking heavy sanity damage. Claimed the Ring of Brass.",
+                choices: [{ text: "Limp to Town Square", nextScene: 'town_square', type: 'travel' }],
                 onEnter: (state) => {
                     state.isSurpriseRound = false; // Clear flag
                     state.currentHP = applyDamage(state.currentHP, 12); // Major Psychic Damage
@@ -2780,11 +2818,10 @@
                     if (!state.inventory.includes("Ring of Brass")) state.inventory.push("Ring of Brass");
                     return "Took 12 DMG. Acquired Ring of Brass.";
                 },
-                choices: [{ text: "Limp to Town Square", nextScene: 'town_square', type: 'travel' }]
             },
             // --- END MULTI-STAGE BOSS FIGHT: DROWNED SPECTRE ---
             
-            'finale_ritual_start': { title: "The Ritual", text: "Ritual start scene.", choices: [{ text: "End", type: 'reset' }] },
+            'finale_ritual_start': { title: "The Ritual", text: "Ritual start scene.", isBoss: true, choices: [{ text: "End", type: 'reset' }] },
 
             'edward_death': {
                 title: "The Mariner's End",
@@ -2986,6 +3023,7 @@
             gameState.isAbsorbCharged = false;
             gameState.isSurpriseRound = false;
             gameState.isRiftCollapse = false;
+            gameState.act1Started = false; // Ensure Act 1 starts false on reset
 
             document.getElementById('journal-content').innerHTML = '';
             await saveGame();
@@ -3114,23 +3152,30 @@
             }
 
             // --- DOOM COUNTER LOGIC (Planar Instability) ---
-            // Only decrement if Act 1 is started AND the scene is not a rest/boss scene
-            const isBossScene = sceneId.includes('smelter_stage') || sceneId.includes('chapel_stage') || sceneId.includes('finale_ritual');
-            if (gameState.act1Started && !scene.isRest && !isBossScene) {
-                gameState.doomTimer -= 1;
-                // Only log if the timer has changed and is above 0
-                if (gameState.doomTimer > 0) {
-                    addToHistory(`Rift Stability: ${gameState.doomTimer} turns remaining.`, 'system');
-                }
+            const isBossScene = scenes[sceneId].isBoss;
+            
+            // Check for explicit doomCost = 0 flag on the scene itself (usually used for information scenes)
+            if (scenes[sceneId].doomCost === 0) { 
+                 // Do nothing, cost is 0
+            } else if (gameState.act1Started && !scenes[sceneId].isRest && !isBossScene) {
+                // If it's a normal scene in Act 1, and the cost wasn't explicitly set to 0 in the button logic, decrement
                 
-                if (gameState.doomTimer <= 0 && !gameState.isRiftCollapse) {
-                    // Fail state: Apply penalty, set flag, and continue
-                    gameState.isRiftCollapse = true;
-                    gameState.maxHP = Math.max(1, gameState.maxHP - 5);
-                    gameState.currentHP = Math.min(gameState.currentHP, gameState.maxHP); // Clamp current HP
-                    addToHistory(`!!! RIFT COLLAPSE !!! The veil has ruptured. All Skill Check DCs are permanently increased by 2. Max HP reduced by 5 due to toxic air.`, 'system');
-                    // Do not reset game, just make it much harder
-                }
+                // This block is complex because we rely on the button click to decrement the doom counter.
+                // However, scenes like 'smelter_workers' are travel scenes that *themselves* have a default doomCost of 1.
+                // For simplicity and to avoid double-decrement, we now rely on the button click handling 
+                // the doom decrement unless the button had doomCost: 0. 
+                // For direct scene entry (no button click), the scene is assumed to have 0 cost (like onEnter logic).
+            }
+
+            // The actual decrement logic is now inside the `btn.onclick` function.
+            // This logic below handles the state if the doom timer hit 0 on the last click.
+            if (gameState.doomTimer <= 0 && !gameState.isRiftCollapse && gameState.act1Started) {
+                // Fail state: Apply penalty, set flag, and continue
+                gameState.isRiftCollapse = true;
+                gameState.maxHP = Math.max(1, gameState.maxHP - 5);
+                gameState.currentHP = Math.min(gameState.currentHP, gameState.maxHP); // Clamp current HP
+                addToHistory(`!!! RIFT COLLAPSE !!! The veil has ruptured. All Skill Check DCs are permanently increased by 2. Max HP reduced by 5 due to toxic air.`, 'system');
+                // Note: renderScene will be called below, which will update the UI
             }
             
             // --- DEATH CHECK 1: Immediately check if onEnter killed the player ---
@@ -3319,10 +3364,8 @@
                 
                 // --- VISIBILITY (OMIT) CHECKS: Apply OMIT logic first ---
                 
-                // OMIT 1: Non-Merchant Choices that require an item (Rope/Torch/etc.)
-                // This applies to scenes like 'cliff_climb' or 'dark_caves'
-                // isTradeButton check is absent here, relying on checking reqItem and if it's in inventory
-                if (choice.reqItem && !choice.cost && !choice.value && !gameState.inventory.includes(choice.reqItem) && choice.type !== 'skill') {
+                // FIX: Only hide non-skill/non-trade buttons if a required item is MISSING.
+                if (choice.reqItem && !choice.cost && !choice.value && !gameState.inventory.includes(choice.reqItem)) {
                      // If it requires an item, and is NOT a trade/sell button, hide it if item missing
                      return;
                 }
@@ -3455,6 +3498,25 @@
                     // RP FIX: Player perceives Order gain, even though it's technically negative influence shift
                     if (choice.orderGain) gameState.influence = Math.max(-20, gameState.influence - choice.orderGain); 
                     
+                    // --- DOOM COUNTER DECREMENT ON CLICK (Conditional) ---
+                    // Decrement only if Act 1 has started AND the choice does NOT have doomCost: 0 (or is implicitly 1)
+                    if (gameState.act1Started && choice.doomCost !== 0) {
+                        gameState.doomTimer -= 1;
+                        if (gameState.doomTimer > 0) {
+                            addToHistory(`Rift Stability: ${gameState.doomTimer} turns remaining.`, 'system');
+                        }
+                        
+                        if (gameState.doomTimer <= 0 && !gameState.isRiftCollapse) {
+                            // Fail state: Apply penalty, set flag, and continue
+                            gameState.isRiftCollapse = true;
+                            gameState.maxHP = Math.max(1, gameState.maxHP - 5);
+                            gameState.currentHP = Math.min(gameState.currentHP, gameState.maxHP); // Clamp current HP
+                            addToHistory(`!!! RIFT COLLAPSE !!! The veil has ruptured. All Skill Check DCs are permanently increased by 2. Max HP reduced by 5 due to toxic air.`, 'system');
+                            // Note: renderScene will be called below, which will update the UI
+                        }
+                    }
+                    // --- END DOOM COUNTER DECREMENT ---
+                    
                     // --- SKILL CHECK LOGIC WITH COMPLEX CREW TRACKING ---
                     if (choice.type === 'skill') {
                         // Store required skill type and DC for the logic scene resolution
@@ -3538,6 +3600,16 @@
                 } else if (choice.orderGain) {
                     indicators.push({ text: `+${choice.orderGain} Order`, color: 'text-blue-400' });
                 }
+                
+                // 4. Doom Cost (If cost is explicit)
+                if (gameState.act1Started && !scenes[currentSceneId].isBoss && !scenes[currentSceneId].isRest) {
+                    const cost = choice.doomCost === undefined ? 1 : choice.doomCost;
+                    if (cost === 0) {
+                         indicators.push({ text: `0 Turns`, color: 'text-purple-400' });
+                    } else if (cost > 0) {
+                         indicators.push({ text: `-${cost} Turn`, color: 'text-purple-400' });
+                    }
+                }
 
                 // Build supplemental text string using all indicators
                 let indicatorString = '';
@@ -3547,19 +3619,9 @@
                 });
 
                 if (indicatorString) {
-                    supplementalText += indicatorString;
-                }
-                // --- End Consistent Currency/Value/Influence Display ---
-                
-                if (choice.type === 'reset') {
-                     icon = '<i class="fas fa-undo text-white"></i>'; // Ensure reset button icon is white/visible
-                     // Content is already set in death scene to Awaken (Restart Game)
-                }
-                
-                // If there is supplemental text (skill/cost/value), merge it with the main content
-                if (supplementalText) {
-                    content += supplementalText;
-                    btn.innerHTML = `${content} <span class="ml-auto">${icon}</span>`;
+                    content += supplementalText; // Append skill text first
+                    supplementalText = indicatorString; // Replace supplementalText with indicator string
+                    btn.innerHTML = `${content} ${supplementalText} <span class="ml-auto">${icon}</span>`;
                 } else {
                      // Default travel/dialogue button using justify-between
                      btn.innerHTML = `${content}${icon}`;
@@ -3609,11 +3671,13 @@
             }
             
             // --- DOOM COUNTER UI ---
+            const doomDisplay = document.getElementById('doom-counter-display');
             const doomText = document.getElementById('doom-timer-text');
             const doomBar = document.getElementById('doom-bar');
             const maxDoom = 15;
 
             if (gameState.act1Started) {
+                doomDisplay.classList.remove('hidden'); // Show the doom counter
                 doomText.textContent = `${gameState.doomTimer} Turns`;
                 const doomPct = (gameState.doomTimer / maxDoom) * 100;
                 doomBar.style.width = `${doomPct}%`;
@@ -3633,6 +3697,8 @@
                      doomBar.classList.add('bg-purple-600');
                      doomText.classList.remove('text-red-500');
                 }
+            } else {
+                doomDisplay.classList.add('hidden'); // Hide doom counter outside Act 1
             }
             
             // Money
