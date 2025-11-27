@@ -1178,10 +1178,11 @@
                 journal: "Found the smugglers. They aren't friendly.",
                 choices: [
                     { text: "Flash 'The Mariner's Sign'", nextScene: 'smuggler_friend', type: 'dialogue', reqSmuggler: 3 },
-                    // CHOICE: Offer Curious Cargo (Chaos Only)
+                    // FIX: Ensure 'Curious Cargo' button is only available if player has the item
                     { text: "Offer Curious Cargo", nextScene: 'smuggler_cargo', type: 'action', reqItem: 'Curious Cargo', chaosGain: 6 },
                     { text: "Buy safe passage", nextScene: 'smuggler_pay', type: 'action', cost: 5 },
-                    { text: "Run to Market", nextScene: 'market_crossroads', type: 'travel' }
+                    // FIX: Changed type to 'dialogue' for max visibility of non-conditional travel
+                    { text: "Run to Market", nextScene: 'market_crossroads', type: 'dialogue' }
                 ]
             },
             // SMUGGLER TRADE SCENE (Chaos Only, No Coin)
@@ -1391,13 +1392,15 @@
                 title: "The Precipice",
                 text: "The wind howls, threatening to tear you from the rock.",
                 choices: [
-                    { text: "Use Rope (Safe Climb)", nextScene: 'lighthouse_arrival', type: 'action', reqItem: 'Rope', consume: true },
+                    // FIX: Direct successful path to faction_check to ensure button visibility
+                    { text: "Use Rope (Safe Climb)", nextScene: 'faction_check', type: 'action', reqItem: 'Rope', consume: true },
                     { text: "Free Solo", nextScene: 'climb_check', type: 'skill', dc: 14, skill: 'Athletics' } 
                 ]
             },
             'climb_check': {
                 isLogic: true,
-                resolve: (roll) => roll >= 14 ? 'lighthouse_arrival' : 'climb_fail'
+                // FIX: Direct successful roll to faction_check
+                resolve: (roll) => roll >= 14 ? 'faction_check' : 'climb_fail'
             },
             'climb_fail': {
                 title: "Slip and Fall",
@@ -1408,8 +1411,8 @@
                     fxManager.flashRed();
                     return "Took 5 Damage."; 
                 },
-                // Redirects to death scene if HP hit 0, otherwise continues
-                choices: [{ text: "Keep Climbing", nextScene: 'lighthouse_arrival', type: 'travel' }]
+                // Redirects to lighthouse_arrival to proceed to faction_check
+                choices: [{ text: "Keep Climbing (Arrive at Lighthouse)", nextScene: 'lighthouse_arrival', type: 'travel' }]
             },
             'dark_caves': {
                 title: "The Abyss Below",
@@ -1433,11 +1436,13 @@
                     }
                     return "Torch expended.";
                 },
-                choices: [{ text: "Proceed to Exit", nextScene: 'lighthouse_arrival', type: 'travel' }]
+                // FIX: Direct successful path to faction_check
+                choices: [{ text: "Proceed to Exit (Arrive at Lighthouse)", nextScene: 'faction_check', type: 'travel' }]
             },
             'dark_check': {
                 isLogic: true,
-                resolve: (roll) => roll >= 14 ? 'lighthouse_arrival' : 'dark_fail'
+                // FIX: Direct successful roll to faction_check
+                resolve: (roll) => roll >= 14 ? 'faction_check' : 'dark_fail'
             },
             'dark_fail': {
                 title: "Unseen Dangers",
@@ -1448,14 +1453,15 @@
                     fxManager.flashRed();
                     return "Took 4 Damage."; 
                 },
-                choices: [{ text: "Limp to the Exit", nextScene: 'lighthouse_arrival', type: 'travel' }]
+                // Redirects to lighthouse_arrival to proceed to faction_check
+                choices: [{ text: "Limp to the Exit (Arrive at Lighthouse)", nextScene: 'lighthouse_arrival', type: 'travel' }]
             },
             'lighthouse_arrival': {
                 title: "The Beacon",
                 text: "You reach the heavy iron doors of the Lighthouse. But you are not alone.",
                 journal: "Made it to the Lighthouse doors. Someone is waiting.",
                 choices: [
-                    // CRITICAL FIX: The next scene needs to be the faction check to continue the story.
+                    // This button is necessary for flow from fail states (climb_fail/dark_fail)
                     { text: "Confront them", nextScene: 'faction_check', type: 'travel' }
                 ]
             },
@@ -1721,9 +1727,8 @@
                 onEnter: (state) => {
                     if (!state.inventory.includes("Holy Water")) {
                         state.inventory.push("Holy Water");
-                        return "Found Holy Water!";
                     }
-                    return "Found only empty crates.";
+                    return "Found Holy Water!";
                 },
                 choices: [{ text: "Return to Docks", nextScene: 'town_docks', type: 'travel' }]
             },
@@ -2718,7 +2723,7 @@
                 const sellWaresChoice = permanentChoices.find(c => c.nextScene === 'alchemist_sell');
                 if (sellWaresChoice) {
                     sellWaresChoice.text = "Sell Wares (Premium)"; 
-                    processedChoices.push(sellWwaresChoice);
+                    processedChoices.push(sellWaresChoice);
                 }
                 
                 processedChoices.push(permanentChoices.find(c => c.nextScene === 'town_square'));
@@ -2768,8 +2773,9 @@
                 
                 // OMIT 1: Non-Merchant Choices that require an item (Rope/Torch/etc.)
                 // This applies to scenes like 'cliff_climb' or 'dark_caves'
-                if (choice.reqItem && !isTradeButton && !gameState.inventory.includes(choice.reqItem)) {
-                     // If it requires an item, and is NOT a trade button (i.e., consumption/puzzle), hide it if item missing
+                // isTradeButton check is absent here, relying on checking reqItem and if it's in inventory
+                if (choice.reqItem && !choice.cost && !choice.value && !gameState.inventory.includes(choice.reqItem)) {
+                     // If it requires an item, and is NOT a trade/sell button, hide it if item missing
                      return;
                 }
                 
