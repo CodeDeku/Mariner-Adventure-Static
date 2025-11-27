@@ -718,10 +718,10 @@
             },
 			'wreckage_success': {
                 title: "Salvage",
-                text: "Quinn guides your hand to a buried chest partially exposed by the tide. Inside, you find a heavy pouch of Shillings and a Rusted Cutlass. You strap the blade to your belt—it feels like an extension of your arm.",
-                journal: "Scavenged a blade and coin from the wreckage.",
+                text: "Quinn guides your hand to a buried chest partially exposed by the tide. Inside, you find a heavy pouch of Shillings and a Rusted Cutlass. You strap the blade to your belt—it feels like an extension of your arm. As you turn to leave, Quinn points frantically to a damp book lying nearby—the Ship's Log.",
+                journal: "Scavenged a blade, coin, and the Logbook from the wreckage.",
                 onEnter: (state) => {
-                    const items = ["Rusted Cutlass"];
+                    const items = ["Rusted Cutlass", "Ship's Log"];
                     let found = false;
                     items.forEach(i => {
                         if(!state.inventory.includes(i)) {
@@ -732,7 +732,7 @@
                     state.shillings += 7; 
                     audioManager.playCoins();
                     
-                    if (found) return "Found: Cutlass & 7 Shillings.";
+                    if (found) return "Found: Cutlass, Log & 7 Shillings.";
                     return "Found: 7 Shillings.";
                 },
                 choices: [{ text: "Move to Treeline", nextScene: 'treeline_prepared', type: 'travel' }]
