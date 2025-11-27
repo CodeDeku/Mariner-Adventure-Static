@@ -1161,11 +1161,11 @@
                 choices: [{ text: "Head to The Crossroads", nextScene: 'market_crossroads', type: 'travel' }]
             },
             'market_crossroads': {
-                title: "The Crossroads Market", // RENAMED TO AVOID HUB CONFUSION
-                text: "You arrive at the ramshackle market district of the port town. You can buy basic supplies here, or push on toward the Lighthouse.",
-                journal: "Reached the Port Market. I should stock up before the final push.",
+                title: "The Crossroads", // RENAMED TO AVOID HUB CONFUSION
+                text: "You arrive at a ramshackle market outside of the port town. You can buy basic supplies here, or push on toward the Lighthouse.",
+                journal: "Reached the a small Market. I should stock up before the final push.",
                 choices: [
-                    { text: "Visit the Market Merchant (Basic Supplies)", nextScene: 'market_stall', type: 'travel' },
+                    { text: "Visit the Market Merchant", nextScene: 'market_stall', type: 'travel' },
                     { text: "Head to the Lighthouse", nextScene: 'lighthouse_split', type: 'travel' }
                 ]
             },
@@ -1583,8 +1583,7 @@
                             customClass: 'btn-shadow-glow' 
                         },
                         { text: "Visit Madam Alara, The Triage Alchemist", nextScene: 'alchemist_triage', type: 'travel' },
-                        { text: "Find Rest at The Blackwater Tavern", nextScene: 'blackwater_tavern', type: 'travel' },
-                        { text: "Visit The Crossroads Market (Basic Supplies)", nextScene: 'market_crossroads', type: 'travel' } 
+                        { text: "Find Rest at The Blackwater Tavern", nextScene: 'blackwater_tavern', type: 'travel' }, 
                     ];
 
                     // STATE 2: FINALE UNLOCKED - Remove exploration choices, force ritual preparation
