@@ -139,25 +139,29 @@
             filter: drop-shadow(0 0 5px rgba(59, 130, 246, 0.8));
         }
 
-        /* --- FIRE ELEMENTAL GLOW (Absorb Elements) --- */
+        /* --- FIRE ELEMENTAL GLOW (Absorb Elements) - DIALED BACK --- */
         @keyframes fire-pulse {
-            0%, 100% { box-shadow: 0 0 8px rgba(239, 68, 68, 0.4); border-color: #f87171; }
-            50% { box-shadow: 0 0 20px rgba(248, 113, 113, 0.8); border-color: #fca5a5; }
+            /* Softer glow spread and opacity */
+            0%, 100% { box-shadow: 0 0 3px rgba(239, 68, 68, 0.3); border-color: #f87171; }
+            50% { box-shadow: 0 0 10px rgba(248, 113, 113, 0.5); border-color: #fca5a5; } /* Max spread reduced from 20px to 10px; Opacity reduced to 0.5 */
         }
         .btn-fire-glow {
-            background: linear-gradient(90deg, rgba(185, 28, 28, 0.4) 0%, rgba(15, 23, 42, 0.6) 100%);
+            /* Reduced base opacity of background */
+            background: linear-gradient(90deg, rgba(185, 28, 28, 0.3) 0%, rgba(15, 23, 42, 0.5) 100%);
             border: 1px solid #f87171;
             color: #fecaca;
             animation: fire-pulse 2s infinite;
         }
 
-        /* --- SHADOW/VOID GLOW (Primeval Awareness) --- */
+        /* --- SHADOW/VOID GLOW (Primeval Awareness) - DIALED BACK --- */
         @keyframes shadow-pulse {
-            0%, 100% { box-shadow: 0 0 8px rgba(139, 92, 246, 0.4); border-color: #a78bfa; }
-            50% { box-shadow: 0 0 20px rgba(167, 139, 250, 0.8); border-color: #d8b4fe; }
+            /* Softer glow spread and opacity */
+            0%, 100% { box-shadow: 0 0 3px rgba(139, 92, 246, 0.3); border-color: #a78bfa; }
+            50% { box-shadow: 0 0 10px rgba(167, 139, 250, 0.5); border-color: #d8b4fe; } /* Max spread reduced from 20px to 10px; Opacity reduced to 0.5 */
         }
         .btn-shadow-glow {
-            background: linear-gradient(90deg, rgba(88, 28, 135, 0.4) 0%, rgba(15, 23, 42, 0.6) 100%);
+            /* Reduced base opacity of background */
+            background: linear-gradient(90deg, rgba(88, 28, 135, 0.3) 0%, rgba(15, 23, 42, 0.5) 100%);
             border: 1px solid #a78bfa;
             color: #e9d5ff;
             animation: shadow-pulse 2s infinite;
@@ -1367,7 +1371,7 @@
             },
             'climb_fail': {
                 title: "Slip and Fall",
-                text: "Your grip fails. You slide twenty feet, shredding skin against stone before catching a root.",
+                text: "You slide twenty feet, shredding skin against stone before catching a root.",
                 journal: "Almost fell to my death. Climbing without rope was foolish.",
                 onEnter: (state) => { 
                     state.currentHP = applyDamage(state.currentHP, 5); 
