@@ -1804,7 +1804,7 @@
                         customClass: 'btn-shadow-glow'						
                     },
                     { text: "Visit The Triage Alchemist", nextScene: 'alchemist_triage', type: 'travel', doomCost: 0 },
-                    { text: "Rest at The Blackwater Tavern", nextScene: 'blackwater_tavern', type: 'travel', doomCost: 0 },
+                    { text: "Stay at The Blackwater Tavern", nextScene: 'blackwater_tavern', type: 'travel', doomCost: 0 },
                     { text: "Explore the Docks", nextScene: 'town_docks', type: 'travel', doomCost: 0 } // NEW DOCKS BUTTON
                 ],
                 onEnter: (state) => {
@@ -1991,9 +1991,9 @@
                 },
                 choices: [
                     // PAID REST OPTION (Now always visible, handled by renderChoices for cost)
-                    { text: "Pay 10 Shillings for a Cot (Full Rest)", nextScene: 'tavern_rest_success', type: 'action', cost: 10 },
+                    { text: "Pay for a Cot (Full Rest)", nextScene: 'tavern_rest_success', type: 'action', cost: 10 },
                     // NEW: BUY GRUEL OPTION
-                    { text: "Buy Gruel (1s, +2 HP)", nextScene: 'buy_gruel', type: 'action', cost: 1, stockItem: 'Gruel' },
+                    { text: "Buy Gruel", nextScene: 'buy_gruel', type: 'action', cost: 1, stockItem: 'Gruel' },
                     // INFORMATION GATHERING
                     { text: "Listen to Engineer's Rumors (Smelter)", nextScene: 'gather_info_smelter', type: 'dialogue' },
                     { text: "Listen to Gravedigger's Warnings (Chapel)", nextScene: 'gather_info_chapel', type: 'dialogue' },
