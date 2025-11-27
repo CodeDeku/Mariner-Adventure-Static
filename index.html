@@ -176,6 +176,18 @@
             background-color: rgba(4, 120, 87, 0.6);
             box-shadow: 0 0 15px rgba(52, 211, 153, 0.8);
         }
+        
+        /* --- TRADE BUTTON STYLING (Used for Buy/Sell options at both merchants) --- */
+        .btn-trade {
+            background-color: #1f2937; /* Dark slate */
+            border: 1px solid #475569; /* Slate-600 */
+            color: #e5e7eb; /* Light grey */
+            transition: background-color 0.1s, border-color 0.1s;
+        }
+        .btn-trade:hover {
+            background-color: #334155; /* Darker hover */
+            border-color: #94a3b8; /* Lighter border on hover */
+        }
 
         /* --- LORE TOOLTIPS --- */
         /* Updated LORE Tooltip styling to use SPECTRAL GLOW for consistency */
@@ -1476,7 +1488,6 @@
                     fxManager.flashRed();
                     return "Took 2 Damage (Hurry)."; 
                 },
-                // REDIRECTED to Lighthouse Vigil
                 choices: [{ text: "Enter and Rest", nextScene: 'lighthouse_vigil', type: 'rest' }]
             },
             'lighthouse_vigil': {
@@ -1658,7 +1669,6 @@
                     "Flash Powder": 1
                 },
                 choices: [
-                    { text: "Visit The Crossroads Market (Basic Supplies)", nextScene: 'market_crossroads', type: 'travel' },
                     { text: "Sell Wares to Alchemist (High Value)", nextScene: 'alchemist_sell', type: 'travel' },
                     { text: "Return to Port Square", nextScene: 'town_square', type: 'travel' }
                 ]
@@ -2067,18 +2077,6 @@
             });
         }
 
-        async function saveGame() {
-            if (!user) return;
-            const docRef = doc(db, 'artifacts', appId, 'users', user.uid, 'data', 'game_save');
-            const safeState = JSON.parse(JSON.stringify(gameState));
-            
-            // --- ATTACH SCENE STOCK TO SAVED STATE ---
-            safeState.market_stall_stock = scenes['market_stall'].stock;
-            safeState.alchemist_triage_stock = scenes['alchemist_triage'].stock;
-
-            await setDoc(docRef, safeState);
-        }
-
         let resetConfirmTimer = null;
         function confirmReset() {
             const btn = document.getElementById('reset-game-btn');
@@ -2302,7 +2300,7 @@
                 const permanentChoices = processedChoices.filter(c => c.nextScene === 'market_sell' || c.nextScene === 'market_crossroads');
                 processedChoices = []; 
 
-                // 1. Generate Dynamic Buy Options
+                // 1. Generate Dynamic Buy Options (The Merchant)
                 MARKET_BUY_OPTIONS.forEach(sale => {
                     // Check local stock for this item name
                     const actualStock = currentSceneStock[sale.item] || 0;
@@ -2314,13 +2312,13 @@
                             nextScene: sale.nextScene,
                             type: 'action',
                             cost: sale.cost,
-                            stockItem: sale.item 
+                            stockItem: sale.item,
+                            customClass: 'btn-trade' // Use generic trade class
                         });
                     }
                 });
                 
                 // 2. Add static navigation back in
-                // Rename the selling button text
                 const sellWaresChoice = permanentChoices.find(c => c.nextScene === 'market_sell');
                 if (sellWaresChoice) {
                     sellWaresChoice.text = "Sell Wares"; 
@@ -2334,7 +2332,7 @@
                 const permanentChoices = choices.filter(c => c.nextScene === 'market_stall' || c.nextScene === 'market_crossroads');
                 processedChoices = []; 
 
-                // Generate Dynamic Sell Options
+                // Generate Dynamic Sell Options (The Merchant)
                 MARKET_SELL_OPTIONS.forEach(sell => {
                     // Check if the player has the item in inventory
                     if (gameState.inventory.includes(sell.item)) {
@@ -2349,18 +2347,20 @@
                             nextScene: sell.nextScene,
                             type: 'action',
                             reqItem: sell.item,
-                            value: sell.value 
+                            value: sell.value,
+                            customClass: 'btn-trade' // Use generic trade class
                         });
                     }
                 });
                 // Add back the navigation choices
                 processedChoices = processedChoices.concat(permanentChoices);
+
             } else if (currentSceneId === 'alchemist_triage') {
                  // Isolate navigation choices and prepare to regenerate buy options
                 const permanentChoices = processedChoices.filter(c => c.nextScene === 'alchemist_sell' || c.nextScene === 'town_square' || c.nextScene === 'market_crossroads');
                 processedChoices = []; 
 
-                // 1. Generate Dynamic Buy Options
+                // 1. Generate Dynamic Buy Options (Triage Alchemist)
                 ALCHEMIST_BUY_OPTIONS.forEach(sale => {
                     const itemText = sale.item.split('(')[0].trim();
                     const actualStock = currentSceneStock[sale.item] || 0;
@@ -2372,8 +2372,8 @@
                             type: 'action',
                             cost: sale.cost,
                             stockItem: sale.item,
-                            // Use standard btn-game class to ensure correct sizing
-                            customClass: 'btn-game bg-gray-900 border-purple-500/50 hover:bg-gray-700 text-purple-300'
+                            // Retain purple color but use same base button size and behavior
+                            customClass: 'btn-trade bg-gray-900 border-purple-500/50 hover:bg-gray-700 text-purple-300'
                         });
                     }
                 });
@@ -2385,35 +2385,35 @@
                     processedChoices.push(sellWaresChoice);
                 }
                 
-                processedChoices.push(permanentChoices.find(c => c.nextScene === 'market_crossroads'));
                 processedChoices.push(permanentChoices.find(c => c.nextScene === 'town_square'));
+
             } else if (currentSceneId === 'alchemist_sell') {
                 // Isolate navigation choices and prepare to regenerate sell options
                 const permanentChoices = choices.filter(c => c.nextScene === 'alchemist_triage' || c.nextScene === 'town_square');
                 processedChoices = []; 
                 
-                // Generate Dynamic Sell Options (Alchemist Stock)
+                // Generate Dynamic Sell Options (Alchemist Stock - Premium/Artifacts)
                 ALCHEMIST_SELL_OPTIONS.forEach(sell => {
                     if (gameState.inventory.includes(sell.item)) {
                         
-                        // Check if item is already in inventory to ensure it can be sold
-                        if (gameState.inventory.includes(sell.item)) {
-                            
-                            let customClass = 'btn-game';
-                            if (sell.item === 'Alchemical Fire' || sell.item === 'Holy Water') {
-                                // Artifacts are highlighted to warn player, but using the base size
-                                customClass = 'btn-game bg-red-900/50 border-red-700/50 hover:bg-red-700 text-red-300';
-                            }
-
-                            processedChoices.push({
-                                text: `Sell ${sell.item.split('(')[0].trim()} (+${sell.value}s)`, 
-                                nextScene: sell.nextScene,
-                                type: 'action',
-                                reqItem: sell.item,
-                                value: sell.value,
-                                customClass: customClass
-                            });
+                        let customClass = 'btn-trade';
+                        if (sell.item === 'Alchemical Fire' || sell.item === 'Holy Water') {
+                            // Artifacts are highlighted (Red warning)
+                            customClass = 'btn-trade bg-red-900/50 border-red-700/50 hover:bg-red-700 text-red-300';
+                        } else if (sell.item === 'Pearlescent Mushroom') {
+                            // Mushroom gets a special gold/premium color
+                            customClass = 'btn-trade bg-yellow-900/50 border-yellow-700/50 hover:bg-yellow-700 text-yellow-300';
                         }
+
+
+                        processedChoices.push({
+                            text: `Sell ${sell.item.split('(')[0].trim()} (+${sell.value}s)`, 
+                            nextScene: sell.nextScene,
+                            type: 'action',
+                            reqItem: sell.item,
+                            value: sell.value,
+                            customClass: customClass
+                        });
                     }
                 });
                 // Add back the navigation choices
@@ -2449,11 +2449,10 @@
 
                 const btn = document.createElement('button');
                 
-                // Determine styling: Is this a Hero/Skill moment?
+                // Determine styling
                 let isHeroButton = choice.reqSkill ? true : false;
                 let isCustomClassButton = choice.customClass ? true : false;
-                let isNormalButton = !isHeroButton && !isCustomClassButton;
-                let isSecretBypass = choice.reqFlag; // Info Bypass buttons are also custom styled
+                let isTradeButton = choice.customClass && choice.customClass.includes('btn-trade');
 
                 const alignmentClass = (choice.type === 'skill' || choice.cost || choice.value || choice.chaosGain || choice.orderGain) ? 'justify-start' : 'justify-between';
                 
@@ -2462,27 +2461,15 @@
                 if (isDeathScene) {
                     // Death button is always full red and large
                     btnClass = `btn-game w-full p-3 text-left rounded shadow flex items-center ${alignmentClass} cinzel font-bold bg-red-900 border-red-700 hover:bg-red-800 hover:border-amber-500 text-white text-xl text-center`;
-                } else if (isNormalButton) {
-                    // STANDARD STYLING (Default grey button)
-                    btnClass = `btn-game w-full text-left rounded shadow flex items-center ${alignmentClass} cinzel font-bold bg-gray-800 border-gray-600 hover:border-amber-500 hover:bg-gray-750 text-gray-300 group`;
+                } else if (isTradeButton) {
+                    // TRADE BUTTONS: Use the custom class for styling, but ensure p-3 size from .btn-game
+                    btnClass = `btn-game w-full text-left rounded shadow flex items-center ${alignmentClass} cinzel font-bold mb-2 ${choice.customClass}`;
+                } else if (isCustomClassButton) {
+                    // HERO/PATH BUTTONS: Use the dedicated custom classes (which now also enforce p-3 sizing)
+                    btnClass = `w-full text-left rounded shadow flex items-center ${alignmentClass} cinzel font-bold mb-2 ${choice.customClass}`;
                 } else {
-                    // HERO/CUSTOM STYLING (Uses the unified custom CSS definitions)
-                    // Note: We deliberately use 'btn-game' here IF the user provided a custom class that isn't a hero button,
-                    // otherwise the full custom glow class is used.
-                    
-                    if (isHeroButton) {
-                         // Hero abilities/Finale button
-                         btnClass = `w-full text-left rounded shadow flex items-center ${alignmentClass} cinzel font-bold mb-2 btn-hero`;
-                    } else if (isSecretBypass) {
-                         // Info bypass/Secret button (green glow)
-                         btnClass = `w-full text-left rounded shadow flex items-center ${alignmentClass} cinzel font-bold mb-2 btn-success-glow`;
-                    } else if (isCustomClassButton) {
-                        // Path selection buttons (Fire/Shadow) or merchant items with special coloring
-                        btnClass = `w-full text-left rounded shadow flex items-center ${alignmentClass} cinzel font-bold mb-2 ${choice.customClass}`;
-                    } else {
-                        // Fallback to generic, should not be hit if logic is correct
-                         btnClass = `btn-game w-full text-left rounded shadow flex items-center ${alignmentClass} cinzel font-bold bg-gray-800 border-gray-600 hover:border-amber-500 hover:bg-gray-750 text-gray-300 group`;
-                    }
+                    // STANDARD NARRATIVE BUTTONS (Default grey button)
+                    btnClass = `btn-game w-full text-left rounded shadow flex items-center ${alignmentClass} cinzel font-bold bg-gray-800 border-gray-600 hover:border-amber-500 hover:bg-gray-750 text-gray-300 group`;
                 }
                 
                 btn.className = btnClass;
@@ -2581,6 +2568,10 @@
                     content = `<span class="cinzel font-bold text-white">${choice.text}</span>`;
                 }
 
+                // Use the standard icon for trade items but the text color is controlled by the custom class
+                if (isTradeButton) {
+                     icon = '<i class="fas fa-coins text-amber-300"></i>';
+                }
 
                 if (choice.type === 'skill') {
                     // Skill notation and dice icon are aligned immediately after the label
