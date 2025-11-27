@@ -665,6 +665,9 @@
             'town_docks': 'images/docks.jpg', // NEW: Docks
             'docks_work': 'images/docks_work.jpg', // NEW: Docks Work
             'tavern_gambler': 'images/tavern_gambler.jpg', // NEW: Gambler/Keen Senses
+            'cliffside_overlook': 'images/cliffside_overlook.jpg', // NEW: Descent Overlook
+            'smelter_workers': 'images/smelter_workers.jpg', // NEW: Smelter Antechamber
+            'chapel_vestry': 'images/chapel_vestry.jpg', // NEW: Chapel Antechamber
             // Boss Fight Images
             'smelter_foundry': 'images/slag_horror.jpg', // Fire Boss
             'chapel_crypt': 'images/drowned_spectre.jpg', // Shadow Boss
@@ -693,7 +696,10 @@
                 history: [],
                 // NEW: Information Flags for Act 1 Shortcuts
                 knowsSmelterSecret: false,
-                knowsChapelSecret: false
+                knowsChapelSecret: false,
+                // NEW: Item found in the Antechamber
+                hasIndustrialLubricant: false,
+                hasSilverLocket: false
             };
         }
 
@@ -763,6 +769,30 @@
                 btnText: "SELL",
                 action: (state) => {
                     return "Must be sold at the Market or traded at the Cove.";
+                }
+            },
+            "Industrial Lubricant": {
+                name: "Industrial Lubricant",
+                type: 'consumable',
+                icon: 'fa-oil-can',
+                color: 'text-gray-400',
+                btnText: "USE",
+                desc: "Consumable: Oily solvent. Can be used to blind targets in combat.",
+                action: (state) => {
+                    const idx = state.inventory.indexOf("Industrial Lubricant");
+                    if (idx > -1) state.inventory.splice(idx, 1);
+                    return `Used Lubricant. Enemy is now impaired. (Need to implement scene logic)`;
+                }
+            },
+            "Silver Locket": {
+                name: "Silver Locket",
+                type: 'key',
+                icon: 'fa-heart',
+                color: 'text-gray-300',
+                btnText: "SELL",
+                desc: "Passive: A sentimental item. Can be sold for a high price at the Alchemist Triage.",
+                action: (state) => {
+                    return "Requires a suitable buyer, such as Madam Alara.";
                 }
             },
             "Rusted Cutlass": { type: 'key', icon: 'fa-khanda', color: 'text-gray-400', desc: "Passive: Reduces damage taken in combat events." },
@@ -915,6 +945,7 @@
         
         // NEW: Alchemist Sell Options
         const ALCHEMIST_SELL_OPTIONS = [
+            { item: "Silver Locket", nextScene: 'sell_locket_alch', value: 10 }, // New sell item
             { item: "Alchemical Fire", nextScene: 'sell_fire', value: 20 },
             { item: "Holy Water", nextScene: 'sell_water', value: 20 },
             { item: "Vitality Tincture", nextScene: 'sell_tincture', value: 7 }, // Can sell back the costly items at a loss
@@ -1615,7 +1646,8 @@
                     state.currentHP = state.maxHP;
                     return "Unlocked: Absorb Elements. HP Restored.";
                 },
-                choices: [{ text: "Descend to the Town", nextScene: 'town_descent', type: 'travel' }]
+                // MODIFIED: Jump to the new Cliffside Overlook scene
+                choices: [{ text: "Descend to the Town", nextScene: 'cliffside_overlook', type: 'travel' }]
             },
             'learn_primeval': {
                 title: "Talon's Lesson",
@@ -1628,13 +1660,79 @@
                     state.currentHP = state.maxHP;
                     return "Unlocked: Primeval Awareness. HP Restored.";
                 },
-                choices: [{ text: "Descend to the Town", nextScene: 'town_descent', type: 'travel' }]
+                // MODIFIED: Jump to the new Cliffside Overlook scene
+                choices: [{ text: "Descend to the Town", nextScene: 'cliffside_overlook', type: 'travel' }]
             },
-            // --- ACT 1: THE HUB SETUP ---
+            // --- NEW SCENE: CLIFFSIDE OVERLOOK ---
+            'cliffside_overlook': {
+                title: "Cliffside Overlook",
+                text: "The path winds along the sheer cliff face, providing a terrifying view of the Port of Shadows below. You see the chaos: smoke rising from the **Smelter** and a thick, unnatural fog shrouding the **Chapel** district. You must decide whether to scan the area for threats or hasten your descent.",
+                journal: "Reached the overlook. The Port is a warzone. Must be cautious.",
+                choices: [
+                    { 
+                        text: "Scan the Road for Guards and Loot", 
+                        nextScene: 'overlook_scan_check', 
+                        type: 'skill', 
+                        dc: 14, 
+                        skill: 'Perception' 
+                    },
+                    { 
+                        text: "Hasten Descent (Risk Injury)", 
+                        nextScene: 'overlook_hasten_check', 
+                        type: 'skill', 
+                        dc: 10, 
+                        skill: 'Athletics' 
+                    }
+                ]
+            },
+            'overlook_scan_check': {
+                isLogic: true,
+                resolve: (roll) => roll >= 14 ? 'overlook_scan_success' : 'overlook_scan_fail'
+            },
+            'overlook_scan_success': {
+                title: "Talon's Eye",
+                text: "Talon guides your focus. You spot a discarded pack near a large rock formation—a traveler was robbed or fled quickly. It holds a small but valuable Silver Locket.",
+                journal: "Talon spotted a discarded Locket. Easy coin.",
+                onEnter: (state) => {
+                    if (!state.inventory.includes("Silver Locket")) {
+                        state.inventory.push("Silver Locket");
+                        return "Found Silver Locket.";
+                    }
+                    return "Found nothing else of value.";
+                },
+                choices: [{ text: "Continue Descent", nextScene: 'town_descent', type: 'travel' }]
+            },
+            'overlook_scan_fail': {
+                title: "Blinded by the View",
+                text: "The sheer drop distracts you. You see nothing useful.",
+                journal: "Failed the scan. Must be more careful.",
+                choices: [{ text: "Continue Descent", nextScene: 'town_descent', type: 'travel' }]
+            },
+            'overlook_hasten_check': {
+                isLogic: true,
+                resolve: (roll) => roll >= 10 ? 'town_descent' : 'overlook_hasten_fail'
+            },
+            'overlook_hasten_fail': {
+                title: "A Misplaced Step",
+                text: "You stumble over loose scree and fall awkwardly, twisting your knee slightly.",
+                journal: "Hasted descent failed. Took minor damage.",
+                onEnter: (state) => {
+                    state.currentHP = applyDamage(state.currentHP, 2);
+                    fxManager.flashRed();
+                    return "Took 2 Damage.";
+                },
+                choices: [{ text: "Reach the Gates", nextScene: 'town_descent', type: 'travel' }]
+            },
+            // --- END NEW SCENES ---
+            
             'town_descent': {
                 title: "The Descent",
-                text: "The path to the Port of Shadows is treacherous. As you near the city gates, your Compass vibrates violently. You pull it out, and the needle splits in two.<br><br>One ghostly needle glows <span class='text-orange-500'>Orange</span>, pointing toward the burning Smelter District.<br><br>The other needle turns <span class='text-gray-500'>Black</span>, pointing toward the fog of the Sunken Chapel.",
+                text: "You arrive at the main city gate. The chaos here is raw and immediate. As you near the city gates, your Compass vibrates violently. You pull it out, and the needle splits in two.<br><br>One ghostly needle glows <span class='text-orange-500'>Orange</span>, pointing toward the burning Smelter District.<br><br>The other needle turns <span class='text-gray-500'>Black</span>, pointing toward the fog of the Sunken Chapel.",
                 journal: "The Compass has split. It tracks two distinct threats: Fire and Shadow.",
+                // NARRATIVE FIX: Added Gareth's warning to explain the choice structure
+                banter: {
+                    'gareth': "Divided attention is a sailor's death, Edward! Pick a course, or we founder here! We must focus on one threat at a time."
+                },
                 choices: [
                     { text: "Enter the Port of Shadows", nextScene: 'town_square', type: 'travel' }
                 ]
@@ -1713,6 +1811,14 @@
                 choices: [
                     // FIX: Updated button text to be concise. Added shillingGain for correct parsing.
                     { text: "Work the Lines", nextScene: 'docks_work', type: 'action', costHP: 2, chaosGain: 1, shillingGain: 3 }, 
+                    // NEW ECONOMIC FIX: High risk/reward dive
+                    { 
+                        text: "Dive for Sunken Treasure (High Risk, +15s)", 
+                        nextScene: 'docks_dive_check', 
+                        type: 'skill', 
+                        dc: 16, 
+                        skill: 'Athletics' 
+                    },
                     { 
                         text: "Search for Smuggler's Drop", 
                         nextScene: 'docks_smuggler_check', 
@@ -1740,7 +1846,34 @@
                 },
                 choices: [{ text: "Return to Docks", nextScene: 'town_docks', type: 'travel' }]
             },
-            // DOCKS SMUGGLER LOGIC (NEW)
+            // NEW SCENE: DOCKS HIGH RISK DIVE
+            'docks_dive_check': {
+                isLogic: true,
+                resolve: (roll) => roll >= 16 ? 'docks_dive_success' : 'docks_dive_fail'
+            },
+            'docks_dive_success': {
+                title: "The Gilded Chest",
+                text: "You hold your breath until your lungs burn, leveraging the dock pilings to dive deep. You surface with a watertight strongbox containing a pouch of gold and gems—enough to buy any artifact the Alchemist sells.",
+                journal: "Risked the depths and found high-value treasure.",
+                onEnter: (state) => {
+                    state.shillings += 15; 
+                    audioManager.playCoins();
+                    return "Found Gems (+15s).";
+                },
+                choices: [{ text: "Surface", nextScene: 'town_docks', type: 'travel' }]
+            },
+            'docks_dive_fail': {
+                title: "The Undertow",
+                text: "The current catches you, slamming you against the rotting pilings. You barely make it back to the surface, gasping and empty-handed.",
+                journal: "The dive failed. Took damage from the current.",
+                onEnter: (state) => {
+                    state.currentHP = applyDamage(state.currentHP, 4);
+                    fxManager.flashRed();
+                    return "Took 4 Damage.";
+                },
+                choices: [{ text: "Climb Out", nextScene: 'town_docks', type: 'travel' }]
+            },
+            // DOCKS SMUGGLER LOGIC (Ring of Brass required for button visibility)
             'docks_smuggler_check': {
                 isLogic: true,
                 resolve: (roll) => roll >= 14 ? 'docks_smuggler_success' : 'docks_smuggler_fail'
@@ -1768,7 +1901,7 @@
             'blackwater_tavern': {
                 title: "The Blackwater Tavern",
                 text: "The interior is dim and smells of stale brine and fear. This is where refugees and broken men hide. Rest is costly, but information is sometimes free.",
-                journal: null,
+                journal: "Arrived at the tavern. Looking for rest or information.",
                 choices: [
                     // PAID REST OPTION
                     { text: "Pay 10 Shillings for a Cot (Full Rest)", nextScene: 'tavern_rest_success', type: 'action', cost: 10 },
@@ -1832,7 +1965,7 @@
             'alchemist_triage': {
                 title: "Madam Alara, Triage Alchemist",
                 text: "Madam Alara, encased in her beaked mask, tends to the wounded with clinical detachment. Her prices are steep, but her wares are potent—she deals only in true survival.",
-                journal: null,
+                journal: "Arrived at the Alchemist's Triage. Expensive, but essential gear.",
                 stock: {
                     "Vitality Tincture": 2,
                     "Smelling Salts": 3,
@@ -1853,6 +1986,20 @@
                     { text: "Back to Buying", nextScene: 'alchemist_triage', type: 'travel' },
                     { text: "Return to Port Square", nextScene: 'town_square', type: 'travel' }
                 ]
+            },
+            // NEW SELL SCENE: Selling the Locket
+            'sell_locket_alch': {
+                title: "Sentiment's Price",
+                text: "Madam Alara cleans the silver locket with a sterile cloth. 'Sentiment holds value in chaos,' she remarks, sliding you the promised coin.",
+                journal: "Sold the Silver Locket for 10 Shillings.",
+                onEnter: (state) => {
+                    const idx = state.inventory.indexOf("Silver Locket");
+                    if (idx > -1) state.inventory.splice(idx, 1);
+                    state.shillings += 10; 
+                    audioManager.playCoins();
+                    return "Sold Locket (+10s) to Alchemist.";
+                },
+                choices: [{ text: "Continue Selling", nextScene: 'alchemist_sell', type: 'travel' }]
             },
             // NEW BUY SCENES FOR ALCHEMIST STOCK (Boss Consumables)
             'buy_fire': {
@@ -2045,12 +2192,12 @@
                 title: "Absorbed Charge", 
                 text: "You pass safely, the fire damage absorbed. The excess heat now crackles on your blade, ready for the next fight.", 
                 journal: "Used Absorb Elements. Blade is Charged.",
-                choices: [{ text: "Continue to Foundry (Combat)", nextScene: 'smelter_foundry', type: 'travel' }] 
+                choices: [{ text: "Continue to Smelter Antechamber", nextScene: 'smelter_workers', type: 'travel' }] // MODIFIED: Next scene is antechamber
             },
             'smelter_safe': { 
                 title: "Safe Passage", 
                 text: "You pass safely.", 
-                choices: [{ text: "Continue to Foundry (Combat)", nextScene: 'smelter_foundry', type: 'travel' }] 
+                choices: [{ text: "Continue to Smelter Antechamber", nextScene: 'smelter_workers', type: 'travel' }] // MODIFIED: Next scene is antechamber
             },
             'smelter_roll': { isLogic: true, resolve: (roll) => roll >= 15 ? 'smelter_safe' : 'smelter_damage' },
             'smelter_damage': { 
@@ -2061,8 +2208,58 @@
                     fxManager.flashRed();
                     return "Took 5 Fire Damage."; 
                 }, 
-                choices: [{ text: "Continue to Foundry (Combat)", nextScene: 'smelter_foundry', type: 'travel' }] 
+                choices: [{ text: "Continue to Smelter Antechamber", nextScene: 'smelter_workers', type: 'travel' }] // MODIFIED: Next scene is antechamber
             },
+            // --- NEW SCENE: SMELTER ANTECHAMBER (Order/Chaos Choice) ---
+            'smelter_workers': {
+                title: "Smelter District: Trapped Workers",
+                text: "You enter the main engine room. A heavy support beam has collapsed, trapping three exhausted workers near the pit. They beg for aid. If you stop, the Slag Horror will hear you. If you don't, they will burn.",
+                journal: "Found trapped workers in the smelter. A moral choice.",
+                choices: [
+                    { 
+                        text: "Save the Workers (High Effort)", 
+                        nextScene: 'smelter_save_workers_check', 
+                        type: 'skill', 
+                        dc: 15, 
+                        skill: 'Athletics',
+                        orderGain: 5 
+                    },
+                    { 
+                        text: "Bypass the Scene (Save Time and HP)", 
+                        nextScene: 'smelter_foundry', 
+                        type: 'travel',
+                        chaosGain: 3
+                    }
+                ]
+            },
+            'smelter_save_workers_check': {
+                isLogic: true,
+                resolve: (roll) => roll >= 15 ? 'smelter_save_workers_success' : 'smelter_save_workers_fail'
+            },
+            'smelter_save_workers_success': {
+                title: "Order Restored",
+                text: "You strain every muscle to lift the beam. The workers escape and quickly point to a bucket of Industrial Lubricant on a shelf—'If you can't beat the fire, blind the beast!' they shout before fleeing.",
+                journal: "Saved the workers. Gained Order +5 and Industrial Lubricant.",
+                onEnter: (state) => {
+                    state.inventory.push("Industrial Lubricant");
+                    state.influence = Math.max(-20, state.influence - 5);
+                    return "Found Lubricant. Order +5.";
+                },
+                choices: [{ text: "Proceed to Foundry (Boss Fight)", nextScene: 'smelter_foundry', type: 'travel' }]
+            },
+            'smelter_save_workers_fail': {
+                title: "A Vicious Price",
+                text: "You strain yourself, but the beam won't budge. The Slag Horror's roar echoes closer. You must abandon them.",
+                journal: "Failed to save the workers. Took psychic damage from the crew's anguish.",
+                onEnter: (state) => {
+                    state.currentHP = applyDamage(state.currentHP, 3);
+                    fxManager.flashRed();
+                    state.influence = Math.max(-20, state.influence - 2); // Minor Order loss from failure
+                    return "Took 3 Psychic Damage. Order +2.";
+                },
+                choices: [{ text: "Proceed to Foundry (Boss Fight)", nextScene: 'smelter_foundry', type: 'travel' }]
+            },
+            // --- END NEW SCENE ---
             'smelter_foundry': {
                 title: "The Slag Horror",
                 text: "The foundry is a cathedral of fire. In the center, rising from a pool of molten iron, is the <span class='text-red-500 font-bold'>Slag Horror</span>. It roars, spewing magma that melts the stone floor. In its chest, suspended in the heat, you see the hilt of a blade—the **Sword of Valor**.",
@@ -2085,6 +2282,15 @@
                         consume: true,
                         customClass: 'btn-success-glow'
                     },
+                    // ANTECHAMBER COUNTER (New Item)
+                    {
+                        text: "Douse with Industrial Lubricant (Blind)",
+                        nextScene: 'smelter_victory_lubricant',
+                        type: 'action',
+                        reqItem: 'Industrial Lubricant',
+                        consume: true,
+                        customClass: 'btn-success-glow'
+                    },
                     // CLASS ABILITY (Mitigation)
                     { 
                         text: "Endure and Strike (Absorb Elements)", 
@@ -2096,6 +2302,18 @@
                     // DESPERATE ATTACK (High Damage Taken)
                     { text: "Charge the Beast (Brute Force)", nextScene: 'smelter_victory_brute', type: 'combat' }
                 ]
+            },
+            'smelter_victory_lubricant': {
+                title: "Blinded Beast",
+                text: "The thick, black lubricant bursts on the Horror's glowing core. It screams, blinded by the sudden obscurity. You use the confusion to tear the sword from its chest.",
+                journal: "Used Industrial Lubricant to defeat the Slag Horror.",
+                onEnter: (state) => {
+                    if (!state.inventory.includes("Sword of Valor")) {
+                        state.inventory.push("Sword of Valor");
+                    }
+                    return "Used Lubricant. Acquired Sword of Valor.";
+                },
+                choices: [{ text: "Return to Town Square", nextScene: 'town_square', type: 'travel' }]
             },
             'smelter_victory_ring': {
                 title: "Frozen Iron",
@@ -2181,12 +2399,12 @@
                 title: "Ambush Avoided", 
                 text: "You bypass the maze and surprise the Spectre. You get a free hit.", 
                 journal: "Used Primeval Awareness. Gained Surprise Round.",
-                choices: [{ text: "Continue to Crypt (Combat)", nextScene: 'chapel_crypt', type: 'travel' }] 
+                choices: [{ text: "Continue to Vestry Antechamber", nextScene: 'chapel_vestry', type: 'travel' }] // MODIFIED: Next scene is antechamber
             },
             'chapel_safe': { 
                 title: "Found Path", 
                 text: "You navigate the fog safely.", 
-                choices: [{ text: "Continue to Crypt (Combat)", nextScene: 'chapel_crypt', type: 'travel' }] 
+                choices: [{ text: "Continue to Vestry Antechamber", nextScene: 'chapel_vestry', type: 'travel' }] // MODIFIED: Next scene is antechamber
             },
             'chapel_roll': { isLogic: true, resolve: (roll) => roll >= 15 ? 'chapel_safe' : 'chapel_damage' },
             'chapel_damage': { 
@@ -2197,8 +2415,72 @@
                     fxManager.flashRed();
                     return "Took 6 Shadow Damage."; 
                 }, 
-                choices: [{ text: "Continue to Crypt (Combat)", nextScene: 'chapel_crypt', type: 'travel' }] 
+                choices: [{ text: "Continue to Vestry Antechamber", nextScene: 'chapel_vestry', type: 'travel' }] // MODIFIED: Next scene is antechamber
             },
+            // --- NEW SCENE: CHAPEL ANTECHAMBER (Order/Chaos Choice) ---
+            'chapel_vestry': {
+                title: "Sunken Chapel: Flooded Vestry",
+                text: "The vestry is flooded with black, polluted water. A panicked man is caught in the undertow, struggling to keep his head above the foul tide. He screams for help.",
+                journal: "Found a drowning man in the Chapel vestry. A choice of mercy or self-interest.",
+                choices: [
+                    { 
+                        text: "Attempt Rescue (Order)", 
+                        nextScene: 'chapel_rescue_check', 
+                        type: 'skill', 
+                        dc: 14, 
+                        skill: 'Athletics',
+                        orderGain: 4
+                    },
+                    { 
+                        text: "Ignore the Screams and Search for Loot", 
+                        nextScene: 'chapel_ignore_drowning', 
+                        type: 'dialogue',
+                        chaosGain: 4
+                    }
+                ]
+            },
+            'chapel_rescue_check': {
+                isLogic: true,
+                resolve: (roll) => roll >= 14 ? 'chapel_rescue_success' : 'chapel_rescue_fail'
+            },
+            'chapel_rescue_success': {
+                title: "Mercy's Reward",
+                text: "You pull the panicked man from the black water. Gasping, he hands you a small, heavy silver heart—a family locket. 'Sell this, please. For my family.'",
+                journal: "Saved the man. Gained Order +4 and a Silver Locket.",
+                onEnter: (state) => {
+                    if (!state.inventory.includes("Silver Locket")) {
+                        state.inventory.push("Silver Locket");
+                    }
+                    state.influence = Math.max(-20, state.influence - 4);
+                    return "Found Silver Locket. Order +4.";
+                },
+                choices: [{ text: "Proceed to Crypt (Boss Fight)", nextScene: 'chapel_crypt', type: 'travel' }]
+            },
+            'chapel_rescue_fail': {
+                title: "Overwhelmed",
+                text: "The black water and the man's panic are too much. He slips from your grasp and is pulled under. The undertow bruises your legs.",
+                journal: "Failed the rescue. Took damage from the undertow.",
+                onEnter: (state) => {
+                    state.currentHP = applyDamage(state.currentHP, 3);
+                    fxManager.flashRed();
+                    return "Took 3 Damage.";
+                },
+                choices: [{ text: "Proceed to Crypt (Boss Fight)", nextScene: 'chapel_crypt', type: 'travel' }]
+            },
+            'chapel_ignore_drowning': {
+                title: "Looting the Drowned",
+                text: "You ignore the man's screams. He drowns quickly. You search his floating corpse and find only a damp, useless map, but Talon spots something shining behind the altar—a consecrated bottle of Holy Water, untouched by the black tide.",
+                journal: "Ignored the drowning man. Gained Chaos +4 and Holy Water.",
+                onEnter: (state) => {
+                    if (!state.inventory.includes("Holy Water")) {
+                        state.inventory.push("Holy Water");
+                    }
+                    state.influence = Math.min(20, state.influence + 4);
+                    return "Found Holy Water. Chaos +4.";
+                },
+                choices: [{ text: "Proceed to Crypt (Boss Fight)", nextScene: 'chapel_crypt', type: 'travel' }]
+            },
+            // --- END NEW SCENE ---
             'chapel_crypt': {
                 title: "The Drowned Spectre",
                 text: "The crypt is flooded with black water. The **Drowned Spectre** rises, its face a void of hunger. On its skeletal finger glints the **Ring of Brass**. It screams—a sound that tears at your sanity.",
@@ -2221,6 +2503,15 @@
                         consume: true,
                         customClass: 'btn-fire-glow'
                     },
+                    // ANTECHAMBER COUNTER (New Item)
+                    {
+                        text: "Splash with Holy Water (Radiant Burst)",
+                        nextScene: 'chapel_victory_water',
+                        type: 'action',
+                        reqItem: 'Holy Water',
+                        consume: true,
+                        customClass: 'btn-success-glow'
+                    },
                     // CLASS ABILITY (Mitigation)
                     { 
                         text: "Track the Void (Primeval Awareness)", 
@@ -2232,6 +2523,18 @@
                     // DESPERATE ATTACK (High Damage Taken)
                     { text: "Hack at the Shadows (Brute Force)", nextScene: 'chapel_victory_brute', type: 'combat' }
                 ]
+            },
+             'chapel_victory_water': {
+                title: "Consecrated End",
+                text: "The Holy Water bursts into radiant light upon contact with the Spectre's void-like form. It screams, a sound of unholy agony, as it is banished in a cloud of white smoke.",
+                journal: "Used Holy Water to defeat the Drowned Spectre.",
+                onEnter: (state) => {
+                    if (!state.inventory.includes("Ring of Brass")) {
+                        state.inventory.push("Ring of Brass");
+                    }
+                    return "Used Holy Water. Acquired Ring of Brass.";
+                },
+                choices: [{ text: "Return to Town Square", nextScene: 'town_square', type: 'travel' }]
             },
             'chapel_victory_sword': {
                 title: "The Vampire Killer",
@@ -2750,7 +3053,7 @@
                 const sellWaresChoice = permanentChoices.find(c => c.nextScene === 'alchemist_sell');
                 if (sellWaresChoice) {
                     sellWaresChoice.text = "Sell Wares (Premium)"; 
-                    processedChoices.push(sellWwaresChoice);
+                    processedChoices.push(sellWaresChoice);
                 }
                 
                 processedChoices.push(permanentChoices.find(c => c.nextScene === 'town_square'));
