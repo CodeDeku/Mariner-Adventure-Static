@@ -2436,7 +2436,8 @@
                 // --- VISIBILITY (OMIT) CHECKS: Apply OMIT logic first ---
                 
                 // OMIT 1: Non-Merchant Choices that require an item (Rope/Torch/etc.)
-                // This applies to scenes like 'cliff_climb' or 'dark_caves'
+                const isTradeButton = choice.cost || choice.value;
+
                 if (choice.reqItem && !isTradeButton && !gameState.inventory.includes(choice.reqItem)) {
                      // If it requires an item, and is NOT a trade button (i.e., consumption/puzzle), hide it if item missing
                      return;
@@ -2465,8 +2466,6 @@
                 }
                 
                 // Note: Item requirement checks for visibility were moved up. 
-                // We leave a residual check here in case an item-requiring button was somehow generated, 
-                // but for non-merchant scenes, the item checks now block generation entirely.
 
 
                 const btn = document.createElement('button');
@@ -2474,7 +2473,6 @@
                 // Determine styling: Is this a Hero/Skill moment?
                 let isHeroButton = choice.reqSkill ? true : false;
                 let isCustomClassButton = choice.customClass ? true : false;
-                let isTradeButton = choice.cost || choice.value;
 
                 const alignmentClass = (choice.type === 'skill' || isTradeButton || choice.chaosGain || choice.orderGain) ? 'justify-start' : 'justify-between';
                 
