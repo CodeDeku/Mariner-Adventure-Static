@@ -2038,24 +2038,40 @@
             // Inventory List View
             const invContainer = document.getElementById('inventory-panel');
             invContainer.innerHTML = '';
+            
+            // SCALABILITY FIX: Add scrolling for large inventories
+            invContainer.className = "flex flex-col gap-1 max-h-[220px] overflow-y-auto pr-1"; // Added max-height & scroll
+
             const descArea = document.getElementById('item-desc-area');
             const defaultText = "Hover over an item to inspect it.";
 
-            // --- FIX START: Reset description area appearance ---
+            // Reset description area appearance
             descArea.innerText = defaultText;
             descArea.classList.remove('text-amber-400');
             descArea.classList.add('text-gray-400'); 
-            // --- FIX END ---
             
             if (gameState.inventory.length === 0) {
                 invContainer.innerHTML = '<div class="text-center text-[10px] text-gray-600 italic py-2">Inventory Empty</div>';
             } else {
-                gameState.inventory.forEach(itemName => {
+                // SORTING LOGIC: Consumables First, then Alphabetical
+                const sortedInventory = [...gameState.inventory].sort((a, b) => {
+                    const itemA = itemRegistry[a] || { type: 'misc' };
+                    const itemB = itemRegistry[b] || { type: 'misc' };
+
+                    // Priority 1: Consumables float to the top
+                    if (itemA.type === 'consumable' && itemB.type !== 'consumable') return -1;
+                    if (itemA.type !== 'consumable' && itemB.type === 'consumable') return 1;
+
+                    // Priority 2: Alphabetical for tidiness
+                    return a.localeCompare(b);
+                });
+
+                sortedInventory.forEach(itemName => {
                     const itemDef = itemRegistry[itemName] || { type: 'misc', icon: 'fa-box', color: 'text-gray-500', desc: "A strange item." };
                     const isConsumable = itemDef.type === 'consumable';
                     
                     const itemRow = document.createElement('div');
-                    itemRow.className = `group w-full flex items-center justify-between p-2 rounded border transition-all cursor-default relative ${
+                    itemRow.className = `group w-full flex items-center justify-between p-2 rounded border transition-all cursor-default relative shrink-0 ${
                         isConsumable 
                         ? 'bg-gray-900/80 border-emerald-900/50 hover:border-emerald-500 hover:bg-gray-800' 
                         : 'bg-gray-900/60 border-gray-800 hover:border-gray-600'
@@ -2078,7 +2094,6 @@
                         actionBtn.innerText = itemDef.btnText || "USE";
                         actionBtn.onclick = (e) => {
                             e.stopPropagation();
-                            // Audio Hook for Item Use
                             audioManager.playClick();
                             const result = itemDef.action(gameState);
                             addToHistory(result, 'system');
