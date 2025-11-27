@@ -3620,13 +3620,22 @@
                     indicatorString += ` <span class="${ind.color} text-sm ml-1">(${ind.text})</span>`;
                 });
 
+				// 1. Always append the Skill Info (supplementalText) to the content if it exists.
+                // This ensures it renders even if there are no costs (indicatorString).
+                if (supplementalText) {
+                    content += supplementalText;
+                }
+
+                // 2. Render the button HTML
                 if (indicatorString) {
-                    content += supplementalText; // Append skill text first
-                    supplementalText = indicatorString; // Replace supplementalText with indicator string
-                    btn.innerHTML = `${content} ${supplementalText} <span class="ml-auto">${icon}</span>`;
+                    // Case A: We have Costs/Gains/Indicators
+                    // render content + indicators + right-aligned icon
+                    btn.innerHTML = `${content} ${indicatorString} <span class="ml-auto">${icon}</span>`;
                 } else {
-                     // Default travel/dialogue button using justify-between
-                     btn.innerHTML = `${content}${icon}`;
+                    // Case B: No costs (Prologue/Standard Travel)
+                    // We still add <span class="ml-auto"> to force the icon to the far right,
+                    // which fixes the alignment issue for Skill Checks using 'justify-start'.
+                    btn.innerHTML = `${content} <span class="ml-auto">${icon}</span>`;
                 }
 
 
