@@ -283,14 +283,27 @@
             transition: box-shadow 0.5s ease;
         }
 
-        @keyframes pulse-violet-anim {
-            0%, 100% { box-shadow: inset 0 0 20px 0px rgba(139, 92, 246, 0.1); background-color: rgba(139, 92, 246, 0.05); }
-            50% { box-shadow: inset 0 0 80px 20px rgba(139, 92, 246, 0.4); background-color: rgba(139, 92, 246, 0.15); }
-        }
-        .fx-pulse-violet {
-            animation: pulse-violet-anim 4s infinite ease-in-out;
-            mix-blend-mode: overlay;
-        }
+		/* --- UNIFIED RIFT FX SYSTEM --- */
+
+		/* State 1: Rift Pulse (The Threat) 
+		   Used in Act 1 Hubs and Boss Intros to show magical instability. */
+		@keyframes rift-pulse-anim {
+			0%, 100% { box-shadow: inset 0 0 20px 0px rgba(139, 92, 246, 0.1); background-color: rgba(139, 92, 246, 0.05); }
+			50% { box-shadow: inset 0 0 80px 20px rgba(139, 92, 246, 0.4); background-color: rgba(139, 92, 246, 0.15); }
+		}
+		.fx-rift-pulse {
+			animation: rift-pulse-anim 4s infinite ease-in-out;
+			mix-blend-mode: overlay;
+		}
+		/* State 2: Rift Collapsed (The Failure)
+		   Used when Doom Counter hits 0. Heavy, static, oppressive violet vignette. 
+		   We use !important to ensure it overrides any lingering animations. */
+		.fx-rift-collapsed {
+			box-shadow: inset 0 0 120px 50px rgba(139, 92, 246, 0.5) !important;
+			background-color: rgba(139, 92, 246, 0.2) !important;
+			mix-blend-mode: multiply; /* Darker, more dangerous look */
+			z-index: 25;
+		}
 
         @keyframes flash-red-anim {
             0% { background-color: rgba(220, 38, 38, 0.6); }
@@ -302,12 +315,6 @@
 
         .fx-vignette-low {
             box-shadow: inset 0 0 80px 30px rgba(127, 29, 29, 0.3);
-        }
-        
-        /* UPDATED: RIFT COLLAPSE VIOLET VIGNETTE (Task 1) */
-        .fx-rift-collapse {
-            /* Matching intensity of .fx-vignette-low but with violet color */
-            box-shadow: inset 0 0 80px 30px rgba(139, 92, 246, 0.3); /* Purple-500 @ 30% opacity to match low HP red */
         }
 
         .water-stained {
@@ -599,37 +606,28 @@
         const audioManager = new AudioManager();
 
         // --- FX MANAGER ---
-        class FXManager {
-            constructor() {
-                this.overlay = document.getElementById('fx-overlay');
-            }
+		class FXManager {
+			constructor() {
+				this.overlay = document.getElementById('fx-overlay');
+			}
 
-            clearEffects() {
-                // Remove all effects except flash animations (they remove themselves)
-                this.overlay.classList.remove('fx-pulse-violet', 'fx-vignette-low', 'fx-rift-collapse'); 
-            }
+			clearEffects() {
+				// Remove the unified rift classes and the red flash
+				this.overlay.classList.remove('fx-rift-pulse', 'fx-rift-collapsed', 'fx-flash-red', 'fx-vignette-low'); 
+			}
 
-            flashRed() {
-                this.overlay.classList.add('fx-flash-red');
-                setTimeout(() => this.overlay.classList.remove('fx-flash-red'), 400);
-            }
-            
-            setPulse(active) {
-                if(active) this.overlay.classList.add('fx-pulse-violet');
-                else this.overlay.classList.remove('fx-pulse-violet');
-            }
-
-            setVignette(active) {
-                if(active) this.overlay.classList.add('fx-vignette-low');
-                else this.overlay.classList.remove('fx-vignette-low');
-            }
-            
-            // NEW: Rift Collapse Visual
-            setRiftCollapseVignette(active) {
-                if (active) this.overlay.classList.add('fx-rift-collapse');
-                else this.overlay.classList.remove('fx-rift-collapse');
-            }
-        }
+			flashRed() {
+				this.overlay.classList.add('fx-flash-red');
+				setTimeout(() => this.overlay.classList.remove('fx-flash-red'), 400);
+			}
+			
+			// We can delete the specific setPulse/setRiftCollapse methods and handle it directly in renderScene
+			// or keep a generic helper if you prefer.
+			setVignette(active) {
+				if(active) this.overlay.classList.add('fx-vignette-low');
+				else this.overlay.classList.remove('fx-vignette-low');
+			}
+		}
         
         const fxManager = new FXManager();
 
@@ -3334,14 +3332,17 @@
 
             gameState.currentSceneId = sceneId;
             
-            // --- FX TRIGGER LOGIC ---
+			// --- FX TRIGGER LOGIC ---
             fxManager.clearEffects();
 
-            // Violet Pulse scenes
-            if (['prologue_storm', 'prologue_abyss', 'guard_scared', 'lighthouse_vigil', 'town_square', 'smelter_stage1_start', 'chapel_stage1_reveal'].includes(sceneId)) {
-                fxManager.setPulse(true);
-            } else {
-                fxManager.setPulse(false);
+            // PRIORITY 1: Has the Rift Collapsed? (Permanent Game State)
+            if (gameState.isRiftCollapse && !['finale_completed', 'edward_death'].includes(sceneId)) {
+                document.getElementById('fx-overlay').classList.add('fx-rift-collapsed');
+            }
+
+            // PRIORITY 2: Is the Rift Pulse active? (Atmospheric State)
+            else if (['prologue_storm', 'prologue_abyss', 'town_square', 'lighthouse_vigil', 'smelter_stage1_start', 'chapel_stage1_reveal', 'town_docks', 'blackwater_tavern'].includes(sceneId)) {
+                document.getElementById('fx-overlay').classList.add('fx-rift-pulse');
             }
 
             if (scene.onEnter && logText) {
