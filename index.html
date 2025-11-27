@@ -950,7 +950,7 @@
             'wreckage_search': {
                 isLogic: true,
                 resolve: (roll) => roll >= 8 ? 'wreckage_success' : 'wreckage_fail'
-            },
+            } ,
 			'wreckage_success': {
                 title: "Salvage",
                 text: "Quinn guides your hand to a buried chest partially exposed by the tide. Inside, you find a small pouch of Shillings and a Rusted Cutlass. You strap the blade to your belt—it feels like an extension of your arm. As you turn to leave, Quinn points frantically to a damp book lying nearby—the Ship's Log.",
@@ -1455,6 +1455,7 @@
                 text: "You reach the heavy iron doors of the Lighthouse. But you are not alone.",
                 journal: "Made it to the Lighthouse doors. Someone is waiting.",
                 choices: [
+                    // CRITICAL FIX: The next scene needs to be the faction check to continue the story.
                     { text: "Confront them", nextScene: 'faction_check', type: 'travel' }
                 ]
             },
@@ -2717,7 +2718,7 @@
                 const sellWaresChoice = permanentChoices.find(c => c.nextScene === 'alchemist_sell');
                 if (sellWaresChoice) {
                     sellWaresChoice.text = "Sell Wares (Premium)"; 
-                    processedChoices.push(sellWaresChoice);
+                    processedChoices.push(sellWwaresChoice);
                 }
                 
                 processedChoices.push(permanentChoices.find(c => c.nextScene === 'town_square'));
