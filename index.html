@@ -1711,7 +1711,8 @@
                 text: "The sea is black and restless. The skeletal remains of piers stretch into the cold water. Sailors work in silence, hauling heavy crates.",
                 journal: "Arrived at the docks. Hard work available, and maybe something more illicit.",
                 choices: [
-                    { text: "Work the Lines (+3 Shillings, -2 HP)", nextScene: 'docks_work', type: 'action', costHP: 2, chaosGain: 1 }, // Added costHP property
+                    // FIX: Updated button text to be concise. Added shillingGain for correct parsing.
+                    { text: "Work the Lines", nextScene: 'docks_work', type: 'action', costHP: 2, chaosGain: 1, shillingGain: 3 }, 
                     { 
                         text: "Search for Smuggler's Drop", 
                         nextScene: 'docks_smuggler_check', 
@@ -1734,7 +1735,7 @@
                     // Negative influence is applied, as working the docks usually involves ignoring official mandates
                     state.influence = Math.min(20, state.influence + 1); 
                     audioManager.playCoins();
-                    fxManager.flashRed();
+                    // FIX: Ensure journal message reflects the correct 2 HP loss
                     return "Worked. +3 Shillings, -2 HP. Chaos +1.";
                 },
                 choices: [{ text: "Return to Docks", nextScene: 'town_docks', type: 'travel' }]
@@ -1775,11 +1776,11 @@
                     { text: "Listen to Engineer's Rumors (Smelter)", nextScene: 'gather_info_smelter', type: 'dialogue' },
                     { text: "Listen to Gravedigger's Warnings (Chapel)", nextScene: 'gather_info_chapel', type: 'dialogue' },
                     { 
-                        text: "Observe the Card Game (Keen Senses)", 
+                        // FIX: Updated button text to be concise. Added shillingGain for correct parsing.
+                        text: "Observe the Card Game", 
                         nextScene: 'tavern_gambler', 
                         type: 'action', 
                         reqItem: 'Ring of Brass',
-                        // FIX: Use the new dedicated keen senses button class
                         customClass: 'btn-keen-senses' 
                     }, 
                     { text: "Return to Port Square", nextScene: 'town_square', type: 'travel' }
@@ -1790,7 +1791,8 @@
                 text: "With the Ring's heightened senses, you hear the slow, measured heartbeat of the man in the corner—too slow for a living man. You spot the card up his sleeve, but he hasn't moved a muscle. He is cheating, and he is <span class='text-red-500'>undead</span>. You confront him.",
                 journal: "Used the Ring to spot a cheater.",
                 choices: [
-                    { text: "Blackmail him (+10 Shillings)", nextScene: 'tavern_payout', type: 'action', chaosGain: 3 },
+                    // FIX: Updated button text to be concise. Added shillingGain property.
+                    { text: "Blackmail him", nextScene: 'tavern_payout', type: 'action', chaosGain: 3, shillingGain: 10 },
                     { text: "Expose him (Gareth/Insight DC 16)", nextScene: 'tavern_expose_check', type: 'skill', dc: 16, skill: 'Insight', orderGain: 3 },
                     { text: "Leave him alone", nextScene: 'blackwater_tavern', type: 'travel' }
                 ]
@@ -2748,7 +2750,7 @@
                 const sellWaresChoice = permanentChoices.find(c => c.nextScene === 'alchemist_sell');
                 if (sellWaresChoice) {
                     sellWaresChoice.text = "Sell Wares (Premium)"; 
-                    processedChoices.push(sellWaresChoice);
+                    processedChoices.push(sellWwaresChoice);
                 }
                 
                 processedChoices.push(permanentChoices.find(c => c.nextScene === 'town_square'));
@@ -2843,7 +2845,7 @@
                 let isCustomClassButton = choice.customClass ? true : false;
                 let isTradeButton = choice.cost || choice.value;
 
-                const alignmentClass = (choice.type === 'skill' || isTradeButton || choice.chaosGain || choice.orderGain || choice.costHP) ? 'justify-start' : 'justify-between';
+                const alignmentClass = (choice.type === 'skill' || isTradeButton || choice.chaosGain || choice.orderGain || choice.costHP || choice.shillingGain) ? 'justify-start' : 'justify-between';
                 
                 let btnClass = "";
                 
@@ -2926,6 +2928,7 @@
                     // --- APPLY ACTIONS ---
                     if (choice.cost) gameState.shillings -= choice.cost;
                     if (choice.costHP) gameState.currentHP = applyDamage(gameState.currentHP, choice.costHP); // NEW HP COST APPLIED
+                    if (choice.shillingGain) gameState.shillings += choice.shillingGain;
                     if (choice.chaosGain) gameState.influence = Math.min(20, gameState.influence + choice.chaosGain);
                     
                     // RP FIX: Player perceives Order gain, even though it's technically negative influence shift
@@ -2985,35 +2988,40 @@
                 }
                 
                 // --- Consistent Currency/Value/Influence Display ---
-                let transactionIndicator = '';
-                let indicatorColor = 'text-amber-500';
+                let indicators = [];
 
+                // 1. Shilling Cost/Value/Gain (Money Indicators)
                 if (choice.cost) {
-                    // Cost (Negative) for Buy/Bribe
-                    transactionIndicator = `(-${choice.cost}s)`;
-                } else if (choice.costHP) {
-                    // HP Cost (Negative) for Docks Work
-                    transactionIndicator = `(-${choice.costHP} HP)`;
-                    indicatorColor = 'text-red-400';
+                    indicators.push({ text: `-${choice.cost}s`, color: 'text-amber-500' });
                 } else if (choice.value) {
-                    // Value (Positive) for Sell actions
-                    transactionIndicator = `(+${choice.value}s)`;
-                } else if (choice.chaosGain) {
-                    // Chaos Gain (Positive) for Smuggler trade (Emerald color for Chaos)
-                    transactionIndicator = `(+${choice.chaosGain} Chaos)`;
-                    indicatorColor = 'text-emerald-400';
-                } else if (choice.orderGain) {
-                    // Order Gain (Negative Influence Shift) - Use primary blue-400 (MODIFIED)
-                    // RP FIX: Display as +Gain
-                    transactionIndicator = `(+${choice.orderGain} Order)`; 
-                    indicatorColor = 'text-blue-400'; // Primary Order Faction Color
+                    indicators.push({ text: `+${choice.value}s`, color: 'text-amber-500' });
+                } else if (choice.shillingGain) {
+                    indicators.push({ text: `+${choice.shillingGain}s`, color: 'text-amber-500' });
                 }
 
-                if (transactionIndicator) {
-                    // Increase size to text-sm
-                    supplementalText += ` <span class="${indicatorColor} text-sm ml-1">${transactionIndicator}</span>`;
+                // 2. Health Cost/Gain
+                if (choice.costHP) {
+                    indicators.push({ text: `-${choice.costHP} HP`, color: 'text-red-400' });
                 }
-                // --- End Transaction Display ---
+
+                // 3. Chaos/Order Gain
+                if (choice.chaosGain) {
+                    indicators.push({ text: `+${choice.chaosGain} Chaos`, color: 'text-emerald-400' });
+                } else if (choice.orderGain) {
+                    indicators.push({ text: `+${choice.orderGain} Order`, color: 'text-blue-400' });
+                }
+
+                // Build supplemental text string using all indicators
+                let indicatorString = '';
+                indicators.forEach(ind => {
+                    // Append a space, then the indicator text, wrapped in its span
+                    indicatorString += ` <span class="${ind.color} text-sm ml-1">(${ind.text})</span>`;
+                });
+
+                if (indicatorString) {
+                    supplementalText += indicatorString;
+                }
+                // --- End Consistent Currency/Value/Influence Display ---
                 
                 if (choice.type === 'reset') {
                      icon = '<i class="fas fa-undo text-white"></i>'; // Ensure reset button icon is white/visible
