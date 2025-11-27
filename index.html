@@ -1059,7 +1059,7 @@
 				},
                 choices: [
                     { text: "Take the Main Road", nextScene: 'road_encounter', type: 'travel' },
-                    { text: "Follow Talon's Lead", nextScene: 'trail_check', type: 'skill', dc: 12, skill: 'Survival' } // Removed redundant text
+                    { text: "Follow Talon's Lead", nextScene: 'trail_check', type: 'skill', dc: 12, skill: 'Survival' } // Clean text
                 ]
             },
             'treeline': {
@@ -1075,7 +1075,7 @@
                 },
                 choices: [
                     { text: "Take the Main Road", nextScene: 'road_encounter', type: 'travel' },
-                    { text: "Follow Talon's Lead", nextScene: 'trail_check', type: 'skill', dc: 12, skill: 'Survival' } // Removed redundant text
+                    { text: "Follow Talon's Lead", nextScene: 'trail_check', type: 'skill', dc: 12, skill: 'Survival' } // Clean text
                 ]
             },
             'road_encounter': {
@@ -1167,7 +1167,7 @@
                     { text: "Bribe him (Cost 5s)", nextScene: 'guard_bribe', type: 'action', cost: 5 }, 
                     // Order Gain Choice
                     { text: "Show Respect (+4 Order)", nextScene: 'guard_respect', type: 'dialogue', orderGain: 4 },
-                    { text: "Intimidate him", nextScene: 'guard_intimidate_check', type: 'skill', dc: 13, skill: 'Insight' }, // Removed redundant text
+                    { text: "Intimidate him", nextScene: 'guard_intimidate_check', type: 'skill', dc: 13, skill: 'Insight' }, // Clean text
                     { text: "Attack", nextScene: 'combat_guard', type: 'combat' }
                 ]
             },
@@ -1465,7 +1465,7 @@
                 choices: [
                     // FIX: Direct successful path to faction_check to ensure button visibility
                     { text: "Use Rope (Safe Climb)", nextScene: 'faction_check', type: 'action', reqItem: 'Rope', consume: true },
-                    { text: "Free Solo", nextScene: 'climb_check', type: 'skill', dc: 14, skill: 'Athletics' } // Removed redundant text
+                    { text: "Free Solo", nextScene: 'climb_check', type: 'skill', dc: 14, skill: 'Athletics' } // Clean text
                 ]
             },
             'climb_check': {
@@ -1493,7 +1493,7 @@
                 },
                 choices: [
                     { text: "Light Torch (Safe Passage)", nextScene: 'dark_caves_illuminated', type: 'action', reqItem: 'Torch', consume: true },
-                    { text: "Stumble in Dark", nextScene: 'dark_check', type: 'skill', dc: 14, skill: 'Perception' } // Removed redundant text
+                    { text: "Stumble in Dark", nextScene: 'dark_check', type: 'skill', dc: 14, skill: 'Perception' } // Clean text
                 ]
             },
             // Updated Mushroom Scene
@@ -1563,7 +1563,7 @@
                 journal: "The Lighthouse is sealed. I need to find the mechanism to enter.",
                 choices: [
                     // Insight DC 15 (Captain Gareth)
-                    { text: "Analyze the mechanism", nextScene: 'neutral_lock_logic', type: 'skill', dc: 15, skill: 'Insight' } // Removed redundant text
+                    { text: "Analyze the mechanism", nextScene: 'neutral_lock_logic', type: 'skill', dc: 15, skill: 'Insight' } // Clean text
                 ]
             },
             'neutral_lock_logic': {
@@ -1676,14 +1676,14 @@
                 journal: "Reached the overlook. The Port is a warzone. Must be cautious.",
                 choices: [
                     { 
-                        text: "Scan the Road for Guards and Loot", // Removed redundant skill text
+                        text: "Scan the Road for Guards and Loot", // Clean text
                         nextScene: 'overlook_scan_check', 
                         type: 'skill', 
                         dc: 14, 
                         skill: 'Perception' 
                     },
                     { 
-                        text: "Hasten Descent", // Removed redundant skill/doom cost text
+                        text: "Hasten Descent", // Clean text
                         nextScene: 'overlook_hasten_check', 
                         type: 'skill', 
                         dc: 10, 
@@ -2632,7 +2632,7 @@
                     // COUNTER 2: Skill Mitigation (Primeval Awareness)
                     { 
                         text: "Channel Primeval Awareness (See The Undead)", 
-                        nextScene: 'chapel_stage2_finish', // Go to finish phase clean
+                        nextScene: 'chapel_stage2_finish', 
                         type: 'action', 
                         reqSkill: 'Primeval Awareness',
                         customClass: 'btn-shadow-glow' 
