@@ -859,14 +859,16 @@
                     { text: "Attack", nextScene: 'combat_guard', type: 'combat' }
                 ]
             },
-            'guard_respect': {
+			'guard_respect': {
                 title: "Order and Law",
-                text: "You salute with practiced discipline. 'Just a shipwrecked sailor, sir. Keeping to the road.' The Guard straightens, recognizing the posture. 'Carry on then. Watch for the cove rats.'",
-                journal: "I showed the Guard a little respect and he let me pass with ease.",
+                text: "You salute with practiced discipline. 'Just a shipwrecked sailor, sir. Keeping to the road.' The Guard straightens, recognizing the posture. 'Carry on then. And take these—get yourself a warm meal.' He flicks two silver coins at you.",
+                journal: "I showed the Guard a little respect. He let me pass and gave me coin.",
                 onEnter: (state) => {
                     // APPLY NEGATIVE INFLUENCE SHIFT (Order)
                     state.influence = Math.max(-20, state.influence - 4); 
-                    return "Showed Respect (+4 Order)";
+                    state.shillings += 2; // Add 2 Shillings
+                    audioManager.playCoins();
+                    return "Showed Respect (+4 Order). Received 2 Shillings.";
                 },
                 choices: [{ text: "Head to Market Crossroads", nextScene: 'market_crossroads', type: 'travel' }]
             },
@@ -896,7 +898,7 @@
             },
             'combat_guard': {
                 title: "Steel Clashes",
-                text: "He draws his hammer. The fight is brutal and short. You survive, but you are now an enemy of the crown.",
+                text: "He unhooks a heavy warhammer from his belt. You move to intercept him, driving the momentum into a brutal close-quarters struggle. You barely deflect the crushing weight of his strikes, fighting until he finally falls. You survive, but you are now an enemy of the crown.",
                 journal: "Had to fight the Guard. I am an outlaw now.",
                 onEnter: (state) => { 
                     audioManager.playClash();
@@ -937,8 +939,8 @@
             },
             'smuggler_friend': {
                 title: "Old Alliances",
-                text: "They recognize the sign. 'The Mariner lives? We have something of yours.' They hand you a bottle of Rum.",
-                journal: "The smugglers recognized the code. Gave me Rum.",
+                text: "They recognize the sign. 'The Mariner lives? Then you drink for free tonight.' They toss you a bottle from their own supply.",
+                journal: "The smugglers recognized the code. Shared their Rum.",
                 onEnter: (state) => {
                      state.inventory.push("Rum (Heal 5)");
                      return "Received Rum.";
@@ -1162,9 +1164,8 @@
             // Updated Mushroom Scene
             'dark_caves_illuminated': {
                 title: "Torch's End",
-                text: "The fire dies, but not the light. A patch of pale, smooth mushrooms provides an eerie illumination. You remember Bones's banter and collect the specimen for its promised clarity.",
-                journal: "Bones was right. Used the torch and found the Pearlescent Mushroom.",
-                onEnter: (state) => {
+                text: "The damp, choking air of the caves extinguishes your torch within minutes, plunging you into darkness. But then, a pale glow reveals itself. A patch of smooth mushrooms provides an eerie illumination. You remember Bones's banter and collect the specimen for its promised clarity.",
+                journal: "The torch died in the damp air, but I found the Pearlescent Mushroom by its own light.",onEnter: (state) => {
                     if (!state.inventory.includes("Pearlescent Mushroom")) {
                         state.inventory.push("Pearlescent Mushroom");
                         return "Torch expended. Found: Pearlescent Mushroom.";
