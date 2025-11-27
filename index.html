@@ -1385,7 +1385,7 @@
             },
             'climb_fail': {
                 title: "Slip and Fall",
-                text: "You slide twenty feet, shredding skin against stone before catching a root.",
+                text: "Your grip fails. You slide twenty feet, shredding skin against stone before catching a root.",
                 journal: "Almost fell to my death. Climbing without rope was foolish.",
                 onEnter: (state) => { 
                     state.currentHP = applyDamage(state.currentHP, 5); 
@@ -2315,7 +2315,7 @@
                     // Check local stock for this item name
                     const actualStock = currentSceneStock[sale.item] || 0;
                     
-                    // We only list items the merchant is willing to sell AND currently has stock for.
+                    // RULE: Only display if in stock (actualStock > 0)
                     if (actualStock > 0) {
                         processedChoices.push({
                             text: `Buy ${sale.item.split('(')[0].trim()} (Stock: ${actualStock})`,
@@ -2345,6 +2345,7 @@
                 // Generate Dynamic Sell Options
                 MARKET_SELL_OPTIONS.forEach(sell => {
                     // Check if the player has the item in inventory
+                    // RULE: Only display if player has the item in inventory (reqItem check is implicit here)
                     if (gameState.inventory.includes(sell.item)) {
                         
                         // Special check for Curious Cargo: Merchant won't buy it if stock is 0 (one-time buy)
@@ -2389,7 +2390,7 @@
                 const sellWaresChoice = permanentChoices.find(c => c.nextScene === 'alchemist_sell');
                 if (sellWaresChoice) {
                     sellWaresChoice.text = "Sell Wares (Premium)"; 
-                    processedChoices.push(sellWwaresChoice);
+                    processedChoices.push(sellWaresChoice);
                 }
                 
                 processedChoices.push(permanentChoices.find(c => c.nextScene === 'town_square'));
@@ -2432,11 +2433,18 @@
             // --- Process Choices and Create Buttons ---
             processedChoices.forEach(choice => {
                 
+                // --- VISIBILITY (OMIT) CHECKS: Apply OMIT logic first ---
+                
+                // OMIT 1: Non-Merchant Choices that require an item (Rope/Torch/etc.)
+                // This applies to scenes like 'cliff_climb' or 'dark_caves'
+                if (choice.reqItem && !isTradeButton && !gameState.inventory.includes(choice.reqItem)) {
+                     // If it requires an item, and is NOT a trade button (i.e., consumption/puzzle), hide it if item missing
+                     return;
+                }
+                
                 // --- GENERAL REQUIREMENTS CHECK ---
                 if (choice.reqSmuggler && gameState.influence < choice.reqSmuggler) return;
                 if (choice.reqGuard && gameState.influence > -choice.reqGuard) return;
-                
-                // NOTE: We no longer return/hide the button if cost/item is missing. We display and disable it below.
                 
                 if (choice.reqNotItem && gameState.inventory.includes(choice.reqNotItem)) return; // NEW NOT ITEM CHECK
                 // NEW: Information Flag Check
@@ -2445,9 +2453,8 @@
                 // SKILL CHECK: If choice requires a skill, hide it if player doesn't have it
                 if (choice.reqSkill && !gameState.skills.includes(choice.reqSkill)) return;
 
-                const btn = document.createElement('button');
-                
-                // --- DISABILITY & AFFORDABILITY CHECK ---
+
+                // --- DISABILITY (GREY OUT) CHECKS ---
                 let isDisabled = false;
                 let disabledClass = '';
                 
@@ -2457,11 +2464,12 @@
                     disabledClass = 'btn-disabled-cost';
                 }
                 
-                // Check 2: Item requirement (Item is required for this choice AND player doesn't have it)
-                if (choice.reqItem && !gameState.inventory.includes(choice.reqItem)) {
-                    isDisabled = true;
-                    // Note: We don't use the disabled-cost class here, sticking to standard graying for item requirements
-                }
+                // Note: Item requirement checks for visibility were moved up. 
+                // We leave a residual check here in case an item-requiring button was somehow generated, 
+                // but for non-merchant scenes, the item checks now block generation entirely.
+
+
+                const btn = document.createElement('button');
                 
                 // Determine styling: Is this a Hero/Skill moment?
                 let isHeroButton = choice.reqSkill ? true : false;
