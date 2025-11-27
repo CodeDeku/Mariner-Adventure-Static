@@ -592,7 +592,11 @@
             // --- ACT 1 SCENE IMAGES ---
             'lighthouse_morning': 'images/lighthouse_morning.jpg', // Placeholder for new scene
             'town_descent': 'images/town_descent.jpg', // Placeholder
-            'town_square': 'images/town_square.jpg', // Placeholder
+            'town_square': 'images/town_square.jpg', // Hub: Wide shot of the chaotic port
+            'alchemist_triage': 'images/plague_doctor.jpg', // Merchant: Plague doctor theme
+            'blackwater_tavern': 'images/tavern_dark.jpg', // Rest/Info Hub: Dark tavern interior
+            'smelter_entry': 'images/steam_pipe.jpg', // Fire Path: Steam Hazard
+            'chapel_entry': 'images/fog_cemetery.jpg', // Shadow Path: Fog Maze
             // --- END ACT 1 SCENE IMAGES ---
 			'default': 'https://placehold.co/600x400/0f172a/1e293b?text=The+Void' 
 		};
@@ -613,10 +617,13 @@
                 crew: {
                     gareth: { id: 'gareth', name: 'Captain Gareth', skill: 'Insight', used: false, desc: 'Add +1d4 to Initiative & Insight' },
                     quinn: { id: 'quinn', name: 'Quinn', skill: 'Investigation', used: false, desc: 'Add +1d4 to Investigation & History' },
-                    talon: { id: 'talon', name: 'Talon', skill: 'Perception', used: false, desc: 'Add +1d4 to Survival & Perception' },
+                    talon: { id: 'talon', name: 'Talon', skill: 'Survival', used: false, desc: 'Add +1d4 to Survival & Perception' },
                     bones: { id: 'bones', name: 'Bones', skill: 'Survival', used: false, desc: 'Add +1d4 to Nature & Foraging' }
                 },
-                history: [] 
+                history: [],
+                // NEW: Information Flags for Act 1 Shortcuts
+                knowsSmelterSecret: false,
+                knowsChapelSecret: false
             };
         }
 
@@ -626,7 +633,7 @@
         // Interactive Items Definition
         const itemRegistry = {
             "Ship's Log": { type: 'key', icon: 'fa-book-skull', color: 'text-amber-700', desc: "Key Item: Records of the damned. Unlocks your history." },
-            "Captain's Tricorn": { type: 'key', icon: 'fa-hat-cowboy', color: 'text-blue-500', desc: "Passive:  A symbol of authority. +1 to Intimidation checks." },
+            "Captain's Tricorn": { type: 'key', icon: 'fa-hat-cowboy', color: 'text-blue-500', desc: "Passive: A symbol of authority. +1 to Intimidation checks." },
             "Rum (Heal 5)": {
                 name: "Rum (Heal 5)",
                 type: 'consumable',
@@ -697,6 +704,96 @@
             "Ring of Brass": { type: 'key', icon: 'fa-ring', color: 'text-orange-500', desc: "Legendary Item: The Wolves of Valor set. Grants fire resistance." },
             "Sword of Valor": { type: 'key', icon: 'fa-sword', color: 'text-blue-500', desc: "Legendary Item: The Wolves of Valor set. Deals extra damage to undead." },
 			"Compass": { type: 'key', icon: 'fa-compass', color: 'text-indigo-400', desc: "Passive: Violently hums near planar energy." },
+            
+            // --- NEW ALCHEMIST ITEMS ---
+            "Vitality Tincture": { 
+                name: "Vitality Tincture",
+                type: 'consumable',
+                icon: 'fa-heart-circle-plus', 
+                color: 'text-red-300',
+                btnText: "DRINK",
+                desc: "Consumable: High-grade restorative. Restores 15 HP.",
+                action: (state) => {
+                    const healAmount = 15;
+                    const oldHP = state.currentHP;
+                    state.currentHP = Math.min(state.maxHP, state.currentHP + healAmount);
+                    const idx = state.inventory.indexOf("Vitality Tincture");
+                    if (idx > -1) state.inventory.splice(idx, 1);
+                    return `Drank Tincture. Healed ${state.currentHP - oldHP} HP.`;
+                }
+            },
+            "Smelling Salts": { 
+                name: "Smelling Salts",
+                type: 'consumable',
+                icon: 'fa-spray-can', 
+                color: 'text-purple-400',
+                btnText: "USE",
+                desc: "Consumable: Revives a single used Crew Member (except the last one used).",
+                action: (state) => {
+                    const usedCrew = Object.values(state.crew).filter(c => c.used);
+                    if (usedCrew.length === 0) {
+                        return "No crew members are currently exhausted.";
+                    }
+                    
+                    // Cannot revive the last crew member used in a skill check
+                    const revivableCrew = usedCrew.filter(c => c.id !== state.lastCrewUsedId);
+
+                    if (revivableCrew.length === 0) {
+                        return `Cannot revive ${state.lastCrewUsedId.charAt(0).toUpperCase() + state.lastCrewUsedId.slice(1)}: they were last used for a check.`;
+                    }
+                    
+                    // For simplicity, just revive the first revivable one found
+                    const crewToRevive = revivableCrew[0];
+                    state.crew[crewToRevive.id].used = false;
+                    
+                    const idx = state.inventory.indexOf("Smelling Salts");
+                    if (idx > -1) state.inventory.splice(idx, 1);
+                    
+                    return `Used Salts. ${crewToRevive.name} is now available.`;
+                }
+            },
+            "Flash Powder": { 
+                name: "Flash Powder",
+                type: 'consumable',
+                icon: 'fa-sparkles', 
+                color: 'text-yellow-300',
+                btnText: "THROW",
+                desc: "Consumable: Guarantees escape from current combat (if in combat).",
+                action: (state) => {
+                    // This item will require scene-specific logic to actually implement the escape,
+                    // but for now, it's a placeholder consumable.
+                    const idx = state.inventory.indexOf("Flash Powder");
+                    if (idx > -1) state.inventory.splice(idx, 1);
+                    return `Used Flash Powder. Prepared for immediate escape. (Need to implement scene logic)`;
+                }
+            },
+            // --- NEW ARTIFACT ITEMS ---
+            "Alchemical Fire": { 
+                name: "Alchemical Fire",
+                type: 'consumable',
+                icon: 'fa-fire-alt', 
+                color: 'text-orange-600',
+                btnText: "IGNITE",
+                desc: "Path Reward: Volatile mixture. Deals high Fire damage over time. Especially potent against Undead.",
+                action: (state) => {
+                    const idx = state.inventory.indexOf("Alchemical Fire");
+                    if (idx > -1) state.inventory.splice(idx, 1);
+                    return `Used Alchemical Fire. Enemy takes damage over time. (Need to implement scene logic)`;
+                }
+            },
+            "Holy Water": { 
+                name: "Holy Water",
+                type: 'consumable',
+                icon: 'fa-cross', 
+                color: 'text-blue-200',
+                btnText: "SPLASH",
+                desc: "Path Reward: Consecrated water. Deals high Radiant damage. Especially potent against Fire Elementals.",
+                action: (state) => {
+                    const idx = state.inventory.indexOf("Holy Water");
+                    if (idx > -1) state.inventory.splice(idx, 1);
+                    return `Used Holy Water. Enemy takes Radiant damage. (Need to implement scene logic)`;
+                }
+            },
         };
         
         function getBonusForSkill(crewMember, skillType) {
@@ -720,6 +817,13 @@
             { item: "Torch", nextScene: 'buy_torch', cost: 2 },
             { item: "Rum (Heal 5)", nextScene: 'buy_rum', cost: 4 } // NEW: Rum is now a purchasable blueprint item
         ];
+        
+        // NEW: Triage Alchemist Stock Definition
+        const ALCHEMIST_BUY_OPTIONS = [
+            { item: "Vitality Tincture", nextScene: 'buy_tincture', cost: 15 },
+            { item: "Smelling Salts", nextScene: 'buy_salts', cost: 8 },
+            { item: "Flash Powder", nextScene: 'buy_powder', cost: 10 }
+        ];
 
         const MARKET_SELL_OPTIONS = [
             { item: "Curious Cargo", nextScene: 'sell_cargo', value: 10 },
@@ -727,6 +831,15 @@
             { item: "Torch", nextScene: 'sell_torch', value: 1 },
             { item: "Healing Potion", nextScene: 'sell_potion', value: 3 },
             { item: "Rum (Heal 5)", nextScene: 'sell_rum', value: 2 }
+        ];
+        
+        // NEW: Alchemist Sell Options (Can sell artifacts back for emergency cash)
+        const ALCHEMIST_SELL_OPTIONS = [
+            { item: "Alchemical Fire", nextScene: 'sell_fire', value: 20 },
+            { item: "Holy Water", nextScene: 'sell_water', value: 20 },
+            // Can sell the demo's high-value items to the Alchemist for a higher price
+            { item: "Healing Potion", nextScene: 'sell_potion_alch', value: 4 }, 
+            { item: "Pearlescent Mushroom", nextScene: 'sell_mushroom_alch', value: 12 }
         ];
         // --- END MARKET BLUEPRINTS ---
         
@@ -1021,8 +1134,7 @@
                 onEnter: (state) => {
                     const idx = state.inventory.indexOf("Curious Cargo");
                     if (idx > -1) state.inventory.splice(idx, 1);
-                    // This prevents the Merchant from later trying to buy it
-                    scenes['market_stall'].stock["Curious Cargo"] = 0; 
+                    scenes['market_stall'].stock["Curious Cargo"] = 0; // Consume merchant's willingness to buy this type of cargo
                     state.influence = Math.min(20, state.influence + 6); // High Chaos gain
                     return "Gave Cargo. Chaos +6.";
                 },
@@ -1049,11 +1161,11 @@
                 choices: [{ text: "Head to The Crossroads", nextScene: 'market_crossroads', type: 'travel' }]
             },
             'market_crossroads': {
-                title: "The Crossroads", // RENAMED TO AVOID HUB CONFUSION
-                text: "You arrive at the edge of the ramshackle port town. Merchants hawk their wares under tattered awnings. The Lighthouse looms in the distance, but the path is treacherous.",
+                title: "The Crossroads Market", // RENAMED TO AVOID HUB CONFUSION
+                text: "You arrive at the ramshackle market district of the port town. You can buy basic supplies here, or push on toward the Lighthouse.",
                 journal: "Reached the Port Market. I should stock up before the final push.",
                 choices: [
-                    { text: "Visit the Merchant", nextScene: 'market_stall', type: 'travel' },
+                    { text: "Visit the Market Merchant (Basic Supplies)", nextScene: 'market_stall', type: 'travel' },
                     { text: "Head to the Lighthouse", nextScene: 'lighthouse_split', type: 'travel' }
                 ]
             },
@@ -1066,17 +1178,17 @@
                     "Healing Potion": 1,
                     "Rope": 1,
                     "Torch": 1,
-                    "Curious Cargo": 1, // Tracks how many times this merchant will buy the cargo
-                    "Rum (Heal 5)": 0 // Rum starts at zero stock
+                    "Curious Cargo": 1, 
+                    "Rum (Heal 5)": 0 
                 },
                 // --- END LOCAL STOCK ---
                 banter: {
                     'quinn': "Supplies are the difference between a legend and a corpse. Buy what you can."
                 },
                 choices: [
-                    // NOTE: Buy options are generated dynamically in renderChoices
+                    // NOTE: Buy/Sell options are generated dynamically in renderChoices
                     { text: "Sell Wares", nextScene: 'market_sell', type: 'travel' }, 
-                    { text: "Leave", nextScene: 'lighthouse_split', type: 'travel' }
+                    { text: "Leave", nextScene: 'market_crossroads', type: 'travel' }
                 ]
             },
             'market_sell': {
@@ -1448,7 +1560,7 @@
                 ]
             },
             'town_square': {
-                title: "Port of Shadows",
+                title: "Port of Shadows - Hub",
                 text: "", // Dynamic text populated by onEnter
                 onEnter: (state) => {
                     const hasRing = state.inventory.includes("Ring of Brass");
@@ -1460,18 +1572,19 @@
                             text: "Investigate Smelter (Fire Path)", 
                             nextScene: 'smelter_entry', 
                             type: 'travel', 
-                            reqNotItem: 'Ring of Brass',
+                            reqNotItem: 'Sword of Valor', // Blade from Fire Path
                             customClass: 'btn-fire-glow' 
                         },
                         { 
                             text: "Investigate Chapel (Shadow Path)", 
                             nextScene: 'chapel_entry', 
                             type: 'travel',
-                            reqNotItem: 'Sword of Valor',
+                            reqNotItem: 'Ring of Brass', // Ring from Shadow Path
                             customClass: 'btn-shadow-glow' 
                         },
-                        // Renamed and rerouted to the Crossroads Hub
-                        { text: "Visit The Crossroads (Check Supplies)", nextScene: 'market_crossroads', type: 'travel' } 
+                        { text: "Visit Madam Alara, The Triage Alchemist", nextScene: 'alchemist_triage', type: 'travel' },
+                        { text: "Find Rest at The Blackwater Tavern", nextScene: 'blackwater_tavern', type: 'travel' },
+                        { text: "Visit The Crossroads Market (Basic Supplies)", nextScene: 'market_crossroads', type: 'travel' } 
                     ];
 
                     // STATE 2: FINALE UNLOCKED - Remove exploration choices, force ritual preparation
@@ -1480,7 +1593,8 @@
                         // Only offer the ritual button and the Tavern/Crossroads link (for supplies)
                         newChoices = [
                             { text: "Prepare the Wolf King's Ritual", nextScene: 'finale_ritual_start', type: 'combat', customClass: 'btn-hero' },
-                            { text: "Visit The Crossroads (Check Supplies)", nextScene: 'market_crossroads', type: 'travel' }
+                            { text: "Visit Madam Alara, The Triage Alchemist", nextScene: 'alchemist_triage', type: 'travel' },
+                            { text: "Find Rest at The Blackwater Tavern", nextScene: 'blackwater_tavern', type: 'travel' }
                         ];
                         // Finale scene TBD: finale_ritual_start
                         return "Finale Unlocked.";
@@ -1488,10 +1602,10 @@
                     
                     // Dynamic Text Logic
                     if (hasRing) {
-                        scenes['town_square'].text = "You return with the Ring of Brass, but the air has grown deathly cold. Fog from the Sunken Chapel is flooding the streets, choking the light. The Shadow threat has escalated while you were away.";
+                        scenes['town_square'].text = "You return with the Ring of Brass. Fog from the Sunken Chapel is flooding the streets, choking the light. The Shadow threat has escalated while you were away. You must pursue the Fire Path now.";
                     } 
                     else if (hasBlade) {
-                        scenes['town_square'].text = "You return with the Sword of Valor, but the cobblestones are scorching hot under your boots. Ash falls from the Smelter District like gray snow. The Fire threat has escalated while you were away.";
+                        scenes['town_square'].text = "You return with the Sword of Valor. Ash falls from the Smelter District like gray snow. The Fire threat has escalated while you were away. You must pursue the Shadow Path now.";
                     } 
                     else {
                         scenes['town_square'].text = "The Port is in chaos. Civilians flee toward the docks. To the East, the Smelter District burns with an unnatural heat. To the West, the Sunken Chapel lies in a pool of dark fog. Your Compass tracks both.";
@@ -1499,47 +1613,292 @@
                     
                     // Filter choices based on acquired items
                     scenes['town_square'].choices = newChoices.filter(choice => {
-                        // Hide Fire Path if Ring is acquired
-                        if (choice.nextScene === 'smelter_entry' && hasRing) return false;
-                        // Hide Shadow Path if Blade is acquired
-                        if (choice.nextScene === 'chapel_entry' && hasBlade) return false;
+                        // Hide Fire Path if Blade is acquired
+                        if (choice.nextScene === 'smelter_entry' && hasBlade) return false;
+                        // Hide Shadow Path if Ring is acquired
+                        if (choice.nextScene === 'chapel_entry' && hasRing) return false;
                         return true;
                     });
                     
                 },
+                choices: []
+            },
+            
+            // --- NEW HUB SCENES ---
+            'alchemist_triage': {
+                title: "Madam Alara, Triage Alchemist",
+                text: "Madam Alara, encased in her beaked mask, tends to the wounded with clinical detachment. Her prices are steep, but her wares are potent—she deals only in true survival.",
+                journal: null,
+                stock: {
+                    "Vitality Tincture": 2,
+                    "Smelling Salts": 3,
+                    "Flash Powder": 1
+                },
                 choices: [
-                    // Base choices populated by onEnter
+                    { text: "Sell Wares to Alchemist (High Value)", nextScene: 'alchemist_sell', type: 'travel' },
+                    { text: "Return to Port Square", nextScene: 'town_square', type: 'travel' }
                 ]
             },
-            // --- TBD SCENES (Placeholders for next steps) ---
+            'alchemist_sell': {
+                title: "Triage Alchemist - Selling",
+                text: "Alara inspects your items, sometimes offering a premium for rare components. 'Speak your price, Mariner. Time is coin.'",
+                journal: null,
+                choices: [
+                    { text: "Back to Buying", nextScene: 'alchemist_triage', type: 'travel' },
+                    { text: "Return to Port Square", nextScene: 'town_square', type: 'travel' }
+                ]
+            },
+            // NEW BUY SCENES FOR ALCHEMIST STOCK
+            'buy_tincture': {
+                title: "Purchase",
+                text: "The Vitality Tincture burns cold in your hand.",
+                journal: "I purchased a high-grade Vitality Tincture.",
+                onEnter: (state) => { 
+                    state.inventory.push("Vitality Tincture"); 
+                    scenes['alchemist_triage'].stock["Vitality Tincture"] -= 1;
+                    audioManager.playCoins();
+                    return "Bought Tincture."; 
+                },
+                choices: [{ text: "Return to Alchemist", nextScene: 'alchemist_triage', type: 'travel' }]
+            },
+            'buy_salts': {
+                title: "Purchase",
+                text: "Smelling Salts. A desperate measure for desperate times.",
+                journal: "I purchased Smelling Salts.",
+                onEnter: (state) => { 
+                    state.inventory.push("Smelling Salts"); 
+                    scenes['alchemist_triage'].stock["Smelling Salts"] -= 1;
+                    audioManager.playCoins();
+                    return "Bought Smelling Salts."; 
+                },
+                choices: [{ text: "Return to Alchemist", nextScene: 'alchemist_triage', type: 'travel' }]
+            },
+            'buy_powder': {
+                title: "Purchase",
+                text: "Flash Powder. Quick, loud, and effective.",
+                journal: "I purchased Flash Powder.",
+                onEnter: (state) => { 
+                    state.inventory.push("Flash Powder"); 
+                    scenes['alchemist_triage'].stock["Flash Powder"] -= 1;
+                    audioManager.playCoins();
+                    return "Bought Flash Powder."; 
+                },
+                choices: [{ text: "Return to Alchemist", nextScene: 'alchemist_triage', type: 'travel' }]
+            },
+            // NEW SELL SCENES FOR ALCHEMIST STOCK (Higher value for some items)
+            'sell_potion_alch': {
+                title: "Sold for Premium",
+                text: "The Alchemist pays a premium for the components in your standard Potion.",
+                journal: "Sold a Healing Potion for 4 Shillings to the Alchemist.",
+                onEnter: (state) => {
+                    const idx = state.inventory.indexOf("Healing Potion");
+                    if (idx > -1) state.inventory.splice(idx, 1);
+                    state.shillings += 4; // Higher value than market merchant (3s)
+                    audioManager.playCoins();
+                    return "Sold Potion (+4s) to Alchemist.";
+                },
+                choices: [{ text: "Continue Selling", nextScene: 'alchemist_sell', type: 'travel' }]
+            },
+             'sell_mushroom_alch': {
+                title: "Sold for Premium",
+                text: "The Alchemist recognizes the power in the Pearlescent Mushroom. 'A valuable specimen,' she murmurs.",
+                journal: "Sold the Pearlescent Mushroom for 12 Shillings to the Alchemist.",
+                onEnter: (state) => {
+                    const idx = state.inventory.indexOf("Pearlescent Mushroom");
+                    if (idx > -1) state.inventory.splice(idx, 1);
+                    state.shillings += 12; 
+                    audioManager.playCoins();
+                    return "Sold Mushroom (+12s) to Alchemist.";
+                },
+                choices: [{ text: "Continue Selling", nextScene: 'alchemist_sell', type: 'travel' }]
+            },
+            'sell_fire': {
+                title: "Sold Path Artifact",
+                text: "A necessary sacrifice. The Alchemist gives you a heavy coin purse for the Alchemical Fire.",
+                journal: "I sold the Alchemical Fire artifact for 20 Shillings.",
+                onEnter: (state) => {
+                    const idx = state.inventory.indexOf("Alchemical Fire");
+                    if (idx > -1) state.inventory.splice(idx, 1);
+                    state.shillings += 20; 
+                    audioManager.playCoins();
+                    return "Sold Alchemical Fire (+20s).";
+                },
+                choices: [{ text: "Continue Selling", nextScene: 'alchemist_sell', type: 'travel' }]
+            },
+            'sell_water': {
+                title: "Sold Path Artifact",
+                text: "A necessary sacrifice. The Alchemist gives you a heavy coin purse for the Holy Water.",
+                journal: "I sold the Holy Water artifact for 20 Shillings.",
+                onEnter: (state) => {
+                    const idx = state.inventory.indexOf("Holy Water");
+                    if (idx > -1) state.inventory.splice(idx, 1);
+                    state.shillings += 20; 
+                    audioManager.playCoins();
+                    return "Sold Holy Water (+20s).";
+                },
+                choices: [{ text: "Continue Selling", nextScene: 'alchemist_sell', type: 'travel' }]
+            },
+
+            // --- BLACKWATER TAVERN SCENES (REST & INFO) ---
+            'blackwater_tavern': {
+                title: "The Blackwater Tavern",
+                text: "The interior is dim and smells of stale brine and fear. This is where refugees and broken men hide. Rest is costly, but information is sometimes free.",
+                journal: null,
+                choices: [
+                    // PAID REST OPTION
+                    { text: "Pay 10 Shillings for a Cot (Full Rest)", nextScene: 'tavern_rest_success', type: 'action', cost: 10 },
+                    // INFORMATION GATHERING
+                    { text: "Listen to Engineer's Rumors (Smelter)", nextScene: 'gather_info_smelter', type: 'dialogue' },
+                    { text: "Listen to Gravedigger's Warnings (Chapel)", nextScene: 'gather_info_chapel', type: 'dialogue' },
+                    { text: "Return to Port Square", nextScene: 'town_square', type: 'travel' }
+                ]
+            },
+            'tavern_rest_success': {
+                title: "A Night's Respite",
+                text: "You find an empty cot in the dusty cellar. The gentle sway of your hoisted hammock lulls the bickering crew into a temporary, cohesive silence.",
+                journal: "Paid 10 Shillings for a good night's rest. The voices are quiet.",
+                onEnter: (state) => {
+                    state.currentHP = state.maxHP;
+                    Object.keys(state.crew).forEach(k => state.crew[k].used = false);
+                    return "Paid 10s. HP and Crew Use Restored.";
+                },
+                choices: [
+                    { text: "Return to Port Square", nextScene: 'town_square', type: 'travel' }
+                ]
+            },
+            // NEW: INFORMATION SCENES
+            'gather_info_smelter': {
+                title: "Smelter District Tip",
+                text: "The exhausted engineer whispers, 'The release valves are rusted shut. Quinn's knowledge won't work unless you know the **counter-clockwise, double-turn** trick. That'll save your life.'",
+                journal: "Learned the secret to bypassing the Smelter's Steam Hazard.",
+                onEnter: (state) => {
+                    state.knowsSmelterSecret = true;
+                    return "New Information Gained (Smelter Path).";
+                },
+                choices: [{ text: "Return to Tavern", nextScene: 'blackwater_tavern', type: 'travel' }]
+            },
+            'gather_info_chapel': {
+                title: "Sunken Chapel Tip",
+                text: "The pale gravedigger warns you, 'Don't follow the sound; follow the silence. The paths are a maze, but the silent, **weeping angel statues** mark the safe, true route.'",
+                journal: "Learned the safe route through the Sunken Chapel's Fog Maze.",
+                onEnter: (state) => {
+                    state.knowsChapelSecret = true;
+                    return "New Information Gained (Chapel Path).";
+                },
+                choices: [{ text: "Return to Tavern", nextScene: 'blackwater_tavern', type: 'travel' }]
+            },
+            // --- END HUB SCENES ---
+
+            // --- TBD PATH SCENES (UPDATED FOR NEW LOGIC) ---
             'smelter_entry': {
-                title: "Smelter District Entry",
-                text: "The path is blocked by a burst steam pipe spitting magical fire. You need to use your abilities here.",
+                title: "Smelter District: Steam Vents",
+                text: "The path is blocked by a burst steam pipe spitting magical fire. The main valve is screaming and rusted over. You need to use your abilities or brute force here.",
                 choices: [
-                    // Hero Button will appear if Absorb Elements is unlocked
-                    { text: "Channel Absorb Elements (Negate Damage)", nextScene: 'smelter_safe', type: 'action', reqSkill: 'Absorb Elements', customClass: 'btn-fire-glow' },
-                    { text: "Attempt Constitution Save", nextScene: 'smelter_roll', type: 'skill', dc: 14, skill: 'Constitution' }
+                    // OPTION 1: INFO CHECK (Automatic Success)
+                    { 
+                        text: "Attempt Counter-Clockwise Double-Turn (Secret)", 
+                        nextScene: 'smelter_safe', 
+                        type: 'dialogue', 
+                        reqFlag: 'knowsSmelterSecret',
+                        customClass: 'btn-game bg-green-900 border-green-700 hover:bg-green-700 text-green-300'
+                    },
+                    // OPTION 2: HERO BUTTON (Absorb Elements)
+                    { 
+                        text: "Channel Absorb Elements (Negate Damage)", 
+                        nextScene: 'smelter_safe_charged', 
+                        type: 'action', 
+                        reqSkill: 'Absorb Elements', 
+                        customClass: 'btn-fire-glow' 
+                    },
+                    // OPTION 3: SKILL CHECK (Quinn/Investigation) - High DC because of rust
+                    { text: "Analyze & Attempt to Turn Valve", nextScene: 'smelter_roll', type: 'skill', dc: 15, skill: 'Investigation' }
                 ]
             },
-            'smelter_safe': { title: "Safe Passage", text: "You pass safely.", choices: [{ text: "Continue", nextScene: 'town_square', type: 'travel' }] },
-            'smelter_roll': { isLogic: true, resolve: (roll) => roll >= 14 ? 'smelter_safe' : 'smelter_damage' },
-            'smelter_damage': { title: "Burned", text: "You take a burn.", onEnter: (s) => { s.currentHP = applyDamage(s.currentHP, 5); return "Took 5 Fire Damage."; }, choices: [{ text: "Continue", nextScene: 'town_square', type: 'travel' }] },
+            'smelter_safe_charged': { 
+                title: "Absorbed Charge", 
+                text: "You pass safely, the fire damage absorbed. The excess heat now crackles on your blade, ready for the next fight.", 
+                journal: "Used Absorb Elements. Blade is Charged.",
+                choices: [{ text: "Continue to Foundry (Combat)", nextScene: 'smelter_foundry', type: 'travel' }] // TBD COMBAT SCENE
+            },
+            'smelter_safe': { 
+                title: "Safe Passage", 
+                text: "You pass safely.", 
+                choices: [{ text: "Continue to Foundry (Combat)", nextScene: 'smelter_foundry', type: 'travel' }] // TBD COMBAT SCENE
+            },
+            'smelter_roll': { isLogic: true, resolve: (roll) => roll >= 15 ? 'smelter_safe' : 'smelter_damage' },
+            'smelter_damage': { 
+                title: "Burned", 
+                text: "You take a burn running past the valve.", 
+                onEnter: (s) => { 
+                    s.currentHP = applyDamage(s.currentHP, 5); 
+                    fxManager.flashRed();
+                    return "Took 5 Fire Damage."; 
+                }, 
+                choices: [{ text: "Continue to Foundry (Combat)", nextScene: 'smelter_foundry', type: 'travel' }] 
+            },
+            // NEW SCENE: Placeholder for the combat encounter we discussed
+            'smelter_foundry': {
+                title: "The Foundry",
+                text: "You find the Sword of Valor, but it is guarded by the Slag Horror (Fire Elemental). Prepare for combat.",
+                choices: [{ text: "Begin Combat", nextScene: 'town_square', type: 'travel' }] // Temporary return
+            },
 
             'chapel_entry': {
-                title: "Sunken Chapel Entry",
-                text: "The cemetery is covered in unnatural fog. You cannot see.",
+                title: "Sunken Chapel: The Fog Maze",
+                text: "The cemetery is covered in unnatural fog. The paths loop back on themselves, and you cannot see.",
                 choices: [
-                    // Hero Button will appear if Primeval Awareness is unlocked
-                    { text: "Channel Primeval Awareness (See in Fog)", nextScene: 'chapel_safe', type: 'action', reqSkill: 'Primeval Awareness', customClass: 'btn-shadow-glow' },
-                    { text: "Attempt Perception Save", nextScene: 'chapel_roll', type: 'skill', dc: 14, skill: 'Perception' }
+                    // OPTION 1: INFO CHECK (Automatic Success)
+                    { 
+                        text: "Follow the Weeping Angel Statues (Secret)", 
+                        nextScene: 'chapel_safe', 
+                        type: 'dialogue', 
+                        reqFlag: 'knowsChapelSecret',
+                        customClass: 'btn-game bg-green-900 border-green-700 hover:bg-green-700 text-green-300'
+                    },
+                    // OPTION 2: HERO BUTTON (Primeval Awareness)
+                    { 
+                        text: "Channel Primeval Awareness (See Ambushers)", 
+                        nextScene: 'chapel_safe_surprise', 
+                        type: 'action', 
+                        reqSkill: 'Primeval Awareness', 
+                        customClass: 'btn-shadow-glow' 
+                    },
+                    // OPTION 3: SKILL CHECK (Talon/Perception)
+                    { text: "Attempt to Track Movement", nextScene: 'chapel_roll', type: 'skill', dc: 15, skill: 'Perception' }
                 ]
             },
-            'chapel_safe': { title: "Found Path", text: "You navigate the fog safely.", choices: [{ text: "Continue", nextScene: 'town_square', type: 'travel' }] },
-            'chapel_roll': { isLogic: true, resolve: (roll) => roll >= 14 ? 'chapel_safe' : 'chapel_damage' },
-            'chapel_damage': { title: "Ambushed", text: "A shadow creature ambushes you.", onEnter: (s) => { s.currentHP = applyDamage(s.currentHP, 6); return "Took 6 Shadow Damage."; }, choices: [{ text: "Continue", nextScene: 'town_square', type: 'travel' }] },
+            'chapel_safe_surprise': { 
+                title: "Ambush Avoided", 
+                text: "You bypass the maze and surprise the Spectre. You get a free hit.", 
+                journal: "Used Primeval Awareness. Gained Surprise Round.",
+                choices: [{ text: "Continue to Crypt (Combat)", nextScene: 'chapel_crypt', type: 'travel' }] // TBD COMBAT SCENE
+            },
+            'chapel_safe': { 
+                title: "Found Path", 
+                text: "You navigate the fog safely.", 
+                choices: [{ text: "Continue to Crypt (Combat)", nextScene: 'chapel_crypt', type: 'travel' }] // TBD COMBAT SCENE
+            },
+            'chapel_roll': { isLogic: true, resolve: (roll) => roll >= 15 ? 'chapel_safe' : 'chapel_damage' },
+            'chapel_damage': { 
+                title: "Ambushed", 
+                text: "A shadow creature ambushes you.", 
+                onEnter: (s) => { 
+                    s.currentHP = applyDamage(s.currentHP, 6); 
+                    fxManager.flashRed();
+                    return "Took 6 Shadow Damage."; 
+                }, 
+                choices: [{ text: "Continue to Crypt (Combat)", nextScene: 'chapel_crypt', type: 'travel' }] 
+            },
+            // NEW SCENE: Placeholder for the combat encounter we discussed
+            'chapel_crypt': {
+                title: "The Flooded Crypt",
+                text: "You find the Ring of Brass, but it is guarded by the Drowned Spectre (Undead). Prepare for combat.",
+                choices: [{ text: "Begin Combat", nextScene: 'town_square', type: 'travel' }] // Temporary return
+            },
+
+            // --- END TBD PATH SCENES ---
             
             'finale_ritual_start': { title: "The Ritual", text: "Ritual start scene.", choices: [{ text: "End", type: 'reset' }] },
-
 
             'edward_death': {
                 title: "The Mariner's End",
@@ -1565,6 +1924,12 @@
             "Torch": 1,
             "Curious Cargo": 1, // Tracks how many times this merchant will buy the cargo
             "Rum (Heal 5)": 0 // Rum starts at zero stock
+        };
+        // NEW: Alchemist stock initialization
+        scenes['alchemist_triage'].stock = {
+            "Vitality Tincture": 2,
+            "Smelling Salts": 3,
+            "Flash Powder": 1
         };
         
         async function generateSceneImage(sceneId) {
@@ -1644,6 +2009,9 @@
                     if (data.market_stall_stock) {
                          scenes['market_stall'].stock = data.market_stall_stock;
                     }
+                    if (data.alchemist_triage_stock) {
+                        scenes['alchemist_triage'].stock = data.alchemist_triage_stock;
+                    }
                     
                     renderScene(gameState.currentSceneId, false);
                     rebuildJournal();
@@ -1663,6 +2031,10 @@
                             scenes['market_stall'].stock = data.market_stall_stock;
                             delete data.market_stall_stock; // Don't overwrite gameState with this old field
                         }
+                        if (data.alchemist_triage_stock) {
+                            scenes['alchemist_triage'].stock = data.alchemist_triage_stock;
+                            delete data.alchemist_triage_stock;
+                        }
 
                         gameState = { ...gameState, ...data };
                         updateUI();
@@ -1678,6 +2050,7 @@
             
             // --- ATTACH SCENE STOCK TO SAVED STATE ---
             safeState.market_stall_stock = scenes['market_stall'].stock;
+            safeState.alchemist_triage_stock = scenes['alchemist_triage'].stock;
 
             await setDoc(docRef, safeState);
         }
@@ -1712,7 +2085,12 @@
                 "Rope": 1,
                 "Torch": 1,
                 "Curious Cargo": 1, 
-                "Rum (Heal 5)": 0 // Ensure Rum starts at 0 stock here
+                "Rum (Heal 5)": 0 
+            };
+            scenes['alchemist_triage'].stock = {
+                "Vitality Tincture": 2,
+                "Smelling Salts": 3,
+                "Flash Powder": 1
             };
 
             document.getElementById('journal-content').innerHTML = '';
@@ -1828,7 +2206,7 @@
             fxManager.clearEffects();
 
             // Violet Pulse scenes
-            if (['prologue_storm', 'prologue_abyss', 'guard_scared', 'lighthouse_vigil'].includes(sceneId)) {
+            if (['prologue_storm', 'prologue_abyss', 'guard_scared', 'lighthouse_vigil', 'town_square', 'smelter_foundry', 'chapel_crypt'].includes(sceneId)) {
                 fxManager.setPulse(true);
             } else {
                 fxManager.setPulse(false);
@@ -1889,15 +2267,16 @@
             const currentSceneId = gameState.currentSceneId;
             const currentSceneStock = scenes[currentSceneId] ? scenes[currentSceneId].stock : {};
             const marketStock = scenes['market_stall'].stock; // Reference for selling logic
+            const alchemistStock = scenes['alchemist_triage'].stock; // Reference for alchemist selling logic
             
             // Collect all choices, starting with static ones
             let processedChoices = [...choices]; 
 
             // Handle dynamic generation for Market Scenes
             if (currentSceneId === 'market_stall') {
-                // Remove hardcoded buy options from the original array first
-                // Only keep static navigation buttons
-                processedChoices = processedChoices.filter(c => c.nextScene !== 'market_sell' && c.nextScene !== 'lighthouse_split');
+                // Isolate navigation choices and prepare to regenerate buy options
+                const permanentChoices = processedChoices.filter(c => c.nextScene === 'market_sell' || c.nextScene === 'market_crossroads');
+                processedChoices = []; 
 
                 // 1. Generate Dynamic Buy Options
                 MARKET_BUY_OPTIONS.forEach(sale => {
@@ -1917,19 +2296,18 @@
                 });
                 
                 // 2. Add static navigation back in
-                // Find and rename the "Sell Wares (Earn Coin)" button.
-                const sellWaresChoice = choices.find(c => c.nextScene === 'market_sell');
+                // Rename the selling button text
+                const sellWaresChoice = permanentChoices.find(c => c.nextScene === 'market_sell');
                 if (sellWaresChoice) {
-                    // FIX: Renamed the selling button text
                     sellWaresChoice.text = "Sell Wares"; 
                     processedChoices.push(sellWaresChoice);
                 }
                 
-                processedChoices.push(choices.find(c => c.nextScene === 'lighthouse_split'));
+                processedChoices.push(permanentChoices.find(c => c.nextScene === 'market_crossroads'));
 
             } else if (currentSceneId === 'market_sell') {
                 // Isolate navigation choices and prepare to regenerate sell options
-                const permanentChoices = choices.filter(c => c.nextScene === 'market_stall' || c.nextScene === 'lighthouse_split');
+                const permanentChoices = choices.filter(c => c.nextScene === 'market_stall' || c.nextScene === 'market_crossroads');
                 processedChoices = []; 
 
                 // Generate Dynamic Sell Options
@@ -1947,13 +2325,86 @@
                             nextScene: sell.nextScene,
                             type: 'action',
                             reqItem: sell.item,
-                            value: sell.value // Value is now passed separately
+                            value: sell.value 
                         });
                     }
                 });
                 // Add back the navigation choices
                 processedChoices = processedChoices.concat(permanentChoices);
+            } else if (currentSceneId === 'alchemist_triage') {
+                 // Isolate navigation choices and prepare to regenerate buy options
+                const permanentChoices = processedChoices.filter(c => c.nextScene === 'alchemist_sell' || c.nextScene === 'town_square');
+                processedChoices = []; 
+
+                // 1. Generate Dynamic Buy Options
+                ALCHEMIST_BUY_OPTIONS.forEach(sale => {
+                    const itemText = sale.item.split('(')[0].trim();
+                    const actualStock = currentSceneStock[sale.item] || 0;
+                    
+                    if (actualStock > 0) {
+                        processedChoices.push({
+                            text: `Buy ${itemText} (${sale.cost}s)`,
+                            nextScene: sale.nextScene,
+                            type: 'action',
+                            cost: sale.cost,
+                            stockItem: sale.item,
+                            customClass: 'btn-game bg-gray-900 border-purple-500/50 hover:bg-gray-700 text-purple-300'
+                        });
+                    }
+                });
+                
+                // 2. Add static navigation back in
+                const sellWaresChoice = permanentChoices.find(c => c.nextScene === 'alchemist_sell');
+                if (sellWaresChoice) {
+                    sellWaresChoice.text = "Sell Wares (Premium)"; 
+                    processedChoices.push(sellWaresChoice);
+                }
+                
+                processedChoices.push(permanentChoices.find(c => c.nextScene === 'town_square'));
+            } else if (currentSceneId === 'alchemist_sell') {
+                // Isolate navigation choices and prepare to regenerate sell options
+                const permanentChoices = choices.filter(c => c.nextScene === 'alchemist_triage' || c.nextScene === 'town_square');
+                processedChoices = []; 
+                
+                // Generate Dynamic Sell Options (Alchemist Stock)
+                ALCHEMIST_SELL_OPTIONS.forEach(sell => {
+                    if (gameState.inventory.includes(sell.item)) {
+                        
+                        // Check if item is already in inventory to ensure it can be sold
+                        if (gameState.inventory.includes(sell.item)) {
+                            
+                            let customClass = '';
+                            if (sell.item === 'Alchemical Fire' || sell.item === 'Holy Water') {
+                                // Artifacts are highlighted to warn player
+                                customClass = 'btn-game bg-red-900/50 border-red-700/50 hover:bg-red-700 text-red-300';
+                            }
+
+                            processedChoices.push({
+                                text: `Sell ${sell.item.split('(')[0].trim()} (+${sell.value}s)`, 
+                                nextScene: sell.nextScene,
+                                type: 'action',
+                                reqItem: sell.item,
+                                value: sell.value,
+                                customClass: customClass
+                            });
+                        }
+                    }
+                });
+                // Add back the navigation choices
+                processedChoices = processedChoices.concat(permanentChoices);
             }
+            // NEW: Blackwater Tavern Rest Logic (Only appears if current HP < Max HP)
+            else if (currentSceneId === 'blackwater_tavern') {
+                const restOption = processedChoices.find(c => c.nextScene === 'tavern_rest_success');
+                if (restOption && gameState.currentHP === gameState.maxHP) {
+                    // Filter out the rest option if at full HP
+                    processedChoices = processedChoices.filter(c => c.nextScene !== 'tavern_rest_success');
+                } else if (restOption) {
+                    // Rename the rest option to include current cost
+                    restOption.text = `Pay ${restOption.cost} Shillings for a Cot (Full Rest)`;
+                }
+            }
+
 
             // --- Process Choices and Create Buttons ---
             processedChoices.forEach(choice => {
@@ -1964,6 +2415,8 @@
                 if (choice.cost && gameState.shillings < choice.cost) return;
                 if (choice.reqItem && !gameState.inventory.includes(choice.reqItem)) return;
                 if (choice.reqNotItem && gameState.inventory.includes(choice.reqNotItem)) return; // NEW NOT ITEM CHECK
+                // NEW: Information Flag Check
+                if (choice.reqFlag && !gameState[choice.reqFlag]) return;
 
                 // SKILL CHECK: If choice requires a skill, hide it if player doesn't have it
                 if (choice.reqSkill && !gameState.skills.includes(choice.reqSkill)) return;
@@ -2009,14 +2462,12 @@
                     if (gameState.crewUseFree && choice.type !== 'skill' && choice.type !== 'dialogue') {
                         addToHistory(`*Warning: The Pearlescent Mushroom's clarity is best saved for a crucial skill check.*`, 'system');
                         // Do NOT consume the free use, just continue the scene flow
-                        // This prevents wasting the buff on a simple travel or dialogue button.
                     }
 
 
                     // --- FINAL STOCK CHECK BEFORE TRANSACTION (Crucial Fix) ---
-                    // 1. Check buying stock
+                    // 1. Check buying stock (Market)
                     if (choice.type === 'action' && currentSceneId === 'market_stall' && choice.stockItem) {
-                         // Check the *actual* current stock
                          const currentStock = scenes['market_stall'].stock[choice.stockItem] || 0;
                          if (currentStock <= 0) {
                             addToHistory(`${choice.stockItem} is out of stock.`, 'system');
@@ -2024,10 +2475,19 @@
                             return;
                         }
                     }
-                    // 2. Check selling stock (Curious Cargo)
+                    // 2. Check buying stock (Alchemist)
+                    if (choice.type === 'action' && currentSceneId === 'alchemist_triage' && choice.stockItem) {
+                         const currentStock = scenes['alchemist_triage'].stock[choice.stockItem] || 0;
+                         if (currentStock <= 0) {
+                            addToHistory(`${choice.stockItem} is out of stock.`, 'system');
+                            updateUI();
+                            return;
+                        }
+                    }
+                    // 3. Check selling stock (Curious Cargo at Market)
                     if (choice.type === 'action' && choice.reqItem === 'Curious Cargo' && currentSceneId === 'market_sell') {
                          if (marketStock['Curious Cargo'] <= 0) {
-                            addToHistory(`The Merchant has no need for another Curious Cargo.`, 'system');
+                            addToHistory(`The Market Merchant has no need for another Curious Cargo.`, 'system');
                             updateUI();
                             return;
                         }
@@ -2043,9 +2503,9 @@
                     }
 
                     const currentScene = scenes[gameState.currentSceneId];
-                    const entryText = currentScene.journal !== undefined ? currentScene.journal : currentScene.text;
-                    if (entryText !== null) {
-                        addToHistory(entryText, 'entry');
+                    // IMPORTANT: Only log the journal entry text if the current scene is NOT a hub/merchant scene.
+                    if (currentScene.journal !== null && currentScene.journal !== undefined) {
+                        addToHistory(currentScene.journal, 'entry');
                     }
 
                     // --- APPLY ACTIONS ---
