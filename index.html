@@ -566,7 +566,7 @@
 			'smuggler_pay': 'images/smuggler_pay.jpg', 
 			'market_crossroads': 'images/market.jpg',
 			'market_stall': 'images/merchant.jpg',
-			'market_sell': 'images/merchant.jpg',
+			'market_sell': 'images/merchant.jpg', 
 			'buy_potion': 'images/merchant.jpg',
 			'buy_rope': 'images/merchant.jpg',
 			'buy_torch': 'images/merchant.jpg',
@@ -694,7 +694,6 @@
             "Rope": { type: 'key', icon: 'fa-om', color: 'text-yellow-700', desc: "Passive: Essential for climbing cliffs." },
             "Torch": { type: 'key', icon: 'fa-fire', color: 'text-orange-500', desc: "Passive: Illuminates dark caves." },
             "Strange Coin": { type: 'key', icon: 'fa-circle-notch', color: 'text-yellow-600', desc: "Passive: Ancient currency. May open doors not made of wood." },
-            "Compass": { type: 'key', icon: 'fa-compass', color: 'text-indigo-400', desc: "Passive: Seems to vibrate near planar energy." },
             "Ring of Brass": { type: 'key', icon: 'fa-ring', color: 'text-orange-500', desc: "Legendary Item: The Wolves of Valor set. Grants fire resistance." },
             "Sword of Valor": { type: 'key', icon: 'fa-sword', color: 'text-blue-500', desc: "Legendary Item: The Wolves of Valor set. Deals extra damage to undead." },
         };
@@ -879,7 +878,7 @@
                 },
                 choices: [
                     { text: "Approach them", nextScene: 'smuggler_meet', type: 'travel' },
-                    { text: "Head to the Crossroads", nextScene: 'market_crossroads', type: 'travel' }
+                    { text: "Head to The Crossroads", nextScene: 'market_crossroads', type: 'travel' }
                 ]
             },
             // NEW SCENE for Talon's specific success (acquiring cargo)
@@ -901,7 +900,7 @@
                 },
                 choices: [
                     { text: "Approach them", nextScene: 'smuggler_meet', type: 'travel' },
-                    { text: "Head to the Crossroads", nextScene: 'market_crossroads', type: 'travel' }
+                    { text: "Head to The Crossroads", nextScene: 'market_crossroads', type: 'travel' }
                 ]
             },
             'trail_fail': {
@@ -1340,6 +1339,7 @@
                     fxManager.flashRed();
                     return "Took 2 Damage (Hurry)."; 
                 },
+                // REDIRECTED to Lighthouse Vigil
                 choices: [{ text: "Enter and Rest", nextScene: 'lighthouse_vigil', type: 'rest' }]
             },
             'lighthouse_vigil': {
@@ -1470,7 +1470,7 @@
                             customClass: 'btn-shadow-glow' 
                         },
                         // Renamed and rerouted to the Crossroads Hub
-                        { text: "Visit The Crossroads", nextScene: 'market_crossroads', type: 'travel' } 
+                        { text: "Visit The Crossroads (Check Supplies)", nextScene: 'market_crossroads', type: 'travel' } 
                     ];
 
                     // STATE 2: FINALE UNLOCKED - Remove exploration choices, force ritual preparation
@@ -1971,6 +1971,7 @@
                 
                 // Determine styling: Is this a Hero/Skill moment?
                 let isHeroButton = choice.reqSkill ? true : false;
+                let isCustomClassButton = choice.customClass ? true : false;
 
                 const alignmentClass = (choice.type === 'skill' || choice.cost || choice.value || choice.chaosGain || choice.orderGain) ? 'justify-start' : 'justify-between';
                 
@@ -1987,7 +1988,7 @@
                 }
                 
                 // NEW: Apply CUSTOM glow class if provided (overrides base coloring/animation)
-                if (choice.customClass) {
+                if (isCustomClassButton) {
                     // Clear existing btn styles (removes the default grey/blue styling)
                     btnClass = btnClass.replace('btn-hero', '').replace('btn-game', ''); 
                     btnClass += ` ${choice.customClass} w-full p-4 text-left rounded shadow flex items-center ${alignmentClass} cinzel font-bold mb-2`;
@@ -2121,7 +2122,8 @@
                 
                 // If there is supplemental text (skill/cost/value), merge it with the main content
                 if (supplementalText) {
-                    btn.innerHTML = `${content} ${supplementalText}<span class="ml-auto">${icon}</span>`;
+                    content += supplementalText;
+                    btn.innerHTML = `${content} <span class="ml-auto">${icon}</span>`;
                 } else {
                      // Default travel/dialogue button using justify-between
                      btn.innerHTML = `${content}${icon}`;
