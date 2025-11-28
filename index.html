@@ -962,7 +962,7 @@
                 btnText: "PASSIVE",
                 desc: "Key Item: Alchemical reserve. Automatically prevents death once, healing 10 HP. Consumed on use.",
                 action: (state) => {
-                    return "A powerful reserve, best saved for when death calls.";
+                    return `A powerful reserve, best saved for when death calls.`;
                 }
             },
             "Pearlescent Mushroom": { 
@@ -2085,7 +2085,7 @@
             },
             'overlook_scan_check': {
                 isLogic: true,
-                resolve: (roll) => roll >= 14 ? 'overlook_scan_success' : 'overlook_scan_fail'
+                resolve: (roll) => roll >= 14 ? 'overlook_scan_success' : 'overlook_hasten_fail'
             },
             'overlook_scan_success': {
                 title: "Talon's Eye",
@@ -2470,9 +2470,7 @@
                     // FIX 1: Hard cap all healing at the MAX_OVERHEAL_CAP (25)
                     state.currentHP = Math.min(MAX_OVERHEAL_CAP, state.currentHP + healAmount);
                     
-                    scenes['blackwater_tavern'].stock["Gruel"] -= 1; // Consume stock
-                    
-                    // Note: Shilling is already consumed by the button logic (choice.cost: 1)
+                    // Note: Stock and shilling consumption/refund is handled by the buttons/if block above.
                     return `Ate Gruel. Healed ${state.currentHP - oldHP} HP.`;
                 },
                 choices: [{ text: "Return to Tavern", nextScene: 'blackwater_tavern', type: 'travel', doomCost: 0 }]
@@ -2814,7 +2812,7 @@
                         type: 'action',
                         reqItem: 'Rope',
                         consume: true,
-                        doomCost: 0 // No doom cost for side path
+                        customClass: 'btn-success-glow'
                     },
                     // OPTION 1: INFO CHECK (Automatic Success) - DOOM COST 0
                     { 
@@ -4300,13 +4298,13 @@
                 processedChoices = []; 
                 const gruelStock = currentSceneStock['Gruel'] || 0;
                 const canAfford = gameState.shillings >= 1;
-                // FIX: Check if current HP is >= MAX_OVERHEAL_CAP (25). If so, healing is strictly wasteful.
-                const isHealingWasteful = gameState.currentHP >= MAX_OVERHEAL_CAP; 
+                // FIX 3: Check if current HP is >= MaxHP (20). If so, healing is strictly wasteful/blocked by shield rule.
+                const isHealingWasteful = gameState.currentHP >= gameState.maxHP; 
                 
                 // 1. Instant Eat Gruel (conditional visibility/disability)
                 if (instantEat) {
                     let instantEatText = `Eat Gruel Now (Stock: ${gruelStock})`;
-                    // Disable if full shield HP (25), out of stock, or can't afford
+                    // Disable if full HP (20+), out of stock, or can't afford
                     let instantEatDisabled = !canAfford || gruelStock <= 0 || isHealingWasteful; 
 
                     processedChoices.push({
