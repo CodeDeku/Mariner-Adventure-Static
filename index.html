@@ -819,8 +819,8 @@
         const itemRegistry = {
             "Ship's Log": { type: 'key', icon: 'fa-book-skull', color: 'text-amber-700', desc: "Key Item: Records of the damned. Unlocks your history." },
             "Captain's Tricorn": { type: 'key', icon: 'fa-hat-cowboy', color: 'text-blue-500', desc: "Passive: A symbol of authority. +1 to Intimidation checks." },
-            "Rum (Heal 5)": {
-                name: "Rum (Heal 5)",
+            "Rum": {
+                name: "Rum",
                 type: 'consumable',
                 icon: 'fa-wine-bottle',
                 color: 'text-amber-500',
@@ -831,7 +831,7 @@
                     const oldHP = state.currentHP;
                     // HP Clamping applied here
                     state.currentHP = Math.min(state.maxHP, state.currentHP + healAmount);
-                    const idx = state.inventory.indexOf("Rum (Heal 5)");
+                    const idx = state.inventory.indexOf("Rum");
                     if (idx > -1) state.inventory.splice(idx, 1);
                     return `Drank Rum. Healed ${state.currentHP - oldHP} HP.`;
                 }
@@ -1111,7 +1111,7 @@
             { item: "Healing Potion", nextScene: 'buy_potion', cost: 5 },
             { item: "Rope", nextScene: 'buy_rope', cost: 3 },
             { item: "Torch", nextScene: 'buy_torch', cost: 2 },
-            { item: "Rum (Heal 5)", nextScene: 'buy_rum', cost: 4 } // NEW: Rum is now a purchasable blueprint item
+            { item: "Rum", nextScene: 'buy_rum', cost: 4 } // NEW: Rum is now a purchasable blueprint item
         ];
         
         // NEW: Triage Alchemist Stock Definition
@@ -1135,7 +1135,7 @@
             { item: "Rope", nextScene: 'sell_rope', value: 2, doomCost: 0 },
             { item: "Torch", nextScene: 'sell_torch', value: 1, doomCost: 0 },
             { item: "Healing Potion", nextScene: 'sell_potion', value: 3, doomCost: 0 },
-            { item: "Rum (Heal 5)", nextScene: 'sell_rum', value: 2, doomCost: 0 }
+            { item: "Rum", nextScene: 'sell_rum', value: 2, doomCost: 0 }
         ];
         
         // NEW: Alchemist Sell Options
@@ -1464,7 +1464,7 @@
                 text: "They recognize the sign. 'The Mariner lives? Then you drink for free tonight.' They toss you a bottle from their own supply.",
                 journal: "The smugglers recognized the code. Shared their Rum.",
                 onEnter: (state) => {
-                     state.inventory.push("Rum (Heal 5)");
+                     state.inventory.push("Rum");
                      return "Received Rum.";
                 },
                 choices: [{ text: "Head to The Crossroads", nextScene: 'market_crossroads', type: 'travel' }]
@@ -1497,8 +1497,8 @@
                     "Healing Potion": 1,
                     "Rope": 1,
                     "Torch": 1,
-                    "Curious Cargo": 1, 
-                    "Rum (Heal 5)": 1 // FIX: Changed from 0 to 1 for consistency
+                    "Curious Cargo": 1, // Logic: He wants to BUY 1. He does not sell this.
+                    "Rum": 0 // Starts at 0. He only sells it if you sell him one first.
                 },
                 // --- END LOCAL STOCK ---
                 banter: {
@@ -1581,10 +1581,10 @@
                 text: "You hand over the bottle of rum.",
                 journal: "I handed over the bottle of rum.",
                 onEnter: (state) => {
-                    const idx = state.inventory.indexOf("Rum (Heal 5)");
+                    const idx = state.inventory.indexOf("Rum");
                     if (idx > -1) state.inventory.splice(idx, 1);
                     state.shillings += 2; 
-                    scenes['market_stall'].stock["Rum (Heal 5)"] = (scenes['market_stall'].stock["Rum (Heal 5)"] || 0) + 1; // INCREMENT STOCK
+                    scenes['market_stall'].stock["Rum"] = (scenes['market_stall'].stock["Rum"] || 0) + 1; // INCREMENT STOCK
                     audioManager.playCoins();
                     return "Sold Rum (+2s). Merchant stock increased.";
                 },
@@ -1596,8 +1596,8 @@
                 text: "You exchange coin for the bottle of grog.",
                 journal: "I bought a bottle of rum.",
                 onEnter: (state) => { 
-                    state.inventory.push("Rum (Heal 5)"); 
-                    scenes['market_stall'].stock["Rum (Heal 5)"] -= 1; // Decrease local stock
+                    state.inventory.push("Rum"); 
+                    scenes['market_stall'].stock["Rum"] -= 1; // Decrease local stock
                     audioManager.playCoins();
                     return "Bought Rum."; 
                 },
@@ -2763,12 +2763,12 @@
                 }
             },
             // --- END LOGIC BRIDGE SCENES ---
-            // NEW SCENE: ROPE SIDE QUEST REWARD (Task 2)
+            // ROPE SIDE QUEST REWARD
             'smelter_side_rope': {
                 title: "Catwalk Bypass",
                 text: "The Rope holds fast long enough for you to ascend quickly to the quieter upper catwalk, bypassing the deadly vents below. Tucked away in a maintenance crate, you find a glint of ancient metal: a Strange Coin.",
                 journal: "Used Rope to bypass the vents. Found a Strange Coin and 5 Shillings.",
-                choices: [{ text: "Continue to Smelter Antechamber", nextScene: 'smelter_workers', type: 'travel' }],
+                choices: [{ text: "Continue to Smelter Antechamber", nextScene: 'smelter_entry', type: 'travel' }],
                 onEnter: (state) => { 
                     state.shillings += 5; // ADDED: 5 Shillings
                     audioManager.playCoins();
@@ -3526,7 +3526,7 @@
             "Rope": 1,
             "Torch": 1,
             "Curious Cargo": 1, 
-            "Rum (Heal 5)": 1 
+            "Rum": 1 
         };
         // NEW: Alchemist stock initialization
         scenes['alchemist_triage'].stock = {
@@ -3705,7 +3705,7 @@
                 "Rope": 1,
                 "Torch": 1,
                 "Curious Cargo": 1, 
-                "Rum (Heal 5)": 1 
+                "Rum": 0 
             };
             scenes['alchemist_triage'].stock = {
                 "Vitality Tincture": 2,
