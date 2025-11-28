@@ -4698,18 +4698,20 @@
             if (gameState.inventory.length === 0) {
                 invContainer.innerHTML = '<div class="text-center text-[10px] text-gray-600 italic py-2">Inventory Empty</div>';
             } else {
-                // SORTING LOGIC: Consumables First, then Alphabetical
-                const sortedInventory = [...gameState.inventory].sort((a, b) => {
-                    const itemA = itemRegistry[a] || { type: 'misc' };
-                    const itemB = itemRegistry[b] || { type: 'misc' };
+			// SORTING LOGIC: Consumables First, then Newest at Top
+            // 1. Reverse the array first so newest items (end of array) come first.
+            // 2. Sort by type, returning 0 if types match to preserve the reversed (newest) order.
+            const sortedInventory = [...gameState.inventory].reverse().sort((a, b) => {
+                const itemA = itemRegistry[a] || { type: 'misc' };
+                const itemB = itemRegistry[b] || { type: 'misc' };
 
-                    // Priority 1: Consumables float to the top
-                    if (itemA.type === 'consumable' && itemB.type !== 'consumable') return -1;
-                    if (itemA.type !== 'consumable' && itemB.type === 'consumable') return 1;
+                // Priority 1: Consumables float to the top
+                if (itemA.type === 'consumable' && itemB.type !== 'consumable') return -1;
+                if (itemA.type !== 'consumable' && itemB.type === 'consumable') return 1;
 
-                    // Priority 2: Alphabetical for tidiness
-                    return a.localeCompare(b);
-                });
+                // Priority 2: Maintain relative order (which is now Newest-First due to .reverse())
+                return 0;
+            });
 
                 sortedInventory.forEach(itemName => {
                     const itemDef = itemRegistry[itemName] || { type: 'misc', icon: 'fa-box', color: 'text-gray-500', desc: "A strange item." };
