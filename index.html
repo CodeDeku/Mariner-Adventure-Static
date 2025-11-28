@@ -1736,8 +1736,8 @@
                     addToHistory(shanty, 'entry');
                     
                     // HP CLAMPING FIX: Only reset HP if current is below max
-                    if (state.currentHP < state.maxHP) {
-                        state.currentHP = state.maxHP;
+                    if (gameState.currentHP < gameState.maxHP) {
+                        gameState.currentHP = gameState.maxHP;
                     }
                     
                     Object.keys(state.crew).forEach(k => state.crew[k].used = false);
@@ -1772,7 +1772,7 @@
                         type: 'dialogue',
                         customClass: 'btn-game spectral-active',
                         onSelect: (state) => { 
-                            // FIX 3: Overheal logic: Set currentHP > maxHP(20). maxHP remains 20 for reference.
+                            // FIX 3: Overheal logic: Set currentHP to 25. MaxHP remains 20.
                             state.currentHP = 25; 
                             return "Bones prepared a feast. Overhealed to 25 HP."; 
                         }
@@ -1834,11 +1834,11 @@
                     if (!state.skills.includes("Absorb Elements")) {
                         state.skills.push("Absorb Elements");
                     }
-                    // FIX 2: Only clamp HP back if current HP exceeds max HP AND max HP is 20 (standard state)
-                    if (state.currentHP > 20) {
-                        // Current HP is > 20 (from Bones overheal). Keep it. MaxHP remains 20.
+                    // FIX 2: If HP is greater than max HP (20), keep it (overheal persistence)
+                    if (state.currentHP > state.maxHP) {
+                        // HP persists, maxHP remains 20
                     } else {
-                         state.currentHP = state.maxHP;
+                         state.currentHP = state.maxHP; // Clamp to max if below
                     }
                     // NEW: START DOOM COUNTER
                     state.act1Started = true;
@@ -1855,11 +1855,11 @@
                     if (!state.skills.includes("Primeval Awareness")) {
                         state.skills.push("Primeval Awareness");
                     }
-                    // FIX 2: Only clamp HP back if current HP exceeds max HP AND max HP is 20 (standard state)
-                    if (state.currentHP > 20) {
-                        // Current HP is > 20 (from Bones overheal). Keep it. MaxHP remains 20.
+                    // FIX 2: If HP is greater than max HP (20), keep it (overheal persistence)
+                    if (state.currentHP > state.maxHP) {
+                        // HP persists, maxHP remains 20.
                     } else {
-                        state.currentHP = state.maxHP;
+                        state.currentHP = state.maxHP; // Clamp to max if below
                     }
                     // NEW: START DOOM COUNTER
                     state.act1Started = true;
@@ -2238,7 +2238,6 @@
                         doomCost: 1 // FIX: Dialogue/Action costs 1 turn in a hub
                     },
                     { 
-                        // FIX 3: Confiscate dice removed from this scene
                         // FIX: Updated button text to be concise. Added doomCost: 1
                         // FIX: Added reqNotFlag for visibility (Task 3 Fix)
                         text: "Observe the Card Game", 
@@ -2258,7 +2257,7 @@
                 text: "You take a moment to consume the cheap gruel. It settles your stomach, but barely.",
                 journal: "I instantly consumed gruel for a small amount of healing.",
                 onEnter: (state) => {
-                    if (state.currentHP === state.maxHP) {
+                    if (state.currentHP >= state.maxHP) {
                         // Refund the cost and stock, don't consume, but still advance scene
                         state.shillings += 1; // Refund cost
                         scenes['blackwater_tavern'].stock["Gruel"] += 1; // Refund stock
@@ -2298,7 +2297,7 @@
                     return null; // Return null so the main text still shows the confrontation
                 },
                 choices: [
-                    // FIX 4: NEW neutral choice (Requires Dead Man's Die NOT to be present)
+                    // FIX 3: Confiscate dice button is ONLY here
                     { 
                         text: "Confiscate the Dice (Neutral)", 
                         nextScene: 'tavern_confiscate_dice', 
@@ -2628,11 +2627,12 @@
                     return 'smelter_safe';
                 }
             },
+            // FIX 3: Primeval bridge now skips straight to stage 2 completion scene
             'chapel_primeval_bridge': {
                 isLogic: true,
                 resolve: (roll, state) => {
                     state.isSurpriseRound = true;
-                    return 'chapel_safe';
+                    return 'chapel_stage2_finish';
                 }
             },
             // --- END LOGIC BRIDGE SCENES ---
@@ -2795,10 +2795,11 @@
                         nextScene: 'smelter_dodge_logic', 
                         type: 'skill', 
                         dc: 14, 
-                        skill: 'Athletics' 
+                        skill: 'Athletics',
+                        doomCost: 1 // FIX 2: Added doomCost to skill check in boss
                     },
                     // ESCAPE OPTION
-                    { text: "Throw Flash Powder and Flee", nextScene: 'town_square', type: 'action', reqItem: 'Flash Powder', consume: true }
+                    { text: "Throw Flash Powder and Flee", nextScene: 'town_square', type: 'action', reqItem: 'Flash Powder', consume: true, doomCost: 1 } // FIX 2: Added doomCost to escape
                 ]
             },
             'smelter_dodge_logic': {
@@ -3154,10 +3155,11 @@
                         nextScene: 'chapel_attack_logic', 
                         type: 'skill', 
                         dc: 14, 
-                        skill: 'Perception'
+                        skill: 'Perception',
+                        doomCost: 1 // FIX 2: Added doomCost to skill check in boss
                     },
                     // ESCAPE OPTION
-                    { text: "Throw Flash Powder and Flee", nextScene: 'town_square', type: 'action', reqItem: 'Flash Powder', consume: true }
+                    { text: "Throw Flash Powder and Flee", nextScene: 'town_square', type: 'action', reqItem: 'Flash Powder', consume: true, doomCost: 1 } // FIX 2: Added doomCost to escape
                 ]
             },
             'chapel_attack_logic': {
@@ -3356,7 +3358,11 @@
                 text: "The voices fall silent, only to surge back in a deafening, cold chorus that rips through your mind. The debt is paid. The Planar Storm claims its last crewman, pulling you into the abyss. You feel the crushing presence of the Leviathan one final time.",
                 journal: "Edward Jones is lost to the deep. The voices of the damned are finally silenced.",
                 choices: [
-                    { text: "Awaken (Restart Game)", type: 'reset' }
+                    { 
+                        text: "Awaken (Restart Game)", 
+                        type: 'reset',
+                        customClass: 'btn-hero' // Force rendering
+                    }
                 ]
             }
         };
@@ -3961,7 +3967,7 @@
                 const infoChapel = choices.find(c => c.nextScene === 'gather_info_chapel');
                 const instantEat = choices.find(c => c.nextScene === 'eat_gruel_instant');
                 const buyToGo = choices.find(c => c.nextScene === 'buy_gruel_to_go');
-                // FIX 3: Removed confiscate dice from choices array here, it is only in tavern_gambler
+                // FIX 3: Confiscate dice button is ONLY in tavern_gambler, so don't retrieve it here.
 
                 // Clear base choices to rebuild
                 processedChoices = []; 
