@@ -2674,7 +2674,6 @@
                         type: 'action',
                         reqItem: 'Rope',
                         consume: true,
-                        customClass: 'btn-success-glow',
                         doomCost: 0 // No doom cost for side path
                     },
                     // OPTION 1: INFO CHECK (Automatic Success) - DOOM COST 0
@@ -3924,12 +3923,11 @@
                 // Find insertion point before 'Sell Wares' or 'Return to Port Square'
                 const sellIndex = processedChoices.findIndex(c => c.nextScene === 'alchemist_sell');
                 const newChoice = {
-                    text: "Offer Strange Coin (Wolf King's Brass)",
+                    text: "Offer Strange Coin",
                     nextScene: 'alchemist_secret_stock',
                     type: 'action',
                     reqItem: 'Strange Coin',
                     consume: true,
-                    customClass: 'btn-hero',
                     doomCost: 0
                 };
 
