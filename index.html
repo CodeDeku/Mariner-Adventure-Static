@@ -1511,16 +1511,18 @@
                     { text: "Climb the Cliff", nextScene: 'cliff_climb', type: 'travel' },
                     { text: "Enter the Sea Caves", nextScene: 'dark_caves', type: 'travel' }
                 ]
-            },
-            'cliff_climb': {
-                title: "The Precipice",
-                text: "The wind howls, threatening to tear you from the rock.",
-                choices: [
-                    // FIX: Direct successful path to faction_check to ensure button visibility
-                    { text: "Use Rope (Safe Climb)", nextScene: 'faction_check', type: 'action', reqItem: 'Rope', consume: true },
-                    { text: "Free Solo", nextScene: 'climb_check', type: 'skill', dc: 14, skill: 'Athletics' } // Clean text
-                ]
-            },
+			'cliff_climb': {
+				title: "The Precipice",
+				text: "The wind howls, threatening to tear you from the rock. The Lighthouse is a sheer vertical ascent from here. The stone is slick with sea-spray and blood from previous climbers.",
+				journal: "The cliff was a wall of jagged teeth. One slip and I'd join the wreck below. Gareth was screaming at me to push through the pain, to climb until my fingers bled.",
+				banter: {
+					'gareth': "Pull yourself up, or the sea takes us back!" // Hints at Athletics DC 14
+				},
+				choices: [
+					{ text: "Use Rope (Safe Climb)", nextScene: 'faction_check', type: 'action', reqItem: 'Rope', consume: true },
+					{ text: "Free Solo", nextScene: 'climb_check', type: 'skill', dc: 14, skill: 'Athletics' }
+				]
+			},
             'climb_check': {
                 isLogic: true,
                 // FIX: Direct successful roll to faction_check
@@ -1540,9 +1542,10 @@
             },
             'dark_caves': {
                 title: "The Abyss Below",
-                text: "The air is thick and smells of rot. It is pitch black.",
+				text: "The air is thick and smells of rot. It is pitch black. You can hear things skittering on the damp stone, but you cannot see them.",
+				journal: "The caves felt heavy, like the stone was trying to push the air out of my lungs. Bones told me to close my eyes and smell the way forward.",
                 banter: {
-                    'bones': "Damp... dark... good place for mushrooms, bad for ankles."
+                    'bones': "Your eyes are useless here. Damp... dark... good place for mushrooms, bad for ankles."
                 },
                 choices: [
                     { text: "Light Torch (Safe Passage)", nextScene: 'dark_caves_illuminated', type: 'action', reqItem: 'Torch', consume: true },
@@ -1736,6 +1739,10 @@
                 title: "Cliffside Overlook",
                 text: "The path winds along the sheer cliff face, providing a terrifying view of the Port of Shadows below. You see the chaos: smoke rising from the **Smelter** and a thick, unnatural fog shrouding the **Chapel** district. You must decide whether to scan the area for threats or hasten your descent.",
                 journal: "Reached the overlook. The Port is a warzone. Must be cautious.",
+				banter: {
+						'talon': "Wait. Look at the shadows near those rocks. People leave valuable things behind when they run.", // Hints at Perception DC 14
+						'gareth': "We don't have time to scavenge like rats! Move your feet!" // Hints at Athletics DC 10
+					},
                 choices: [
                     { 
                         text: "Scan the Road for Guards and Loot", // Clean text
@@ -1893,8 +1900,12 @@
             // DOCKS SCENE (NEW)
             'town_docks': {
                 title: "The Rotting Docks",
-                text: "The sea is black and restless. The skeletal remains of piers stretch into the cold water. Sailors work in silence, hauling heavy crates. You see a shifty-eyed <span class='memory-keyword' data-lore='The unseen veins of the coast. They value coin above law.'>Smuggler</span> checking his manifest.",
-                journal: "Arrived at the docks. Hard work available, and maybe something more illicit.",
+                text: "The sea is black and restless. The remains of piers stretch into the cold water. Sailors work in silence, hauling heavy crates, trying to ignore the end of the world. You see a shifty-eyed <span class='memory-keyword' data-lore='The unseen veins of the coast. They value coin above law.'>Smuggler</span> checking his manifest.",
+                journal: "The piers were rotting under our feet. The sailors worked with their heads down, terrified. Bones thought the water looked cold enough to kill.",
+				banter: {
+					'bones': "That water's cold enough to stop a heart. If you're going diving for lost coin, you better have the lungs of a whale.", // Hints at Survival DC 16
+					'talon': "Smugglers love false bottoms and hidden knots. Look closer..." // Hints at Perception DC 14
+				},
                 choices: [
                     // NEW CHOICE: Sell Curious Cargo directly here for a premium (+15s). This button is now handled by renderChoices visibility.
                     { text: "Sell Curious Cargo to Smuggler", nextScene: 'docks_sell_cargo', type: 'action', reqItem: 'Curious Cargo', value: 15, doomCost: 0 },
@@ -2011,10 +2022,13 @@
             'blackwater_tavern': {
 				title: "The Blackwater Tavern",
 				text: "The interior is dim, smelling of stale brine and fear. Men speak in hushed tones, glancing at the door. This is where the broken come to hide. Rest is costly, but information is sometimes free.",
-				journal: "The Blackwater. Even the ale tastes like defeat here. But the walls have ears, and I need to listen.",
+				journal: "The Blackwater stank of defeat. But Quinn was right—the walls have ears. I sat in the dark and listened to the dying city breathe.",
+				banter: {
+					'gareth': "That gambler in the corner... Watch his hands.", // Hints at Insight DC 16
+				},
                 isRest: true, // Tag as rest scene to prevent doom counter decrement
                 stock: { // NEW STOCK FOR GRUEL
-                    "Gruel": 5 
+                    "Gruel": 4 
                 },
                 choices: [
                     // PAID REST OPTION (Task 3 Fix: Added doomCost: 3)
@@ -2344,11 +2358,11 @@
             'smelter_entry': {
                 title: "Smelter District: Steam Vents",
                 text: "The path is blocked by a burst steam pipe spitting magical fire. The main valve is screaming and rusted over. You need to use your abilities or brute force here.",
-				journal: "The heat hits like a physical blow. The air tastes of sulfur and ash. Even the ghosts in my head are quiet, drowned out by the roar of the vents.",
+				journal: "The heat hit me like a hammer. The pipes were screaming. Quinn started shouting about torque and pressure, but Talon just pointed at the walls.",
                 banter: {
-                    // Talon Banter for Rope Check (New: Task 2)
-                    'talon': "That massive pipe network runs up the outside wall. It's steep, but if we could climb to the upper catwalk, we'd bypass these deadly vents entirely."
-                },
+					'quinn': "That valve isn't jammed; it's pressurized! Use your head, not your muscle!", // Hints at Investigation DC 15
+					'talon': "Why fight the steam? That massive pipe network runs up the outside wall. It's steep, but if we have a rope, we can make it." // Hints at Rope
+				},
                 choices: [
                     // NEW CHOICE: ROPE SIDE QUEST (Task 2)
                     {
@@ -2422,8 +2436,11 @@
             // --- NEW SCENE: SMELTER ANTECHAMBER (Order/Chaos Choice) ---
             'smelter_workers': {
                 title: "Smelter District: Trapped Workers",
-                text: "You enter the main engine room. A heavy support beam has collapsed, trapping three exhausted workers near the pit. They beg for aid. If you stop, the Slag Horror will hear you. If you don't, they will burn.",
-                journal: "Found trapped workers in the smelter. A moral choice.",
+                text: "You enter the main engine room. A heavy support beam has collapsed, trapping three exhausted workers near the pit. They beg for aid.",
+                journal: "I found men pinned by a beam, baking alive. Gareth started screaming about duty. A Captain protects the weak, even if it costs him everything.",
+				banter: {
+					'gareth': "Heave! Put your back into it! They are civilians under there!!" // Hints at Athletics DC 15
+				},
                 choices: [
                     // ORDER PATH: INCURS DOOM COST (Default 1) - Takes time
                     { 
@@ -2479,6 +2496,10 @@
             'smelter_stage1_start': {
                 title: "Slag Horror: Stage 1 - The Heat Wave",
                 text: "The <span class='text-red-500 font-bold'>Slag Horror</span> rises from the molten iron, its core glowing. It prepares to spew a wave of magma. You must find a way to mitigate the heat to get close enough to strike. You spot the hilt of the **Sword of Valor** suspended in its chest.",
+				journal: "The beast rose from the slag, dripping liquid iron. It didn't look like a monster; it looked like an industrial accident given hate and form.",
+				banter: {
+					'gareth': "It's winding up! Don't stand there—move!" // Hints at Athletics DC 14
+				},
                 isBoss: true, // Tag as boss scene (No doom cost)
                 choices: [
                     // COUNTER 1: Item Bypass
@@ -2662,12 +2683,12 @@
             // --- SHADOW PATH SCENES ---
             'chapel_entry': {
                 title: "Sunken Chapel: The Fog Maze",
-                text: "The cemetery is covered in unnatural fog. The paths loop back on themselves, and you cannot see.",
-				journal: "The silence here is heavy. It presses against my ears. The fog moves like it has intent. I'd prefer the fire—at least fire is honest.",
+                text: "The cemetery is covered in unnatural fog. The paths loop back on themselves, and you cannot see. The silence here is heavy.",
+				journal: "The silence of the Chapel was heavy. The fog felt intentional. It wanted me lost.",
                 banter: {
-                     // Bones Banter for Torch Check (New: Task 2)
-                    'bones': "The ground here is soaked, and the air is thick. You need a big, hot light, or you'll trip over the truly dead."
-                },
+					'talon': "The fog moves against the wind. Something is disturbing it.", // Hints at Perception DC 15
+					'bones': "You can't fight what you can't see. Light a torch." // Hints at Torch
+				},
                 choices: [
                     // NEW CHOICE: TORCH SIDE QUEST (Task 2)
                     {
@@ -2742,7 +2763,10 @@
             'chapel_vestry': {
                 title: "Sunken Chapel: Flooded Vestry",
                 text: "The vestry is flooded with black, polluted water. A panicked man is caught in the undertow, struggling to keep his head above the foul tide. He screams for help.",
-                journal: "Found a drowning man in the Chapel vestry. A choice of mercy or self-interest.",
+                journal: "A man was drowning in the vestry. The water looked necrotic, thick with rot. I hesitated. I admit it. I didn't want to touch that water.",
+				banter: {
+					'gareth': "He's going under! You have the strength to pull him out, Edward. Don't let him drown!" // Hints at Athletics DC 14
+				},
                 choices: [
                     // ORDER PATH: INCURS DOOM COST (Default 1) - Takes time
                     { 
@@ -2810,6 +2834,10 @@
             'chapel_stage1_reveal': {
                 title: "Drowned Spectre: Stage 1 - The Ambush",
                 text: "The crypt is flooded. The <span class='text-gray-400 font-bold'>Drowned Spectre</span> is present but invisible in the thick, churning black fog. It will strike from the dark unless you can pinpoint its true location. On its skeletal finger glints the **Ring of Brass**.",
+				journal: "The Spectre was everywhere and nowhere. A cold touch on my neck. A whisper in my ear. Talon told me to stop looking with my eyes.",
+				banter: {
+					'talon': "It's circling us. Stop looking with your eyes. Watch for the displacement in the fog." // Hints at Perception DC 14
+				},
                 isBoss: true, // Tag as boss scene (No doom cost)
                 choices: [
                     // COUNTER 1: Item Bypass (If Fire Path was done first)
