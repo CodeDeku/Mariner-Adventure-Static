@@ -178,6 +178,7 @@
         .btn-success-glow:hover {
             background-color: rgba(4, 120, 87, 0.6);
             box-shadow: 0 0 15px rgba(52, 211, 153, 0.8);
+            transform: translateY(-1px);
         }
         
         /* --- KEEN SENSES GLOW (Violet Border) --- */
@@ -1107,8 +1108,7 @@
 				journal: "The forest is watching. Gareth wants to march like a soldier; Talon wants to skulk like a wolf. I have to decide who to listen to before I go mad.",
 				banter: {
 					'gareth': "The King's Road is the only path for a proper vessel. March on.",
-					'talon': "Roads are for sheep and slaughter. The brush hides us.",
-					'bones': "Dirt feels better than cobblestone on these tired feet."
+					'talon': "Roads are for sheep and slaughter. The brush hides us. I smell a game trail the soldiers missed."
 				},
                 choices: [
                     { text: "Take the Main Road", nextScene: 'road_encounter', type: 'travel' },
@@ -1370,8 +1370,8 @@
                 },
                 choices: [
                     // NOTE: Buy/Sell options are generated dynamically in renderChoices
-                    { text: "Sell Wares", nextScene: 'market_sell', type: 'travel' }, 
-                    { text: "Leave", nextScene: 'market_crossroads', type: 'travel' }
+                    { text: "Sell Wares", nextScene: 'market_sell', type: 'travel', doomCost: 0 }, 
+                    { text: "Leave", nextScene: 'market_crossroads', type: 'travel', doomCost: 0 }
                 ]
             },
             'market_sell': {
@@ -1380,7 +1380,7 @@
                 journal: null,
                 // NOTE: Sell options are generated dynamically in renderChoices
                 choices: [
-                    { text: "Back to Buying", nextScene: 'market_stall', type: 'travel' }
+                    { text: "Back to Buying", nextScene: 'market_stall', type: 'travel', doomCost: 0 }
                 ]
             },
             // Merchant Sale Scene (Coin Only, No Influence)
@@ -1396,7 +1396,7 @@
                     audioManager.playCoins();
                     return "Sold Curious Cargo (+10s).";
                 },
-                choices: [{ text: "Continue Selling", nextScene: 'market_sell', type: 'travel' }]
+                choices: [{ text: "Continue Selling", nextScene: 'market_sell', type: 'travel', doomCost: 0 }]
             },
             'sell_rope': {
                 title: "Sold",
@@ -1410,7 +1410,7 @@
                     audioManager.playCoins();
                     return "Sold Rope (+2s). Merchant stock increased.";
                 },
-                choices: [{ text: "Continue Selling", nextScene: 'market_sell', type: 'travel' }]
+                choices: [{ text: "Continue Selling", nextScene: 'market_sell', type: 'travel', doomCost: 0 }]
             },
             'sell_torch': {
                 title: "Sold",
@@ -1424,7 +1424,7 @@
                     audioManager.playCoins();
                     return "Sold Torch (+1s). Merchant stock increased.";
                 },
-                choices: [{ text: "Continue Selling", nextScene: 'market_sell', type: 'travel' }]
+                choices: [{ text: "Continue Selling", nextScene: 'market_sell', type: 'travel', doomCost: 0 }]
             },
             'sell_potion': {
                 title: "Sold",
@@ -1438,7 +1438,7 @@
                     audioManager.playCoins();
                     return "Sold Potion (+3s). Merchant stock increased.";
                 },
-                choices: [{ text: "Continue Selling", nextScene: 'market_sell', type: 'travel' }]
+                choices: [{ text: "Continue Selling", nextScene: 'market_sell', type: 'travel', doomCost: 0 }]
             },
             'sell_rum': {
                 title: "Sold",
@@ -1452,7 +1452,7 @@
                     audioManager.playCoins();
                     return "Sold Rum (+2s). Merchant stock increased.";
                 },
-                choices: [{ text: "Continue Selling", nextScene: 'market_sell', type: 'travel' }]
+                choices: [{ text: "Continue Selling", nextScene: 'market_sell', type: 'travel', doomCost: 0 }]
             },
             // NEW SCENE: buy_rum (for dynamic repurchasing)
              'buy_rum': {
@@ -1465,7 +1465,7 @@
                     audioManager.playCoins();
                     return "Bought Rum."; 
                 },
-                choices: [{ text: "Return to Merchant", nextScene: 'market_stall', type: 'travel' }]
+                choices: [{ text: "Return to Merchant", nextScene: 'market_stall', type: 'travel', doomCost: 0 }]
             },
             'buy_potion': {
                 title: "Purchase",
@@ -1477,7 +1477,7 @@
                     audioManager.playCoins();
                     return "Bought Potion."; 
                 },
-                choices: [{ text: "Return to Merchant", nextScene: 'market_stall', type: 'travel' }]
+                choices: [{ text: "Return to Merchant", nextScene: 'market_stall', type: 'travel', doomCost: 0 }]
             },
             'buy_rope': {
                 title: "Purchase",
@@ -1489,7 +1489,7 @@
                     audioManager.playCoins();
                     return "Bought Rope."; 
                 },
-                choices: [{ text: "Return to Merchant", nextScene: 'market_stall', type: 'travel' }]
+                choices: [{ text: "Return to Merchant", nextScene: 'market_stall', type: 'travel', doomCost: 0 }]
             },
             'buy_torch': {
                 title: "Purchase",
@@ -1501,7 +1501,7 @@
                     audioManager.playCoins();
                     return "Bought Torch."; 
                 },
-                choices: [{ text: "Return to Merchant", nextScene: 'market_stall', type: 'travel' }]
+                choices: [{ text: "Return to Merchant", nextScene: 'market_stall', type: 'travel', doomCost: 0 }]
             },
             'lighthouse_split': {
                 title: "The Final Approach",
@@ -1511,6 +1511,7 @@
                     { text: "Climb the Cliff", nextScene: 'cliff_climb', type: 'travel' },
                     { text: "Enter the Sea Caves", nextScene: 'dark_caves', type: 'travel' }
                 ]
+            }, 
 			'cliff_climb': {
 				title: "The Precipice",
 				text: "The wind howls, threatening to tear you from the rock. The Lighthouse is a sheer vertical ascent from here. The stone is slick with sea-spray and blood from previous climbers.",
@@ -1604,12 +1605,12 @@
             'ending_order': {
                 title: "Checkpoint: The Deputy", // RENAMED
                 text: "A squad of Royal Guards stands at the door, pikes grounded. Their captain steps forward, his gauntlet striking his breastplate in a sharp salute. 'We have eyes on the road, citizen. In a land governed by rot, you kept to the code. The Lighthouse is yours to secure, Deputy.' They part ranks, granting you passage with the discipline of a king's court.",
-                journal: "The Guards respect me. They let me pass without question. Order has its perks.",
+                journal: "The Guards respect me. They let me pass without question. Order has its uses.",
                 choices: [{ text: "Enter and Rest (Start Act 1)", nextScene: 'lighthouse_vigil', type: 'rest' }]
             },
 			'ending_chaos': {
                 title: "Checkpoint: Smuggler's Ally", // RENAMED
-                text: "Smugglers lounge by the entrance. They grin as you approach. 'The Mariner lives? Then you drink for free tonight.' They toss you a key.",
+                text: "Smugglers lounge by the entrance. 'The Mariner lives? Then you drink for free tonight.' They toss you a key.",
                 journal: "The smugglers see me as one of their own. They gave me the key.",
                 choices: [{ text: "Enter and Rest (Start Act 1)", nextScene: 'lighthouse_vigil', type: 'rest' }]
             },
@@ -1929,7 +1930,7 @@
                         dc: 14, 
                         skill: 'Perception', 
                         reqItem: 'Ring of Brass', // Keen Senses check to find hidden goods
-                        reqNotFlag: 'hasSearchedSmugglerDrop', // NEW: Hides after use (Task 3 Fix)
+                        reqNotFlag: 'hasSearchedSmugglerDrop', // NEW: Hides after use
                         customClass: 'btn-keen-senses',
                         doomCost: 1
                     }, 
@@ -2386,7 +2387,7 @@
                     // OPTION 2: HERO BUTTON (Absorb Elements) - DOOM COST 0
                     { 
                         text: "Channel Absorb Elements (Absorb Heat)", 
-                        nextScene: 'smelter_safe_charged', 
+                        nextScene: 'smelter_absorb_bridge', // FIXED: Points to bridge scene to set flag
                         type: 'action', 
                         reqSkill: 'Absorb Elements', 
                         doomCost: 0,
@@ -2396,6 +2397,22 @@
                     { text: "Analyze & Attempt to Turn Valve", nextScene: 'smelter_roll', type: 'skill', dc: 15, skill: 'Investigation' }
                 ]
             },
+             // --- NEW LOGIC BRIDGE SCENES (CRITICAL FIX) ---
+            'smelter_absorb_bridge': {
+                isLogic: true,
+                resolve: (roll, state) => {
+                    state.isAbsorbCharged = true;
+                    return 'smelter_stage2_clean';
+                }
+            },
+            'chapel_primeval_bridge': {
+                isLogic: true,
+                resolve: (roll, state) => {
+                    state.isSurpriseRound = true;
+                    return 'chapel_stage2_finish';
+                }
+            },
+            // --- END LOGIC BRIDGE SCENES ---
             // NEW SCENE: ROPE SIDE QUEST REWARD (Task 2)
             'smelter_side_rope': {
                 title: "Catwalk Bypass",
@@ -2514,7 +2531,7 @@
                     // COUNTER 2: Skill Mitigation (Absorb Elements) - Sets flag for stage 2
                     { 
                         text: "Channel Absorb Elements", 
-                        nextScene: 'smelter_stage2_clean', 
+                        nextScene: 'smelter_absorb_bridge', // FIXED: Points to bridge scene
                         type: 'action', 
                         reqSkill: 'Absorb Elements', 
                         doomCost: 0,
@@ -2712,7 +2729,7 @@
                     // OPTION 2: HERO BUTTON (Primeval Awareness) - DOOM COST 0
                     { 
                         text: "Channel Primeval Awareness", 
-                        nextScene: 'chapel_safe_surprise', 
+                        nextScene: 'chapel_primeval_bridge', // FIXED: Points to bridge scene to set flag
                         type: 'action', 
                         reqSkill: 'Primeval Awareness', 
                         doomCost: 0,
@@ -2731,9 +2748,9 @@
                 onEnter: (state) => { 
                     if (!state.inventory.includes("Pearlescent Mushroom")) {
                         state.inventory.push("Pearlescent Mushroom");
-                        return "Torch consumed. Found Pearlescent Mushroom!"; 
+                        return "Torch expended. Found Pearlescent Mushroom!"; 
                     }
-                    return "Torch consumed. Found nothing else of value.";
+                    return "Torch expended.";
                 },
             },
             'chapel_safe_surprise': { 
@@ -2851,7 +2868,7 @@
                     // COUNTER 2: Skill Mitigation (Primeval Awareness)
                     { 
                         text: "Channel Primeval Awareness", 
-                        nextScene: 'chapel_stage2_finish', 
+                        nextScene: 'chapel_primeval_bridge', // FIXED: Points to bridge scene
                         type: 'action', 
                         reqSkill: 'Primeval Awareness',
                         customClass: 'btn-shadow-glow' 
