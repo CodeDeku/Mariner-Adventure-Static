@@ -4096,7 +4096,9 @@
                 // Determine styling: Is this a Hero/Skill moment?
                 let isHeroButton = choice.reqSkill ? true : false;
                 let isCustomClassButton = choice.customClass ? true : false;
-                let isTradeButton = choice.cost || choice.value || choice.shillingGain || (choice.nextScene.includes('sell') && currentSceneId.includes('alchemist')); // Added shillingGain for dock work/gruel
+                // FIXED LINE:
+				// Added "choice.nextScene &&" to ensure we don't crash on Reset buttons
+				let isTradeButton = choice.cost || choice.value || choice.shillingGain || (choice.nextScene && choice.nextScene.includes('sell') && currentSceneId.includes('alchemist'));
                 let isSkillCheck = choice.type === 'skill';
 
                 const alignmentClass = (isSkillCheck || isTradeButton || choice.chaosGain || choice.orderGain || choice.costHP !== undefined || choice.shillingGain || choice.doomCost !== undefined || choice.reqFlag) ? 'justify-start' : 'justify-between';
