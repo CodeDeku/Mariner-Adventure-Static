@@ -3356,7 +3356,7 @@
                     { 
                         text: "The End (Restart Game)", 
                         type: 'reset',
-                        customClass: 'btn-hero' // Use customClass to force rendering by renderChoices
+						doomCost: 0
                     }
                 ]
             },
@@ -3369,7 +3369,8 @@
                     { 
                         text: "Awaken (Restart Game)", 
                         type: 'reset',
-                        customClass: 'btn-hero' // Force rendering
+                        customClass: 'btn-hero',
+						doomCost: 0						// Force rendering
                     }
                 ]
             }
@@ -4284,6 +4285,9 @@
                 if (isTradeButton) {
                     icon = '<i class="fas fa-coins text-amber-500"></i>';
                 }
+				if (choice.type === 'reset') {
+					icon = '<i class="fas fa-sync-alt text-gray-400 group-hover:text-white"></i>';
+				}
 
                 if (isSkillCheck) {
                     // Skill notation and dice icon are aligned immediately after the label
@@ -4327,7 +4331,7 @@
 				const hasExplicitCost = choice.doomCost !== undefined;
                 const cost = hasExplicitCost ? choice.doomCost : (isStandardAct1Scene ? 1 : 0);
                 
-				if (gameState.act1Started && gameState.quinnLogistics && cost >= 0) {
+				if (gameState.act1Started && gameState.quinnLogistics && cost >= 0 && choice.type !== 'reset') {
 					if (cost > 0) {
 						indicators.push({ text: `-${cost} Turns`, color: 'text-purple-400' });
 					} else if (cost === 0 && (hasExplicitCost || choice.type === 'travel')) {
