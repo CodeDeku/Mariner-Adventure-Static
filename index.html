@@ -2609,7 +2609,7 @@
                     // OPTION 2: HERO BUTTON (Absorb Elements) - DOOM COST 0
                     { 
                         text: "Channel Absorb Elements (Absorb Heat)", 
-                        nextScene: 'smelter_absorb_bridge', // FIXED: Points to bridge scene to set flag
+                        nextScene: 'smelter_boss_absorb_bridge', // FIXED: Points to bridge scene to set flag
                         type: 'action', 
                         reqSkill: 'Absorb Elements', 
                         doomCost: 0,
@@ -2627,6 +2627,14 @@
                     return 'smelter_safe';
                 }
             },
+			// NEW SCENE: Specific bridge for Boss Fight to break the loop
+			'smelter_boss_absorb_bridge': {
+				isLogic: true,
+				resolve: (roll, state) => {
+					state.isAbsorbCharged = true; // Set the flag for Stage 2
+					return 'smelter_stage2_clean'; // Go directly to Stage 2, skipping the loop
+				}
+			},
             // FIX 3: Primeval bridge now skips straight to stage 2 completion scene
             'chapel_primeval_bridge': {
                 isLogic: true,
@@ -2783,7 +2791,7 @@
                     // COUNTER 2: Skill Mitigation (Absorb Elements) - Sets flag for stage 2
                     { 
                         text: "Channel Absorb Elements", 
-                        nextScene: 'smelter_absorb_bridge', // FIXED: Points to bridge scene to set flag
+                        nextScene: 'smelter_boss_absorb_bridge', // FIXED: Points to bridge scene to set flag
                         type: 'action', 
                         reqSkill: 'Absorb Elements', 
                         doomCost: 0,
@@ -3816,7 +3824,8 @@
                     const actualStock = currentSceneStock[sale.item] || 0;
                     
                     // Check if player has max HP (if buying healing item)
-                    const isHealingItem = itemRegistry[sale.item] && itemRegistry[sale.item].name.includes('Heal');
+                    const itemDef = itemRegistry[sale.item];
+					const isHealingItem = itemDef && itemDef.name && itemDef.name.includes('Heal');
                     const isFullHP = gameState.currentHP >= gameState.maxHP;
                     
                     // RULE: Only display if in stock (actualStock > 0)
