@@ -207,19 +207,19 @@
             animation: shadow-pulse 2s infinite;
         }
 
-        /* --- SUCCESS GLOW (Info Bypass) --- */
-        .btn-success-glow {
-            background-color: rgba(4, 120, 87, 0.4); /* Dark green */
-            border: 1px solid #34d399; /* Light green */
-            box-shadow: 0 0 10px rgba(52, 211, 153, 0.4);
-            color: #d1fae5;
-            transition: all 0.2s;
-        }
-        .btn-success-glow:hover {
-            background-color: rgba(4, 120, 87, 0.6);
-            box-shadow: 0 0 15px rgba(52, 211, 153, 0.8);
-            transform: translateY(-1px);
-        }
+        /* --- SUCCESS GLOW (Info Bypass) - UPDATED TO WHISPER TONE --- */
+		.btn-success-glow {
+			background-color: rgba(243, 244, 246, 0.1); /* White/Gray Base */
+			border: 1px solid #9ca3af; /* Gray-400 */
+			box-shadow: 0 0 8px rgba(156, 163, 175, 0.3); /* Soft, subtle glow */
+			color: #f9fafb; /* Lightest Gray text */
+			transition: all 0.2s;
+		}
+		.btn-success-glow:hover {
+			background-color: rgba(243, 244, 246, 0.2);
+			box-shadow: 0 0 12px rgba(255, 255, 255, 0.4); /* White glow on hover */
+			transform: translateY(-1px);
+		}
         
         /* --- KEEN SENSES GLOW (Violet Border) --- */
         @keyframes keen-senses-pulse {
@@ -446,7 +446,7 @@
         }
         body.plane-ethereal .journal-font {
             color: #bae6fd !important; /* Light Sky Blue text */
-            font-family: 'Cinzel', serif !important; /* Shift font to feel more ancient/formal in the void */
+            font-family: 'Dancing Script', cursive !important;
         }
 
         /* 6. STANDARD BUTTON OVERRIDE (The "Normal" Travel Buttons) */
@@ -976,8 +976,10 @@
                         return "The residual clarity remains. You can only benefit from one mushroom at a time.";
                     }
                     state.crewUseFree = true;
+                    // FIX 2: Mushroom consumption added here
                     const idx = state.inventory.indexOf("Pearlescent Mushroom");
                     if (idx > -1) state.inventory.splice(idx, 1);
+                    
                     return `Consumed Pearlescent Mushroom. Clarity gained! (Free Guiding Voice available)`;
                 }
             },
@@ -2100,7 +2102,7 @@
             },
             'overlook_scan_fail': {
                 title: "Blinded by the View",
-                text: "The sheer drop distracts you. You see nothing useful.",
+                text: "You stumble over loose scree and fall awkwardly, twisting your knee slightly.",
                 journal: "Failed the scan. Must be more careful.",
                 choices: [
                     { text: "Continue Descent", nextScene: 'town_descent', type: 'travel' },
@@ -2454,13 +2456,13 @@
                 text: "You take a moment to consume the cheap gruel. It settles your stomach, but barely.",
                 journal: "I instantly consumed gruel for a small amount of healing.",
                 onEnter: (state) => {
-                    // Overheal check logic is handled by the Item Registry action.
-                    if (state.currentHP >= state.maxHP) {
+                    // FIX 3: Check if current HP is at the absolute MAX_OVERHEAL_CAP (25)
+                    if (state.currentHP >= MAX_OVERHEAL_CAP) {
                         // Refund the cost and stock, don't consume, but still advance scene
-                        state.shillings += 1; // Refund cost
+                        state.shillings += 1; // Refund cost (since it was charged by the button)
                         scenes['blackwater_tavern'].stock["Gruel"] += 1; // Refund stock
                         audioManager.playCoins();
-                        return "You are already at full HP. Gruel was not consumed, Shilling refunded.";
+                        return "You are already at maximum HP (Shield Active). Gruel was not consumed, Shilling refunded.";
                     }
                     
                     const healAmount = 2;
@@ -3195,8 +3197,7 @@
                         type: 'action',
                         reqItem: 'Torch',
                         consume: true,
-                        customClass: 'btn-success-glow',
-                        doomCost: 0 // No doom cost for side path
+                        customClass: 'btn-success-glow'
                     },
                     // OPTION 1: INFO CHECK (Automatic Success) - DOOM COST 0
                     { 
@@ -4298,20 +4299,21 @@
                 // Clear base choices to rebuild
                 processedChoices = []; 
                 const gruelStock = currentSceneStock['Gruel'] || 0;
-                const canHeal = gameState.currentHP < gameState.maxHP;
                 const canAfford = gameState.shillings >= 1;
+                // FIX: Check if current HP is >= MAX_OVERHEAL_CAP (25). If so, healing is strictly wasteful.
+                const isHealingWasteful = gameState.currentHP >= MAX_OVERHEAL_CAP; 
                 
                 // 1. Instant Eat Gruel (conditional visibility/disability)
                 if (instantEat) {
                     let instantEatText = `Eat Gruel Now (Stock: ${gruelStock})`;
-                    // Disable if full HP, out of stock, or can't afford
-                    let instantEatDisabled = !canAfford || gruelStock <= 0 || !canHeal; 
+                    // Disable if full shield HP (25), out of stock, or can't afford
+                    let instantEatDisabled = !canAfford || gruelStock <= 0 || isHealingWasteful; 
 
                     processedChoices.push({
                         ...instantEat, 
                         text: instantEatText, 
                         cost: instantEat.cost, 
-                        doomCost: 0, // FIX: Explicitly add doomCost 0
+                        doomCost: 0, 
                         isDisabled: instantEatDisabled,
                     });
                 }
@@ -4326,7 +4328,7 @@
                         ...buyToGo,
                         text: buyToGoText,
                         cost: buyToGo.cost, 
-                        doomCost: 0, // FIX: Explicitly add doomCost 0
+                        doomCost: 0, 
                         isDisabled: buyToGoDisabled
                     });
                 }
@@ -4622,8 +4624,12 @@
                     // Custom classes need the base styling mixed in for padding, shadow, etc.
                     content = `<span class="cinzel font-bold text-white">${rawText}</span>`;
                     
+                    // NEW FIX: Success Glow Icon (Whisper)
+                    if (choice.customClass === 'btn-success-glow') {
+                         icon = '<i class="fas fa-ear-listen text-gray-300"></i>';
+                    }
                     // Custom Icon Logic for Keen Senses
-                    if (choice.customClass === 'btn-keen-senses') {
+                    else if (choice.customClass === 'btn-keen-senses') {
                          icon = '<i class="fas fa-eye text-purple-300"></i>';
                     } else if (choice.customClass && choice.customClass.includes('spectral-active')) {
                          // FIX 2: Captain's orders buttons use chevron and spectral glow
