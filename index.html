@@ -1403,7 +1403,7 @@
                     'quinn': "Buy what you can, but we need inventory, not junk."
                 },
                 choices: [
-                    // NOTE: Buy/Sell options are generated dynamically in renderChoices
+                    // NOTE: Choices are defined here, but rendering is handled by renderChoices
                     { text: "Sell Wares", nextScene: 'market_sell', type: 'travel', doomCost: 0 }, 
                     { text: "Leave", nextScene: 'market_crossroads', type: 'travel', doomCost: 0 }
                 ]
@@ -1735,7 +1735,10 @@
                     
                     addToHistory(shanty, 'entry');
                     
-                    state.currentHP = state.maxHP;
+                    // Reset maxHP to base 20 if it was set for the Bones overheal visual
+                    if (state.maxHP === 25) state.maxHP = 20; 
+                    state.currentHP = Math.min(state.currentHP, state.maxHP); // Clamp HP to 20 if overhealed from previous life.
+                    
                     Object.keys(state.crew).forEach(k => state.crew[k].used = false);
                     // NEW: Docks work exhaustion reset
                     state.docksWorkCount = 0;
@@ -1756,20 +1759,21 @@
                         text: "Gareth: 'Violence of Action' (First Combat has Surprise Advantage)", 
                         nextScene: 'lighthouse_morning', 
                         type: 'dialogue',
-                        customClass: 'btn-hero',
+                        customClass: 'btn-game spectral-active',
                         onSelect: (state) => { 
                             state.isSurpriseRound = true; 
                             return "Gareth's tactical advice grants a free Surprise Round on the first boss."; 
                         }
                     },
                     { 
-                        text: "Bones: 'The Last Meal' (Start Act 1 Overhealed to 25 HP)", 
+                        text: "Bones: 'The Last Meal' (Start Act 1 Overhealed to 25/20 HP)", 
                         nextScene: 'lighthouse_morning', 
                         type: 'dialogue',
-                        customClass: 'btn-success-glow',
+                        customClass: 'btn-game spectral-active',
                         onSelect: (state) => { 
+                            // FIX 3: Overheal logic: Set currentHP > maxHP(20). maxHP remains 20 for logic, but currentHP is 25
                             state.currentHP = 25; 
-                            state.maxHP = 25; // Increase maxHP to 25 to show the overheal on the bar (visual effect only)
+                            state.maxHP = 20; 
                             return "Bones prepared a feast. Overhealed to 25 HP."; 
                         }
                     },
@@ -1777,7 +1781,7 @@
                         text: "Quinn: 'Logistical Mapping' (Reveal Doom Costs on Choices)", 
                         nextScene: 'lighthouse_morning', 
                         type: 'dialogue',
-                        customClass: 'btn-shadow-glow',
+                        customClass: 'btn-game spectral-active',
                         onSelect: (state) => { 
                             state.quinnLogistics = true; 
                             return "Quinn mapped the city. Doom Costs are now visible on all choices."; 
@@ -1787,7 +1791,7 @@
                         text: "Talon: 'Forward Recon' (Unlock All Secret Paths)", 
                         nextScene: 'lighthouse_morning', 
                         type: 'dialogue',
-                        customClass: 'btn-keen-senses',
+                        customClass: 'btn-game spectral-active',
                         onSelect: (state) => { 
                             state.knowsSmelterSecret = true; 
                             state.knowsChapelSecret = true; 
@@ -1830,8 +1834,10 @@
                     if (!state.skills.includes("Absorb Elements")) {
                         state.skills.push("Absorb Elements");
                     }
-                    if (state.maxHP === 25) state.maxHP = 20; // Reset maxHP if it was set for the Bones overheal visual
-                    state.currentHP = state.maxHP;
+                    // Reset maxHP to base 20 if it was set for the Bones overheal visual
+                    if (state.maxHP === 25) state.maxHP = 20; 
+                    // Clamp current HP back to the new max HP
+                    state.currentHP = Math.min(state.currentHP, state.maxHP);
                     // NEW: START DOOM COUNTER
                     state.act1Started = true;
                     return "Unlocked: Absorb Elements. HP Restored. Act 1 Commencing.";
@@ -1847,8 +1853,10 @@
                     if (!state.skills.includes("Primeval Awareness")) {
                         state.skills.push("Primeval Awareness");
                     }
-                    if (state.maxHP === 25) state.maxHP = 20; // Reset maxHP if it was set for the Bones overheal visual
-                    state.currentHP = state.maxHP;
+                    // Reset maxHP to base 20 if it was set for the Bones overheal visual
+                    if (state.maxHP === 25) state.maxHP = 20; 
+                    // Clamp current HP back to the new max HP
+                    state.currentHP = Math.min(state.currentHP, state.maxHP);
                     // NEW: START DOOM COUNTER
                     state.act1Started = true;
                     return "Unlocked: Primeval Awareness. HP Restored. Act 1 Commencing.";
@@ -2226,6 +2234,14 @@
                         doomCost: 1 // FIX: Dialogue/Action costs 1 turn in a hub
                     },
                     { 
+                        // FIX 4: NEW neutral option - requires Dead Man's Die not to be present, but Ring of Brass is not required here.
+                        text: "Confiscate the Dice (Neutral)", 
+                        nextScene: 'tavern_confiscate_dice', 
+                        type: 'action', 
+                        reqNotItem: "Dead Man's Die",
+                        doomCost: 0 
+                    },
+                    { 
                         // FIX: Updated button text to be concise. Added doomCost: 1
                         // FIX: Added reqNotFlag for visibility (Task 3 Fix)
                         text: "Observe the Card Game", 
@@ -2285,11 +2301,31 @@
                     return null; // Return null so the main text still shows the confrontation
                 },
                 choices: [
-                    // FIX: Updated button text to be concise. Added shillingGain property.
+                    // FIX 4: NEW neutral choice
+                    { 
+                        text: "Confiscate the Dice (Neutral)", 
+                        nextScene: 'tavern_confiscate_dice', 
+                        type: 'action', 
+                        reqNotItem: "Dead Man's Die",
+                        doomCost: 0 
+                    },
                     { text: "Blackmail him", nextScene: 'tavern_payout', type: 'action', chaosGain: 3, shillingGain: 10, doomCost: 0 },
                     { text: "Expose him", nextScene: 'tavern_expose_check', type: 'skill', dc: 16, skill: 'Insight', orderGain: 3, doomCost: 0 }, // Removed redundant skill text
                     { text: "Leave him alone", nextScene: 'blackwater_tavern', type: 'travel', doomCost: 0 }
                 ]
+            },
+            // NEW SCENE: Confiscate Dice (FIX 4)
+            'tavern_confiscate_dice': {
+                title: "The Toll for a Cheater",
+                text: "You silently relieve the corpse of his loaded bone die. He doesn't move to stop you; he merely smiles, his empty eyes following you to the door. A neutral act that may save your life.",
+                journal: "Confiscated a Dead Man's Die from the gambler.",
+                choices: [{ text: "Return to Tavern", nextScene: 'blackwater_tavern', type: 'travel', doomCost: 0 }],
+                onEnter: (state) => {
+                    if (!state.inventory.includes("Dead Man's Die")) {
+                        state.inventory.push("Dead Man's Die");
+                    }
+                    return "Found Dead Man's Die.";
+                }
             },
             'tavern_payout': {
                 title: "A Quiet Exchange",
@@ -2512,7 +2548,7 @@
                     { text: "Return to Port Square", nextScene: 'town_square', type: 'travel', doomCost: 0 }
                 ],
                 onEnter: (state) => {
-                    // FIX: Reset maxHP if it was set for the Bones overheal visual
+                    // Reset maxHP to base 20 if it was set for the Bones overheal visual
                     if (state.maxHP === 25) state.maxHP = 20;
                     state.currentHP = state.maxHP;
                     Object.keys(state.crew).forEach(k => state.crew[k].used = false);
@@ -2676,7 +2712,8 @@
                 title: "Containment Established",
                 text: "You slam the heavy blast doors shut, sealing the fire—and the workers—inside. Their screams are cut short by the roar of the furnaces. It is a cold calculus, but the primary objective is now more secure. You spot a bucket of Industrial Lubricant they dropped outside the door.",
                 journal: "I sealed the doors. The workers are gone, but I found Industrial Lubricant. The mission comes first. Chaos +3.",
-                choices: [{ text: "Proceed to Foundry (Boss Fight)", nextScene: 'smelter_stage1_start', type: 'travel' }],
+                // FIX 5: Change button type to 'combat' for boss initiation
+                choices: [{ text: "Proceed to Foundry (Boss Encounter)", nextScene: 'smelter_stage1_start', type: 'combat' }],
                 onEnter: (state) => {
                     if (!state.inventory.includes("Industrial Lubricant")) {
                         state.inventory.push("Industrial Lubricant");
@@ -2693,7 +2730,8 @@
                 title: "Order Restored",
                 text: "You strain every muscle to lift the beam. The workers escape and quickly point to a bucket of Industrial Lubricant on a shelf—'If you can't beat the fire, blind the beast!' they shout before fleeing. You take the bucket.",
                 journal: "Saved the workers. Gained Order +5 and Industrial Lubricant.",
-                choices: [{ text: "Proceed to Foundry (Boss Fight)", nextScene: 'smelter_stage1_start', type: 'travel' }],
+                // FIX 5: Change button type to 'combat' for boss initiation
+                choices: [{ text: "Proceed to Foundry (Boss Encounter)", nextScene: 'smelter_stage1_start', type: 'combat' }],
                 onEnter: (state) => {
                     if (!state.inventory.includes("Industrial Lubricant")) {
                         state.inventory.push("Industrial Lubricant");
@@ -2707,7 +2745,8 @@
                 text: "You strain yourself, but the beam won't budge. The Slag Horror's roar echoes closer. You must abandon them. The crew's anguish deals a psychic blow.",
                 journal: "Failed to save the workers. Took psychic damage from the crew's anguish.",
                 choices: [
-                    { text: "Proceed to Foundry (Boss Fight)", nextScene: 'smelter_stage1_start', type: 'travel' },
+                    // FIX 5: The flow must go to the boss phase, not loop back to stage 1 start logic
+                    { text: "Proceed to Foundry (Boss Encounter)", nextScene: 'smelter_stage1_start', type: 'combat' },
                     // NEW: Dead Man's Die Cheat Fate option
                     { 
                         text: "Cheat Fate (Use Dead Man's Die)", 
@@ -2749,7 +2788,7 @@
                     // COUNTER 2: Skill Mitigation (Absorb Elements) - Sets flag for stage 2
                     { 
                         text: "Channel Absorb Elements", 
-                        nextScene: 'smelter_absorb_bridge', // FIXED: Points to bridge scene to set flag
+                        nextScene: 'smelter_stage2_clean', // FIXED: Go directly to stage 2 clean, the absorbtion flag is set in the bridge scene
                         type: 'action', 
                         reqSkill: 'Absorb Elements', 
                         doomCost: 0,
@@ -3307,8 +3346,13 @@
                     state.isRiftCollapse = false; // Reset the persistent visual flag (Task 1)
                     return "The Rift is closed. Peace found.";
                 },
+                // FIX 6: Ensure the reset button renders
                 choices: [
-                    { text: "The End (Restart Game)", type: 'reset' }
+                    { 
+                        text: "The End (Restart Game)", 
+                        type: 'reset',
+                        customClass: 'btn-hero' // Use customClass to force rendering by renderChoices
+                    }
                 ]
             },
 
@@ -3514,7 +3558,7 @@
                 "Rope": 1,
                 "Torch": 1,
                 "Curious Cargo": 1, 
-                "Rum (Heal 5)": 1 // FIX: Changed from 0 to 1 for consistency
+                "Rum (Heal 5)": 1 
             };
             scenes['alchemist_triage'].stock = {
                 "Vitality Tincture": 2,
@@ -3759,8 +3803,10 @@
 
             // Handle dynamic generation for Market Scenes
             if (currentSceneId === 'market_stall') {
-                // Isolate navigation choices and prepare to regenerate buy options
-                const permanentChoices = processedChoices.filter(c => c.nextScene === 'market_sell' || c.nextScene === 'market_crossroads');
+                // FIX 1: Retrieve all original navigation buttons first
+                const sellWaresNav = choices.find(c => c.nextScene === 'market_sell');
+                const leaveNav = choices.find(c => c.nextScene === 'market_crossroads');
+                
                 processedChoices = []; 
 
                 // 1. Generate Dynamic Buy Options
@@ -3787,18 +3833,18 @@
                 });
                 
                 // 2. Add static navigation back in
-                // Rename the selling button text
-                const sellWaresChoice = permanentChoices.find(c => c.nextScene === 'market_sell');
-                if (sellWaresChoice) {
-                    sellWaresChoice.text = "Sell Wares"; 
-                    processedChoices.push(sellWaresChoice);
+                if (sellWaresNav) {
+                    processedChoices.push(sellWaresNav);
                 }
-                
-                processedChoices.push(permanentChoices.find(c => c.nextScene === 'market_crossroads'));
+                if (leaveNav) {
+                    processedChoices.push(leaveNav);
+                }
 
             } else if (currentSceneId === 'market_sell') {
-                // Isolate navigation choices and prepare to regenerate sell options
-                const permanentChoices = choices.filter(c => c.nextScene === 'market_stall' || c.nextScene === 'market_crossroads');
+                // FIX 1: Retrieve all original navigation buttons first
+                const backToBuyNav = choices.find(c => c.nextScene === 'market_stall');
+                const leaveNav = choices.find(c => c.nextScene === 'market_crossroads');
+                
                 processedChoices = []; 
 
                 // Get sell options from blueprint
@@ -3825,10 +3871,18 @@
                     }
                 });
                 // Add back the navigation choices
-                processedChoices = processedChoices.concat(permanentChoices);
+                if (backToBuyNav) {
+                    processedChoices.push(backToBuyNav);
+                }
+                if (leaveNav) {
+                    processedChoices.push(leaveNav);
+                }
+                
             } else if (currentSceneId === 'alchemist_triage') {
                  // Isolate navigation choices and prepare to regenerate buy options
-                const permanentChoices = processedChoices.filter(c => c.nextScene === 'alchemist_sell' || c.nextScene === 'town_square');
+                const sellWaresNav = processedChoices.find(c => c.nextScene === 'alchemist_sell');
+                const returnNav = processedChoices.find(c => c.nextScene === 'town_square');
+
                 processedChoices = []; 
 
                 // 1. Generate Dynamic Buy Options
@@ -3856,17 +3910,20 @@
                 });
                 
                 // 2. Add static navigation back in
-                const sellWaresChoice = permanentChoices.find(c => c.nextScene === 'alchemist_sell');
-                if (sellWaresChoice) {
-                    sellWaresChoice.text = "Sell Wares (Premium)"; 
-                    processedChoices.push(sellWaresChoice);
+                if (sellWaresNav) {
+                    sellWaresNav.text = "Sell Wares (Premium)"; 
+                    processedChoices.push(sellWaresNav);
                 }
                 
-                processedChoices.push(permanentChoices.find(c => c.nextScene === 'town_square'));
+                if (returnNav) {
+                    processedChoices.push(returnNav);
+                }
 
             } else if (currentSceneId === 'alchemist_sell') {
                 // Isolate navigation choices and prepare to regenerate sell options
-                const permanentChoices = choices.filter(c => c.nextScene === 'alchemist_triage' || c.nextScene === 'town_square');
+                const backToBuyNav = choices.find(c => c.nextScene === 'alchemist_triage');
+                const returnNav = choices.find(c => c.nextScene === 'town_square');
+                
                 processedChoices = []; 
                 
 				// Get sell options from blueprint
@@ -3895,7 +3952,8 @@
 					}
 				});
                 // Add back the navigation choices
-                processedChoices = processedChoices.concat(permanentChoices);
+                if (backToBuyNav) processedChoices.push(backToBuyNav);
+                if (returnNav) processedChoices.push(returnNav);
             }
             // NEW: Blackwater Tavern Rest/Gruel Logic (Task 2 & 3)
             else if (currentSceneId === 'blackwater_tavern') {
@@ -3906,6 +3964,7 @@
                 const infoChapel = choices.find(c => c.nextScene === 'gather_info_chapel');
                 const instantEat = choices.find(c => c.nextScene === 'eat_gruel_instant');
                 const buyToGo = choices.find(c => c.nextScene === 'buy_gruel_to_go');
+                const confiscateDice = choices.find(c => c.nextScene === 'tavern_confiscate_dice'); // FIX 4
 
 
                 // Clear base choices to rebuild
@@ -3952,6 +4011,7 @@
                 if (infoSmelter && !gameState.knowsSmelterSecret) processedChoices.push(infoSmelter);
                 if (infoChapel && !gameState.knowsChapelSecret) processedChoices.push(infoChapel);
                 
+                if (confiscateDice) processedChoices.push(confiscateDice); // FIX 4: Add new option
                 if (gamblerOption) processedChoices.push(gamblerOption);
                 if (returnOption) processedChoices.push(returnOption);
 
@@ -4038,8 +4098,13 @@
                     btnClass = `btn-game w-full p-3 text-left rounded shadow flex items-center ${alignmentClass} cinzel font-bold bg-red-900 border-red-700 hover:bg-red-800 hover:border-amber-500 text-white text-xl text-center`;
                 } else if (isCustomClassButton) {
                     // Custom classes need the base styling mixed in for padding, shadow, etc.
-                    // This ensures the custom buttons (like Keen Senses) look like the others before the glow is applied.
-                    btnClass = `btn-game w-full text-left rounded shadow flex items-center ${alignmentClass} cinzel font-bold mb-2 ${choice.customClass}`;
+                    // FIX 2: Check for Captain's Orders buttons (spectral-active) and style them similarly to Hero.
+                    if (choice.customClass && choice.customClass.includes('spectral-active')) {
+                         btnClass = `btn-game w-full text-left rounded shadow flex items-center ${alignmentClass} cinzel font-bold mb-2 spectral-active text-blue-100 ring-1 ring-blue-400 hover:ring-white`;
+                    } else {
+                        // All other custom classes (fire/shadow/keen)
+                        btnClass = `btn-game w-full text-left rounded shadow flex items-center ${alignmentClass} cinzel font-bold mb-2 ${choice.customClass}`;
+                    }
                 } else {
                     // STANDARD NARRATIVE/TRADE BUTTONS (Default grey button)
                     btnClass = `btn-game w-full text-left rounded shadow flex items-center ${alignmentClass} cinzel font-bold bg-gray-800 border-gray-600 hover:border-amber-500 hover:bg-gray-750 text-gray-300 group`;
@@ -4192,9 +4257,11 @@
                     // Ensure text color is set to white for custom buttons
                     content = `<span class="cinzel font-bold text-white">${rawText}</span>`;
                     
-                    // Custom Icon Logic for Keen Senses
+                    // Custom Icon Logic for Keen Senses or spectral-active (FIX 2)
                     if (choice.customClass === 'btn-keen-senses') {
                          icon = '<i class="fas fa-eye text-purple-300"></i>';
+                    } else if (choice.customClass && choice.customClass.includes('spectral-active')) {
+                         icon = '<i class="fas fa-chevron-right text-white"></i>';
                     } else {
                         // General custom button icon (e.g. Fire/Shadow/Hero)
                         icon = '<i class="fas fa-chevron-right text-white"></i>';
@@ -4311,11 +4378,19 @@
             }
 
             // HP
+            const baseMaxHP = 20; // Define base max HP for display purposes
+            
+            // FIX 3: Corrected maxHP calculation based on current state (20 for normal, 25 for overheal)
+            // Use the actual currentHP for bar calculation
             const hpPct = (gameState.currentHP / gameState.maxHP) * 100;
             const bar = document.getElementById('hp-bar');
-            bar.style.width = `${hpPct}%`;
-            bar.className = `h-full transition-all duration-500 ${hpPct < 30 ? 'bg-red-600 animate-pulse' : 'bg-red-800'}`;
-            document.getElementById('hp-text').innerText = `${gameState.currentHP}/${gameState.maxHP}`;
+            
+            // Clamp bar width at 100% (or slightly over if we use 20 as the max reference, but we use actual maxHP)
+            bar.style.width = `${Math.min(100, hpPct)}%`;
+            bar.className = `h-full transition-all duration-500 ${gameState.currentHP < (gameState.maxHP * 0.3) ? 'bg-red-600 animate-pulse' : 'bg-red-800'}`;
+            
+            // FIX 3: Display currentHP against maxHP, which may be 25/20 if overhealed
+            document.getElementById('hp-text').innerText = `${gameState.currentHP}/${gameState.maxHP}`; 
 
             // Check for low health audio
             audioManager.checkVulnerable(gameState.currentHP, gameState.maxHP);
