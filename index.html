@@ -171,8 +171,8 @@
         .btn-success-glow {
             background-color: rgba(4, 120, 87, 0.4); /* Dark green */
             border: 1px solid #34d399; /* Light green */
-            color: #d1fae5;
             box-shadow: 0 0 10px rgba(52, 211, 153, 0.4);
+            color: #d1fae5;
             transition: all 0.2s;
         }
         .btn-success-glow:hover {
@@ -717,6 +717,8 @@
             // Item Check Reward Scenes
             'smelter_side_rope': 'images/smelter_workers.jpg', // Rope shortcut reward
             'chapel_side_torch': 'images/chapel_vestry.jpg', // Torch shortcut reward
+            // NEW SECRET SCENE
+            'alchemist_secret_stock': 'images/alchemist_secret.jpg',
             // Boss Fight Images
             'smelter_foundry': 'images/slag_horror.jpg', // Fire Boss
             'chapel_crypt': 'images/drowned_spectre.jpg', // Shadow Boss
@@ -825,6 +827,17 @@
                     const idx = state.inventory.indexOf("Healing Potion");
                     if (idx > -1) state.inventory.splice(idx, 1);
                     return `Drank Potion. Healed ${state.currentHP - oldHP} HP.`;
+                }
+            },
+            "Phoenix Draft": { // NEW ITEM: PHOENIX DRAFT
+                name: "Phoenix Draft",
+                type: 'key',
+                icon: 'fa-feather',
+                color: 'text-red-400',
+                btnText: "PASSIVE",
+                desc: "Key Item: Alchemical reserve. Automatically prevents death once, healing 10 HP. Consumed on use.",
+                action: (state) => {
+                    return "A powerful reserve, best saved for when death calls.";
                 }
             },
             "Pearlescent Mushroom": { 
@@ -2222,7 +2235,7 @@
                     // NEW: BUY GRUEL (To Go, adds to inventory)
                     { text: "Buy Gruel (To Go)", nextScene: 'buy_gruel_to_go', type: 'action', cost: 1, stockItem: 'Gruel', doomCost: 0 },
                     // INFORMATION GATHERING
-                    // Task 4 Fix: Added reqNotFlag for visibility
+                    // Task 4 Fix: Added reqNotFlag
                     { 
                         text: "Listen to Engineer's Rumors (Smelter)", 
                         nextScene: 'gather_info_smelter', 
@@ -2377,10 +2390,28 @@
                     "Holy Water": 1 
                 },
                 choices: [
+                    // This choice is dynamically generated in renderChoices below
+                    // { text: "Offer Strange Coin", nextScene: 'alchemist_secret_stock', type: 'action', reqItem: 'Strange Coin', consume: true, doomCost: 0 },
                     // FIX: DoomCost is 0 for navigation
                     { text: "Sell Wares", nextScene: 'alchemist_sell', type: 'travel', doomCost: 0 },
                     { text: "Return to Port Square", nextScene: 'town_square', type: 'travel', doomCost: 0 }
                 ]
+            },
+            // NEW SCENE: Secret Coin Trade
+            'alchemist_secret_stock': {
+                title: "The Alchemist's Reserve",
+                text: "Madam Alara takes the Strange Coin—a brass piece from an ancient kingdom—and her head snaps up. 'I recognize this metal. It's from the kingdom of the Wolf King,' she hisses. 'You honor my trade. This Draft is my reserve, a single draught that cheats the ferryman. Use it wisely, Mariner.'",
+                journal: "Traded the Strange Coin for the Alchemist's ultimate reserve: the Phoenix Draft.",
+                choices: [
+                    { text: "Return to Triage", nextScene: 'alchemist_triage', type: 'travel', doomCost: 0 }
+                ],
+                onEnter: (state) => {
+                    if (!state.inventory.includes("Phoenix Draft")) {
+                        state.inventory.push("Phoenix Draft");
+                        return "Acquired Phoenix Draft.";
+                    }
+                    return null;
+                }
             },
             'alchemist_sell': {
                 title: "Triage Alchemist - Selling",
@@ -2648,14 +2679,17 @@
             'smelter_side_rope': {
                 title: "Catwalk Bypass",
                 text: "The Rope holds fast. You ascend quickly to the quieter upper catwalk, bypassing the deadly vents below. Tucked away in a maintenance crate, you find a glint of ancient metal: a Strange Coin.",
-                journal: "Used Rope to bypass the vents. Found a Strange Coin.",
+                journal: "Used Rope to bypass the vents. Found a Strange Coin and 5 Shillings.",
                 choices: [{ text: "Continue to Smelter Antechamber", nextScene: 'smelter_workers', type: 'travel' }],
                 onEnter: (state) => { 
+                    state.shillings += 5; // ADDED: 5 Shillings
+                    audioManager.playCoins();
+
                     if (!state.inventory.includes("Strange Coin")) {
                         state.inventory.push("Strange Coin");
-                        return "Rope consumed. Found Strange Coin!"; 
+                        return "Rope consumed. Found Strange Coin and 5 Shillings!"; 
                     }
-                    return "Rope consumed. Found nothing else of value.";
+                    return "Rope consumed. Found 5 Shillings.";
                 },
             },
             'smelter_safe': { 
@@ -2992,7 +3026,7 @@
                         text: "Channel Primeval Awareness", 
                         nextScene: 'chapel_primeval_bridge', // FIXED: Points to bridge scene to set flag
                         type: 'action', 
-                        reqSkill: 'Primeval Awareness', 
+                        reqSkill: 'Primeval Awareness',
                         doomCost: 0,
                         customClass: 'btn-shadow-glow' 
                     },
@@ -3101,12 +3135,7 @@
                         consume: true,
                         customClass: 'btn-hero'
                     }
-                ],
-                onEnter: (state) => {
-                    state.currentHP = applyDamage(state.currentHP, 3);
-                    fxManager.flashRed();
-                    return "Took 3 Damage.";
-                },
+                ]
             },
             'chapel_ignore_drowning': {
                 title: "Looting the Drowned",
@@ -3136,7 +3165,7 @@
                     // COUNTER 1: Item Bypass (If Fire Path was done first)
                     { 
                         text: "Strike with Sword of Valor", 
-                        nextScene: 'chapel_victory_sword', // Skip directly to victory
+                        nextScene: 'chapel_victory_sword', 
                         type: 'action', 
                         reqItem: 'Sword of Valor',
                         customClass: 'btn-hero' 
@@ -3147,6 +3176,7 @@
                         nextScene: 'chapel_primeval_bridge', // FIXED: Points to bridge scene to set flag
                         type: 'action', 
                         reqSkill: 'Primeval Awareness',
+                        doomCost: 0,
                         customClass: 'btn-shadow-glow' 
                     },
                     // COUNTER 3: Ring of Brass Passive (Keen Senses)
@@ -3379,8 +3409,21 @@
         // --- CORE FUNCTIONS ---
         // NEW HELPER: Applies damage while ensuring HP doesn't go below 0.
         function applyDamage(currentHP, damageAmount) {
-            // Clamps HP at 0
-            return Math.max(0, currentHP - damageAmount);
+            let finalHP = Math.max(0, currentHP - damageAmount);
+            
+            // PHOENIX DRAFT CHECK
+            if (finalHP === 0) {
+                const phoenixIndex = gameState.inventory.indexOf("Phoenix Draft");
+                if (phoenixIndex > -1) {
+                    gameState.inventory.splice(phoenixIndex, 1); // Consume the item
+                    finalHP = 10; // Restore HP
+                    addToHistory(`*The Phoenix Draft shatters, pulling you back from the abyss! Restored 10 HP.*`, 'system');
+                    fxManager.flashRed(); // Still show the flash of damage/shock
+                }
+            }
+
+            // Clamps HP at 0 (after potential Phoenix Draft save)
+            return Math.max(0, finalHP);
         }
 
         // Helper function to provide initial stock data structure
@@ -3617,7 +3660,7 @@
             let html = '';
             if (type === 'entry') {
                 // Apply spectral-text-glow to crew names in the journal
-                const processedText = text.replace(/(Captain Gareth|Gareth|Quinn|Talon|Bones|Wolf King|Ring of Brass|Sword of Valor|Smelter|Chapel|Absorb Elements|Primeval Awareness)/g, '<span class="spectral-text-glow">$1</span>');
+                const processedText = text.replace(/(Captain Gareth|Gareth|Quinn|Talon|Bones|Wolf King|Ring of Brass|Sword of Valor|Smelter|Chapel|Absorb Elements|Primeval Awareness|Phoenix Draft)/g, '<span class="spectral-text-glow">$1</span>');
                 html = `<div class="journal-font pb-4 border-b border-gray-700/30 text-gray-400 fade-in">${processedText}</div>`;
             } else if (type === 'system') {
                 html = `<div class="text-xs text-amber-500 font-mono mb-2 fade-in">> ${text}</div>`;
@@ -3810,6 +3853,30 @@
             
             // Collect all choices, starting with static ones
             let processedChoices = [...choices]; 
+            
+            // --- DYNAMIC INJECTION: ALCHEMIST SECRET STOCK ---
+            // Inject trade option if on Alchemist Triage scene and has the coin, and Phoenix Draft hasn't been acquired
+            if (currentSceneId === 'alchemist_triage' && gameState.inventory.includes('Strange Coin') && !gameState.inventory.includes('Phoenix Draft')) {
+                // Find insertion point before 'Sell Wares' or 'Return to Port Square'
+                const sellIndex = processedChoices.findIndex(c => c.nextScene === 'alchemist_sell');
+                const newChoice = {
+                    text: "Offer Strange Coin (Wolf King's Brass)",
+                    nextScene: 'alchemist_secret_stock',
+                    type: 'action',
+                    reqItem: 'Strange Coin',
+                    consume: true,
+                    customClass: 'btn-hero',
+                    doomCost: 0
+                };
+
+                if (sellIndex !== -1) {
+                    processedChoices.splice(sellIndex, 0, newChoice);
+                } else {
+                    processedChoices.push(newChoice); // Fallback to end of list
+                }
+            }
+            // --- END DYNAMIC INJECTION ---
+
 
             // Handle dynamic generation for Market Scenes
             if (currentSceneId === 'market_stall') {
@@ -3895,10 +3962,16 @@
                  // Isolate navigation choices and prepare to regenerate buy options
                 const sellWaresNav = processedChoices.find(c => c.nextScene === 'alchemist_sell');
                 const returnNav = processedChoices.find(c => c.nextScene === 'town_square');
+                const secretTrade = processedChoices.find(c => c.nextScene === 'alchemist_secret_stock'); // Get the injected choice
 
                 processedChoices = []; 
 
-                // 1. Generate Dynamic Buy Options
+                // 1. Inject the secret trade button first if it exists
+                if (secretTrade) {
+                    processedChoices.push(secretTrade);
+                }
+
+                // 2. Generate Dynamic Buy Options
                 ALCHEMIST_BUY_OPTIONS.forEach(sale => {
                     const itemText = sale.item.split('(')[0].trim();
                     const actualStock = currentSceneStock[sale.item] || 0;
@@ -3922,7 +3995,7 @@
                     }
                 });
                 
-                // 2. Add static navigation back in
+                // 3. Add static navigation back in
                 if (sellWaresNav) {
                     sellWaresNav.text = "Sell Wares (Premium)"; 
                     processedChoices.push(sellWaresNav);
