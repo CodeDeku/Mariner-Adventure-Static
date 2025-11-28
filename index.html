@@ -636,6 +636,8 @@
         
         const appId = "edward-jones-standalone";
         let user;
+        
+        const MAX_OVERHEAL_CAP = 25; // Define the absolute maximum HP allowed
 
         // --- AUDIO MANAGER ---
         class AudioManager {
@@ -908,8 +910,8 @@
                 action: (state) => {
                     const healAmount = 5;
                     const oldHP = state.currentHP;
-                    // FIX 2: Overheal logic correction
-                    state.currentHP = (state.currentHP > state.maxHP) ? (state.currentHP + healAmount) : Math.min(state.maxHP, state.currentHP + healAmount);
+                    // FIX 1: Hard cap all healing at the MAX_OVERHEAL_CAP (25)
+                    state.currentHP = Math.min(MAX_OVERHEAL_CAP, state.currentHP + healAmount);
 
                     const idx = state.inventory.indexOf("Rum");
                     if (idx > -1) state.inventory.splice(idx, 1);
@@ -926,8 +928,8 @@
                 action: (state) => {
                     const healAmount = 2;
                     const oldHP = state.currentHP;
-                    // FIX 2: Overheal logic correction
-                    state.currentHP = (state.currentHP > state.maxHP) ? (state.currentHP + healAmount) : Math.min(state.maxHP, state.currentHP + healAmount);
+                    // FIX 1: Hard cap all healing at the MAX_OVERHEAL_CAP (25)
+                    state.currentHP = Math.min(MAX_OVERHEAL_CAP, state.currentHP + healAmount);
                     
                     const idx = state.inventory.indexOf("Gruel");
                     if (idx > -1) state.inventory.splice(idx, 1);
@@ -944,8 +946,8 @@
                 action: (state) => {
                     const healAmount = 10;
                     const oldHP = state.currentHP;
-                    // FIX 2: Overheal logic correction
-                    state.currentHP = (state.currentHP > state.maxHP) ? (state.currentHP + healAmount) : Math.min(state.maxHP, state.currentHP + healAmount);
+                    // FIX 1: Hard cap all healing at the MAX_OVERHEAL_CAP (25)
+                    state.currentHP = Math.min(MAX_OVERHEAL_CAP, state.currentHP + healAmount);
                     
                     const idx = state.inventory.indexOf("Healing Potion");
                     if (idx > -1) state.inventory.splice(idx, 1);
@@ -1051,8 +1053,8 @@
                 action: (state) => {
                     const healAmount = 15;
                     const oldHP = state.currentHP;
-                    // FIX 2: Overheal logic correction
-                    state.currentHP = (state.currentHP > state.maxHP) ? (state.currentHP + healAmount) : Math.min(state.maxHP, state.currentHP + healAmount);
+                    // FIX 1: Hard cap all healing at the MAX_OVERHEAL_CAP (25)
+                    state.currentHP = Math.min(MAX_OVERHEAL_CAP, state.currentHP + healAmount);
                     
                     const idx = state.inventory.indexOf("Vitality Tincture");
                     if (idx > -1) state.inventory.splice(idx, 1);
@@ -1764,7 +1766,7 @@
                         text: "Cheat Fate (Use Dead Man's Die)", 
                         nextScene: 'lighthouse_arrival', // Redirect to success-like path
                         type: 'action', 
-                        reqItem: "Dead Man's Die", // CRITICAL SYNTAX FIX APPLIED HERE
+                        reqItem: "Dead Man's Die", 
                         consume: true,
                         customClass: 'btn-hero'
                     }
@@ -1920,8 +1922,8 @@
                     addToHistory(shanty, 'entry');
                     
                     // HP CLAMPING FIX: Only reset HP if current is below max
-                    if (gameState.currentHP < gameState.maxHP) {
-                        gameState.currentHP = gameState.maxHP;
+                    if (state.currentHP < state.maxHP) {
+                        state.currentHP = state.maxHP;
                     }
                     
                     Object.keys(state.crew).forEach(k => state.crew[k].used = false);
@@ -1957,7 +1959,7 @@
                         customClass: 'btn-game spectral-active',
                         onSelect: (state) => { 
                             // FIX 3: Overheal logic: Set currentHP to 25. MaxHP remains 20.
-                            state.currentHP = 25; 
+                            state.currentHP = MAX_OVERHEAL_CAP; 
                             return "Bones prepared a feast. Overhealed to 25 HP."; 
                         }
                     },
@@ -2463,8 +2465,8 @@
                     
                     const healAmount = 2;
                     const oldHP = state.currentHP;
-                    // FIX 2: Overheal logic correction
-                    state.currentHP = (state.currentHP > state.maxHP) ? (state.currentHP + healAmount) : Math.min(state.maxHP, state.currentHP + healAmount);
+                    // FIX 1: Hard cap all healing at the MAX_OVERHEAL_CAP (25)
+                    state.currentHP = Math.min(MAX_OVERHEAL_CAP, state.currentHP + healAmount);
                     
                     scenes['blackwater_tavern'].stock["Gruel"] -= 1; // Consume stock
                     
@@ -3569,7 +3571,11 @@
                 text: "The world shatters. The Port of Shadows, the Smelter, the Chapel—they dissolve into mist. You are no longer on the Material Plane. You are drifting in the Ethereal, a ghost among ghosts. The Rift is closed, but you are on the wrong side of it.<br><br>The voices of your crew are crystal clear now. They are not in your head; they are standing beside you on the deck of a spectral ship sailing through starlight.<br><br><span class='cinzel text-xl text-blue-400'>End of Act 1</span>",
                 journal: "I closed the Rift, but the recoil threw me into the Ethereal Plane. I am truly the Mariner of the Damned now.",
                 onEnter: (state) => {
-                    state.isRiftCollapse = false;                     
+                    state.isRiftCollapse = false; 
+                    
+                    // ACTIVATE COMPLETE UI THEME CHANGE
+                    // state.isEthereal = true; // REMOVED: Handled by hold button now for smooth transition
+                    
                     return "Act 1 Complete. Welcome to the Ethereal Plane.";
                 },
                 choices: [
@@ -4213,7 +4219,8 @@
                     const actualStock = currentSceneStock[sale.item] || 0;
                     
                     // Check if buying healing item when full HP
-                    const isHealingItem = itemRegistry[sale.item] && (itemRegistry[sale.item].name.includes('Tincture') || itemRegistry[sale.item].name.includes('Potion'));
+                    const itemDef = itemRegistry[sale.item];
+					const isHealingItem = itemDef && (itemDef.name.includes('Tincture') || itemDef.name.includes('Potion'));
                     const isFullHP = gameState.currentHP >= gameState.maxHP;
                     
                     
