@@ -1868,15 +1868,16 @@
                     // STATE 2: FINALE UNLOCKED - Remove exploration choices, force ritual preparation
                     if (hasRing && hasBlade) {
                         scenes['town_square'].text = "The Rift is tearing the sky apart. Violet lightning strikes the cobblestones. You have the Ring and the Blade. The Wolf King's ritual is the only way to close this wound.";
-                        // Only offer the ritual button and the Tavern/Crossroads link (for supplies)
                         newChoices = [
                             { text: "Prepare the Wolf King's Ritual", nextScene: 'finale_ritual_start', type: 'combat', customClass: 'btn-hero' },
                             { text: "Visit Madam Alara, The Triage Alchemist", nextScene: 'alchemist_triage', type: 'travel', doomCost: 0 },
-                            { text: "Rest at The Blackwater Tavern", nextScene: 'blackwater_tavern', type: 'travel', doomCost: 0 }
+                            { text: "Rest at The Blackwater Tavern", nextScene: 'blackwater_tavern', type: 'travel', doomCost: 0 },
+                            // ADD THIS LINE BELOW:
+                            { text: "Explore the Docks", nextScene: 'town_docks', type: 'travel', doomCost: 0 } 
                         ];
                         scenes['town_square'].choices = newChoices;
                         return "Finale Unlocked.";
-                    } 
+                    }
                     
                     // Dynamic Text Logic
                     if (hasRing) {
