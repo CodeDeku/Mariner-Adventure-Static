@@ -883,6 +883,7 @@
                 isAbsorbCharged: false, // For Absorb Elements
                 isSurpriseRound: false, // For Primeval Awareness/Ambush
                 isRiftCollapse: false, // For Doom Counter Failure State
+                hasLoggedCollapse: false, // FIX 2A: Flag to prevent repeated logging of Rift Collapse penalty
                 // NEW FLAGS FOR ONE-TIME ACTIONS (Task 3 Fix)
                 hasObservedGambler: false, 
                 hasSearchedSmugglerDrop: false,
@@ -1527,7 +1528,6 @@
                     // FIX: Ensure 'Curious Cargo' button is only available if player has the item (reqItem is the correct check here)
                     { text: "Offer Curious Cargo", nextScene: 'smuggler_cargo', type: 'action', reqItem: 'Curious Cargo', chaosGain: 6 },
                     { text: "Buy safe passage", nextScene: 'smuggler_pay', type: 'action', cost: 5 },
-                    // FIX: Changed type to 'dialogue' for max visibility of non-conditional travel
                     { text: "Run to Market", nextScene: 'market_crossroads', type: 'dialogue' }
                 ]
             },
@@ -3570,10 +3570,8 @@
                 text: "The world shatters. The Port of Shadows, the Smelter, the Chapel—they dissolve into mist. You are no longer on the Material Plane. You are drifting in the Ethereal, a ghost among ghosts. The Rift is closed, but you are on the wrong side of it.<br><br>The voices of your crew are crystal clear now. They are not in your head; they are standing beside you on the deck of a spectral ship sailing through starlight.<br><br><span class='cinzel text-xl text-blue-400'>End of Act 1</span>",
                 journal: "I closed the Rift, but the recoil threw me into the Ethereal Plane. I am truly the Mariner of the Damned now.",
                 onEnter: (state) => {
+                    // FIX 2: Clear Rift flags, but DO NOT clear low-HP vignette status
                     state.isRiftCollapse = false; 
-                    
-                    // ACTIVATE COMPLETE UI THEME CHANGE
-                    // state.isEthereal = true; // REMOVED: Handled by hold button now for smooth transition
                     
                     return "Act 1 Complete. Welcome to the Ethereal Plane.";
                 },
@@ -3842,6 +3840,7 @@
             gameState.isAbsorbCharged = false;
             gameState.isSurpriseRound = false;
             gameState.isRiftCollapse = false;
+            // gameState.hasLoggedCollapse is already in createInitialState
             gameState.act1Started = false; // Ensure Act 1 starts false on reset
             // Reset one-time flags
             gameState.hasObservedGambler = false;
@@ -3902,6 +3901,7 @@
             }
 
             // --- PLANAR THEME TOGGLE ---
+            // This applies the Act 2 CSS theme globally
             if (gameState.isEthereal) {
                 document.body.classList.add('plane-ethereal');
             } else {
@@ -3974,10 +3974,12 @@
             gameState.currentSceneId = sceneId;
             
 			// --- FX TRIGGER LOGIC ---
-            fxManager.clearEffects();
+            // FX are cleared *before* the new scene FX are applied
+            fxManager.clearEffects(); 
 
             // PRIORITY 1: Has the Rift Collapsed? (Permanent Game State)
             if (gameState.isRiftCollapse && !['finale_completed', 'edward_death'].includes(sceneId)) {
+                // FIX 1: Ensure the persistent visual rift FX are running in Act 1 after collapse
                 document.getElementById('fx-overlay').classList.add('fx-rift-collapsed');
             }
 
@@ -3996,28 +3998,22 @@
             // --- DOOM COUNTER LOGIC (Planar Instability) ---
             const isBossScene = scenes[sceneId].isBoss;
             
-            // Check for explicit doomCost = 0 flag on the scene itself (usually used for information scenes)
-            if (scenes[sceneId].doomCost === 0) { 
-                 // Do nothing, cost is 0
-            } else if (gameState.act1Started && !scenes[sceneId].isRest && !isBossScene) {
-                // If it's a normal scene in Act 1, and the cost wasn't explicitly set to 0 in the button logic, decrement
-                
-                // This block is complex because we rely on the button click to decrement the doom counter.
-                // However, scenes like 'smelter_workers' are travel scenes that *themselves* have a default doomCost of 1.
-                // For simplicity and to avoid double-decrement, we now rely on the button click handling 
-                // the doom decrement unless the button had doomCost: 0. 
-                // For direct scene entry (no button click), the scene is assumed to have 0 cost (like onEnter logic).
-            }
-
             // The actual decrement logic is now inside the `btn.onclick` function.
             // This logic below handles the state if the doom timer hit 0 on the last click.
-            if (gameState.doomTimer <= 0 && !gameState.isRiftCollapse && gameState.act1Started) {
-                // Fail state: Apply penalty, set flag, and continue
-                gameState.isRiftCollapse = true;
-                gameState.maxHP = Math.max(1, gameState.maxHP - 5);
-                gameState.currentHP = Math.min(gameState.currentHP, gameState.maxHP); // Clamp current HP
-                addToHistory(`!!! RIFT COLLAPSE !!! The veil has ruptured. All Skill Check DCs are permanently increased by 2. Max HP reduced by 5 due to toxic air.`, 'system');
-                // Note: renderScene will be called below, which will update the UI
+            if (gameState.doomTimer <= 0 && gameState.act1Started) {
+                
+                // FIX 2B: Apply penalties and log the message ONLY ONCE
+                if (!gameState.isRiftCollapse && !gameState.hasLoggedCollapse) {
+                    
+                    // Set both collapse flags (The penalty applies here only once)
+                    gameState.isRiftCollapse = true;
+                    gameState.hasLoggedCollapse = true; 
+                    
+                    // Apply penalties and log the message
+                    gameState.maxHP = Math.max(1, gameState.maxHP - 5);
+                    gameState.currentHP = Math.min(gameState.currentHP, gameState.maxHP); // Clamp current HP
+                    addToHistory(`!!! RIFT COLLAPSE !!! The veil has ruptured. All Skill Check DCs are permanently increased by 2. Max HP reduced by 5 due to toxic air.`, 'system');
+                }
             }
             
             // --- DEATH CHECK 1: Immediately check if onEnter killed the player ---
@@ -4473,6 +4469,9 @@
                             audioManager.playClash(); 
                             
                             // *** ACT 2 TRANSITION FIX: Apply Ethereal theme immediately before renderScene ***
+                            fxManager.setVignette(false); // FIX 1: Explicitly disable the low HP vignette
+                            fxManager.clearEffects();     // FIX 1: Clear persistent visual effects (rift collapsed/pulse)
+                            
                             gameState.isEthereal = true; // Set the state
                             document.body.classList.add('plane-ethereal'); // Apply the CSS class immediately
                             await saveGame(); // Save the state change before rendering the next scene to ensure persistence
@@ -4579,8 +4578,11 @@
                                 addToHistory(`Rift Stability: ${gameState.doomTimer} turns remaining.`, 'system');
                             }
                             
+                            // FIX 2: Replaced the old redundant collapse logic with a check against the new hasLoggedCollapse flag
                             if (gameState.doomTimer <= 0 && !gameState.isRiftCollapse) {
                                 gameState.isRiftCollapse = true;
+                                gameState.hasLoggedCollapse = true; // Logged the message
+                                
                                 gameState.maxHP = Math.max(1, gameState.maxHP - 5);
                                 gameState.currentHP = Math.min(gameState.currentHP, gameState.maxHP);
                                 addToHistory(`!!! RIFT COLLAPSE !!! The veil has ruptured. All Skill Check DCs are permanently increased by 2. Max HP reduced by 5 due to toxic air.`, 'system');
@@ -4591,7 +4593,8 @@
                         if (choice.type === 'skill') {
                             gameState.lastSkillType = choice.skill;
                             let finalDC = choice.dc;
-                            if (gameState.isRiftCollapse) {
+                            // Check for permanent difficulty increase after rift collapse
+                            if (gameState.isRiftCollapse) { 
                                 finalDC += 2;
                                 addToHistory(`Rift Penalty: DC increased by 2 (New DC: ${finalDC})`, 'system');
                             }
