@@ -391,6 +391,83 @@
         /* Hidden Log State */
         .log-hidden { opacity: 0; pointer-events: none; transform: translateY(20px); }
         .log-visible { opacity: 1; pointer-events: auto; transform: translateY(0); transition: all 1s ease-out; }
+
+        /* --- ETHEREAL PLANE THEME (SYSTEM OVERRIDE) --- */
+        
+        /* 1. Global Background & Transition */
+        body.plane-ethereal {
+            background-color: #020617; /* Slate-950: Deep Void */
+            transition: background-color 1s ease;
+        }
+
+        /* 2. TEXT SHIFTS: Gold/Amber becomes Cyan/Spectral */
+        body.plane-ethereal .text-amber-500,
+        body.plane-ethereal .text-amber-600,
+        body.plane-ethereal .text-amber-700 {
+            color: #22d3ee !important; /* Cyan-400 */
+            text-shadow: 0 0 10px rgba(34, 211, 238, 0.6);
+        }
+        body.plane-ethereal .text-gray-300,
+        body.plane-ethereal .text-gray-400 {
+            color: #e2e8f0 !important; /* Slate-200: Cold White */
+        }
+        /* Override Cinzel headers to be spectral blue */
+        body.plane-ethereal h1, 
+        body.plane-ethereal h2, 
+        body.plane-ethereal h3 {
+            color: #67e8f9 !important; /* Cyan-300 */
+            text-shadow: 0 0 15px rgba(103, 232, 249, 0.4);
+        }
+
+        /* 3. PANEL TRANSFORMATIONS: Wood/Stone becomes Void Glass */
+        /* Targets: Stats Panel, Main Text Area, Journal Container */
+        body.plane-ethereal .bg-gray-800,
+        body.plane-ethereal .bg-gray-900,
+        body.plane-ethereal .bg-\[\#111318\] { 
+            background-color: rgba(15, 23, 42, 0.8) !important; /* Slate-900 semi-transparent */
+            backdrop-filter: blur(5px); /* Glass effect */
+            box-shadow: 0 0 30px rgba(34, 211, 238, 0.05); /* Slight cyan ambient glow */
+        }
+
+        /* 4. BORDER GLOW: Rusted Iron becomes Starlight Silver */
+        body.plane-ethereal .border-gray-700,
+        body.plane-ethereal .border-gray-600 {
+            border-color: #1e3a8a !important; /* Blue-900 */
+            box-shadow: 0 0 8px rgba(59, 130, 246, 0.3); /* Blue Glow */
+        }
+
+        /* 5. JOURNAL OVERRIDE: Remove Paper, Add Void */
+        body.plane-ethereal .water-stained {
+            background-image: none !important; /* Remove paper texture */
+            background: linear-gradient(180deg, #0f172a 0%, #172554 100%) !important; /* Void Gradient */
+        }
+        body.plane-ethereal #journal-container {
+            border-color: #60a5fa !important; /* Blue-400 Border */
+        }
+        body.plane-ethereal .journal-font {
+            color: #bae6fd !important; /* Light Sky Blue text */
+            font-family: 'Cinzel', serif !important; /* Shift font to feel more ancient/formal in the void */
+        }
+
+        /* 6. STANDARD BUTTON OVERRIDE (The "Normal" Travel Buttons) */
+        /* We target the standard grey buttons specifically */
+        body.plane-ethereal .btn-game:not(.btn-hero):not(.btn-fire-glow):not(.btn-shadow-glow):not(.btn-success-glow):not(.btn-keen-senses) {
+            background: linear-gradient(90deg, rgba(30, 27, 75, 0.9) 0%, rgba(15, 23, 42, 0.9) 100%) !important; /* Indigo-950 */
+            border-color: #4f46e5 !important; /* Indigo-600 */
+            color: #e0e7ff !important; /* Indigo-100 */
+            box-shadow: 0 0 10px rgba(79, 70, 229, 0.2);
+        }
+        body.plane-ethereal .btn-game:not(.btn-hero):hover {
+            border-color: #22d3ee !important; /* Cyan Hover */
+            box-shadow: 0 0 15px rgba(34, 211, 238, 0.4);
+            transform: translateX(5px); /* Ethereal Drift movement */
+        }
+        
+        /* 7. SCENE IMAGE FILTER: Invert/Spectral */
+        body.plane-ethereal #scene-image {
+            filter: hue-rotate(190deg) saturate(0.8) contrast(1.2) brightness(0.8);
+            mix-blend-mode: luminosity; /* Ghostly B&W feel */
+        }
     </style>
 </head>
 <body>
@@ -780,6 +857,8 @@
                 currentHP: 20,
                 maxHP: 20,
                 shillings: 0, 
+                // NEW: Tracks the styling state
+                isEthereal: false, 
                 inventory: [], 
                 skills: [], // NEW: Hidden tracking for Absorb Elements / Primeval Awareness
                 influence: 0, 
@@ -924,10 +1003,7 @@
                 icon: 'fa-heart',
                 color: 'text-gray-300',
                 btnText: "SELL",
-                desc: "Passive: A sentimental item. Might be worth something.",
-                action: (state) => {
-                    return "Requires a suitable buyer, such as Madam Alara.";
-                }
+                desc: "Passive: A sentimental item. Might be worth something."
             },
             "Rusted Cutlass": { type: 'key', icon: 'fa-khanda', color: 'text-gray-400', desc: "Passive: Reduces damage taken in combat events." },
             "Rope": { type: 'key', icon: 'fa-om', color: 'text-yellow-700', desc: "Passive: Essential for climbing cliffs." },
@@ -1061,7 +1137,7 @@
             'gareth': [
                 "Keep your feet moving, Mariner. A dead ship needs a fast Captain.",
                 "The storm is behind us, but the fog ahead is thicker. Stay alert.",
-                "Do you feel that? The planar veil is thinning again. Hurry!",
+                "Do you feel that? The planar veil is thinning again. Hurry.",
                 "There is no easy port in this chaos. Pick a heading and hold it true."
             ],
             'quinn': [
@@ -1411,7 +1487,7 @@
 			'combat_guard': {
                 title: "The Clash",
                 text: "He unhooks a heavy warhammer from his belt. You move to intercept him, driving the momentum into a brutal close-quarters struggle. You barely deflect the crushing weight of his strikes, fighting until he finally falls. You survive, but you are now an enemy of the crown.",
-                journal: "Had to fight the Guard. I am an outlaw now.",
+                journal: "Had combat the Guard. I am an outlaw now.",
                 onEnter: (state) => { 
                     audioManager.playClash();
                     let minDmg = 10;
@@ -1682,7 +1758,7 @@
                         text: "Cheat Fate (Use Dead Man's Die)", 
                         nextScene: 'lighthouse_arrival', // Redirect to success-like path
                         type: 'action', 
-                        reqItem: "Dead Man's Die", 
+                        reqItem: "Dead Man's Die', 
                         consume: true,
                         customClass: 'btn-hero'
                     }
@@ -1730,7 +1806,7 @@
                 },
                 // Redirects to lighthouse_arrival to proceed to faction_check
                 choices: [
-                    { text: "Limp to the Exit)", nextScene: 'lighthouse_arrival', type: 'travel' },
+                    { text: "Limp to the Exit", nextScene: 'lighthouse_arrival', type: 'travel' },
                     // NEW: Dead Man's Die Cheat Fate option
                     { 
                         text: "Cheat Fate (Use Dead Man's Die)", 
@@ -3474,6 +3550,10 @@
                 journal: "I closed the Rift, but the recoil threw me into the Ethereal Plane. I am truly the Mariner of the Damned now.",
                 onEnter: (state) => {
                     state.isRiftCollapse = false; 
+                    
+                    // ACTIVATE COMPLETE UI THEME CHANGE
+                    state.isEthereal = true; 
+                    
                     return "Act 1 Complete. Welcome to the Ethereal Plane.";
                 },
                 choices: [
@@ -3729,6 +3809,8 @@
             gameState.docksWorkCount = 0;
             // NEW: Quinn's Logistics reset
             gameState.quinnLogistics = false;
+            // NEW: Ethereal flag reset
+            gameState.isEthereal = false;
 
 
             document.getElementById('journal-content').innerHTML = '';
@@ -3777,6 +3859,16 @@
                 renderScene('edward_death');
                 return;
             }
+
+            // --- PLANAR THEME TOGGLE ---
+            if (gameState.isEthereal) {
+                document.body.classList.add('plane-ethereal');
+            } else {
+                document.body.classList.remove('plane-ethereal');
+            }
+
+            // ... existing updateUI code ...
+            const statsPanel = document.getElementById('stats-panel');
 
 
             if (scene.isLogic) {
@@ -4296,7 +4388,7 @@
                     if (choice.customClass && choice.customClass.includes('spectral-active')) {
                          btnClass = `btn-game w-full text-left rounded shadow flex items-center ${alignmentClass} cinzel font-bold mb-2 spectral-active text-blue-100 ring-1 ring-blue-400 hover:ring-white`;
                     } else {
-                        // All other custom classes (fire/shadow/keen)
+                        // All other custom classes (fire/shadow/hero/keen)
                         btnClass = `btn-game w-full text-left rounded shadow flex items-center ${alignmentClass} cinzel font-bold mb-2 ${choice.customClass}`;
                     }
                 } else {
