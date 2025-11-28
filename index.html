@@ -891,6 +891,7 @@
                 docksWorkCount: 0,
                 // NEW FLAG: Quinn's Logistics (Doom Cost UI Reveal)
                 quinnLogistics: false,
+				hasDivedTreasure: false,
             };
         }
 
@@ -2282,14 +2283,14 @@
                     { text: "Sell Curious Cargo to Smuggler", nextScene: 'docks_sell_cargo', type: 'action', reqItem: 'Curious Cargo', value: 15, doomCost: 0 },
                     // WORK BUTTON (costHP: 2 is the base, adjusted in onEnter)
                     { text: "Work the Lines", nextScene: 'docks_work', type: 'action', costHP: 2, chaosGain: 1, shillingGain: 3, doomCost: 1 }, 
-                    // NEW ECONOMIC FIX: High risk/reward dive
                     { 
                         text: "Dive for Sunken Treasure", 
                         nextScene: 'docks_dive_check', 
                         type: 'skill', 
                         dc: 16, 
-                        skill: 'Survival' ,
-                        doomCost: 1
+                        skill: 'Survival',
+                        doomCost: 1,
+                        reqNotFlag: 'hasDivedTreasure' // FIX: Hides button only after success
                     },
                     { 
                         // FIX: Added reqNotFlag
@@ -2359,6 +2360,7 @@
                 text: "You hold your breath until your lungs burn, leveraging the dock pilings to dive deep. You surface with a watertight strongbox containing a pouch of gold and gems—enough to buy any artifact the Alchemist sells.",
                 journal: "Risked the depths and found high-value treasure.",
                 onEnter: (state) => {
+                    state.hasDivedTreasure = true; // FIX: Lock the treasure so it can't be farmed
                     state.shillings += 15; 
                     audioManager.playCoins();
                     return "Found Gems (+15s).";
