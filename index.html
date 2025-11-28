@@ -762,6 +762,8 @@
                 // NEW FLAGS FOR ONE-TIME ACTIONS (Task 3 Fix)
                 hasObservedGambler: false, 
                 hasSearchedSmugglerDrop: false,
+                // NEW: Docks work exhaustion counter
+                docksWorkCount: 0,
             };
         }
 
@@ -1367,7 +1369,7 @@
                     "Rope": 1,
                     "Torch": 1,
                     "Curious Cargo": 1, 
-                    "Rum (Heal 5)": 0 
+                    "Rum (Heal 5)": 1 // FIX: Changed from 0 to 1 for consistency
                 },
                 // --- END LOCAL STOCK ---
                 banter: {
@@ -1677,6 +1679,8 @@
                     
                     state.currentHP = state.maxHP;
                     Object.keys(state.crew).forEach(k => state.crew[k].used = false);
+                    // NEW: Docks work exhaustion reset
+                    state.docksWorkCount = 0;
                     return "Mission Accepted: Find the Wolves of Valor. HP and Crew Use Restored.";
                 },
                 choices: [
@@ -1872,7 +1876,7 @@
                             { text: "Prepare the Wolf King's Ritual", nextScene: 'finale_ritual_start', type: 'combat', customClass: 'btn-hero' },
                             { text: "Visit Madam Alara, The Triage Alchemist", nextScene: 'alchemist_triage', type: 'travel', doomCost: 0 },
                             { text: "Rest at The Blackwater Tavern", nextScene: 'blackwater_tavern', type: 'travel', doomCost: 0 },
-                            // ADD THIS LINE BELOW:
+                            // ADDED DOCKS BACK FOR LATE-GAME TRADING/HEALING
                             { text: "Explore the Docks", nextScene: 'town_docks', type: 'travel', doomCost: 0 } 
                         ];
                         scenes['town_square'].choices = newChoices;
@@ -1904,7 +1908,7 @@
             },
             
             // --- NEW HUB SCENES ---
-            // DOCKS SCENE (NEW)
+            // DOCKS SCENE (NEW) - Includes dynamic cost calculation
             'town_docks': {
                 title: "The Rotting Docks",
                 text: "The sea is black and restless. The remains of piers stretch into the cold water. Sailors work in silence, hauling heavy crates, trying to ignore the end of the world. You see a shifty-eyed <span class='memory-keyword' data-lore='The unseen veins of the coast. They value coin above law.'>Smuggler</span> checking his manifest.",
@@ -1916,7 +1920,7 @@
                 choices: [
                     // NEW CHOICE: Sell Curious Cargo directly here for a premium (+15s). This button is now handled by renderChoices visibility.
                     { text: "Sell Curious Cargo to Smuggler", nextScene: 'docks_sell_cargo', type: 'action', reqItem: 'Curious Cargo', value: 15, doomCost: 0 },
-                    // FIX: Updated button text to be concise. Added doomCost: 1
+                    // WORK BUTTON (costHP: 2 is the base, adjusted in onEnter)
                     { text: "Work the Lines", nextScene: 'docks_work', type: 'action', costHP: 2, chaosGain: 1, shillingGain: 3, doomCost: 1 }, 
                     // NEW ECONOMIC FIX: High risk/reward dive
                     { 
@@ -1928,7 +1932,6 @@
                         doomCost: 1
                     },
                     { 
-                        // FIX: reqItem is handled by the check below to ensure visibility is tied to Ring of Brass.
                         // FIX: Added reqNotFlag
                         text: "Search for Smuggler's Drop", 
                         nextScene: 'docks_smuggler_check', 
@@ -1941,7 +1944,17 @@
                         doomCost: 1
                     }, 
                     { text: "Return to Port Square", nextScene: 'town_square', type: 'travel', doomCost: 0 }
-                ]
+                ],
+                onEnter: (state) => {
+                    // NEW LOGIC: Calculate Progressive Cost and update the button for the UI
+                    const workBtn = scenes['town_docks'].choices.find(c => c.nextScene === 'docks_work');
+                    if (workBtn) {
+                        // Base Cost (2) + Number of times worked previously
+                        const exhaustion = state.docksWorkCount || 0;
+                        workBtn.costHP = 2 + exhaustion;
+                    }
+                    return null;
+                }
             },
             // NEW SCENE: DOCKS SELL CARGO (Premium Payout)
             'docks_sell_cargo': {
@@ -1957,16 +1970,23 @@
                     return "Sold Curious Cargo (+15s) to Smuggler.";
                 },
             },
-            // DOCKS WORK SCENE (NEW)
+            // DOCKS WORK SCENE (NEW) - Increments the counter and reports the cost
             'docks_work': {
                 title: "Hard Labor",
                 text: "You haul crates and tie lines until your muscles ache and your hands blister.",
                 choices: [{ text: "Return to Docks", nextScene: 'town_docks', type: 'travel', doomCost: 0 }],
                 onEnter: (state) => {
-                    // DOUBLE DIP FIX: Removed state.shillings += 3; and state.influence += 1;
+                    // Calculate what the cost WAS for this action (Base 2 + previous count)
+                    const costPaid = 2 + (state.docksWorkCount || 0);
+                    
+                    // Increment the counter (used for next time's calculation)
+                    state.docksWorkCount = (state.docksWorkCount || 0) + 1;
+                    
                     audioManager.playCoins();
-                    // FIX: Ensure journal message reflects the correct 2 HP loss
-                    return "Worked. +3 Shillings, -2 HP. Chaos +1.";
+                    
+                    // Note: Shillings/Chaos gain and HP damage are handled by the button click logic
+                    // Report the values based on what was *just paid/gained*
+                    return `Worked. Earned 3 Shillings. Took ${costPaid} HP (Exhaustion Level ${state.docksWorkCount}). Chaos +1.`;
                 },
             },
             // NEW SCENE: DOCKS HIGH RISK DIVE
@@ -2035,7 +2055,7 @@
 				},
                 isRest: true, // Tag as rest scene to prevent doom counter decrement
                 stock: { // NEW STOCK FOR GRUEL
-                    "Gruel": 4 
+                    "Gruel": 5 
                 },
                 choices: [
                     // PAID REST OPTION (Task 3 Fix: Added doomCost: 3)
@@ -2161,7 +2181,7 @@
 				title: "Madam Alara, Triage Alchemist",
 				text: "Madam Alara, encased in her beaked mask, tends to the wounded with the cold efficiency of a butcher. She doesn't offer comfort, only chemistry. Her wares are potent—she deals only in true survival.",
 				journal: "Madam Alara. She'd distill her own mother if it made a potent tonic. Her prices are robbery, but her potions might be the only reason I survive the night.",
-                stock: {
+				stock: {
                     "Vitality Tincture": 2,
                     "Smelling Salts": 3,
                     "Flash Powder": 1,
@@ -2335,7 +2355,9 @@
                 onEnter: (state) => {
                     state.currentHP = state.maxHP;
                     Object.keys(state.crew).forEach(k => state.crew[k].used = false);
-                    return "Paid 10s. HP and Crew Use Restored.";
+                    // NEW: Docks work exhaustion reset
+                    state.docksWorkCount = 0;
+                    return "Paid 10s. HP, Crew Use, and Exhaustion Restored.";
                 },
             },
             // NEW: INFORMATION SCENES
@@ -3108,7 +3130,7 @@
             "Rope": 1,
             "Torch": 1,
             "Curious Cargo": 1, 
-            "Rum (Heal 5)": 0 
+            "Rum (Heal 5)": 1 
         };
         // NEW: Alchemist stock initialization
         scenes['alchemist_triage'].stock = {
@@ -3280,13 +3302,14 @@
         async function resetGame() {
             // Reset state
             gameState = createInitialState();
+            
             // Reset scene data manually (needed for market stock)
             scenes['market_stall'].stock = {
                 "Healing Potion": 1,
                 "Rope": 1,
                 "Torch": 1,
                 "Curious Cargo": 1, 
-                "Rum (Heal 5)": 0 
+                "Rum (Heal 5)": 1 // FIX: Changed from 0 to 1 for consistency
             };
             scenes['alchemist_triage'].stock = {
                 "Vitality Tincture": 2,
@@ -3306,6 +3329,9 @@
             // Reset one-time flags
             gameState.hasObservedGambler = false;
             gameState.hasSearchedSmugglerDrop = false;
+            // NEW: Docks work exhaustion counter reset
+            gameState.docksWorkCount = 0;
+
 
             document.getElementById('journal-content').innerHTML = '';
             await saveGame();
@@ -3702,10 +3728,18 @@
                 if (returnOption) processedChoices.push(returnOption);
 
             }
-            // NEW: Docks Cargo Check (Curious Cargo is checked via reqItem in the main loop, but we need to ensure the other options are not missed)
+            // NEW: Docks Dynamic Work Button logic
             else if (currentSceneId === 'town_docks') {
-                 // We keep the original choices array, but the visibility check below handles the Curious Cargo button specifically.
-                 // Ensure the 'Curious Cargo' button's visibility is tied to reqItem
+                 // The onEnter logic handles updating the costHP on the WORK button.
+                 // We simply ensure the button text reflects the current calculated cost.
+                const workBtn = choices.find(c => c.nextScene === 'docks_work');
+                if (workBtn) {
+                     // Check if costHP exists (it should, after onEnter runs)
+                     const currentCost = workBtn.costHP !== undefined ? workBtn.costHP : workBtn.costHP || 2;
+                     
+                     // Update button text to display the current HP cost
+                     workBtn.text = `Work the Lines (Current HP Cost: ${currentCost})`;
+                }
             }
 
 
@@ -3742,8 +3776,8 @@
                     isDisabled = true;
                     disabledClass = 'btn-disabled-cost';
                 }
-                // Check 2: Health Cost (Docks)
-                if (choice.costHP && gameState.currentHP <= choice.costHP) {
+                // Check 2: Health Cost (Crucial Docks Fix)
+                if (choice.costHP !== undefined && gameState.currentHP <= choice.costHP) {
                     isDisabled = true;
                     disabledClass = 'btn-disabled-cost';
                 }
@@ -3762,7 +3796,7 @@
                 let isTradeButton = choice.cost || choice.value || choice.shillingGain; // Added shillingGain for dock work/gruel
                 let isSkillCheck = choice.type === 'skill';
 
-                const alignmentClass = (isSkillCheck || isTradeButton || choice.chaosGain || choice.orderGain || choice.costHP || choice.shillingGain || choice.doomCost !== undefined || choice.reqFlag) ? 'justify-start' : 'justify-between';
+                const alignmentClass = (isSkillCheck || isTradeButton || choice.chaosGain || choice.orderGain || choice.costHP !== undefined || choice.shillingGain || choice.doomCost !== undefined || choice.reqFlag) ? 'justify-start' : 'justify-between';
                 
                 let btnClass = "";
                 
@@ -3828,6 +3862,7 @@
                         }
                     }
 
+
                     // 3. Check selling stock (Curious Cargo at Market)
                     if (choice.type === 'action' && choice.reqItem === 'Curious Cargo' && currentSceneId === 'market_sell') {
                          if (marketStock['Curious Cargo'] <= 0) {
@@ -3854,7 +3889,9 @@
 
                     // --- APPLY ACTIONS ---
                     if (choice.cost) gameState.shillings -= choice.cost;
-                    if (choice.costHP) gameState.currentHP = applyDamage(gameState.currentHP, choice.costHP); // NEW HP COST APPLIED
+                    // NEW HP COST APPLIED (CostHP !== undefined handles the base cost and the dynamic docks cost)
+                    if (choice.costHP !== undefined) gameState.currentHP = applyDamage(gameState.currentHP, choice.costHP); 
+                    
                     if (choice.shillingGain) gameState.shillings += choice.shillingGain;
                     if (choice.chaosGain) gameState.influence = Math.min(20, gameState.influence + choice.chaosGain);
                     
@@ -3867,6 +3904,7 @@
                         // Use explicit doomCost from the choice, or default to 1 for generic travel/skill checks
                         const cost = choice.doomCost !== undefined ? choice.doomCost : 1; 
                         
+                        // FIX: Clamp subtraction at 0 to prevent negative numbers
                         gameState.doomTimer = Math.max(0, gameState.doomTimer - cost);
                         
                         if (gameState.doomTimer > 0) {
@@ -3961,7 +3999,8 @@
                 }
 
                 // 2. Health Cost/Gain
-                if (choice.costHP) {
+                // Use !== undefined check to include the 0 HP base cost for dynamic calculation
+                if (choice.costHP !== undefined) { 
                     indicators.push({ text: `-${choice.costHP} HP`, color: 'text-red-400' });
                 }
 
