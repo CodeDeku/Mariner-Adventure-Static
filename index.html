@@ -1050,6 +1050,12 @@
                     return `Keep this for when luck runs out (Fail States).`;
                 }
             },
+			"Salt-Warped Spyglass": { 
+                type: 'key', 
+                icon: 'fa-telescope', // or fa-eye
+                color: 'text-cyan-400', 
+                desc: "Passive: A collapsible telescope. Its lens changes based on your alignment." 
+            },
             
             // --- LEGENDARY ARTIFACTS (WOLVES OF VALOR) ---
             "Ring of Brass": { 
@@ -2396,16 +2402,33 @@
             },
             'docks_smuggler_success': {
                 title: "Hidden Stash",
-                text: "The Ring of Brass magnifies your senses. You catch the faint smell of brine and tar. Behind a pile of old nets, you find a small, consecrated bottle. Holy Water—a counter to Fire.",
-                journal: "Keen Senses worked. Found Holy Water, likely smuggled.",
+                text: "The Ring of Brass magnifies your senses. You catch the faint smell of brine and old metal coming from a pile of nets.",
+                journal: "Keen Senses worked. Found a hidden stash.",
+                choices: [{ text: "Return to Docks", nextScene: 'town_docks', type: 'travel', doomCost: 0 }],
                 onEnter: (state) => {
-                    state.hasSearchedSmugglerDrop = true; // Task 3 Fix: Set flag to prevent future use
-                    if (!state.inventory.includes("Holy Water")) {
-                        state.inventory.push("Holy Water");
+                    state.hasSearchedSmugglerDrop = true; 
+                    
+                    // UNIQUE ITEM CHECK
+                    const hasCoin = state.inventory.includes("Strange Coin");
+                    const hasDraft = state.inventory.includes("Phoenix Draft");
+                    const hasHolyWater = state.inventory.includes("Holy Water");
+
+                    // Priority 1: The Coin (If missed at Smelter)
+                    if (!hasCoin && !hasDraft) {
+                         state.inventory.push("Strange Coin");
+                         // If they also don't have Holy Water, give a hint they missed it? 
+                         // For now, let's just give the Coin as the "Jackpot"
+                         return "Found a heavy, grime-encrusted Strange Coin hidden in the nets.";
                     }
-                    return "Found Holy Water!";
-                },
-                choices: [{ text: "Return to Docks", nextScene: 'town_docks', type: 'travel', doomCost: 0 }]
+                    
+                    // Priority 2: Holy Water (If Coin is already found)
+                    if (!hasHolyWater) {
+                        state.inventory.push("Holy Water");
+                        return "Found Holy Water!";
+                    }
+                    
+                    return "The stash is empty.";
+                }
             },
             'docks_smuggler_fail': {
                 title: "Nothing But Wood",
@@ -2894,17 +2917,22 @@
             // ROPE SIDE QUEST REWARD
             'smelter_side_rope': {
                 title: "Catwalk Bypass",
-                text: "The Rope holds fast long enough for you to ascend quickly to the quieter upper catwalk, bypassing the deadly vents below. Tucked away in a maintenance crate, you find a glint of ancient metal: a Strange Coin.",
-                journal: "Used Rope to bypass the vents. Found a Strange Coin and 5 Shillings.",
+                text: "The Rope holds fast. You ascend to the upper catwalk, bypassing the deadly vents.",
+                journal: "Used Rope to bypass the vents.",
                 choices: [{ text: "Continue to Smelter Antechamber", nextScene: 'smelter_workers', type: 'travel' }],
                 onEnter: (state) => { 
-                    state.shillings += 5; // ADDED: 5 Shillings
+                    state.shillings += 5; 
                     audioManager.playCoins();
+                    
+                    // UNIQUE ITEM CHECK
+                    const hasCoin = state.inventory.includes("Strange Coin");
+                    const hasDraft = state.inventory.includes("Phoenix Draft");
 
-                    if (!state.inventory.includes("Strange Coin")) {
+                    if (!hasCoin && !hasDraft) {
                         state.inventory.push("Strange Coin");
-                        return "Rope consumed. Found Strange Coin and 5 Shillings!"; 
+                        return "Rope consumed. Found a Strange Coin and 5 Shillings!"; 
                     }
+                    
                     return "Rope consumed. Found 5 Shillings.";
                 },
             },
@@ -3150,9 +3178,29 @@
                 journal: "Defeated the Slag Horror and claimed the Sword of Valor.",
                 choices: [{ text: "Return to Town Square", nextScene: 'town_square', type: 'travel', }],
                 onEnter: (state) => {
-                    state.isAbsorbCharged = false; // Clear flag
-                    if (!state.inventory.includes("Sword of Valor")) state.inventory.push("Sword of Valor");
-                    return "Acquired Sword of Valor.";
+                    state.isAbsorbCharged = false; 
+                    let logMsg = "Acquired Sword of Valor.";
+
+                    // SWORD SWAP LOGIC
+                    if (state.inventory.includes("Rusted Cutlass")) {
+                        // 1. Remove the cutlass
+                        const cutlassIdx = state.inventory.indexOf("Rusted Cutlass");
+                        if (cutlassIdx > -1) state.inventory.splice(cutlassIdx, 1);
+                        
+                        // 2. Thematic Log Entry
+                        addToHistory("Your Rusted Cutlass shattered against the Slag Horror's hide—useless iron against a god of fire. You dropped the burning hilt and grasped the Sword of Valor. Finally, a weapon worthy of the mission.", 'entry');
+                        logMsg = "Cutlass destroyed. Acquired Sword of Valor.";
+                    } else {
+                        // Fallback if they didn't have the cutlass
+                         addToHistory("You grasped the Sword of Valor from the beast's chest. The steel hummed with the Wolf King's memory.", 'entry');
+                    }
+
+                    // 3. Grant the new sword
+                    if (!state.inventory.includes("Sword of Valor")) {
+                        state.inventory.push("Sword of Valor");
+                    }
+                    
+                    return logMsg;
                 },
             },
             'smelter_victory_ring': {
@@ -3161,9 +3209,29 @@
                 journal: "Flawless victory over the Slag Horror using the Ring's power. Claimed the Sword of Valor.",
                 choices: [{ text: "Return to Town Square", nextScene: 'town_square', type: 'travel' }],
                 onEnter: (state) => {
-                    state.isAbsorbCharged = false; // Clear flag
-                    if (!state.inventory.includes("Sword of Valor")) state.inventory.push("Sword of Valor");
-                    return "Acquired Sword of Valor.";
+                    state.isAbsorbCharged = false; 
+                    let logMsg = "Acquired Sword of Valor.";
+
+                    // SWORD SWAP LOGIC
+                    if (state.inventory.includes("Rusted Cutlass")) {
+                        // 1. Remove the cutlass
+                        const cutlassIdx = state.inventory.indexOf("Rusted Cutlass");
+                        if (cutlassIdx > -1) state.inventory.splice(cutlassIdx, 1);
+                        
+                        // 2. Thematic Log Entry
+                        addToHistory("Your Rusted Cutlass shattered against the Slag Horror's hide—useless iron against a god of fire. You dropped the burning hilt and grasped the Sword of Valor. Finally, a weapon worthy of the mission.", 'entry');
+                        logMsg = "Cutlass destroyed. Acquired Sword of Valor.";
+                    } else {
+                        // Fallback if they didn't have the cutlass
+                         addToHistory("You grasped the Sword of Valor from the beast's chest. The steel hummed with the Wolf King's memory.", 'entry');
+                    }
+
+                    // 3. Grant the new sword
+                    if (!state.inventory.includes("Sword of Valor")) {
+                        state.inventory.push("Sword of Valor");
+                    }
+                    
+                    return logMsg;
                 },
             },
             'smelter_victory_item': {
@@ -3172,11 +3240,29 @@
                 journal: "Used Holy Water to defeat the Slag Horror. Claimed the Sword of Valor.",
                 choices: [{ text: "Return to Town Square", nextScene: 'town_square', type: 'travel' }],
                 onEnter: (state) => {
-                    state.isAbsorbCharged = false; // Clear flag
-                    if (!state.inventory.includes("Sword of Valor")) state.inventory.push("Sword of Valor");
-                    const idx = state.inventory.indexOf("Holy Water");
-                    if (idx > -1) state.inventory.splice(idx, 1);
-                    return "Used Holy Water. Acquired Sword of Valor.";
+                    state.isAbsorbCharged = false; 
+                    let logMsg = "Acquired Sword of Valor.";
+
+                    // SWORD SWAP LOGIC
+                    if (state.inventory.includes("Rusted Cutlass")) {
+                        // 1. Remove the cutlass
+                        const cutlassIdx = state.inventory.indexOf("Rusted Cutlass");
+                        if (cutlassIdx > -1) state.inventory.splice(cutlassIdx, 1);
+                        
+                        // 2. Thematic Log Entry
+                        addToHistory("Your Rusted Cutlass shattered against the Slag Horror's hide—useless iron against a god of fire. You dropped the burning hilt and grasped the Sword of Valor. Finally, a weapon worthy of the mission.", 'entry');
+                        logMsg = "Cutlass destroyed. Acquired Sword of Valor.";
+                    } else {
+                        // Fallback if they didn't have the cutlass
+                         addToHistory("You grasped the Sword of Valor from the beast's chest. The steel hummed with the Wolf King's memory.", 'entry');
+                    }
+
+                    // 3. Grant the new sword
+                    if (!state.inventory.includes("Sword of Valor")) {
+                        state.inventory.push("Sword of Valor");
+                    }
+                    
+                    return logMsg;
                 },
             },
             'smelter_victory_skill': {
@@ -3188,8 +3274,26 @@
                     state.isAbsorbCharged = false; // Clear flag
                     state.currentHP = applyDamage(state.currentHP, 4); // Minor Damage
                     fxManager.flashRed();
-                    if (!state.inventory.includes("Sword of Valor")) state.inventory.push("Sword of Valor");
-                    return "Took 4 DMG. Acquired Sword of Valor.";
+                    // SWORD SWAP LOGIC
+                    if (state.inventory.includes("Rusted Cutlass")) {
+                        // 1. Remove the cutlass
+                        const cutlassIdx = state.inventory.indexOf("Rusted Cutlass");
+                        if (cutlassIdx > -1) state.inventory.splice(cutlassIdx, 1);
+                        
+                        // 2. Thematic Log Entry
+                        addToHistory("Your Rusted Cutlass shattered against the Slag Horror's hide—useless iron against a god of fire. You dropped the burning hilt and grasped the Sword of Valor. Finally, a weapon worthy of the mission.", 'entry');
+                        logMsg = "Cutlass destroyed. Acquired Sword of Valor.";
+                    } else {
+                        // Fallback if they didn't have the cutlass
+                         addToHistory("You grasped the Sword of Valor from the beast's chest. The steel hummed with the Wolf King's memory.", 'entry');
+                    }
+
+                    // 3. Grant the new sword
+                    if (!state.inventory.includes("Sword of Valor")) {
+                        state.inventory.push("Sword of Valor");
+                    }
+                    
+                    return logMsg;
                 },
             },
             'smelter_victory_brute': {
@@ -3201,8 +3305,26 @@
                     state.isAbsorbCharged = false; // Clear flag
                     state.currentHP = applyDamage(state.currentHP, 10); // Major Damage
                     fxManager.flashRed();
-                    if (!state.inventory.includes("Sword of Valor")) state.inventory.push("Sword of Valor");
-                    return "Took 10 DMG. Acquired Sword of Valor.";
+                    // SWORD SWAP LOGIC
+                    if (state.inventory.includes("Rusted Cutlass")) {
+                        // 1. Remove the cutlass
+                        const cutlassIdx = state.inventory.indexOf("Rusted Cutlass");
+                        if (cutlassIdx > -1) state.inventory.splice(cutlassIdx, 1);
+                        
+                        // 2. Thematic Log Entry
+                        addToHistory("Your Rusted Cutlass shattered against the Slag Horror's hide—useless iron against a god of fire. You dropped the burning hilt and grasped the Sword of Valor. Finally, a weapon worthy of the mission.", 'entry');
+                        logMsg = "Cutlass destroyed. Acquired Sword of Valor.";
+                    } else {
+                        // Fallback if they didn't have the cutlass
+                         addToHistory("You grasped the Sword of Valor from the beast's chest. The steel hummed with the Wolf King's memory.", 'entry');
+                    }
+
+                    // 3. Grant the new sword
+                    if (!state.inventory.includes("Sword of Valor")) {
+                        state.inventory.push("Sword of Valor");
+                    }
+                    
+                    return logMsg;
                 },
             },
             // --- END MULTI-STAGE BOSS FIGHT: SLAG HORROR ---
