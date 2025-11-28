@@ -1052,7 +1052,7 @@
             },
 			"Salt-Warped Spyglass": { 
                 type: 'key', 
-                icon: 'fa-telescope', // or fa-eye
+                icon: 'fa-eye', // or fa-eye
                 color: 'text-cyan-400', 
                 desc: "Key: A heavy brass instrument. The lens seems to shift focus on its own." 
             },
@@ -1066,7 +1066,7 @@
             },
             "Sword of Valor": { 
                 type: 'key', 
-                icon: 'fa-sword', 
+                icon: 'fa-cross', 
                 color: 'text-blue-500', 
                 desc: "Legendary (Wolves of Valor): +1 to attack/damage. Deals extra Force damage to Undead. Required for the Ritual." 
             },
@@ -1412,8 +1412,8 @@
                     'bones': "I smell rum... and unwashed men."
                 },
                 onEnter: (state) => { 
-                    // RE-IMPLEMENTED BASE CHAOS GAIN
-                    state.influence = Math.min(20, state.influence + 4); 
+                    // UPDATED CLAMPING
+                    state.influence = Math.min(50, state.influence + 4); 
                     return "Secrets Learned (Chaos +4)"; 
                 },
                 choices: [
@@ -1430,8 +1430,8 @@
                     'bones': "I smell rum... and unwashed men."
                 },
                 onEnter: (state) => { 
-                    // RE-IMPLEMENTED BASE CHAOS GAIN
-                    state.influence = Math.min(20, state.influence + 4); 
+                    // UPDATED CLAMPING
+                    state.influence = Math.min(50, state.influence + 4); 
                     if (!state.inventory.includes("Curious Cargo")) {
                         state.inventory.push("Curious Cargo");
                         return "Found Curious Cargo. Secrets Learned (Chaos +4).";
@@ -1485,8 +1485,8 @@
                 text: "You salute with practiced discipline. 'Just a shipwrecked sailor, sir. Keeping to the road.' The Guard straightens, recognizing the posture. 'Carry on then. And take these—get yourself a warm meal.' He flicks two silver coins at you.",
                 journal: "Played the part of the good sailor. Saluted the uniform, not the man. It worked. Order has its uses, even if it tastes like bile.",
                 onEnter: (state) => {
-                    // APPLY NEGATIVE INFLUENCE SHIFT (Order)
-                    state.influence = Math.max(-20, state.influence - 4); 
+                    // UPDATED CLAMPING
+                    state.influence = Math.max(-50, state.influence - 4); 
                     state.shillings += 2; // Add 2 Shillings
                     audioManager.playCoins();
                     return "Showed Respect (+4 Order). Received 2 Shillings.";
@@ -1523,7 +1523,8 @@
                 text: "You channel Gareth's command. Your eyes flare with pale light. The Guard stumbles back, terrified. 'Go! Just go!'",
                 journal: "Gareth spoke through me. The Guard fled in terror.",
                 onEnter: (state) => { 
-                    state.influence = Math.min(20, state.influence + 4); 
+                    // UPDATED CLAMPING
+                    state.influence = Math.min(50, state.influence + 4); 
                     return "Guard Terrified (Chaos +4)."; 
                 },
                 choices: [{ text: "Head to The Crossroads", nextScene: 'market_crossroads', type: 'travel' }]
@@ -1546,7 +1547,7 @@
                     const dmg = Math.floor(Math.random() * varDmg) + minDmg; 
                     state.currentHP = applyDamage(state.currentHP, dmg);
                     fxManager.flashRed(); 
-                    state.influence = 20; // Max Chaos
+                    state.influence = 50; // Max Chaos (UPDATED CLAMPING)
                     return `Took ${dmg} damage. Became Outlaw (Max Chaos).`;
                 },
                 choices: [{ text: "Limp to The Crossroads", nextScene: 'market_crossroads', type: 'travel' }]
@@ -1573,7 +1574,8 @@
                     const idx = state.inventory.indexOf("Curious Cargo");
                     if (idx > -1) state.inventory.splice(idx, 1);
                     scenes['market_stall'].stock["Curious Cargo"] = 0; // Consume merchant's willingness to buy this type of cargo
-                    state.influence = Math.min(20, state.influence + 6); // High Chaos gain
+                    // UPDATED CLAMPING
+                    state.influence = Math.min(50, state.influence + 6); // High Chaos gain
                     return "Gave Cargo. Chaos +6.";
                 },
                 choices: [{ text: "Head to The Crossroads", nextScene: 'market_crossroads', type: 'travel' }]
@@ -1801,7 +1803,7 @@
                         text: "Cheat Fate (Use Dead Man's Die)", 
                         nextScene: 'lighthouse_arrival', // Redirect to success-like path
                         type: 'action', 
-                        reqItem: "Dead Man's Die", 
+                        reqItem: "Dead Man's Die', 
                         consume: true,
                         customClass: 'btn-hero'
                     }
@@ -1999,13 +2001,15 @@
                         }
                     },
                     { 
-                        text: "Quinn: 'Logistical Mapping' (Reveal Doom Costs)", 
+                        // UPDATED TEXT: Quinn now refers to "Time"
+                        text: "Quinn: 'Logistics' (Reveals Time Costs)", 
                         nextScene: 'lighthouse_morning', 
                         type: 'dialogue',
                         customClass: 'btn-game spectral-active',
                         onSelect: (state) => { 
                             state.quinnLogistics = true; 
-                            return "Quinn mapped the city. Doom Costs are now visible on all choices."; 
+                            // UPDATED TEXT: Quinn now refers to "Time"
+                            return "Quinn hands you a chronometer. You can now see the Time Cost of every action."; 
                         }
                     },
                     { 
@@ -2353,7 +2357,8 @@
                 onEnter: (state) => {
                     const idx = state.inventory.indexOf("Curious Cargo");
                     if (idx > -1) state.inventory.splice(idx, 1);
-                    // The payout is handled by the choice button logic (value: 15)
+                    scenes['market_stall'].stock["Curious Cargo"] = 0; // Consume merchant's willingness to buy this type of cargo
+                    state.shillings += 15; 
                     audioManager.playCoins();
                     return "Sold Curious Cargo (+15s) to Smuggler.";
                 },
@@ -3022,7 +3027,8 @@
                     if (!state.inventory.includes("Industrial Lubricant")) {
                         state.inventory.push("Industrial Lubricant");
                     }
-                    state.influence = Math.min(20, state.influence + 3);
+                    // UPDATED CLAMPING
+                    state.influence = Math.min(50, state.influence + 3);
                     return "Sacrificed workers for containment. Chaos +3. Found Lubricant.";
                 }
             },
@@ -3039,7 +3045,8 @@
                     if (!state.inventory.includes("Industrial Lubricant")) {
                         state.inventory.push("Industrial Lubricant");
                     }
-                    state.influence = Math.max(-20, state.influence - 5);
+                    // UPDATED CLAMPING
+                    state.influence = Math.max(-50, state.influence - 5);
                     return "Found Lubricant. Order +5.";
                 },
             },
@@ -3062,7 +3069,8 @@
                 onEnter: (state) => {
                     state.currentHP = applyDamage(state.currentHP, 3);
                     fxManager.flashRed();
-                    state.influence = Math.max(-20, state.influence - 2); // Minor Order loss from failure
+                    // UPDATED CLAMPING
+                    state.influence = Math.max(-50, state.influence - 2); // Minor Order loss from failure
                     return "Took 3 Psychic Damage. Order +2 (Failed Rescue).";
                 },
             },
@@ -3089,7 +3097,7 @@
                     },
                     // COUNTER 2: Skill Mitigation (Absorb Elements) - Sets flag for stage 2
                     { 
-                        text: "Channel Absorb Elements", 
+                        text: "Channel Absorb Elements (Absorb Heat)", 
                         nextScene: 'smelter_boss_absorb_bridge', // FIXED: Points to bridge scene to set flag
                         type: 'action', 
                         reqSkill: 'Absorb Elements', 
@@ -3457,14 +3465,14 @@
                         type: 'skill', 
                         dc: 14, 
                         skill: 'Athletics',
-                        orderGain: 4
+                        orderGain: 5 
                     },
                     // CHAOS PATH: Pragmatism/No Time Cost
                     { 
                         text: "Prioritize Containment", 
                         nextScene: 'chapel_ignore_drowning', 
                         type: 'dialogue',
-                        chaosGain: 4,
+                        chaosGain: 3,
                         doomCost: 0
                     }
                 ]
@@ -3482,7 +3490,8 @@
                     if (!state.inventory.includes("Silver Locket")) {
                         state.inventory.push("Silver Locket");
                     }
-                    state.influence = Math.max(-20, state.influence - 4);
+                    // UPDATED CLAMPING
+                    state.influence = Math.max(-50, state.influence - 4);
                     return "Found Silver Locket. Order +4.";
                 },
             },
@@ -3512,7 +3521,8 @@
                     if (!state.inventory.includes("Holy Water")) {
                         state.inventory.push("Holy Water");
                     }
-                    state.influence = Math.min(20, state.influence + 4);
+                    // UPDATED CLAMPING
+                    state.influence = Math.min(50, state.influence + 4);
                     return "Found Holy Water. Chaos +4.";
                 },
             },
@@ -3789,8 +3799,8 @@
             let finalDamage = damageAmount;
 
             // --- SPYGLASS PASSIVE: ORDER (VIGILANCE) ---
-            // If player has Spyglass AND Influence is <= -5 (Order)
-            if (gameState.inventory.includes("Salt-Warped Spyglass") && gameState.influence <= -5) {
+            // If player has Spyglass AND Influence is <= -15 (Order - NEW THRESHOLD)
+            if (gameState.inventory.includes("Salt-Warped Spyglass") && gameState.influence <= -15) {
                 if (finalDamage > 0) {
                     finalDamage = Math.max(0, finalDamage - 1);
                     // Only log this if it actually prevented damage
@@ -4761,15 +4771,20 @@
 						// --- SPYGLASS PASSIVE: CHAOS (AVARICE) ---
                         let extraGold = 0;
                         // Check if the choice gives money (shillingGain or value)
-                        if ((choice.shillingGain || choice.value) && gameState.inventory.includes("Salt-Warped Spyglass") && gameState.influence >= 5) {
+                        // UPDATED THRESHOLD: 15
+                        if ((choice.shillingGain || choice.value) && gameState.inventory.includes("Salt-Warped Spyglass") && gameState.influence >= 15) {
                              extraGold = 1;
                              addToHistory("Passive (Privateer's Lens): Found +1 extra Shilling.", 'system');
                         }
                       
+                        // FIX: Ensure extraGold is included in the money addition
                         if (choice.shillingGain) gameState.shillings += (choice.shillingGain + extraGold);
                         if (choice.value) gameState.shillings += (choice.value + extraGold);
-                        if (choice.chaosGain) gameState.influence = Math.min(20, gameState.influence + choice.chaosGain);
-                        if (choice.orderGain) gameState.influence = Math.max(-20, gameState.influence - choice.orderGain); 
+                        
+                        // UPDATED CLAMPING: Max 50
+                        if (choice.chaosGain) gameState.influence = Math.min(50, gameState.influence + choice.chaosGain);
+                        // UPDATED CLAMPING: Max -50
+                        if (choice.orderGain) gameState.influence = Math.max(-50, gameState.influence - choice.orderGain); 
                         
                         // Crew Selection Hook
                         if (choice.nextScene === 'lighthouse_morning' && currentSceneId === 'captain_orders' && choice.onSelect) {
