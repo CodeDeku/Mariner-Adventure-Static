@@ -40,6 +40,46 @@
         .btn-game:active { transform: translateY(1px); }
         .text-shadow { text-shadow: 0 2px 4px rgba(0,0,0,0.8); }
         
+		/* --- CHANNEL BUTTON (HOLD INTERACTION) --- */
+        .btn-channel {
+            position: relative;
+            background: linear-gradient(90deg, #1e1b4b 0%, #312e81 100%); /* Deep Indigo */
+            border: 1px solid #818cf8;
+            color: #e0e7ff;
+            overflow: hidden;
+            user-select: none; /* Prevent text highlighting while holding */
+            -webkit-user-select: none;
+            touch-action: none; /* Prevent scrolling while holding on mobile */
+        }
+        
+        /* The Progress Bar Overlay */
+        .btn-channel::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 0%;
+            background: rgba(139, 92, 246, 0.6); /* Violet Glow */
+            z-index: 0;
+            transition: width 0s; /* Default: Instant reset */
+        }
+        
+        /* The Animation State */
+        .btn-channel.channeling::before {
+            width: 100%;
+            transition: width 2.5s linear; /* 2.5s Channel Time */
+        }
+        
+        /* Ensure text stays on top of the progress bar */
+        .btn-content-wrapper {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            width: 100%;
+            align-items: center;
+        }
+		
         /* SPECTRAL BLUE/GLOW DEFINITIONS (Centralized Theme) */
         
         /* Crew Selection Active Glow (Border/Shadow) */
@@ -3413,28 +3453,34 @@
             },
             // --- END MULTI-STAGE BOSS FIGHT: DROWNED SPECTRE ---
             
-            'finale_ritual_start': { 
-                title: "The Ritual", 
-                text: "The Ring and the Blade flare in your hands. You begin the ancient Wolf King's ritual, preparing to close the Planar Rift forever.", 
+			'finale_ritual_start': { 
+                title: "The Wolf King's Ritual", 
+                text: "The Ring and the Blade flare in your hands, vibrating with a hum that rattles your teeth. The Rift above screams, a violet wound in the sky. To close it, you must become the anchor. You must channel the artifacts until the gateway shatters.<br><br><span class='text-purple-400 italic'>Hold the button to channel the ritual...</span>", 
                 isBoss: true, 
                 choices: [
-                    // This button should lead to the final completion state which resets the persistent flag
-                    { text: "Complete the Ritual", nextScene: 'finale_completed', type: 'combat', customClass: 'btn-hero' }
+                    { 
+                        text: "Channel the Power", 
+                        nextScene: 'act2_ethereal_drift', 
+                        type: 'hold', 
+                        customClass: 'btn-channel',
+                        doomCost: 0
+                    }
                 ] 
             },
-            'finale_completed': {
-                title: "The Toll is Paid",
-                text: "The planar tear snaps shut. The voices of the damned are silent, replaced by the calm peace of the sea. The mission is done, Mariner.",
+
+            'act2_ethereal_drift': {
+                title: "Act 2: The Ethereal Drift",
+                text: "The world shatters. The Port of Shadows, the Smelter, the Chapel—they dissolve into mist. You are no longer on the Material Plane. You are drifting in the Ethereal, a ghost among ghosts. The Rift is closed, but you are on the wrong side of it.<br><br>The voices of your crew are crystal clear now. They are not in your head; they are standing beside you on the deck of a spectral ship sailing through starlight.<br><br><span class='cinzel text-xl text-blue-400'>End of Act 1</span>",
+                journal: "I closed the Rift, but the recoil threw me into the Ethereal Plane. I am truly the Mariner of the Damned now.",
                 onEnter: (state) => {
-                    state.isRiftCollapse = false; // Reset the persistent visual flag (Task 1)
-                    return "The Rift is closed. Peace found.";
+                    state.isRiftCollapse = false; 
+                    return "Act 1 Complete. Welcome to the Ethereal Plane.";
                 },
-                // FIX 6: Ensure the reset button renders
                 choices: [
                     { 
-                        text: "The End (Restart Game)", 
+                        text: "Restart Game", 
                         type: 'reset',
-						doomCost: 0
+                        doomCost: 0
                     }
                 ]
             },
@@ -4267,6 +4313,52 @@
                 btn.className = btnClass;
                 
                 // --- ONCLICK HANDLER ---
+				// --- HOLD TO CHANNEL LOGIC ---
+                if (choice.type === 'hold') {
+                    let holdTimer = null;
+                    const duration = 2500; // 2.5 seconds match CSS
+                    
+                    const startChannel = (e) => {
+                        e.preventDefault(); // Prevent default touch actions
+                        if (btn.disabled) return;
+                        
+                        btn.classList.add('channeling');
+                        audioManager.playGhost(); // Optional: Sound cue on start
+
+                        holdTimer = setTimeout(() => {
+                            // SUCCESS: Channel Complete
+                            audioManager.playClash(); // Success Sound
+                            renderScene(choice.nextScene);
+                        }, duration);
+                    };
+
+                    const cancelChannel = (e) => {
+                        if (holdTimer) {
+                            clearTimeout(holdTimer);
+                            holdTimer = null;
+                        }
+                        btn.classList.remove('channeling');
+                    };
+
+                    // Mouse Events
+                    btn.addEventListener('mousedown', startChannel);
+                    btn.addEventListener('mouseup', cancelChannel);
+                    btn.addEventListener('mouseleave', cancelChannel);
+
+                    // Touch Events (Mobile)
+                    btn.addEventListener('touchstart', startChannel);
+                    btn.addEventListener('touchend', cancelChannel);
+                    
+                    // Disable standard click for this type
+                    btn.onclick = null; 
+                } 
+                else {
+                    // --- STANDARD CLICK HANDLER (EXISTING CODE) ---
+                    btn.onclick = (e) => {
+                        // ... (Your existing click logic goes here) ...
+                    };
+                }
+				
                 btn.onclick = (e) => {
                     // If disabled, just play click sound and stop execution
                     if (btn.disabled) {
@@ -4492,7 +4584,8 @@
                 if (indicatorString) {
                     // Case A: We have Costs/Gains/Indicators
                     // render content + indicators + right-aligned icon
-                    btn.innerHTML = `${content} ${indicatorString} <span class="ml-auto">${icon}</span>`;
+                    // NEW: Wrap content for z-index layering
+					btn.innerHTML = `<div class="btn-content-wrapper ${alignmentClass}">${content} ${indicatorString} <span class="ml-auto">${icon}</span></div>`;
                 } else {
                     // Case B: No costs (Prologue/Standard Travel)
                     // We still add <span class="ml-auto"> to force the icon to the far right,
