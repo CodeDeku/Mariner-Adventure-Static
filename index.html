@@ -908,8 +908,9 @@
                 action: (state) => {
                     const healAmount = 5;
                     const oldHP = state.currentHP;
-                    // HP Clamping applied here
-                    state.currentHP = Math.min(state.maxHP, state.currentHP + healAmount);
+                    // FIX 2: Overheal logic correction
+                    state.currentHP = (state.currentHP > state.maxHP) ? (state.currentHP + healAmount) : Math.min(state.maxHP, state.currentHP + healAmount);
+
                     const idx = state.inventory.indexOf("Rum");
                     if (idx > -1) state.inventory.splice(idx, 1);
                     return `Drank Rum. Healed ${state.currentHP - oldHP} HP.`;
@@ -925,7 +926,9 @@
                 action: (state) => {
                     const healAmount = 2;
                     const oldHP = state.currentHP;
-                    state.currentHP = Math.min(state.maxHP, state.currentHP + healAmount);
+                    // FIX 2: Overheal logic correction
+                    state.currentHP = (state.currentHP > state.maxHP) ? (state.currentHP + healAmount) : Math.min(state.maxHP, state.currentHP + healAmount);
+                    
                     const idx = state.inventory.indexOf("Gruel");
                     if (idx > -1) state.inventory.splice(idx, 1);
                     return `Ate Gruel. Healed ${state.currentHP - oldHP} HP.`;
@@ -941,8 +944,9 @@
                 action: (state) => {
                     const healAmount = 10;
                     const oldHP = state.currentHP;
-                    // HP Clamping applied here
-                    state.currentHP = Math.min(state.maxHP, state.currentHP + healAmount);
+                    // FIX 2: Overheal logic correction
+                    state.currentHP = (state.currentHP > state.maxHP) ? (state.currentHP + healAmount) : Math.min(state.maxHP, state.currentHP + healAmount);
+                    
                     const idx = state.inventory.indexOf("Healing Potion");
                     if (idx > -1) state.inventory.splice(idx, 1);
                     return `Drank Potion. Healed ${state.currentHP - oldHP} HP.`;
@@ -1047,7 +1051,9 @@
                 action: (state) => {
                     const healAmount = 15;
                     const oldHP = state.currentHP;
-                    state.currentHP = Math.min(state.maxHP, state.currentHP + healAmount);
+                    // FIX 2: Overheal logic correction
+                    state.currentHP = (state.currentHP > state.maxHP) ? (state.currentHP + healAmount) : Math.min(state.maxHP, state.currentHP + healAmount);
+                    
                     const idx = state.inventory.indexOf("Vitality Tincture");
                     if (idx > -1) state.inventory.splice(idx, 1);
                     return `Drank Tincture. Healed ${state.currentHP - oldHP} HP.`;
@@ -1758,7 +1764,7 @@
                         text: "Cheat Fate (Use Dead Man's Die)", 
                         nextScene: 'lighthouse_arrival', // Redirect to success-like path
                         type: 'action', 
-                        reqItem: "Dead Man's Die", 
+                        reqItem: "Dead Man's Die", // CRITICAL SYNTAX FIX APPLIED HERE
                         consume: true,
                         customClass: 'btn-hero'
                     }
@@ -2377,7 +2383,18 @@
                     state.hasSearchedSmugglerDrop = true; // Task 3 Fix: Set flag to prevent future use
                     return null;
                 },
-                choices: [{ text: "Return to Docks", nextScene: 'town_docks', type: 'travel', doomCost: 0 }]
+                choices: [
+                    { text: "Return to Docks", nextScene: 'town_docks', type: 'travel', doomCost: 0 },
+                    // NEW: Dead Man's Die Cheat Fate option
+                    { 
+                        text: "Cheat Fate (Use Dead Man's Die)", 
+                        nextScene: 'docks_smuggler_success', 
+                        type: 'action', 
+                        reqItem: "Dead Man's Die", 
+                        consume: true,
+                        customClass: 'btn-hero'
+                    }
+                ]
             },
             
             // TAVERN KEEN SENSES (NEW)
@@ -2435,6 +2452,7 @@
                 text: "You take a moment to consume the cheap gruel. It settles your stomach, but barely.",
                 journal: "I instantly consumed gruel for a small amount of healing.",
                 onEnter: (state) => {
+                    // Overheal check logic is handled by the Item Registry action.
                     if (state.currentHP >= state.maxHP) {
                         // Refund the cost and stock, don't consume, but still advance scene
                         state.shillings += 1; // Refund cost
@@ -2445,7 +2463,9 @@
                     
                     const healAmount = 2;
                     const oldHP = state.currentHP;
-                    state.currentHP = Math.min(state.maxHP, state.currentHP + healAmount);
+                    // FIX 2: Overheal logic correction
+                    state.currentHP = (state.currentHP > state.maxHP) ? (state.currentHP + healAmount) : Math.min(state.maxHP, state.currentHP + healAmount);
+                    
                     scenes['blackwater_tavern'].stock["Gruel"] -= 1; // Consume stock
                     
                     // Note: Shilling is already consumed by the button logic (choice.cost: 1)
@@ -2844,7 +2864,7 @@
                 title: "Catwalk Bypass",
                 text: "The Rope holds fast long enough for you to ascend quickly to the quieter upper catwalk, bypassing the deadly vents below. Tucked away in a maintenance crate, you find a glint of ancient metal: a Strange Coin.",
                 journal: "Used Rope to bypass the vents. Found a Strange Coin and 5 Shillings.",
-                choices: [{ text: "Continue to Smelter Antechamber", nextScene: 'smelter_entry', type: 'travel' }],
+                choices: [{ text: "Continue to Smelter Antechamber", nextScene: 'smelter_workers', type: 'travel' }],
                 onEnter: (state) => { 
                     state.shillings += 5; // ADDED: 5 Shillings
                     audioManager.playCoins();
@@ -3549,11 +3569,7 @@
                 text: "The world shatters. The Port of Shadows, the Smelter, the Chapel—they dissolve into mist. You are no longer on the Material Plane. You are drifting in the Ethereal, a ghost among ghosts. The Rift is closed, but you are on the wrong side of it.<br><br>The voices of your crew are crystal clear now. They are not in your head; they are standing beside you on the deck of a spectral ship sailing through starlight.<br><br><span class='cinzel text-xl text-blue-400'>End of Act 1</span>",
                 journal: "I closed the Rift, but the recoil threw me into the Ethereal Plane. I am truly the Mariner of the Damned now.",
                 onEnter: (state) => {
-                    state.isRiftCollapse = false; 
-                    
-                    // ACTIVATE COMPLETE UI THEME CHANGE
-                    state.isEthereal = true; 
-                    
+                    state.isRiftCollapse = false;                     
                     return "Act 1 Complete. Welcome to the Ethereal Plane.";
                 },
                 choices: [
@@ -3705,6 +3721,13 @@
                     if (data.blackwater_tavern_stock) {
                         scenes['blackwater_tavern'].stock = data.blackwater_tavern_stock;
                     }
+
+                    // --- PLANAR THEME TOGGLE (ON PAGE LOAD) ---
+                    if (gameState.isEthereal) {
+                        document.body.classList.add('plane-ethereal');
+                    } else {
+                        document.body.classList.remove('plane-ethereal');
+                    }
                     
                     renderScene(gameState.currentSceneId, false);
                     rebuildJournal();
@@ -3735,6 +3758,14 @@
                         }
 
                         gameState = { ...gameState, ...data };
+                        
+                        // --- PLANAR THEME TOGGLE (ON REALTIME UPDATE) ---
+                        if (gameState.isEthereal) {
+                            document.body.classList.add('plane-ethereal');
+                        } else {
+                            document.body.classList.remove('plane-ethereal');
+                        }
+                        
                         updateUI();
                     }
                 }
@@ -3797,6 +3828,11 @@
             scenes['blackwater_tavern'].stock = { // NEW: Tavern Stock Reset
                 "Gruel": 5 
             };
+            
+            // FIX 1: Reset the Docks Work cost manually
+            const workBtn = scenes['town_docks'].choices.find(c => c.nextScene === 'docks_work');
+            if (workBtn) workBtn.costHP = 2; // Reset to base cost
+            
             // Clear boss flags which may persist in the scene definitions (if not explicitly cleared on win/loss)
             gameState.isAbsorbCharged = false;
             gameState.isSurpriseRound = false;
@@ -4425,9 +4461,15 @@
                         btn.classList.add('channeling');
                         audioManager.playGhost(); 
 
-                        holdTimer = setTimeout(() => {
+                        holdTimer = setTimeout(async () => {
                             // SUCCESS: Channel Complete
                             audioManager.playClash(); 
+                            
+                            // *** ACT 2 TRANSITION FIX: Apply Ethereal theme immediately before renderScene ***
+                            gameState.isEthereal = true; // Set the state
+                            document.body.classList.add('plane-ethereal'); // Apply the CSS class immediately
+                            await saveGame(); // Save the state change before rendering the next scene to ensure persistence
+                            
                             renderScene(choice.nextScene);
                         }, duration);
                     };
