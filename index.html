@@ -1016,6 +1016,55 @@
             return allowedSkills.includes(skillType);
         }
 
+        // --- DYNAMIC BANTER DATA (NEW) ---
+        const dynamicBanter = {
+            'gareth': [
+                "Keep your feet moving, Mariner. A dead ship needs a fast Captain.",
+                "The storm is behind us, but the fog ahead is thicker. Stay alert.",
+                "Do you feel that? The planar veil is thinning again. Hurry!",
+                "There is no easy port in this chaos. Pick a heading and hold it true."
+            ],
+            'quinn': [
+                "I've checked the manifest twice; we're running low on luck, Edward.",
+                "Keep track of the shillings! Coin is the only stable metric left in this world.",
+                "This path is inefficient, Captain. Logically, we should have gone the other way.",
+                "Hmph. More wreckage. Always more wreckage."
+            ],
+            'talon': [
+                "Watch the ground, Edward. The dead leave tracks too.",
+                "Something smells wrong. Not rot—*new* wrong. Be ready.",
+                "The shadows here are deeper than they should be. It's a good place to hide, or be hunted.",
+                "Rustling in the brush. Just wind... or something that hunts in the wind."
+            ],
+            'bones': [
+                "I could use a long rest, Edward. My bones are cold and tired.",
+                "Are you eating enough? You can't run on sea-water and guilt, Captain.",
+                "This town is sick. I can taste the fever in the air.",
+                "Keep the cutlass sharp. I don't like the look of these locals."
+            ]
+        };
+
+        function getDynamicBanter() {
+            // 20% chance check to inject banter
+            if (Math.random() > 0.80) {
+                const availableCrew = Object.keys(gameState.crew).filter(id => !gameState.crew[id].used);
+                
+                if (availableCrew.length === 0) return null;
+
+                const randomCrewId = availableCrew[Math.floor(Math.random() * availableCrew.length)];
+                const crewName = gameState.crew[randomCrewId].name;
+                const lines = dynamicBanter[randomCrewId];
+                
+                if (lines && lines.length > 0) {
+                    const randomLine = lines[Math.floor(Math.random() * lines.length)];
+                    return { name: crewName, line: randomLine };
+                }
+            }
+            return null;
+        }
+        // --- END DYNAMIC BANTER DATA (NEW) ---
+
+
         // --- MARKET BLUEPRINTS (Global Definitions for all merchants) ---
         // This is the single source of truth for item pricing and scene flow
         const MARKET_BUY_OPTIONS = [
@@ -1770,7 +1819,7 @@
                 journal: "The crew offered their aid. I had to choose a permanent advantage for Act 1.",
                 choices: [
                     { 
-                        text: "Gareth: 'Violence of Action' (First Combat has Surprise Advantage)", 
+                        text: "Gareth: 'Violence of Action' (First Combat has Advantage)", 
                         nextScene: 'lighthouse_morning', 
                         type: 'dialogue',
                         customClass: 'btn-game spectral-active',
@@ -1780,7 +1829,7 @@
                         }
                     },
                     { 
-                        text: "Bones: 'The Last Meal' (Start Act 1 Overhealed to 25/20 HP)", 
+                        text: "Bones: 'The Last Meal' (Overheal to 25/20 HP)", 
                         nextScene: 'lighthouse_morning', 
                         type: 'dialogue',
                         customClass: 'btn-game spectral-active',
@@ -1791,7 +1840,7 @@
                         }
                     },
                     { 
-                        text: "Quinn: 'Logistical Mapping' (Reveal Doom Costs on Choices)", 
+                        text: "Quinn: 'Logistical Mapping' (Reveal Doom Costs)", 
                         nextScene: 'lighthouse_morning', 
                         type: 'dialogue',
                         customClass: 'btn-game spectral-active',
@@ -1801,7 +1850,7 @@
                         }
                     },
                     { 
-                        text: "Talon: 'Forward Recon' (Unlock All Secret Paths)", 
+                        text: "Talon: 'Forward Recon' (Unlock Secret Paths)", 
                         nextScene: 'lighthouse_morning', 
                         type: 'dialogue',
                         customClass: 'btn-game spectral-active',
@@ -2678,7 +2727,7 @@
             // NEW SCENE: ROPE SIDE QUEST REWARD (Task 2)
             'smelter_side_rope': {
                 title: "Catwalk Bypass",
-                text: "The Rope holds fast. You ascend quickly to the quieter upper catwalk, bypassing the deadly vents below. Tucked away in a maintenance crate, you find a glint of ancient metal: a Strange Coin.",
+                text: "The Rope holds fast long enough for you to ascend quickly to the quieter upper catwalk, bypassing the deadly vents below. Tucked away in a maintenance crate, you find a glint of ancient metal: a Strange Coin.",
                 journal: "Used Rope to bypass the vents. Found a Strange Coin and 5 Shillings.",
                 choices: [{ text: "Continue to Smelter Antechamber", nextScene: 'smelter_workers', type: 'travel' }],
                 onEnter: (state) => { 
@@ -2730,7 +2779,7 @@
                 choices: [
                     // ORDER PATH: Heroism/Time Cost
                     { 
-                        text: "Heave the Beam (Attempt Rescue)", 
+                        text: "Attempt Rescue", 
                         nextScene: 'smelter_save_workers_check', 
                         type: 'skill', 
                         dc: 15, 
@@ -2739,7 +2788,7 @@
                     },
                     // CHAOS PATH: Pragmatism/No Time Cost
                     { 
-                        text: "Seal the Blast Doors (Prioritize Containment)", 
+                        text: "Prioritize Containment", 
                         nextScene: 'smelter_containment_success', // Direct success
                         type: 'travel',
                         chaosGain: 3,
@@ -3086,7 +3135,7 @@
                 choices: [
                     // ORDER PATH: Heroism/Time Cost
                     { 
-                        text: "Attempt Rescue (Risk Infection)", 
+                        text: "Attempt Rescue", 
                         nextScene: 'chapel_rescue_check', 
                         type: 'skill', 
                         dc: 14, 
@@ -3095,7 +3144,7 @@
                     },
                     // CHAOS PATH: Pragmatism/No Time Cost
                     { 
-                        text: "Ignore the Screams and Search for Loot", 
+                        text: "Prioritize Containment", 
                         nextScene: 'chapel_ignore_drowning', 
                         type: 'dialogue',
                         chaosGain: 4,
@@ -3820,6 +3869,8 @@
             let finalHtml = `<h2 class="2xl cinzel ${titleClass} mb-2">${scene.title}</h2><p class="text-lg leading-relaxed ${textClass} fade-in">${scene.text}</p>`;
             
             // --- BANTER INJECTION (AUTOMATIC) ---
+            
+            // 1. Scripted Banter (always prioritized if available)
             if (scene.banter) {
                 Object.keys(scene.banter).forEach(crewId => {
                     if (gameState.crew[crewId] && !gameState.crew[crewId].used) {
@@ -3830,6 +3881,19 @@
                               </div>`;
                     }
                 });
+            }
+            
+            // 2. Dynamic Banter Injection (20% chance on non-boss/non-scripted scenes)
+            const isScriptedScene = scene.banter || scene.isBoss || scene.isRest || scene.choices.some(c => c.type === 'skill');
+            // If the scene has no dedicated banter, is not a boss/rest scene, and we're past the prologue
+            if (!isScriptedScene && !sceneId.startsWith('prologue') && gameState.act1Started) {
+                 const dynamicLine = getDynamicBanter();
+                 if (dynamicLine) {
+                      finalHtml += `<div class="mt-4 spectral-text-glow italic border-l-2 border-blue-500 pl-3 fade-in">
+                            <span class="font-bold text-xs uppercase block mb-1">${dynamicLine.name}:</span>
+                            "${dynamicLine.line}"
+                          </div>`;
+                 }
             }
             
             textEl.innerHTML = finalHtml;
