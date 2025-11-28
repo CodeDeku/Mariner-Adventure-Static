@@ -4310,20 +4310,24 @@
                     btn.disabled = true;
                 }
 
-                btn.className = btnClass;
+
+
+				btn.className = btnClass;
+
+                // --- EVENT HANDLER SPLIT ---
                 
-                // --- ONCLICK HANDLER ---
-				// --- HOLD TO CHANNEL LOGIC ---
-                // --- HOLD TO CHANNEL LOGIC ---
+                // 1. HOLD INTERACTION (EXCLUSIVE)
                 if (choice.type === 'hold') {
                     let holdTimer = null;
-                    const duration = 3000; // SINGLE SOURCE OF TRUTH (3.0 seconds)
+                    const duration = 3000; // Duration must match CSS logic
                     
-                    // Set the CSS variable dynamically so animation matches timer exactly
+                    // Sync CSS animation speed to JS timer
                     btn.style.setProperty('--channel-duration', `${duration}ms`);
 
                     const startChannel = (e) => {
-                        e.preventDefault(); 
+                        // Prevent touch scrolling/selection while holding
+                        if (e.type === 'touchstart') e.preventDefault(); 
+                        
                         if (btn.disabled) return;
                         
                         btn.classList.add('channeling');
@@ -4353,138 +4357,115 @@
                     btn.addEventListener('touchstart', startChannel);
                     btn.addEventListener('touchend', cancelChannel);
                     
-                    // Disable standard click
+                    // CRITICAL: Kill standard click so a quick tap does nothing
                     btn.onclick = null; 
-                }
+                } 
+                
+                // 2. STANDARD CLICK INTERACTION (EXCLUSIVE)
                 else {
-                    // --- STANDARD CLICK HANDLER (EXISTING CODE) ---
                     btn.onclick = (e) => {
-                        // ... (Your existing click logic goes here) ...
+                        // If disabled, just play click sound and stop execution
+                        if (btn.disabled) {
+                             audioManager.playClick();
+                             return;
+                        }
+                        
+                        audioManager.playClick();
+                        
+                        if (choice.type === 'reset') {
+                            resetGame();
+                            return;
+                        }
+                        
+                        // Mushroom Warning Check
+                        if (gameState.crewUseFree && choice.type !== 'skill' && choice.type !== 'dialogue' && !choice.nextScene.includes('captain_orders')) {
+                            addToHistory(`*Warning: The Pearlescent Mushroom's clarity is best saved for a crucial skill check.*`, 'system');
+                        }
+
+                        // Stock Checks
+                        if (choice.type === 'action' && (currentSceneId === 'market_stall' || currentSceneId === 'alchemist_triage' || currentSceneId === 'blackwater_tavern') && choice.stockItem) {
+                             const currentStock = scenes[currentSceneId].stock[choice.stockItem] || 0;
+                             if (currentStock <= 0) {
+                                addToHistory(`${choice.stockItem} is out of stock.`, 'system');
+                                renderScene(currentSceneId); 
+                                return;
+                            }
+                        }
+                        
+                        // Curious Cargo Check
+                        if (choice.type === 'action' && choice.reqItem === 'Curious Cargo' && currentSceneId === 'market_sell') {
+                             if (marketStock['Curious Cargo'] <= 0) {
+                                addToHistory(`The Market Merchant has no need for another Curious Cargo.`, 'system');
+                                renderScene(currentSceneId);
+                                return;
+                            }
+                        }
+
+                        // Consume Items
+                        if (choice.consume && choice.reqItem) {
+                            const idx = gameState.inventory.indexOf(choice.reqItem);
+                            if (idx > -1) {
+                                gameState.inventory.splice(idx, 1);
+                                addToHistory(`${choice.reqItem} used and discarded.`, 'system');
+                            }
+                        }
+
+                        // Journal Entry
+                        const currentScene = scenes[gameState.currentSceneId];
+                        if (currentScene.journal !== null && currentScene.journal !== undefined) {
+                            addToHistory(currentScene.journal, 'entry');
+                        }
+
+                        // Apply Costs & Gains
+                        if (choice.cost) gameState.shillings -= choice.cost;
+                        if (choice.costHP !== undefined) gameState.currentHP = applyDamage(gameState.currentHP, choice.costHP); 
+                        if (choice.shillingGain) gameState.shillings += choice.shillingGain;
+                        if (choice.value) gameState.shillings += choice.value;
+                        if (choice.chaosGain) gameState.influence = Math.min(20, gameState.influence + choice.chaosGain);
+                        if (choice.orderGain) gameState.influence = Math.max(-20, gameState.influence - choice.orderGain); 
+                        
+                        // Crew Selection Hook
+                        if (choice.nextScene === 'lighthouse_morning' && currentSceneId === 'captain_orders' && choice.onSelect) {
+                            choice.onSelect(gameState);
+                        }
+
+                        // Doom Counter Decrement
+                        if (gameState.act1Started && choice.doomCost !== 0) {
+                            const cost = choice.doomCost !== undefined ? choice.doomCost : 1; 
+                            gameState.doomTimer = Math.max(0, gameState.doomTimer - cost);
+                            
+                            if (gameState.doomTimer > 0) {
+                                addToHistory(`Rift Stability: ${gameState.doomTimer} turns remaining.`, 'system');
+                            }
+                            
+                            if (gameState.doomTimer <= 0 && !gameState.isRiftCollapse) {
+                                gameState.isRiftCollapse = true;
+                                gameState.maxHP = Math.max(1, gameState.maxHP - 5);
+                                gameState.currentHP = Math.min(gameState.currentHP, gameState.maxHP);
+                                addToHistory(`!!! RIFT COLLAPSE !!! The veil has ruptured. All Skill Check DCs are permanently increased by 2. Max HP reduced by 5 due to toxic air.`, 'system');
+                            }
+                        }
+                        
+                        // Handle Skill Checks vs Standard Navigation
+                        if (choice.type === 'skill') {
+                            gameState.lastSkillType = choice.skill;
+                            let finalDC = choice.dc;
+                            if (gameState.isRiftCollapse) {
+                                finalDC += 2;
+                                addToHistory(`Rift Penalty: DC increased by 2 (New DC: ${finalDC})`, 'system');
+                            }
+                            gameState.lastDC = finalDC;
+                            renderScene(choice.nextScene);
+                            return;
+                        }
+                        
+                        if (choice.type !== 'skill') {
+                            renderScene(choice.nextScene);
+                        }
                     };
                 }
-				
-                btn.onclick = (e) => {
-                    // If disabled, just play click sound and stop execution
-                    if (btn.disabled) {
-                         audioManager.playClick();
-                         return;
-                    }
-                    
-                    // ... (rest of the action logic remains the same)
-                    audioManager.playClick();
-                    
-                    if (choice.type === 'reset') {
-                        resetGame();
-                        return;
-                    }
-                    
-                    // --- MUSHROOM CHECK: If mushroom is active and click is NOT a skill check, log a warning ---
-                    if (gameState.crewUseFree && choice.type !== 'skill' && choice.type !== 'dialogue' && !choice.nextScene.includes('captain_orders')) {
-                        addToHistory(`*Warning: The Pearlescent Mushroom's clarity is best saved for a crucial skill check.*`, 'system');
-                        // Do NOT consume the free use, just continue the scene flow
-                    }
-
-                    // --- FINAL STOCK CHECK BEFORE TRANSACTION (Crucial Fix) ---
-                    // This is still needed for asynchronous stock changes (e.g., two players buying the last item in MP mode)
-                    if (choice.type === 'action' && (currentSceneId === 'market_stall' || currentSceneId === 'alchemist_triage' || currentSceneId === 'blackwater_tavern') && choice.stockItem) {
-                         const currentStock = scenes[currentSceneId].stock[choice.stockItem] || 0;
-                         if (currentStock <= 0) {
-                            addToHistory(`${choice.stockItem} is out of stock.`, 'system');
-                            renderScene(currentSceneId); // Reload scene to update choices
-                            return;
-                        }
-                    }
 
 
-                    // 3. Check selling stock (Curious Cargo at Market)
-                    if (choice.type === 'action' && choice.reqItem === 'Curious Cargo' && currentSceneId === 'market_sell') {
-                         if (marketStock['Curious Cargo'] <= 0) {
-                            addToHistory(`The Market Merchant has no need for another Curious Cargo.`, 'system');
-                            renderScene(currentSceneId);
-                            return;
-                        }
-                    }
-
-
-                    if (choice.consume && choice.reqItem) {
-                        const idx = gameState.inventory.indexOf(choice.reqItem);
-                        if (idx > -1) {
-                            gameState.inventory.splice(idx, 1);
-                            addToHistory(`${choice.reqItem} used and discarded.`, 'system');
-                        }
-                    }
-
-                    const currentScene = scenes[gameState.currentSceneId];
-                    // IMPORTANT: Only log the journal entry text if the current scene is NOT a hub/merchant scene.
-                    if (currentScene.journal !== null && currentScene.journal !== undefined) {
-                        addToHistory(currentScene.journal, 'entry');
-                    }
-
-                    // --- APPLY ACTIONS ---
-                    if (choice.cost) gameState.shillings -= choice.cost;
-                    // NEW HP COST APPLIED (CostHP !== undefined handles the base cost and the dynamic docks cost)
-                    if (choice.costHP !== undefined) gameState.currentHP = applyDamage(gameState.currentHP, choice.costHP); 
-                    
-                    if (choice.shillingGain) gameState.shillings += choice.shillingGain;
-                    if (choice.value) gameState.shillings += choice.value; // If a 'sell' button, apply value
-                    if (choice.chaosGain) gameState.influence = Math.min(20, gameState.influence + choice.chaosGain);
-                    
-                    // RP FIX: Player perceives Order gain, even though it.s technically negative influence shift
-                    if (choice.orderGain) gameState.influence = Math.max(-20, gameState.influence - choice.orderGain); 
-                    
-                    // --- CREW ORDER SELECTION HANDLER (for permanent buff) ---
-                    if (choice.nextScene === 'lighthouse_morning' && currentSceneId === 'captain_orders' && choice.onSelect) {
-                        choice.onSelect(gameState); // Execute the permanent buff logic
-                    }
-
-
-                    // --- DOOM COUNTER DECREMENT ON CLICK (Conditional) ---
-                    // Decrement only if Act 1 has started AND the choice does NOT have doomCost: 0 (or is implicitly 1)
-                    if (gameState.act1Started && choice.doomCost !== 0) {
-                        // Use explicit doomCost from the choice, or default to 1 for generic travel/skill checks
-                        const cost = choice.doomCost !== undefined ? choice.doomCost : 1; 
-                        
-                        // FIX: Clamp subtraction at 0 to prevent negative numbers
-                        gameState.doomTimer = Math.max(0, gameState.doomTimer - cost);
-                        
-                        if (gameState.doomTimer > 0) {
-                            addToHistory(`Rift Stability: ${gameState.doomTimer} turns remaining.`, 'system');
-                        }
-                        
-                        if (gameState.doomTimer <= 0 && !gameState.isRiftCollapse) {
-                            // Fail state: Apply penalty, set flag, and continue
-                            gameState.isRiftCollapse = true;
-                            gameState.maxHP = Math.max(1, gameState.maxHP - 5);
-                            gameState.currentHP = Math.min(gameState.currentHP, gameState.maxHP); // Clamp current HP
-                            addToHistory(`!!! RIFT COLLAPSE !!! The veil has ruptured. All Skill Check DCs are permanently increased by 2. Max HP reduced by 5 due to toxic air.`, 'system');
-                            // Note: renderScene will be called below, which will update the UI
-                        }
-                    }
-                    // --- END DOOM COUNTER DECREMENT ---
-                    
-                    // --- SKILL CHECK LOGIC WITH COMPLEX CREW TRACKING ---
-                    if (choice.type === 'skill') {
-                        // Store required skill type and DC for the logic scene resolution
-                        gameState.lastSkillType = choice.skill;
-                        
-                        // Apply Rift Collapse penalty to DC if active
-                        let finalDC = choice.dc;
-                        if (gameState.isRiftCollapse) {
-                            finalDC += 2;
-                            addToHistory(`Rift Penalty: DC increased by 2 (New DC: ${finalDC})`, 'system');
-                        }
-                        gameState.lastDC = finalDC;
-                        
-                        // Handle the roll in the next scene to allow for complex logic checks (like Talon's Cargo)
-                        renderScene(choice.nextScene);
-                        return;
-                    }
-                    
-                    // Non-skill choices or if logic flow differs
-                    if (choice.type !== 'skill') {
-                        renderScene(choice.nextScene);
-                    }
-                };
                 
                 // Default icon for travel/dialogue buttons
                 let icon = '<i class="fas fa-chevron-right text-gray-300 group-hover:text-amber-100"></i>';
