@@ -907,12 +907,18 @@
                 icon: 'fa-wine-bottle',
                 color: 'text-amber-500',
                 btnText: "DRINK",
-                desc: "Consumable: Potent grog. Restores 5 HP immediately.",
+                desc: "Consumable: Potent grog. Restores 5 HP. Cannot repair Spectral HP.",
                 action: (state) => {
+                    // FIX: Block usage if at natural max HP or higher
+                    if (state.currentHP >= state.maxHP) {
+                        return "Your natural vitality is full. The burning grog offers no comfort to the Spectral Shield.";
+                    }
+
                     const healAmount = 5;
                     const oldHP = state.currentHP;
-                    // FIX 1: Hard cap all healing at the MAX_OVERHEAL_CAP (25)
-                    state.currentHP = Math.min(MAX_OVERHEAL_CAP, state.currentHP + healAmount);
+                    
+                    // FIX: Cap healing at state.maxHP (20), never MAX_OVERHEAL_CAP (25)
+                    state.currentHP = Math.min(state.maxHP, state.currentHP + healAmount);
 
                     const idx = state.inventory.indexOf("Rum");
                     if (idx > -1) state.inventory.splice(idx, 1);
@@ -2457,8 +2463,8 @@
                         doomCost: 1 // FIX: Dialogue/Action costs 1 turn in a hub
                     },
                     { 
-                        // FIX: Updated button text to be concise. Added doomCost: 1
                         // FIX: Added reqNotFlag for visibility (Task 3 Fix)
+                        // FIX: Updated button text to be concise. Added doomCost: 1
                         text: "Observe the Card Game", 
                         nextScene: 'tavern_gambler', 
                         type: 'action', 
@@ -3592,10 +3598,13 @@
                 text: "The world shatters. The Port of Shadows, the Smelter, the Chapel—they dissolve into mist. You are no longer on the Material Plane. You are drifting in the Ethereal, a ghost among ghosts. The Rift is closed, but you are on the wrong side of it.<br><br>The voices of your crew are crystal clear now. They are not in your head; they are standing beside you on the deck of a spectral ship sailing through starlight.<br><br><span class='cinzel text-xl text-blue-400'>End of Act 1</span>",
                 journal: "I closed the Rift, but the recoil threw me into the Ethereal Plane. I am truly the Mariner of the Damned now.",
                 onEnter: (state) => {
-                    // FIX 2: Clear Rift flags, but DO NOT clear low-HP vignette status
-                    state.isRiftCollapse = false; 
+                    // --- WORLD STATE: RIFT CLOSED ---
+                    state.act1Started = false;    // Hides Doom UI Bar & Stops Button Turn Counts
+                    state.isRiftCollapse = false; // Removes Purple/Red Overlay logic
+                    state.doomTimer = 0;          // Resets the internal counter (optional cleanup)
+                    state.quinnLogistics = false; // Hides the "0 Turns" text on buttons
                     
-                    return "Act 1 Complete. Welcome to the Ethereal Plane.";
+                    return "Act 1 Complete. The Rift is Closed. Welcome to the Ethereal Plane.";
                 },
                 choices: [
                     { 
@@ -4000,8 +4009,9 @@
             fxManager.clearEffects(); 
 
             // PRIORITY 1: Has the Rift Collapsed? (Permanent Game State)
-            if (gameState.isRiftCollapse && !['finale_completed', 'edward_death'].includes(sceneId)) {
-                // FIX 1: Ensure the persistent visual rift FX are running in Act 1 after collapse
+            // CHECK: Is the Rift collapsed AND are we NOT in a scene where it should be hidden/closed?
+            if (gameState.isRiftCollapse && !['finale_completed', 'edward_death', 'act2_ethereal_drift'].includes(sceneId)) {
+                // Shows the failure overlay
                 document.getElementById('fx-overlay').classList.add('fx-rift-collapsed');
             }
 
