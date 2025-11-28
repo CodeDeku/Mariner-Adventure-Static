@@ -68,7 +68,7 @@
         /* The Animation State */
         .btn-channel.channeling::before {
             width: 100%;
-            transition: width 2.5s linear; /* 2.5s Channel Time */
+            transition: width var(--channel-duration) linear;
         }
         
         /* Ensure text stays on top of the progress bar */
@@ -4314,20 +4314,24 @@
                 
                 // --- ONCLICK HANDLER ---
 				// --- HOLD TO CHANNEL LOGIC ---
+                // --- HOLD TO CHANNEL LOGIC ---
                 if (choice.type === 'hold') {
                     let holdTimer = null;
-                    const duration = 2500; // 2.5 seconds match CSS
+                    const duration = 3000; // SINGLE SOURCE OF TRUTH (3.0 seconds)
                     
+                    // Set the CSS variable dynamically so animation matches timer exactly
+                    btn.style.setProperty('--channel-duration', `${duration}ms`);
+
                     const startChannel = (e) => {
-                        e.preventDefault(); // Prevent default touch actions
+                        e.preventDefault(); 
                         if (btn.disabled) return;
                         
                         btn.classList.add('channeling');
-                        audioManager.playGhost(); // Optional: Sound cue on start
+                        audioManager.playGhost(); 
 
                         holdTimer = setTimeout(() => {
                             // SUCCESS: Channel Complete
-                            audioManager.playClash(); // Success Sound
+                            audioManager.playClash(); 
                             renderScene(choice.nextScene);
                         }, duration);
                     };
@@ -4349,9 +4353,9 @@
                     btn.addEventListener('touchstart', startChannel);
                     btn.addEventListener('touchend', cancelChannel);
                     
-                    // Disable standard click for this type
+                    // Disable standard click
                     btn.onclick = null; 
-                } 
+                }
                 else {
                     // --- STANDARD CLICK HANDLER (EXISTING CODE) ---
                     btn.onclick = (e) => {
