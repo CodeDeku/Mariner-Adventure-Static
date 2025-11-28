@@ -4833,6 +4833,28 @@
 
 
                 
+                // Handle Skill Checks vs Standard Navigation
+                        if (choice.type === 'skill') {
+                            gameState.lastSkillType = choice.skill;
+                            let finalDC = choice.dc;
+                            // Check for permanent difficulty increase after rift collapse
+                            if (gameState.isRiftCollapse) { 
+                                finalDC += 2;
+                                addToHistory(`Rift Penalty: DC increased by 2 (New DC: ${finalDC})`, 'system');
+                            }
+                            gameState.lastDC = finalDC;
+                            renderScene(choice.nextScene);
+                            return;
+                        }
+                        
+                        if (choice.type !== 'skill') {
+                            renderScene(choice.nextScene);
+                        }
+                    };
+                }
+
+
+                
                 // Default icon for travel/dialogue buttons
                 let icon = '<i class="fas fa-chevron-right text-gray-300 group-hover:text-amber-100"></i>';
                 
@@ -4915,10 +4937,11 @@
                 
 				if (gameState.act1Started && gameState.quinnLogistics && cost >= 0 && choice.type !== 'reset') {
 					if (cost > 0) {
-						indicators.push({ text: `-${cost} Turns`, color: 'text-purple-400' });
+						// FIX: Changed "Turns" to "Time"
+						indicators.push({ text: `-${cost} Time`, color: 'text-purple-400' }); 
 					} else if (cost === 0 && (hasExplicitCost || choice.type === 'travel')) {
-						// Only display '0 Turns' if it's explicitly 0 (shopping) or a travel button in Act 1 (for consistency)
-						indicators.push({ text: `0 Turns`, color: 'text-purple-400' });
+						// FIX: Changed "Turns" to "Time"
+						indicators.push({ text: `0 Time`, color: 'text-purple-400' });
 					}
 				}
 
