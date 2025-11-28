@@ -1054,7 +1054,7 @@
                 type: 'key', 
                 icon: 'fa-telescope', // or fa-eye
                 color: 'text-cyan-400', 
-                desc: "Passive: A collapsible telescope. Its lens changes based on your alignment." 
+                desc: "Key: A heavy brass instrument. The lens seems to shift focus on its own." 
             },
             
             // --- LEGENDARY ARTIFACTS (WOLVES OF VALOR) ---
@@ -2131,14 +2131,14 @@
                     }
                     return "Found nothing else of value.";
                 },
-                choices: [{ text: "Continue Descent", nextScene: 'town_descent', type: 'travel' }]
+                choices: [{ text: "Continue Descent", nextScene: 'meeting_the_stranger', type: 'travel' }]
             },
             'overlook_scan_fail': {
                 title: "Blinded by the View",
                 text: "You stumble over loose scree and fall awkwardly, twisting your knee slightly.",
                 journal: "Failed the scan. Must be more careful.",
                 choices: [
-                    { text: "Continue Descent", nextScene: 'town_descent', type: 'travel' },
+                    { text: "Continue Descent", nextScene: 'meeting_the_stranger', type: 'travel' },
                     // NEW: Dead Man's Die Cheat Fate option
                     { 
                         text: "Cheat Fate (Use Dead Man's Die)", 
@@ -2152,7 +2152,7 @@
             },
             'overlook_hasten_check': {
                 isLogic: true,
-                resolve: (roll) => roll >= 10 ? 'town_descent' : 'overlook_hasten_fail'
+                resolve: (roll) => roll >= 10 ? 'meeting_the_stranger' : 'overlook_hasten_fail'
             },
             'overlook_hasten_fail': {
                 title: "A Misplaced Step",
@@ -2164,16 +2164,37 @@
                     return "Took 2 Damage.";
                 },
                 choices: [
-                    { text: "Reach the Gates", nextScene: 'town_descent', type: 'travel' },
+                    { text: "Reach the Gates", nextScene: 'meeting_the_stranger', type: 'travel' },
                     // NEW: Dead Man's Die Cheat Fate option
                     { 
                         text: "Cheat Fate (Use Dead Man's Die)", 
-                        nextScene: 'town_descent', 
+                        nextScene: 'meeting_the_stranger', 
                         type: 'action', 
                         reqItem: "Dead Man's Die", 
                         consume: true,
                         customClass: 'btn-hero'
                     }
+                ]
+            },
+			// --- NEW NARRATIVE SCENE: THE STRANGER ---
+            'meeting_the_stranger': {
+                title: "The Stranger",
+                text: "A figure in stained robes stumbles up the path, clutching a satchel bursting with parchment. He freezes when he sees you, his eyes wide and bloodshot behind cracked spectacles.<br><br>'You... you're going the wrong way,' he wheezes. 'The geometry... it's failing down there. The Wolf King's math is unraveling.'<br><br>Before you can speak, he thrusts a heavy brass spyglass into your chest. 'I don't want to see the fissures anymore. Take it! Let it show you what you are.' He scrambles past you up the cliff, leaving you with the weight of his terror in your hands.",
+                journal: "Met a frantic stranger fleeing the city. He forced his Spyglass into my hands before running.",
+                banter: {
+                    'gareth': "He reeks of fear, Edward. And something else...",
+                    'talon': "He was running from something specific. Not the fire."
+                },
+                onEnter: (state) => {
+                     // Auto-acquire the item
+                     if (!state.inventory.includes("Salt-Warped Spyglass")) {
+                        state.inventory.push("Salt-Warped Spyglass");
+                        return "Received Salt-Warped Spyglass.";
+                     }
+                     return null;
+                },
+                choices: [
+                    { text: "Descend to the Gates", nextScene: 'town_descent', type: 'travel' }
                 ]
             },
             // --- END NEW SCENES ---
@@ -3757,7 +3778,20 @@
         // --- CORE FUNCTIONS ---
         // NEW HELPER: Applies damage while ensuring HP doesn't go below 0.
         function applyDamage(currentHP, damageAmount) {
-            let finalHP = Math.max(0, currentHP - damageAmount);
+            let finalDamage = damageAmount;
+
+            // --- SPYGLASS PASSIVE: ORDER (VIGILANCE) ---
+            // If player has Spyglass AND Influence is <= -5 (Order)
+            if (gameState.inventory.includes("Salt-Warped Spyglass") && gameState.influence <= -5) {
+                if (finalDamage > 0) {
+                    finalDamage = Math.max(0, finalDamage - 1);
+                    // Only log this if it actually prevented damage
+                    addToHistory("Passive (Watchman's Lens): Damage reduced by 1.", 'system');
+                }
+            }
+            // -------------------------------------------
+
+            let finalHP = Math.max(0, currentHP - finalDamage);
             
             // PHOENIX DRAFT CHECK
             if (finalHP === 0) {
@@ -4714,9 +4748,18 @@
 
                         // Apply Costs & Gains
                         if (choice.cost) gameState.shillings -= choice.cost;
-                        if (choice.costHP !== undefined) gameState.currentHP = applyDamage(gameState.currentHP, choice.costHP); 
-                        if (choice.shillingGain) gameState.shillings += choice.shillingGain;
-                        if (choice.value) gameState.shillings += choice.value;
+                        if (choice.costHP !== undefined) gameState.currentHP = applyDamage(gameState.currentHP, choice.costHP);
+
+						// --- SPYGLASS PASSIVE: CHAOS (AVARICE) ---
+                        let extraGold = 0;
+                        // Check if the choice gives money (shillingGain or value)
+                        if ((choice.shillingGain || choice.value) && gameState.inventory.includes("Salt-Warped Spyglass") && gameState.influence >= 5) {
+                             extraGold = 1;
+                             addToHistory("Passive (Privateer's Lens): Found +1 extra Shilling.", 'system');
+                        }
+                      
+                        if (choice.shillingGain) gameState.shillings += (choice.shillingGain + extraGold);
+                        if (choice.value) gameState.shillings += (choice.value + extraGold);
                         if (choice.chaosGain) gameState.influence = Math.min(20, gameState.influence + choice.chaosGain);
                         if (choice.orderGain) gameState.influence = Math.max(-20, gameState.influence - choice.orderGain); 
                         
@@ -5094,7 +5137,23 @@
             });
 
                 sortedInventory.forEach(itemName => {
-                    const itemDef = itemRegistry[itemName] || { type: 'misc', icon: 'fa-box', color: 'text-gray-500', desc: "A strange item." };
+                    let itemDef = itemRegistry[itemName] || { type: 'misc', icon: 'fa-box', color: 'text-gray-500', desc: "A strange item." };
+                    
+                    // --- DYNAMIC SPYGLASS DESCRIPTION ---
+                    if (itemName === "Salt-Warped Spyglass") {
+                        itemDef = { ...itemDef }; // Clone to avoid mutation
+                        if (gameState.influence <= -5) {
+                            itemDef.name = "Watchman's Spyglass (Order)";
+                            itemDef.color = "text-blue-400";
+                            itemDef.desc = "Passive: The lens aligns with Order. Damage taken reduced by 1.";
+                        } else if (gameState.influence >= 5) {
+                            itemDef.name = "Privateer's Spyglass (Chaos)";
+                            itemDef.color = "text-emerald-400";
+                            itemDef.desc = "Passive: The lens aligns with Chaos. Gain +1 coin on all earnings.";
+                        }
+                    }
+                    // -----------------------------------
+                    
                     const isConsumable = itemDef.type === 'consumable';
                     
                     const itemRow = document.createElement('div');
@@ -5109,13 +5168,13 @@
                     leftSide.className = 'flex items-center gap-3';
                     leftSide.innerHTML = `
                         <div class="text-lg w-5 text-center ${itemDef.color}"><i class="fas ${itemDef.icon}"></i></div>
-                        <span class="text-xs cinzel text-gray-300 group-hover:text-gray-100 transition-colors">${itemName.split('(')[0].trim()}</span>
+                        <span class="text-xs cinzel text-gray-300 group-hover:text-gray-100 transition-colors">${itemDef.name || itemName.split('(')[0].trim()}</span>
                     `;
                     itemRow.appendChild(leftSide);
 
                     // Right Side: Action Button or Tag
                     const rightSide = document.createElement('div');
-                    if (isConsumable && itemDef.btnText !== 'USE' && itemDef.btnText !== 'INSPECT' && itemDef.btnText !== 'THROW') { // Only show button for consumable items that have a direct action (Heal/Revive)
+                    if (isConsumable && itemDef.btnText !== 'USE' && itemDef.btnText !== 'INSPECT' && itemDef.btnText !== 'THROW') { 
                         const actionBtn = document.createElement('button');
                         actionBtn.className = "px-2 py-1 bg-emerald-900/40 border border-emerald-600/30 text-emerald-500 text-[9px] font-bold rounded hover:bg-emerald-600 hover:text-white transition-all tracking-wider";
                         actionBtn.innerText = itemDef.btnText || "USE";
