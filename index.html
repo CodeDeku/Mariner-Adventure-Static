@@ -3295,6 +3295,10 @@
                     state.isAbsorbCharged = false; // Clear flag
                     state.currentHP = applyDamage(state.currentHP, 4); // Minor Damage
                     fxManager.flashRed();
+                    
+                    // FIX: Defined the variable here
+                    let logMsg = "Acquired Sword of Valor.";
+
                     // SWORD SWAP LOGIC
                     if (state.inventory.includes("Rusted Cutlass")) {
                         // 1. Remove the cutlass
@@ -3326,6 +3330,10 @@
                     state.isAbsorbCharged = false; // Clear flag
                     state.currentHP = applyDamage(state.currentHP, 10); // Major Damage
                     fxManager.flashRed();
+                    
+                    // FIX: Defined the variable here
+                    let logMsg = "Acquired Sword of Valor.";
+
                     // SWORD SWAP LOGIC
                     if (state.inventory.includes("Rusted Cutlass")) {
                         // 1. Remove the cutlass
