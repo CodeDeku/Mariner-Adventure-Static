@@ -919,42 +919,56 @@
                     return `Drank Rum. Healed ${state.currentHP - oldHP} HP.`;
                 }
             },
-            "Gruel": { // NEW ITEM: Gruel
-                name: "Gruel",
-                type: 'consumable',
-                icon: 'fa-bowl-food',
-                color: 'text-gray-400',
-                btnText: "EAT",
-                desc: "Consumable: Cheap, watery sustenance. Restores 2 HP immediately.",
-                action: (state) => {
-                    const healAmount = 2;
-                    const oldHP = state.currentHP;
-                    // FIX 1: Hard cap all healing at the MAX_OVERHEAL_CAP (25)
-                    state.currentHP = Math.min(MAX_OVERHEAL_CAP, state.currentHP + healAmount);
-                    
-                    const idx = state.inventory.indexOf("Gruel");
-                    if (idx > -1) state.inventory.splice(idx, 1);
-                    return `Ate Gruel. Healed ${state.currentHP - oldHP} HP.`;
-                }
-            },
+            "Gruel": {
+				name: "Gruel",
+				type: 'consumable',
+				icon: 'fa-bowl-food',
+				color: 'text-gray-400',
+				btnText: "EAT",
+				desc: "Consumable: Cheap, watery sustenance. Restores 2 HP. Cannot repair Spectral HP.",
+				action: (state) => {
+					// FIX: Block usage if at natural max HP or higher (Spectral Shield)
+					if (state.currentHP >= state.maxHP) {
+						return "You are full. The watery gruel offers no comfort to the Spectral Shield.";
+					}
+
+					const healAmount = 2;
+					const oldHP = state.currentHP;
+					
+					// FIX: Cap healing at state.maxHP (20), never MAX_OVERHEAL_CAP (25)
+					state.currentHP = Math.min(state.maxHP, state.currentHP + healAmount);
+					
+					// Only consume item if we actually healed
+					const idx = state.inventory.indexOf("Gruel");
+					if (idx > -1) state.inventory.splice(idx, 1);
+					
+					return `Ate Gruel. Healed ${state.currentHP - oldHP} HP.`;
+				}
+			},
             "Healing Potion": {
-                name: "Healing Potion",
-                type: 'consumable',
-                icon: 'fa-flask',
-                color: 'text-red-500',
-                btnText: "DRINK",
-                desc: "Consumable: Alchemical vitality. Restores 10 HP.",
-                action: (state) => {
-                    const healAmount = 10;
-                    const oldHP = state.currentHP;
-                    // FIX 1: Hard cap all healing at the MAX_OVERHEAL_CAP (25)
-                    state.currentHP = Math.min(MAX_OVERHEAL_CAP, state.currentHP + healAmount);
-                    
-                    const idx = state.inventory.indexOf("Healing Potion");
-                    if (idx > -1) state.inventory.splice(idx, 1);
-                    return `Drank Potion. Healed ${state.currentHP - oldHP} HP.`;
-                }
-            },
+				name: "Healing Potion",
+				type: 'consumable',
+				icon: 'fa-flask',
+				color: 'text-red-500',
+				btnText: "DRINK",
+				desc: "Consumable: Alchemical vitality. Restores 10 HP. Cannot repair Spectral HP.",
+				action: (state) => {
+					// FIX: Block usage if at natural max HP or higher
+					if (state.currentHP >= state.maxHP) {
+						return "Your natural vitality is full. Potions cannot repair the Spectral Shield.";
+					}
+
+					const healAmount = 10;
+					const oldHP = state.currentHP;
+					
+					// FIX: Cap healing at state.maxHP
+					state.currentHP = Math.min(state.maxHP, state.currentHP + healAmount);
+					
+					const idx = state.inventory.indexOf("Healing Potion");
+					if (idx > -1) state.inventory.splice(idx, 1);
+					return `Drank Potion. Healed ${state.currentHP - oldHP} HP.`;
+				}
+			},
             "Phoenix Draft": { // NEW ITEM: PHOENIX DRAFT
                 name: "Phoenix Draft",
                 type: 'key',
@@ -1047,23 +1061,29 @@
             
             // --- ALCHEMIST ITEMS ---
             "Vitality Tincture": { 
-                name: "Vitality Tincture",
-                type: 'consumable',
-                icon: 'fa-heart-circle-plus', 
-                color: 'text-red-300',
-                btnText: "DRINK",
-                desc: "Consumable: High-grade restorative. Restores 15 HP.",
-                action: (state) => {
-                    const healAmount = 15;
-                    const oldHP = state.currentHP;
-                    // FIX 1: Hard cap all healing at the MAX_OVERHEAL_CAP (25)
-                    state.currentHP = Math.min(MAX_OVERHEAL_CAP, state.currentHP + healAmount);
-                    
-                    const idx = state.inventory.indexOf("Vitality Tincture");
-                    if (idx > -1) state.inventory.splice(idx, 1);
-                    return `Drank Tincture. Healed ${state.currentHP - oldHP} HP.`;
-                }
-            },
+				name: "Vitality Tincture",
+				type: 'consumable',
+				icon: 'fa-heart-circle-plus', 
+				color: 'text-red-300',
+				btnText: "DRINK",
+				desc: "Consumable: High-grade restorative. Restores 15 HP. Cannot repair Spectral HP.",
+				action: (state) => {
+					// FIX: Block usage if at natural max HP or higher
+					if (state.currentHP >= state.maxHP) {
+						return "Your natural vitality is full. Tinctures cannot repair the Spectral Shield.";
+					}
+
+					const healAmount = 15;
+					const oldHP = state.currentHP;
+					
+					// FIX: Cap healing at state.maxHP
+					state.currentHP = Math.min(state.maxHP, state.currentHP + healAmount);
+					
+					const idx = state.inventory.indexOf("Vitality Tincture");
+					if (idx > -1) state.inventory.splice(idx, 1);
+					return `Drank Tincture. Healed ${state.currentHP - oldHP} HP.`;
+				}
+			},
             "Smelling Salts": { 
                 name: "Smelling Salts",
                 type: 'consumable',
@@ -2451,30 +2471,32 @@
                 ]
             },
             // NEW SCENE (Task 1): Eat Gruel (Instant consumption, checks HP)
-            'eat_gruel_instant': {
-                title: "Gruel Consumed",
-                text: "You take a moment to consume the cheap gruel. It settles your stomach, but barely.",
-                journal: "I instantly consumed gruel for a small amount of healing.",
-                onEnter: (state) => {
-                    // FIX 3: Check if current HP is at the absolute MAX_OVERHEAL_CAP (25)
-                    if (state.currentHP >= MAX_OVERHEAL_CAP) {
-                        // Refund the cost and stock, don't consume, but still advance scene
-                        state.shillings += 1; // Refund cost (since it was charged by the button)
-                        scenes['blackwater_tavern'].stock["Gruel"] += 1; // Refund stock
-                        audioManager.playCoins();
-                        return "You are already at maximum HP (Shield Active). Gruel was not consumed, Shilling refunded.";
-                    }
-                    
-                    const healAmount = 2;
-                    const oldHP = state.currentHP;
-                    // FIX 1: Hard cap all healing at the MAX_OVERHEAL_CAP (25)
-                    state.currentHP = Math.min(MAX_OVERHEAL_CAP, state.currentHP + healAmount);
-                    
-                    // Note: Stock and shilling consumption/refund is handled by the buttons/if block above.
-                    return `Ate Gruel. Healed ${state.currentHP - oldHP} HP.`;
-                },
-                choices: [{ text: "Return to Tavern", nextScene: 'blackwater_tavern', type: 'travel', doomCost: 0 }]
-            },
+            // Locate 'eat_gruel_instant' inside const scenes:
+
+			'eat_gruel_instant': {
+				title: "Gruel Consumed",
+				text: "You take a moment to consume the cheap gruel. It settles your stomach, but barely.",
+				journal: "I instantly consumed gruel for a small amount of healing.",
+				onEnter: (state) => {
+					// FIX: Check against state.maxHP (20), NOT MAX_OVERHEAL_CAP (25).
+					// If the player has Spectral HP (e.g., 22 HP), this will now trigger, preserving the shield logic.
+					if (state.currentHP >= state.maxHP) {
+						state.shillings += 1; // Refund cost
+						scenes['blackwater_tavern'].stock["Gruel"] += 1; // Refund stock
+						audioManager.playCoins();
+						return "Your natural health is full. The Gruel offers no benefit to your Spectral Shield. (Shilling refunded)";
+					}
+					
+					const healAmount = 2;
+					const oldHP = state.currentHP;
+					
+					// FIX: Cap healing at state.maxHP (20)
+					state.currentHP = Math.min(state.maxHP, state.currentHP + healAmount);
+					
+					return `Ate Gruel. Healed ${state.currentHP - oldHP} HP.`;
+				},
+				choices: [{ text: "Return to Tavern", nextScene: 'blackwater_tavern', type: 'travel', doomCost: 0 }]
+			},
             // NEW SCENE (Task 1): Buy Gruel (To Go, adds to inventory)
             'buy_gruel_to_go': {
                 title: "Gruel To Go",
