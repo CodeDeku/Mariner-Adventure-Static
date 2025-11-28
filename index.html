@@ -701,6 +701,7 @@
 			'lighthouse_rest': 'images/dream.jpg', // Placeholder image kept for consistency, but scene is removed from flow
             // --- ACT 1 SCENE IMAGES ---
             'lighthouse_morning': 'images/lighthouse_morning.jpg', // Skill unlock scene
+            'captain_orders': 'images/lighthouse_vigil.jpg', // NEW SCENE
             'town_descent': 'images/town_descent.jpg', // Descent scene
             'town_square': 'images/town_square.jpg', // Hub: Wide shot of the chaotic port
             'alchemist_triage': 'images/plague_doctor.jpg', // Merchant: Plague doctor theme
@@ -764,6 +765,8 @@
                 hasSearchedSmugglerDrop: false,
                 // NEW: Docks work exhaustion counter
                 docksWorkCount: 0,
+                // NEW FLAG: Quinn's Logistics (Doom Cost UI Reveal)
+                quinnLogistics: false,
             };
         }
 
@@ -877,6 +880,17 @@
             "Rope": { type: 'key', icon: 'fa-om', color: 'text-yellow-700', desc: "Passive: Essential for climbing cliffs." },
             "Torch": { type: 'key', icon: 'fa-fire', color: 'text-orange-500', desc: "Passive: Illuminates dark caves." },
             "Strange Coin": { type: 'key', icon: 'fa-circle-notch', color: 'text-yellow-600', desc: "Passive: Ancient currency. May open doors not made of wood." },
+            "Dead Man's Die": { // NEW ITEM: Reroll Token
+                name: "Dead Man's Die",
+                type: 'consumable',
+                icon: 'fa-dice-six', 
+                color: 'text-gray-200',
+                btnText: "INSPECT",
+                desc: "Consumable: A bone die loaded to cheat fate. Allows you to escape a failure outcome once.",
+                action: (state) => {
+                    return "Keep this for when luck runs out (Fail States).";
+                }
+            },
             
             // --- LEGENDARY ARTIFACTS (WOLVES OF VALOR) ---
             "Ring of Brass": { 
@@ -999,12 +1013,13 @@
         ];
         
         // NEW: Triage Alchemist Stock Definition
+        // FIX: Set doomCost to 0 on the *blueprint* for sales actions, but the button logic overrides based on the scene flow
         const ALCHEMIST_BUY_OPTIONS = [
-            { item: "Vitality Tincture", nextScene: 'buy_tincture', cost: 15, doomCost: 1 },
-            { item: "Smelling Salts", nextScene: 'buy_salts', cost: 8, doomCost: 1 },
-            { item: "Flash Powder", nextScene: 'buy_powder', cost: 10, doomCost: 1 },
-            { item: "Alchemical Fire", nextScene: 'buy_fire', cost: 12, doomCost: 1 }, // Alchemist sells boss counters
-            { item: "Holy Water", nextScene: 'buy_water', cost: 12, doomCost: 1 }
+            { item: "Vitality Tincture", nextScene: 'buy_tincture', cost: 15, doomCost: 0 },
+            { item: "Smelling Salts", nextScene: 'buy_salts', cost: 8, doomCost: 0 },
+            { item: "Flash Powder", nextScene: 'buy_powder', cost: 10, doomCost: 0 },
+            { item: "Alchemical Fire", nextScene: 'buy_fire', cost: 12, doomCost: 0 }, // Alchemist sells boss counters
+            { item: "Holy Water", nextScene: 'buy_water', cost: 12, doomCost: 0 }
         ];
         
         // NEW: Tavern Gruel Stock Definition
@@ -1013,22 +1028,23 @@
         ];
 
         const MARKET_SELL_OPTIONS = [
-            { item: "Curious Cargo", nextScene: 'sell_cargo', value: 10 },
-            { item: "Rope", nextScene: 'sell_rope', value: 2 },
-            { item: "Torch", nextScene: 'sell_torch', value: 1 },
-            { item: "Healing Potion", nextScene: 'sell_potion', value: 3 },
-            { item: "Rum (Heal 5)", nextScene: 'sell_rum', value: 2 }
+            // FIX: Curious Cargo is the ONLY exception to the 0 doom cost rule in Act 1 sales
+            { item: "Curious Cargo", nextScene: 'sell_cargo', value: 10, doomCost: 1 }, 
+            { item: "Rope", nextScene: 'sell_rope', value: 2, doomCost: 0 },
+            { item: "Torch", nextScene: 'sell_torch', value: 1, doomCost: 0 },
+            { item: "Healing Potion", nextScene: 'sell_potion', value: 3, doomCost: 0 },
+            { item: "Rum (Heal 5)", nextScene: 'sell_rum', value: 2, doomCost: 0 }
         ];
         
         // NEW: Alchemist Sell Options
         const ALCHEMIST_SELL_OPTIONS = [
-            { item: "Silver Locket", nextScene: 'sell_locket_alch', value: 10 }, // New sell item
-            { item: "Alchemical Fire", nextScene: 'sell_fire', value: 20 },
-            { item: "Holy Water", nextScene: 'sell_water', value: 20 },
-            { item: "Vitality Tincture", nextScene: 'sell_tincture', value: 7 }, // Can sell back the costly items at a loss
+            { item: "Silver Locket", nextScene: 'sell_locket_alch', value: 10, doomCost: 0 }, // New sell item
+            { item: "Alchemical Fire", nextScene: 'sell_fire', value: 20, doomCost: 0 },
+            { item: "Holy Water", nextScene: 'sell_water', value: 20, doomCost: 0 },
+            { item: "Vitality Tincture", nextScene: 'sell_tincture', value: 7, doomCost: 0 }, // Can sell back the costly items at a loss
             // Can sell the demo's high-value items to the Alchemist for a higher price
-            { item: "Healing Potion", nextScene: 'sell_potion_alch', value: 4 }, 
-            { item: "Pearlescent Mushroom", nextScene: 'sell_mushroom_alch', value: 12 }
+            { item: "Healing Potion", nextScene: 'sell_potion_alch', value: 4, doomCost: 0 }, 
+            { item: "Pearlescent Mushroom", nextScene: 'sell_mushroom_alch', value: 12, doomCost: 0 }
         ];
         // --- END MARKET BLUEPRINTS ---
         
@@ -1214,7 +1230,18 @@
                     fxManager.flashRed();
                     return "Took 2 Scratch Damage."; 
                 },
-                choices: [{ text: "Confront the Guard", nextScene: 'road_encounter', type: 'dialogue' }] 
+                choices: [
+                    { text: "Confront the Guard", nextScene: 'road_encounter', type: 'dialogue' },
+                    // NEW: Dead Man's Die Cheat Fate option
+                    { 
+                        text: "Cheat Fate (Use Dead Man's Die)", 
+                        nextScene: 'trail_success', 
+                        type: 'action', 
+                        reqItem: "Dead Man's Die", 
+                        consume: true,
+                        customClass: 'btn-hero'
+                    }
+                ] 
             },
             'guard_talk': {
                 title: "The Interrogation",
@@ -1546,7 +1573,18 @@
                     return "Took 5 Damage."; 
                 },
                 // Redirects to lighthouse_arrival to proceed to faction_check
-                choices: [{ text: "Keep Climbing (Arrive at Lighthouse)", nextScene: 'lighthouse_arrival', type: 'travel' }]
+                choices: [
+                    { text: "Keep Climbing (Arrive at Lighthouse)", nextScene: 'lighthouse_arrival', type: 'travel' },
+                    // NEW: Dead Man's Die Cheat Fate option
+                    { 
+                        text: "Cheat Fate (Use Dead Man's Die)", 
+                        nextScene: 'lighthouse_arrival', // Redirect to success-like path
+                        type: 'action', 
+                        reqItem: "Dead Man's Die", 
+                        consume: true,
+                        customClass: 'btn-hero'
+                    }
+                ]
             },
             'dark_caves': {
                 title: "The Abyss Below",
@@ -1589,7 +1627,18 @@
                     return "Took 4 Damage."; 
                 },
                 // Redirects to lighthouse_arrival to proceed to faction_check
-                choices: [{ text: "Limp to the Exit)", nextScene: 'lighthouse_arrival', type: 'travel' }]
+                choices: [
+                    { text: "Limp to the Exit)", nextScene: 'lighthouse_arrival', type: 'travel' },
+                    // NEW: Dead Man's Die Cheat Fate option
+                    { 
+                        text: "Cheat Fate (Use Dead Man's Die)", 
+                        nextScene: 'lighthouse_arrival', // Redirect to success-like path
+                        type: 'action', 
+                        reqItem: "Dead Man's Die", 
+                        consume: true,
+                        customClass: 'btn-hero'
+                    }
+                ]
             },
             'lighthouse_arrival': {
                 title: "The Beacon",
@@ -1627,7 +1676,16 @@
                 journal: "The Lighthouse is sealed. I need to find the mechanism to enter.",
                 choices: [
                     // Insight DC 15 (Captain Gareth)
-                    { text: "Analyze the mechanism", nextScene: 'neutral_lock_logic', type: 'skill', dc: 15, skill: 'Insight' } // Clean text
+                    { text: "Analyze the mechanism", nextScene: 'neutral_lock_logic', type: 'skill', dc: 15, skill: 'Insight' }, // Clean text
+                    // NEW: Dead Man's Die Cheat Fate option
+                    { 
+                        text: "Cheat Fate (Use Dead Man's Die)", 
+                        nextScene: 'ending_neutral_success', 
+                        type: 'action', 
+                        reqItem: "Dead Man's Die", 
+                        consume: true,
+                        customClass: 'btn-hero'
+                    }
                 ]
             },
             'neutral_lock_logic': {
@@ -1684,9 +1742,61 @@
                     return "Mission Accepted: Find the Wolves of Valor. HP and Crew Use Restored.";
                 },
                 choices: [
-                    { text: "Continue to Act 1", nextScene: 'lighthouse_morning', type: 'travel' } // MODIFIED
+                    // MODIFIED: Leads to the Captain's Orders choice scene
+                    { text: "Ask the Crew for Final Orders", nextScene: 'captain_orders', type: 'dialogue' } 
                 ]
             },
+            // --- NEW SCENE: CAPTAIN'S ORDERS ---
+            'captain_orders': {
+                title: "The Captain's Orders",
+                text: "Before you descend into the Port of Shadows, the crew manifests in the lantern's light. They know the odds. Each offers a final, unique advantage, but you have the focus to maintain only one. Choose who to listen to.",
+                journal: "The crew offered their aid. I had to choose a permanent advantage for Act 1.",
+                choices: [
+                    { 
+                        text: "Gareth: 'Violence of Action' (First Combat has Surprise Advantage)", 
+                        nextScene: 'lighthouse_morning', 
+                        type: 'dialogue',
+                        customClass: 'btn-hero',
+                        onSelect: (state) => { 
+                            state.isSurpriseRound = true; 
+                            return "Gareth's tactical advice grants a free Surprise Round on the first boss."; 
+                        }
+                    },
+                    { 
+                        text: "Bones: 'The Last Meal' (Start Act 1 Overhealed to 25 HP)", 
+                        nextScene: 'lighthouse_morning', 
+                        type: 'dialogue',
+                        customClass: 'btn-success-glow',
+                        onSelect: (state) => { 
+                            state.currentHP = 25; 
+                            state.maxHP = 25; // Increase maxHP to 25 to show the overheal on the bar (visual effect only)
+                            return "Bones prepared a feast. Overhealed to 25 HP."; 
+                        }
+                    },
+                    { 
+                        text: "Quinn: 'Logistical Mapping' (Reveal Doom Costs on Choices)", 
+                        nextScene: 'lighthouse_morning', 
+                        type: 'dialogue',
+                        customClass: 'btn-shadow-glow',
+                        onSelect: (state) => { 
+                            state.quinnLogistics = true; 
+                            return "Quinn mapped the city. Doom Costs are now visible on all choices."; 
+                        }
+                    },
+                    { 
+                        text: "Talon: 'Forward Recon' (Unlock All Secret Paths)", 
+                        nextScene: 'lighthouse_morning', 
+                        type: 'dialogue',
+                        customClass: 'btn-keen-senses',
+                        onSelect: (state) => { 
+                            state.knowsSmelterSecret = true; 
+                            state.knowsChapelSecret = true; 
+                            return "Talon scouted ahead. Smelter and Chapel shortcuts unlocked."; 
+                        }
+                    }
+                ]
+            },
+            // --- END NEW SCENE ---
 			// REMOVED 'lighthouse_rest' SCENE
             // --- ACT 1: LEVEL UP SEQUENCE (SKILL UNLOCK) ---
             'lighthouse_morning': {
@@ -1720,6 +1830,7 @@
                     if (!state.skills.includes("Absorb Elements")) {
                         state.skills.push("Absorb Elements");
                     }
+                    if (state.maxHP === 25) state.maxHP = 20; // Reset maxHP if it was set for the Bones overheal visual
                     state.currentHP = state.maxHP;
                     // NEW: START DOOM COUNTER
                     state.act1Started = true;
@@ -1736,6 +1847,7 @@
                     if (!state.skills.includes("Primeval Awareness")) {
                         state.skills.push("Primeval Awareness");
                     }
+                    if (state.maxHP === 25) state.maxHP = 20; // Reset maxHP if it was set for the Bones overheal visual
                     state.currentHP = state.maxHP;
                     // NEW: START DOOM COUNTER
                     state.act1Started = true;
@@ -1792,7 +1904,18 @@
                 title: "Blinded by the View",
                 text: "The sheer drop distracts you. You see nothing useful.",
                 journal: "Failed the scan. Must be more careful.",
-                choices: [{ text: "Continue Descent", nextScene: 'town_descent', type: 'travel' }]
+                choices: [
+                    { text: "Continue Descent", nextScene: 'town_descent', type: 'travel' },
+                    // NEW: Dead Man's Die Cheat Fate option
+                    { 
+                        text: "Cheat Fate (Use Dead Man's Die)", 
+                        nextScene: 'overlook_scan_success', 
+                        type: 'action', 
+                        reqItem: "Dead Man's Die", 
+                        consume: true,
+                        customClass: 'btn-hero'
+                    }
+                ]
             },
             'overlook_hasten_check': {
                 isLogic: true,
@@ -1807,7 +1930,18 @@
                     fxManager.flashRed();
                     return "Took 2 Damage.";
                 },
-                choices: [{ text: "Reach the Gates", nextScene: 'town_descent', type: 'travel' }]
+                choices: [
+                    { text: "Reach the Gates", nextScene: 'town_descent', type: 'travel' },
+                    // NEW: Dead Man's Die Cheat Fate option
+                    { 
+                        text: "Cheat Fate (Use Dead Man's Die)", 
+                        nextScene: 'town_descent', 
+                        type: 'action', 
+                        reqItem: "Dead Man's Die", 
+                        consume: true,
+                        customClass: 'btn-hero'
+                    }
+                ]
             },
             // --- END NEW SCENES ---
             
@@ -1841,7 +1975,7 @@
                         customClass: 'btn-shadow-glow'						
                     },
                     { text: "Visit The Triage Alchemist", nextScene: 'alchemist_triage', type: 'travel', doomCost: 0 },
-                    { text: "Stay at The Blackwater Tavern", nextScene: 'blackwater_tavern', type: 'travel', doomCost: 0 },
+                    { text: "Rest at The Blackwater Tavern", nextScene: 'blackwater_tavern', type: 'travel', doomCost: 0 },
                     { text: "Explore the Docks", nextScene: 'town_docks', type: 'travel', doomCost: 0 } // NEW DOCKS BUTTON
                 ],
                 onEnter: (state) => {
@@ -1965,7 +2099,7 @@
                 onEnter: (state) => {
                     const idx = state.inventory.indexOf("Curious Cargo");
                     if (idx > -1) state.inventory.splice(idx, 1);
-                    // DOUBLE DIP FIX: Removed state.shillings += 15; 
+                    // The payout is handled by the choice button logic (value: 15)
                     audioManager.playCoins();
                     return "Sold Curious Cargo (+15s) to Smuggler.";
                 },
@@ -2014,7 +2148,18 @@
                     fxManager.flashRed();
                     return "Took 4 Damage.";
                 },
-                choices: [{ text: "Climb Out", nextScene: 'town_docks', type: 'travel' }]
+                choices: [
+                    { text: "Climb Out", nextScene: 'town_docks', type: 'travel' },
+                     // NEW: Dead Man's Die Cheat Fate option
+                    { 
+                        text: "Cheat Fate (Use Dead Man's Die)", 
+                        nextScene: 'docks_dive_success', 
+                        type: 'action', 
+                        reqItem: "Dead Man's Die", 
+                        consume: true,
+                        customClass: 'btn-hero'
+                    }
+                ]
             },
             // DOCKS SMUGGLER LOGIC (Ring of Brass required for button visibility)
             'docks_smuggler_check': {
@@ -2061,9 +2206,9 @@
                     // PAID REST OPTION (Task 3 Fix: Added doomCost: 3)
                     { text: "Pay for a Cot (Full Rest)", nextScene: 'tavern_rest_success', type: 'action', cost: 10, doomCost: 3 },
                     // NEW: EAT GRUEL (Instant Consume, checks HP)
-                    { text: "Eat Gruel Now", nextScene: 'eat_gruel_instant', type: 'action', cost: 1, stockItem: 'Gruel' },
+                    { text: "Eat Gruel Now", nextScene: 'eat_gruel_instant', type: 'action', cost: 1, stockItem: 'Gruel', doomCost: 0 },
                     // NEW: BUY GRUEL (To Go, adds to inventory)
-                    { text: "Buy Gruel (To Go)", nextScene: 'buy_gruel_to_go', type: 'action', cost: 1, stockItem: 'Gruel' },
+                    { text: "Buy Gruel (To Go)", nextScene: 'buy_gruel_to_go', type: 'action', cost: 1, stockItem: 'Gruel', doomCost: 0 },
                     // INFORMATION GATHERING
                     // Task 4 Fix: Added reqNotFlag for visibility
                     { 
@@ -2175,7 +2320,18 @@
                 title: "Public Scorn",
                 text: "You accuse the man, but your words are muddled. The other patrons laugh at you. The cheater remains, simply smiling.",
                 journal: "Failed to expose the cheater. Embarrassing.",
-                choices: [{ text: "Return to Tavern", nextScene: 'blackwater_tavern', type: 'travel', doomCost: 0 }]
+                choices: [
+                    { text: "Return to Tavern", nextScene: 'blackwater_tavern', type: 'travel', doomCost: 0 },
+                    // NEW: Dead Man's Die Cheat Fate option
+                    { 
+                        text: "Cheat Fate (Use Dead Man's Die)", 
+                        nextScene: 'tavern_expose_success', 
+                        type: 'action', 
+                        reqItem: "Dead Man's Die", 
+                        consume: true,
+                        customClass: 'btn-hero'
+                    }
+                ]
             },
             'alchemist_triage': {
 				title: "Madam Alara, Triage Alchemist",
@@ -2189,6 +2345,7 @@
                     "Holy Water": 1 
                 },
                 choices: [
+                    // FIX: DoomCost is 0 for navigation
                     { text: "Sell Wares", nextScene: 'alchemist_sell', type: 'travel', doomCost: 0 },
                     { text: "Return to Port Square", nextScene: 'town_square', type: 'travel', doomCost: 0 }
                 ]
@@ -2198,6 +2355,7 @@
                 text: "Alara inspects your items, sometimes offering a premium for rare components. 'Speak your price, Mariner. Time is coin.'",
                 journal: null,
                 choices: [
+                    // FIX: DoomCost is 0 for navigation
                     { text: "Back to Buying", nextScene: 'alchemist_triage', type: 'travel', doomCost: 0 },
                     { text: "Return to Port Square", nextScene: 'town_square', type: 'travel', doomCost: 0 }
                 ]
@@ -2350,9 +2508,12 @@
                 journal: "Paid 10 Shillings for a good night's rest. The voices are quiet.",
                 isRest: true, // Tag as rest scene to prevent doom counter decrement
                 choices: [
+                    // FIX: doomCost 0 for travel from rest scene
                     { text: "Return to Port Square", nextScene: 'town_square', type: 'travel', doomCost: 0 }
                 ],
                 onEnter: (state) => {
+                    // FIX: Reset maxHP if it was set for the Bones overheal visual
+                    if (state.maxHP === 25) state.maxHP = 20;
                     state.currentHP = state.maxHP;
                     Object.keys(state.crew).forEach(k => state.crew[k].used = false);
                     // NEW: Docks work exhaustion reset
@@ -2430,14 +2591,14 @@
                 isLogic: true,
                 resolve: (roll, state) => {
                     state.isAbsorbCharged = true;
-                    return 'smelter_stage2_clean';
+                    return 'smelter_safe';
                 }
             },
             'chapel_primeval_bridge': {
                 isLogic: true,
                 resolve: (roll, state) => {
                     state.isSurpriseRound = true;
-                    return 'chapel_stage2_finish';
+                    return 'chapel_safe';
                 }
             },
             // --- END LOGIC BRIDGE SCENES ---
@@ -2455,13 +2616,6 @@
                     return "Rope consumed. Found nothing else of value.";
                 },
             },
-            'smelter_safe_charged': { 
-                title: "Absorbed Charge", 
-                text: "You pass safely, the fire damage absorbed. The excess heat now crackles on your blade, ready for the next fight.", 
-                journal: "Used Absorb Elements. Blade is Charged.",
-                choices: [{ text: "Continue to Smelter Antechamber", nextScene: 'smelter_workers', type: 'travel' }],
-                onEnter: (state) => { state.isAbsorbCharged = true; return "Absorb Elements Charged."; },
-            },
             'smelter_safe': { 
                 title: "Safe Passage", 
                 text: "You pass safely.", 
@@ -2471,7 +2625,18 @@
             'smelter_damage': { 
                 title: "Burned", 
                 text: "You take a burn running past the valve.", 
-                choices: [{ text: "Continue to Smelter Antechamber", nextScene: 'smelter_workers', type: 'travel' }],
+                choices: [
+                    { text: "Continue to Smelter Antechamber", nextScene: 'smelter_workers', type: 'travel' },
+                    // NEW: Dead Man's Die Cheat Fate option
+                    { 
+                        text: "Cheat Fate (Use Dead Man's Die)", 
+                        nextScene: 'smelter_safe', 
+                        type: 'action', 
+                        reqItem: "Dead Man's Die", 
+                        consume: true,
+                        customClass: 'btn-hero'
+                    }
+                ],
                 onEnter: (s) => { 
                     s.currentHP = applyDamage(s.currentHP, 5); 
                     fxManager.flashRed();
@@ -2481,30 +2646,44 @@
             // --- NEW SCENE: SMELTER ANTECHAMBER (Order/Chaos Choice) ---
             'smelter_workers': {
                 title: "Smelter District: Trapped Workers",
-                text: "You enter the main engine room. A heavy support beam has collapsed, trapping three exhausted workers near the pit. They beg for aid.",
-                journal: "I found men pinned by a beam, baking alive. Gareth started screaming about duty. A Captain protects the weak, even if it costs him everything.",
+                text: "You enter the main engine room. A heavy support beam has collapsed, trapping three exhausted workers near the pit. They beg for aid. The structural groans suggest you have very little time.",
+                journal: "I found men pinned by a beam, baking alive. I had to choose between saving them and securing the primary objective.",
 				banter: {
-					'gareth': "Heave! Put your back into it! They are civilians under there!!" // Hints at Athletics DC 15
+					'gareth': "Heave! Put your back into it! A Captain protects his people!" // Hints at Athletics DC 15
 				},
                 choices: [
-                    // ORDER PATH: INCURS DOOM COST (Default 1) - Takes time
+                    // ORDER PATH: Heroism/Time Cost
                     { 
-                        text: "Save the Workers", 
+                        text: "Heave the Beam (Attempt Rescue)", 
                         nextScene: 'smelter_save_workers_check', 
                         type: 'skill', 
                         dc: 15, 
                         skill: 'Athletics',
                         orderGain: 5 
                     },
-                    // CHAOS PATH: NO DOOM COST - Saves time
+                    // CHAOS PATH: Pragmatism/No Time Cost
                     { 
-                        text: "Bypass the Scene", 
-                        nextScene: 'smelter_stage1_start', // DIRECT TO BOSS
+                        text: "Seal the Blast Doors (Prioritize Containment)", 
+                        nextScene: 'smelter_containment_success', // Direct success
                         type: 'travel',
                         chaosGain: 3,
                         doomCost: 0
                     }
                 ]
+            },
+            // NEW SCENE: PRAGMATIC SUCCESS (Chaos)
+            'smelter_containment_success': {
+                title: "Containment Established",
+                text: "You slam the heavy blast doors shut, sealing the fire—and the workers—inside. Their screams are cut short by the roar of the furnaces. It is a cold calculus, but the primary objective is now more secure. You spot a bucket of Industrial Lubricant they dropped outside the door.",
+                journal: "I sealed the doors. The workers are gone, but I found Industrial Lubricant. The mission comes first. Chaos +3.",
+                choices: [{ text: "Proceed to Foundry (Boss Fight)", nextScene: 'smelter_stage1_start', type: 'travel' }],
+                onEnter: (state) => {
+                    if (!state.inventory.includes("Industrial Lubricant")) {
+                        state.inventory.push("Industrial Lubricant");
+                    }
+                    state.influence = Math.min(20, state.influence + 3);
+                    return "Sacrificed workers for containment. Chaos +3. Found Lubricant.";
+                }
             },
             'smelter_save_workers_check': {
                 isLogic: true,
@@ -2527,12 +2706,23 @@
                 title: "A Vicious Price",
                 text: "You strain yourself, but the beam won't budge. The Slag Horror's roar echoes closer. You must abandon them. The crew's anguish deals a psychic blow.",
                 journal: "Failed to save the workers. Took psychic damage from the crew's anguish.",
-                choices: [{ text: "Proceed to Foundry (Boss Fight)", nextScene: 'smelter_stage1_start', type: 'travel' }],
+                choices: [
+                    { text: "Proceed to Foundry (Boss Fight)", nextScene: 'smelter_stage1_start', type: 'travel' },
+                    // NEW: Dead Man's Die Cheat Fate option
+                    { 
+                        text: "Cheat Fate (Use Dead Man's Die)", 
+                        nextScene: 'smelter_save_workers_success', 
+                        type: 'action', 
+                        reqItem: "Dead Man's Die", 
+                        consume: true,
+                        customClass: 'btn-hero'
+                    }
+                ],
                 onEnter: (state) => {
                     state.currentHP = applyDamage(state.currentHP, 3);
                     fxManager.flashRed();
                     state.influence = Math.max(-20, state.influence - 2); // Minor Order loss from failure
-                    return "Took 3 Psychic Damage. Order +2.";
+                    return "Took 3 Psychic Damage. Order +2 (Failed Rescue).";
                 },
             },
             // --- END SMELTER ANTECHAMBER ---
@@ -2781,13 +2971,6 @@
                     return "Torch expended.";
                 },
             },
-            'chapel_safe_surprise': { 
-                title: "Ambush Avoided", 
-                text: "You bypass the maze and surprise the Spectre. You get a free hit.", 
-                journal: "Used Primeval Awareness. Gained Surprise Round.",
-                choices: [{ text: "Continue to Vestry Antechamber", nextScene: 'chapel_vestry', type: 'travel' }],
-                onEnter: (state) => { state.isSurpriseRound = true; return "Surprise Round advantage granted."; },
-            },
             'chapel_safe': { 
                 title: "Found Path", 
                 text: "You navigate the fog safely.", 
@@ -2797,7 +2980,18 @@
             'chapel_damage': { 
                 title: "Ambushed", 
                 text: "A shadow creature ambushes you.", 
-                choices: [{ text: "Continue to Vestry Antechamber", nextScene: 'chapel_vestry', type: 'travel' }],
+                choices: [
+                    { text: "Continue to Vestry Antechamber", nextScene: 'chapel_vestry', type: 'travel' },
+                    // NEW: Dead Man's Die Cheat Fate option
+                    { 
+                        text: "Cheat Fate (Use Dead Man's Die)", 
+                        nextScene: 'chapel_safe', 
+                        type: 'action', 
+                        reqItem: "Dead Man's Die", 
+                        consume: true,
+                        customClass: 'btn-hero'
+                    }
+                ],
                 onEnter: (s) => { 
                     s.currentHP = applyDamage(s.currentHP, 6); 
                     fxManager.flashRed();
@@ -2807,22 +3001,22 @@
             // --- NEW SCENE: CHAPEL ANTECHAMBER (Order/Chaos Choice) ---
             'chapel_vestry': {
                 title: "Sunken Chapel: Flooded Vestry",
-                text: "The vestry is flooded with black, polluted water. A panicked man is caught in the undertow, struggling to keep his head above the foul tide. He screams for help.",
-                journal: "A man was drowning in the vestry. The water looked necrotic, thick with rot. I hesitated. I admit it. I didn't want to touch that water.",
+                text: "The vestry is flooded with black, polluted water. A panicked man is caught in the undertow, struggling to keep his head above the foul tide. He screams for help. The water is necrotic—Edward's mind screams for him not to touch it.",
+                journal: "A man was drowning in the vestry. The water looked necrotic, thick with rot. I had to choose between my duty to the living and the sanctity of the mission.",
 				banter: {
 					'gareth': "He's going under! You have the strength to pull him out, Edward. Don't let him drown!" // Hints at Athletics DC 14
 				},
                 choices: [
-                    // ORDER PATH: INCURS DOOM COST (Default 1) - Takes time
+                    // ORDER PATH: Heroism/Time Cost
                     { 
-                        text: "Attempt Rescue", 
+                        text: "Attempt Rescue (Risk Infection)", 
                         nextScene: 'chapel_rescue_check', 
                         type: 'skill', 
                         dc: 14, 
                         skill: 'Athletics',
                         orderGain: 4
                     },
-                    // CHAOS PATH: NO DOOM COST - Saves time
+                    // CHAOS PATH: Pragmatism/No Time Cost
                     { 
                         text: "Ignore the Screams and Search for Loot", 
                         nextScene: 'chapel_ignore_drowning', 
@@ -2853,7 +3047,18 @@
                 title: "Overwhelmed",
                 text: "The black water and the man's panic are too much. He slips from your grasp and is pulled under. The undertow bruises your legs.",
                 journal: "Failed the rescue. Took damage from the undertow.",
-                choices: [{ text: "Proceed to Crypt (Boss Fight)", nextScene: 'chapel_stage1_reveal', type: 'travel' }], // DIRECT TO BOSS
+                choices: [
+                    { text: "Proceed to Crypt (Boss Fight)", nextScene: 'chapel_stage1_reveal', type: 'travel' }, // DIRECT TO BOSS
+                    // NEW: Dead Man's Die Cheat Fate option
+                    { 
+                        text: "Cheat Fate (Use Dead Man's Die)", 
+                        nextScene: 'chapel_rescue_success', 
+                        type: 'action', 
+                        reqItem: "Dead Man's Die", 
+                        consume: true,
+                        customClass: 'btn-hero'
+                    }
+                ],
                 onEnter: (state) => {
                     state.currentHP = applyDamage(state.currentHP, 3);
                     fxManager.flashRed();
@@ -3331,6 +3536,8 @@
             gameState.hasSearchedSmugglerDrop = false;
             // NEW: Docks work exhaustion counter reset
             gameState.docksWorkCount = 0;
+            // NEW: Quinn's Logistics reset
+            gameState.quinnLogistics = false;
 
 
             document.getElementById('journal-content').innerHTML = '';
@@ -3561,6 +3768,10 @@
                     // Check local stock for this item name
                     const actualStock = currentSceneStock[sale.item] || 0;
                     
+                    // Check if player has max HP (if buying healing item)
+                    const isHealingItem = itemRegistry[sale.item] && itemRegistry[sale.item].name.includes('Heal');
+                    const isFullHP = gameState.currentHP === gameState.maxHP;
+                    
                     // RULE: Only display if in stock (actualStock > 0)
                     if (actualStock > 0) {
                         processedChoices.push({
@@ -3568,7 +3779,9 @@
                             nextScene: sale.nextScene,
                             type: 'action',
                             cost: sale.cost,
-                            stockItem: sale.item 
+                            stockItem: sale.item,
+                            doomCost: 0, // FIX: Market stall is PROLOGUE (no doom)
+                            isDisabled: isHealingItem && isFullHP
                         });
                     }
                 });
@@ -3588,10 +3801,12 @@
                 const permanentChoices = choices.filter(c => c.nextScene === 'market_stall' || c.nextScene === 'market_crossroads');
                 processedChoices = []; 
 
+                // Get sell options from blueprint
+                const currentSellOptions = MARKET_SELL_OPTIONS;
+
                 // Generate Dynamic Sell Options
-                MARKET_SELL_OPTIONS.forEach(sell => {
+                currentSellOptions.forEach(sell => {
                     // Check if the player has the item in inventory
-                    // RULE: Only display if player has the item in inventory (reqItem check is implicit here)
                     if (gameState.inventory.includes(sell.item)) {
                         
                         // Special check for Curious Cargo: Merchant won't buy it if stock is 0 (one-time buy)
@@ -3604,7 +3819,8 @@
                             nextScene: sell.nextScene,
                             type: 'action',
                             reqItem: sell.item,
-                            value: sell.value 
+                            value: sell.value,
+                            doomCost: sell.doomCost // Use explicit doomCost from blueprint (0 or 1 for cargo)
                         });
                     }
                 });
@@ -3620,6 +3836,11 @@
                     const itemText = sale.item.split('(')[0].trim();
                     const actualStock = currentSceneStock[sale.item] || 0;
                     
+                    // Check if buying healing item when full HP
+                    const isHealingItem = itemRegistry[sale.item] && (itemRegistry[sale.item].name.includes('Tincture') || itemRegistry[sale.item].name.includes('Potion'));
+                    const isFullHP = gameState.currentHP === gameState.maxHP;
+                    
+                    
                     // RULE: Only display if in stock (actualStock > 0)
                     if (actualStock > 0) {
                         processedChoices.push({
@@ -3628,7 +3849,8 @@
                             type: 'action',
                             cost: sale.cost,
                             stockItem: sale.item,
-                            doomCost: sale.doomCost // Added explicit doom cost from blueprint
+                            doomCost: sale.doomCost, // FIX: Use explicit doomCost from blueprint (0)
+                            isDisabled: isHealingItem && isFullHP
                         });
                     }
                 });
@@ -3647,11 +3869,19 @@
                 const permanentChoices = choices.filter(c => c.nextScene === 'alchemist_triage' || c.nextScene === 'town_square');
                 processedChoices = []; 
                 
+				// Get sell options from blueprint
+				const currentSellOptions = ALCHEMIST_SELL_OPTIONS;
+
 				// Generate Dynamic Sell Options (Alchemist Stock)
-				ALCHEMIST_SELL_OPTIONS.forEach(sell => {
+				currentSellOptions.forEach(sell => {
 					// RULE: Only display if player has the item in inventory
 					if (gameState.inventory.includes(sell.item)) {
-						
+                        // FIX: Check if selling back Alchemist stock that is already maxed
+                        let isDisabled = false;
+                        if (sell.nextScene === 'sell_tincture' && currentSceneStock["Vitality Tincture"] >= 2) {
+                            isDisabled = true; // Cannot sell back if Alchemist is fully stocked (max 2)
+                        }
+
 						processedChoices.push({
 							// FIX: Removed manual (+${sell.value}s) string to avoid duplication
 							text: `Sell ${sell.item.split('(')[0].trim()}`, 
@@ -3659,7 +3889,8 @@
 							type: 'action',
 							reqItem: sell.item,
 							value: sell.value,
-							doomCost: 1 // FIX: Explicitly add 1 turn cost to selling
+							doomCost: sell.doomCost, // FIX: Use explicit doomCost from blueprint (0)
+                            isDisabled: isDisabled
 						});
 					}
 				});
@@ -3685,32 +3916,30 @@
                 
                 // 1. Instant Eat Gruel (conditional visibility/disability)
                 if (instantEat) {
-                    // Task 2 Fix: Removed (1s) from the text
                     let instantEatText = `Eat Gruel Now (Stock: ${gruelStock})`;
-                    let instantEatDisabled = !canHeal || gruelStock <= 0 || !canAfford;
+                    // Disable if full HP, out of stock, or can't afford
+                    let instantEatDisabled = !canAfford || gruelStock <= 0 || !canHeal; 
 
                     processedChoices.push({
                         ...instantEat, 
                         text: instantEatText, 
-                        // Cost property remains for the indicator logic
                         cost: instantEat.cost, 
-                        doomCost: 1, // FIX: Explicitly add doomCost here
+                        doomCost: 0, // FIX: Explicitly add doomCost 0
                         isDisabled: instantEatDisabled,
                     });
                 }
 
                 // 2. Buy Gruel (To Go)
                 if (buyToGo) {
-                    // Task 2 Fix: Removed (1s) from the text
                     let buyToGoText = `Buy Gruel (To Go) (Stock: ${gruelStock})`;
+                    // Disable if out of stock, or can't afford
                     let buyToGoDisabled = gruelStock <= 0 || !canAfford;
 
                     processedChoices.push({
                         ...buyToGo,
                         text: buyToGoText,
-                        // Cost property remains for the indicator logic
                         cost: buyToGo.cost, 
-                        doomCost: 1, // FIX: Explicitly add doomCost here
+                        doomCost: 0, // FIX: Explicitly add doomCost 0
                         isDisabled: buyToGoDisabled
                     });
                 }
@@ -3720,7 +3949,6 @@
                 if (restOption) processedChoices.push(restOption);
                 
                 // 4. Info/Gambler options (non-cost options)
-                // Task 4 Fix: Use reqNotFlag for visibility
                 if (infoSmelter && !gameState.knowsSmelterSecret) processedChoices.push(infoSmelter);
                 if (infoChapel && !gameState.knowsChapelSecret) processedChoices.push(infoChapel);
                 
@@ -3731,12 +3959,20 @@
             // NEW: Docks Dynamic Work Button logic
             else if (currentSceneId === 'town_docks') {
                  // The onEnter logic handles updating the costHP on the WORK button.
-                 // We simply ensure the button text reflects the current calculated cost.
-                const workBtn = choices.find(c => c.nextScene === 'docks_work');
-                if (workBtn) {
-                     // Check if costHP exists (it should, after onEnter runs)
-                     const currentCost = workBtn.costHP !== undefined ? workBtn.costHP : workBtn.costHP || 2;
-                }
+                 const workBtn = choices.find(c => c.nextScene === 'docks_work');
+                 const currentCost = workBtn.costHP !== undefined ? workBtn.costHP : 2;
+                 const canAffordHP = gameState.currentHP > currentCost;
+                 
+                 // Find the button and update its isDisabled state based on HP cost
+                 const processedWorkBtn = {
+                    ...workBtn, 
+                    text: workBtn.text, 
+                    isDisabled: !canAffordHP,
+                    // The doomCost: 1 is already on the button object itself
+                 };
+
+                 // Replace the original work button with the processed one
+                 processedChoices = processedChoices.map(c => c.nextScene === 'docks_work' ? processedWorkBtn : c);
             }
 
 
@@ -3790,7 +4026,7 @@
                 // Determine styling: Is this a Hero/Skill moment?
                 let isHeroButton = choice.reqSkill ? true : false;
                 let isCustomClassButton = choice.customClass ? true : false;
-                let isTradeButton = choice.cost || choice.value || choice.shillingGain; // Added shillingGain for dock work/gruel
+                let isTradeButton = choice.cost || choice.value || choice.shillingGain || (choice.nextScene.includes('sell') && currentSceneId.includes('alchemist')); // Added shillingGain for dock work/gruel
                 let isSkillCheck = choice.type === 'skill';
 
                 const alignmentClass = (isSkillCheck || isTradeButton || choice.chaosGain || choice.orderGain || choice.costHP !== undefined || choice.shillingGain || choice.doomCost !== undefined || choice.reqFlag) ? 'justify-start' : 'justify-between';
@@ -3834,27 +4070,18 @@
                     }
                     
                     // --- MUSHROOM CHECK: If mushroom is active and click is NOT a skill check, log a warning ---
-                    if (gameState.crewUseFree && choice.type !== 'skill' && choice.type !== 'dialogue') {
+                    if (gameState.crewUseFree && choice.type !== 'skill' && choice.type !== 'dialogue' && !choice.nextScene.includes('captain_orders')) {
                         addToHistory(`*Warning: The Pearlescent Mushroom's clarity is best saved for a crucial skill check.*`, 'system');
                         // Do NOT consume the free use, just continue the scene flow
                     }
 
                     // --- FINAL STOCK CHECK BEFORE TRANSACTION (Crucial Fix) ---
                     // This is still needed for asynchronous stock changes (e.g., two players buying the last item in MP mode)
-                    if (choice.type === 'action' && (currentSceneId === 'market_stall' || currentSceneId === 'alchemist_triage') && choice.stockItem) {
+                    if (choice.type === 'action' && (currentSceneId === 'market_stall' || currentSceneId === 'alchemist_triage' || currentSceneId === 'blackwater_tavern') && choice.stockItem) {
                          const currentStock = scenes[currentSceneId].stock[choice.stockItem] || 0;
                          if (currentStock <= 0) {
                             addToHistory(`${choice.stockItem} is out of stock.`, 'system');
                             renderScene(currentSceneId); // Reload scene to update choices
-                            return;
-                        }
-                    }
-                    // Handle Gruel stock check separately due to split buy/eat logic
-                    if (choice.type === 'action' && currentSceneId === 'blackwater_tavern' && choice.stockItem === 'Gruel') {
-                        const currentStock = scenes[currentSceneId].stock['Gruel'] || 0;
-                        if (currentStock <= 0) {
-                            addToHistory(`Gruel is out of stock.`, 'system');
-                            renderScene(currentSceneId); 
                             return;
                         }
                     }
@@ -3890,11 +4117,18 @@
                     if (choice.costHP !== undefined) gameState.currentHP = applyDamage(gameState.currentHP, choice.costHP); 
                     
                     if (choice.shillingGain) gameState.shillings += choice.shillingGain;
+                    if (choice.value) gameState.shillings += choice.value; // If a 'sell' button, apply value
                     if (choice.chaosGain) gameState.influence = Math.min(20, gameState.influence + choice.chaosGain);
                     
                     // RP FIX: Player perceives Order gain, even though it.s technically negative influence shift
                     if (choice.orderGain) gameState.influence = Math.max(-20, gameState.influence - choice.orderGain); 
                     
+                    // --- CREW ORDER SELECTION HANDLER (for permanent buff) ---
+                    if (choice.nextScene === 'lighthouse_morning' && currentSceneId === 'captain_orders' && choice.onSelect) {
+                        choice.onSelect(gameState); // Execute the permanent buff logic
+                    }
+
+
                     // --- DOOM COUNTER DECREMENT ON CLICK (Conditional) ---
                     // Decrement only if Act 1 has started AND the choice does NOT have doomCost: 0 (or is implicitly 1)
                     if (gameState.act1Started && choice.doomCost !== 0) {
@@ -4009,19 +4243,16 @@
                 }
                 
 				// 4. Doom Cost
-				// FIX: Check if we are in Act 1. Then, show cost if it is explicitly defined on the button, 
-				// OR if it's a standard scene (not boss/rest) which implies a default cost.
+				// FIX: Check if Quinn's Logistics is active AND the cost is > 0 OR it's explicitly defined as 0 on an action button.
 				const isStandardAct1Scene = gameState.act1Started && !scenes[currentSceneId].isBoss && !scenes[currentSceneId].isRest;
 				const hasExplicitCost = choice.doomCost !== undefined;
-
-				if (gameState.act1Started && (isStandardAct1Scene || hasExplicitCost)) {
-					// Determine cost based on explicit definition or default to 1 for generic travel/skill checks.
-					const cost = choice.doomCost !== undefined ? choice.doomCost : (choice.type === 'travel' || choice.type === 'skill' ? 1 : 0);
-
+                const cost = hasExplicitCost ? choice.doomCost : (isStandardAct1Scene ? 1 : 0);
+                
+				if (gameState.act1Started && gameState.quinnLogistics && cost >= 0) {
 					if (cost > 0) {
 						indicators.push({ text: `-${cost} Turns`, color: 'text-purple-400' });
-					} else if (cost === 0 && choice.doomCost === 0) {
-						// Only display if explicitly set to zero (like info scenes)
+					} else if (cost === 0 && (hasExplicitCost || choice.type === 'travel')) {
+						// Only display '0 Turns' if it's explicitly 0 (shopping) or a travel button in Act 1 (for consistency)
 						indicators.push({ text: `0 Turns`, color: 'text-purple-400' });
 					}
 				}
@@ -4272,7 +4503,7 @@
 
                     // Right Side: Action Button or Tag
                     const rightSide = document.createElement('div');
-                    if (isConsumable && itemDef.btnText !== 'USE') { // Only show button for consumable items that have a direct action (Heal/Revive)
+                    if (isConsumable && itemDef.btnText !== 'USE' && itemDef.btnText !== 'INSPECT' && itemDef.btnText !== 'THROW') { // Only show button for consumable items that have a direct action (Heal/Revive)
                         const actionBtn = document.createElement('button');
                         actionBtn.className = "px-2 py-1 bg-emerald-900/40 border border-emerald-600/30 text-emerald-500 text-[9px] font-bold rounded hover:bg-emerald-600 hover:text-white transition-all tracking-wider";
                         actionBtn.innerText = itemDef.btnText || "USE";
@@ -4288,7 +4519,7 @@
                     } else {
                         const tag = document.createElement('span');
                         tag.className = "text-[9px] text-gray-600 uppercase tracking-wider font-bold opacity-50 group-hover:opacity-100 transition-opacity";
-                        tag.innerText = "PASSIVE";
+                        tag.innerText = itemDef.btnText || "PASSIVE";
                         rightSide.appendChild(tag);
                     }
                     itemRow.appendChild(rightSide);
