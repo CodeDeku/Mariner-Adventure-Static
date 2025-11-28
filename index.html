@@ -298,27 +298,26 @@
 		}
 		/* State 2: Rift Collapsed (The Failure) - DIALED BACK & VISIBLE */
 		@keyframes rift-collapse-anim {
+			/* REDUCED INTENSITY AND SPREAD */
 			0% { 
-				/* Resting: Subtle purple vignette */
-				box-shadow: inset 0 0 50px 20px rgba(109, 40, 217, 0.6); 
+				box-shadow: inset 0 0 30px 10px rgba(109, 40, 217, 0.4); /* Reduced size and opacity */
 				background-color: rgba(88, 28, 135, 0.05); 
 			}
 			50% { 
-				/* Pulse: Expands, but opacity stays lower (0.15 instead of 0.3) */
-				box-shadow: inset 0 0 140px 50px rgba(139, 92, 246, 0.7); 
-				background-color: rgba(124, 58, 237, 0.15); 
+				box-shadow: inset 0 0 90px 30px rgba(139, 92, 246, 0.5); /* Reduced size and opacity */
+				background-color: rgba(124, 58, 237, 0.10); /* Reduced background flash */
 			}
 			100% { 
-				box-shadow: inset 0 0 50px 20px rgba(109, 40, 217, 0.6); 
+				box-shadow: inset 0 0 30px 10px rgba(109, 40, 217, 0.4); 
 				background-color: rgba(88, 28, 135, 0.05); 
 			}
 		}
 
 		.fx-rift-collapsed {
-			animation: rift-collapse-anim 4s infinite ease-in-out !important; /* Slower breath (4s) for less chaos */
+			animation: rift-collapse-anim 4s infinite ease-in-out !important; 
 			mix-blend-mode: normal !important; 
 			z-index: 25;
-			border: 1px solid rgba(139, 92, 246, 0.4); /* Thinner border */
+			border: 1px solid rgba(139, 92, 246, 0.4); 
 		}
 
         @keyframes flash-red-anim {
@@ -637,8 +636,6 @@
 				setTimeout(() => this.overlay.classList.remove('fx-flash-red'), 400);
 			}
 			
-			// We can delete the specific setPulse/setRiftCollapse methods and handle it directly in renderScene
-			// or keep a generic helper if you prefer.
 			setVignette(active) {
 				if(active) this.overlay.classList.add('fx-vignette-low');
 				else this.overlay.classList.remove('fx-vignette-low');
@@ -2531,7 +2528,7 @@
                     // COUNTER 2: Skill Mitigation (Absorb Elements) - Sets flag for stage 2
                     { 
                         text: "Channel Absorb Elements", 
-                        nextScene: 'smelter_absorb_bridge', // FIXED: Points to bridge scene
+                        nextScene: 'smelter_absorb_bridge', // FIXED: Points to bridge scene to set flag
                         type: 'action', 
                         reqSkill: 'Absorb Elements', 
                         doomCost: 0,
@@ -2868,7 +2865,7 @@
                     // COUNTER 2: Skill Mitigation (Primeval Awareness)
                     { 
                         text: "Channel Primeval Awareness", 
-                        nextScene: 'chapel_primeval_bridge', // FIXED: Points to bridge scene
+                        nextScene: 'chapel_primeval_bridge', // FIXED: Points to bridge scene to set flag
                         type: 'action', 
                         reqSkill: 'Primeval Awareness',
                         customClass: 'btn-shadow-glow' 
@@ -3463,6 +3460,15 @@
                 return;
             }
 
+            // --- VIGNETTE CHECK (FIXED) ---
+            // Apply low health vignette if HP is <= 30%
+            const hpPct = (gameState.currentHP / gameState.maxHP) * 100;
+            if (hpPct <= 30) {
+                fxManager.setVignette(true);
+            } else {
+                fxManager.setVignette(false);
+            }
+
             const textEl = document.getElementById('main-scene-text');
             // Check if we are in the Death scene to apply unique styling
             const isDeathScene = sceneId === 'edward_death';
@@ -4035,13 +4041,10 @@
             bar.className = `h-full transition-all duration-500 ${hpPct < 30 ? 'bg-red-600 animate-pulse' : 'bg-red-800'}`;
             document.getElementById('hp-text').innerText = `${gameState.currentHP}/${gameState.maxHP}`;
 
-            // Check for low health audio & vignette
+            // Check for low health audio
             audioManager.checkVulnerable(gameState.currentHP, gameState.maxHP);
-            if (hpPct <= 30) {
-                fxManager.setVignette(true);
-            } else {
-                fxManager.setVignette(false);
-            }
+            
+            // Note: Vignette check moved to renderScene()
             
             // --- DOOM COUNTER UI ---
             const doomDisplay = document.getElementById('doom-counter-display');
