@@ -5063,11 +5063,12 @@
             
             const infText = document.getElementById('inf-status-text');
             if (infText) {
-                if (inf < -10) infText.textContent = "Sworn to the Crown";
-                else if (inf < -5) infText.textContent = "Respected by Guards";
-                else if (inf > 10) infText.textContent = "Pirate Lord";
-                else if (inf > 5) infText.textContent = "Known Smuggler";
-                else infText.textContent = "Unknown / Neutral";
+                // Spyglass power activates at +/- 15. Max status is beyond 30.
+                if (inf <= -30) infText.textContent = "Sworn to the Crown (Max Order)";
+                else if (inf <= -15) infText.textContent = "Watchman (Spyglass Active)"; // Order Active: -15 to -30
+                else if (inf >= 30) infText.textContent = "Pirate Lord (Max Chaos)";
+                else if (inf >= 15) infText.textContent = "Privateer (Spyglass Active)"; // Chaos Active: 15 to 30
+                else infText.textContent = "Neutral / Growing";
             }
 
             // Crew UI
