@@ -473,8 +473,9 @@
         
         /* 7. SCENE IMAGE FILTER: Invert/Spectral */
 		body.plane-ethereal #scene-image {
-			/* brightness increased to 1.1, contrast slightly lowered to prevent crushing blacks */
-			filter: hue-rotate(190deg) saturate(0.8) contrast(1.1) brightness(1.1);
+			/* No heavy filters. Just a tiny boost to visibility. */
+			filter: brightness(1.1) contrast(1.05); 
+			mix-blend-mode: normal; 
 		}
 
         /* ACT 2: Tether Bar Glow */
@@ -484,11 +485,12 @@
         }
 
         /* ACT 2: Map Overlay Mode */
-        /* Apply this class to the body to trigger the image changes for blueprint view */
-        .map-active #scene-image {
-            filter: sepia(1) hue-rotate(180deg) saturate(1.5) !important; /* Blue-print style effect */
-            border: 2px solid #22d3ee;
-        }
+		/* Apply this class to the body to trigger the image changes for blueprint view */
+		.map-active #scene-image {
+			/* Remove sepia/hue-rotate so your custom blue map shows clearly */
+			filter: brightness(1.1) !important; 
+			border: 2px solid #22d3ee;
+		}
 
         /* ACT 2: Text for Ethereal Dice */
         .text-spectral-d8 {
@@ -4618,14 +4620,22 @@
             // PRIORITY 1: Has the Rift Collapsed? (Permanent Game State)
             // CHECK: If collapsed, the class is already handled in updateUI for persistence. 
             // This section simply prevents the atmospheric pulse from overriding it.
+			// PRIORITY 2: Is the Rift Pulse active? (Atmospheric State)
+            
+            // 1. Prologue (The Storm starts)
+            const isProloguePulse = ['prologue_storm', 'prologue_abyss'].includes(sceneId);
 
-            // FIX: Separated Prologue check so it works before Act 1 starts
-			const isProloguePulse = ['prologue_storm', 'prologue_abyss'].includes(sceneId);
-			const isAct1Pulse = gameState.act1Started && ['town_square', 'lighthouse_vigil', 'smelter_stage1_start', 'chapel_stage1_reveal', 'town_docks', 'blackwater_tavern', 'alchemist_triage'].includes(sceneId);
+            // 2. Act 1 Hubs (Only if Rift hasn't collapsed yet)
+            const isAct1Pulse = gameState.act1Started && !gameState.isRiftCollapse && 
+                ['town_square', 'lighthouse_vigil', 'smelter_stage1_start', 'chapel_stage1_reveal', 'town_docks', 'blackwater_tavern', 'alchemist_triage'].includes(sceneId);
 
-			if (!gameState.isRiftCollapse && (isProloguePulse || isAct1Pulse)) {
-				document.getElementById('fx-overlay').classList.add('fx-rift-pulse');
-			}
+            // 3. Act 2 (The Ethereal Plane - Always active except on failure)
+            // This ensures the pulse effect applies to the Map View and Manor Rooms
+            const isAct2Pulse = gameState.act2Started && sceneId !== 'act2_tether_fail';
+
+            if (isProloguePulse || isAct1Pulse || isAct2Pulse) {
+                document.getElementById('fx-overlay').classList.add('fx-rift-pulse');
+            }
 
             if (scene.onEnter && logText) {
                 const msg = scene.onEnter(gameState);
