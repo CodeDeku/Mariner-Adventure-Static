@@ -695,16 +695,16 @@
                     </div>
                 </div>
                 <!-- END ACT 2 TETHER DISPLAY -->
-                <div class="flex flex-col gap-2 text-sm">
+                <div class="flex flex-col gap-2 text-xs">
                     
                     <div class="flex gap-2">
                         <div class="bg-gray-900 p-2 rounded border border-gray-700 flex items-center justify-between flex-1 transition-all">
-                            <span class="text-amber-500 cinzel"><i class="fas fa-coins mr-1"></i>Coin</span>
+                            <span class="text-amber-500 cinzel"><i class="fas fa-coins mr-1"></i>Shillings</span>
                             <span id="shillings-display" class="font-bold text-gray-200">0</span>
                         </div>
 
                         <div id="supplies-display" class="bg-gray-900 p-2 rounded border border-gray-700 flex items-center justify-between flex-1 hidden fade-in">
-                            <span class="text-indigo-400 cinzel"><i class="fas fa-anchor mr-1"></i>Supply</span>
+                            <span class="text-indigo-400 cinzel"><i class="fas fa-anchor mr-1"></i>Supplies</span>
                             <span id="supplies-count" class="font-bold text-gray-200">0</span>
                         </div>
                     </div>
@@ -725,16 +725,6 @@
                         </div>
                         </div>
                 </div>
-
-                <!-- ACT 3: COMPANION PANEL (NEW) -->
-                <div id="companion-panel" class="hidden mb-2 pb-2 fade-in clean-spectral-title">
-                    <div class="flex justify-between items-end mb-1 clean-spectral-title">
-                        <span class="text-xs cinzel text-emerald-400"><i class="fas fa-users mr-1"></i> Allies</span>
-                    </div>
-                    <div id="companions-list" class="flex flex-col gap-2">
-                        <!-- Silas will be dynamically added here -->
-                    </div>
-                </div>
                 <!-- END ACT 3 COMPANION PANEL -->
 
                 <div>
@@ -745,8 +735,18 @@
                     <div class="grid grid-cols-2 gap-2" id="crew-panel">
                         </div>
                 </div>
+				
+				<!-- COMPANION PANEL -->
+                <div id="companion-panel" class="hidden pb-2 fade-in clean-spectral-title">
+                    <div class="flex justify-between items-end mb-1 clean-spectral-title">
+                        <span class="text-xs cinzel text-emerald-400"><i class="fas fa-users mr-1"></i> Allies</span>
+                    </div>
+                    <div id="companions-list" class="flex flex-col gap-2">
+                        <!-- Silas will be dynamically added here -->
+                    </div>
+                </div>
 
-                <!-- ACT 2: PLANAR SKILLS (NEW) -->
+                <!-- PLANAR SKILLS -->
                 <div id="planar-skills-container" class="hidden mb-2 pb-2 fade-in clean-spectral-title">
                     <div class="flex justify-between items-end mb-1 clean-spectral-title">
                         <span class="text-xs cinzel text-cyan-400"><i class="fas fa-bolt mr-1"></i> Horizon Walker</span>
