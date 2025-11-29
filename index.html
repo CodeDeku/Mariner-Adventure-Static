@@ -4357,20 +4357,7 @@
                 renderScene('edward_death');
                 return;
             }
-            
-            // --- MAP LOGIC FIX: Handle return from map view (clearing CSS) ---
-            if (choice.type === 'map_view') { // Check for the new custom type
-                 // Set the return point to the CURRENT scene before leaving
-                 // The renderScene logic for manor_map_view handles the actual rendering and saving
-                 btn.onclick = () => {
-                     audioManager.playClick();
-                     // CAPTURE THE CURRENT SCENE ID
-                     gameState.returnSceneId = gameState.currentSceneId; 
-                     renderScene(choice.nextScene);
-                 }
-                 // Skip the rest of the button setup logic below for the standard click handler
-                 return;
-            }
+           
 
             // --- PLANAR THEME TOGGLE ---
             // This applies the Act 2 CSS theme globally
