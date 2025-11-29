@@ -4174,7 +4174,6 @@
                             const nextScene = state.returnSceneId || 'manor_foyer'; 
                             state.returnSceneId = null; 
                             renderScene(nextScene); 
-                            return "Closed Map.";
                         },
                         tetherCost: 0 
                     }
@@ -4620,11 +4619,13 @@
             // CHECK: If collapsed, the class is already handled in updateUI for persistence. 
             // This section simply prevents the atmospheric pulse from overriding it.
 
-            // PRIORITY 2: Is the Rift Pulse active? (Atmospheric State)
-            // This is applied only if the scene is a hub/boss intro AND the Rift has NOT permanently collapsed.
-            if (gameState.act1Started && !gameState.isRiftCollapse && ['prologue_storm', 'prologue_abyss', 'town_square', 'lighthouse_vigil', 'smelter_stage1_start', 'chapel_stage1_reveal', 'town_docks', 'blackwater_tavern', 'alchemist_triage', 'blackwater_tavern'].includes(sceneId)) {
-                document.getElementById('fx-overlay').classList.add('fx-rift-pulse');
-            }
+            // FIX: Separated Prologue check so it works before Act 1 starts
+			const isProloguePulse = ['prologue_storm', 'prologue_abyss'].includes(sceneId);
+			const isAct1Pulse = gameState.act1Started && ['town_square', 'lighthouse_vigil', 'smelter_stage1_start', 'chapel_stage1_reveal', 'town_docks', 'blackwater_tavern', 'alchemist_triage'].includes(sceneId);
+
+			if (!gameState.isRiftCollapse && (isProloguePulse || isAct1Pulse)) {
+				document.getElementById('fx-overlay').classList.add('fx-rift-pulse');
+			}
 
             if (scene.onEnter && logText) {
                 const msg = scene.onEnter(gameState);
