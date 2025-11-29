@@ -592,7 +592,7 @@
                 </div>
 
                 <div>
-                    <div class="flex justify-between items-end border-b border-gray-700 pb-1 mb-2">
+                    <div class="flex justify-between items-end border-b border-gray-700 pb-1 mb-2 clean-spectral-title">
                         <span class="text-xs cinzel text-gray-400">Guiding Voice (+1d4)</span>
                         <span class="text-[10px] text-gray-600 italic">Resets on Long Rest</span>
                     </div>
@@ -602,7 +602,7 @@
 
                 <!-- ACT 2: PLANAR SKILLS (NEW) -->
                 <div id="planar-skills-container" class="hidden mb-2 border-b border-gray-700 pb-2 fade-in">
-                    <div class="flex justify-between items-end mb-1">
+                    <div class="flex justify-between items-end mb-1 clean-spectral-title">
                         <span class="text-xs cinzel text-cyan-400"><i class="fas fa-bolt mr-1"></i> Horizon Walker</span>
                     </div>
                     <div class="grid grid-cols-2 gap-2">
@@ -621,7 +621,7 @@
                 <!-- END ACT 2 PLANAR SKILLS -->
 
                 <div class="flex-1 flex flex-col">
-                    <div class="flex justify-between items-end border-b border-gray-700 pb-1 mb-2">
+                    <div class="flex justify-between items-end border-b border-gray-700 pb-1 mb-2 clean-spectral-title">
                         <span class="text-xs cinzel text-gray-400"><i class="fas fa-briefcase mr-1"></i> Inventory</span>
                     </div>
 
@@ -3907,7 +3907,8 @@
                     { text: "Enter Library", nextScene: 'manor_library', type: 'travel', tetherCost: 1 },
                     { text: "Enter Grand Hall", nextScene: 'manor_hall', type: 'travel', tetherCost: 1 },
                     // Conditional Button: Only shows if Blueprint is owned
-                    { text: "Check Blueprint (Map)", nextScene: 'manor_map_view', type: 'travel', reqItem: 'Manor Blueprint', tetherCost: 0 }
+                    // FIX: This button now uses the custom action type 'map_view' to trigger the capture logic
+                    { text: "Check Blueprint (Map)", nextScene: 'manor_map_view', type: 'map_view', reqItem: 'Manor Blueprint', tetherCost: 0 } 
                 ]
             },
             
@@ -3981,10 +3982,10 @@
                 text: "You unfurl the spectral chart. The ink glows, highlighting your current location within the vast, impossible architecture of the Manor.",
                 // Note: The image swapping logic lives in renderScene's choice handler
                 onEnter: (state) => {
-                    // Check where we came from and store it so we can return
+                    // returnSceneId should already be set by the calling scene's handler
+                    // If it isn't set, default to Foyer
                     if (!state.returnSceneId) {
-                        // If somehow we got here without a return ID (e.g., direct jump from failure), default to foyer
-                        state.returnSceneId = 'manor_foyer';
+                        state.returnSceneId = 'manor_foyer'; 
                     }
                     // Add visual class for map style (sepia tone/blueprint look)
                     document.body.classList.add('map-active');
@@ -3997,6 +3998,7 @@
                         // Using a custom action to ensure we clean up the visual class
                         action: (state) => {
                             document.body.classList.remove('map-active');
+                            // USE the CAPTURED returnSceneId
                             const nextScene = state.returnSceneId || 'manor_foyer'; 
                             state.returnSceneId = null; // Clear it after use
                             renderScene(nextScene); 
@@ -4357,9 +4359,17 @@
             }
             
             // --- MAP LOGIC FIX: Handle return from map view (clearing CSS) ---
-            if (!sceneId.includes('map_view')) {
-                 document.body.classList.remove('map-active');
-                 gameState.returnSceneId = null;
+            if (choice.type === 'map_view') { // Check for the new custom type
+                 // Set the return point to the CURRENT scene before leaving
+                 // The renderScene logic for manor_map_view handles the actual rendering and saving
+                 btn.onclick = () => {
+                     audioManager.playClick();
+                     // CAPTURE THE CURRENT SCENE ID
+                     gameState.returnSceneId = gameState.currentSceneId; 
+                     renderScene(choice.nextScene);
+                 }
+                 // Skip the rest of the button setup logic below for the standard click handler
+                 return;
             }
 
             // --- PLANAR THEME TOGGLE ---
@@ -4447,14 +4457,12 @@
             fxManager.clearEffects(); 
 
             // PRIORITY 1: Has the Rift Collapsed? (Permanent Game State)
-            // CHECK: Is the Rift collapsed AND are we NOT in a scene where it should be hidden/closed?
-            if (gameState.isRiftCollapse && !['finale_completed', 'edward_death', 'act2_arrival'].includes(sceneId)) {
-                // Shows the failure overlay
-                document.getElementById('fx-overlay').classList.add('fx-rift-collapsed');
-            }
+            // CHECK: If collapsed, the class is already handled in updateUI for persistence. 
+            // This section simply prevents the atmospheric pulse from overriding it.
 
             // PRIORITY 2: Is the Rift Pulse active? (Atmospheric State)
-            else if (['prologue_storm', 'prologue_abyss', 'town_square', 'lighthouse_vigil', 'smelter_stage1_start', 'chapel_stage1_reveal', 'town_docks', 'blackwater_tavern'].includes(sceneId)) {
+            // This is applied only if the scene is a hub/boss intro AND the Rift has NOT permanently collapsed.
+            if (gameState.act1Started && !gameState.isRiftCollapse && ['prologue_storm', 'prologue_abyss', 'town_square', 'lighthouse_vigil', 'smelter_stage1_start', 'chapel_stage1_reveal', 'town_docks', 'blackwater_tavern', 'alchemist_triage', 'blackwater_tavern'].includes(sceneId)) {
                 document.getElementById('fx-overlay').classList.add('fx-rift-pulse');
             }
 
@@ -5318,7 +5326,7 @@
 					const doomDisplay = document.getElementById('doom-counter-display');
 					const doomText = document.getElementById('doom-timer-text');
 					const doomBar = document.getElementById('doom-bar');
-					const maxDoom = 20; // UPDATED MAX RIFT STABILITY
+					const maxDoom = 20; 
 
 					if (gameState.act1Started) {
 						doomDisplay.classList.remove('hidden'); // Show the doom counter
@@ -5326,23 +5334,39 @@
 						const doomPct = (gameState.doomTimer / maxDoom) * 100;
 						doomBar.style.width = `${doomPct}%`;
 						
-						// Flash red when timer is low or collapsed
+						// 1. Reset base classes for bar and text
+						doomBar.classList.remove('bg-purple-600', 'bg-red-700', 'bg-yellow-600', 'animate-pulse');
+						doomText.classList.remove('text-red-500', 'text-yellow-500');
+						
+						// FIX 2A: Ensure FX is removed if the collapse state is false
+						if (!gameState.isRiftCollapse) {
+							document.getElementById('fx-overlay').classList.remove('fx-rift-collapsed');
+						}
+
+
+						// 2. CHECK FOR PERMANENT COLLAPSE (Highest Priority)
 						if (gameState.isRiftCollapse) {
 							doomBar.classList.add('bg-red-700', 'animate-pulse');
-							doomBar.classList.remove('bg-purple-600');
 							doomText.textContent = `COLLAPSED!`;
 							doomText.classList.add('text-red-500');
-						} else if (gameState.doomTimer <= 5) {
+							
+							// FIX 2B: Force FX overlay back on every update if the collapse flag is true
+							document.getElementById('fx-overlay').classList.add('fx-rift-collapsed');
+						} 
+						// 3. Check for Low Timer Warning (only if NOT collapsed)
+						else if (gameState.doomTimer <= 5) {
 							doomBar.classList.add('bg-yellow-600', 'animate-pulse');
 							doomBar.classList.remove('bg-purple-600');
 							doomText.classList.add('text-yellow-500');
-						} else {
-							 doomBar.classList.remove('bg-red-700', 'bg-yellow-600', 'animate-pulse');
-							 doomBar.classList.add('bg-purple-600');
-							 doomText.classList.remove('text-red-500');
+						} 
+						// 4. Default State (Normal purple)
+						else {
+							doomBar.classList.add('bg-purple-600');
 						}
 					} else {
 						doomDisplay.classList.add('hidden'); // Hide doom counter outside Act 1
+						// FIX 2C: Ensure FX is removed if Act 1 is complete (i.e., we are in Act 2)
+						document.getElementById('fx-overlay').classList.remove('fx-rift-collapsed');
 					}
 					
 					// --- TETHER COUNTER UI (ACT 2) ---
