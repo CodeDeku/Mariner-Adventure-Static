@@ -2791,8 +2791,12 @@
                         customClass: 'btn-keen-senses'
                     },
                     { text: "Recall Ancient Charts", nextScene: 'sea_fog_history_logic', type: 'skill', dc: 14, skill: 'History' },
-					{ text: "Brute Force Through", nextScene: 'sea_fog_fail', type: 'skill', dc: 15, skill: 'Athletics' }
+					{ text: "Brute Force Through", nextScene: 'sea_fog_athletics_logic', type: 'skill', dc: 15, skill: 'Athletics' }
                 ]
+            },
+			'sea_fog_athletics_logic': {
+                isLogic: true,
+                resolve: (roll) => roll >= 15 ? 'sea_fog_success' : 'sea_fog_fail'
             },
 			'sea_fog_history_logic': {
                 isLogic: true,
