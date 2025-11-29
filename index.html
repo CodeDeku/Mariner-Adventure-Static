@@ -131,7 +131,6 @@
 			color: #fcd34d; /* Amber-300 */
 			text-shadow: 0 0 5px rgba(245, 158, 11, 0.4);
 			font-weight: 700;
-			border-bottom: 1px dotted #78350f; /* Subtle underline for items */
 		}
 
 		/* Enemies / Direct Danger */
@@ -1103,11 +1102,9 @@
             // Toggle Visuals
             if (gameState.isEthereal) {
                 document.body.classList.add('plane-ethereal');
-                addToHistory("*Stepped into the Ethereal Plane.*", "system");
                 audioManager.playGhost();
             } else {
                 document.body.classList.remove('plane-ethereal');
-                addToHistory("*Returned to the Material Plane.*", "system");
                 audioManager.playClick(); // Sound distinct from ghost
             }
             
@@ -1589,7 +1586,7 @@
             },
             'prologue_abyss': {
                 title: "The God of the Deep",
-				text: "The deck of <span class='text-spectral'>The Trident's Kiss</span> heaves. The sky isn't just storming; it hates you. Above, the clouds are a bleeding violet bruise. Captain Gareth stands at the wheel, singing against the gale. '...But who pays the toll for the army of dead?!' he roars. Quinn is frantically tying down crates, screaming that the manifest is slipping away.",
+				text: "A wave of pure magical force shatters the hull. The freezing dark claims you instantly. You sink, drifting into the abyss, and see IT rising—a colossal shadow, vast as a mountain. The screams of Gareth, Quinn, Talon, and Bones are silenced by the water... only to re-ignite inside your skull, burning hotter than the freezing deep.",
 				journal: "I died. I know I died. But the Shadow beneath the waves spat me back out. Now, I am not alone in my own skin.",
                 choices: [
                     { text: "Gasp for air (Wake Up)", nextScene: 'start', type: 'travel' }
@@ -2556,7 +2553,7 @@
                         scenes['town_square'].choices = [
                             // Safe House (Only if Ethereal)
                             { 
-                                text: "Enter the Vanishing Gates (Safehouse)", 
+                                text: "Enter the Vanishing Manor", 
                                 nextScene: 'wolf_estate_safe', 
                                 type: 'travel', 
                                 reqFlag: 'isEthereal',
@@ -2571,11 +2568,10 @@
                                 doomCost: 0 
                             },
                             // Essential Shops & Work
-                            // Essential Shops & Work
 							{ text: "Visit The Triage Alchemist", nextScene: 'alchemist_triage', type: 'travel', doomCost: 0 },
-							{ text: "Go to The Harbor Provisioner", nextScene: 'port_provisioner', type: 'travel', doomCost: 0 }, // Points to new Act 3 shop,
                             { text: "Rest at The Blackwater Tavern", nextScene: 'blackwater_tavern', type: 'travel', doomCost: 0 },
-							{ text: "Explore the Docks", nextScene: 'town_docks', type: 'travel', doomCost: 0 } 
+							{ text: "Explore the Docks", nextScene: 'town_docks', type: 'travel', doomCost: 0 }, 
+							{ text: "Go to The Harbor Provisioner", nextScene: 'port_provisioner', type: 'travel', doomCost: 0 }
                         ];
                         
                         return null; // STOP here. Do not run Act 1 logic.
@@ -2665,10 +2661,14 @@
                 journal: `Act 3 started. Acquired the ship, ${gameState.shipName}.`,
                 onEnter: (state) => {
                     state.act3Started = true;
-                    state.act2Started = false; // Officially end Act 2 state
+                    state.act2Started = false; 
                     state.isEthereal = false;
+                    
+                    // FIX: Unlock the first Act 3 location immediately
+                    state.unlocked_dogtooth = true; 
+                    
                     document.body.classList.remove('plane-ethereal');
-                    return "Act 3 Commencing. Ship acquired. Set course!";
+                    return "Act 3 Commencing. Ship acquired. Bleak Dogtooth coordinates charted.";
                 },
                 choices: [
                     { text: "Check the Map", nextScene: 'sea_map_hub', type: 'travel', doomCost: 0 }
@@ -2802,9 +2802,13 @@
                 journal: "Recruited Silas, the Wolf King's Seneschal. (Companion Gained).",
                 onEnter: (state) => {
                     state.companions.silas.joined = true;
-                    // Unlock the Vampire Hub (since Silas can help track them)
+                    
+                    // FIX: Set the reqFlag for the Spire button
+                    state.unlocked_spire = true;
+                    // Also keep knownIslands for consistency if needed later
                     state.knownIslands.push('sanguine_spire_entry');
-                    return "Silas joined the crew. Sanguine Spire unlocked on the map.";
+                    
+                    return "Silas joined the crew. Sanguine Spire coordinates unlocked.";
                 },
                 choices: [{ text: "Return to Bleak Dogtooth", nextScene: 'bleak_dogtooth', type: 'travel', doomCost: 0 }]
             },
@@ -3118,13 +3122,12 @@
 				text: "You take a moment to consume the cheap gruel. It settles your stomach, but barely.",
 				journal: "I instantly consumed gruel for a small amount of healing.",
 				onEnter: (state) => {
-					// FIX: Check against state.maxHP (20), NOT MAX_OVERHEAL_CAP (25).
-					// If the player has Spectral HP (e.g., 22 HP), this will now trigger, preserving the shield logic.
+					// FIX: Check against state.maxHP (20)
 					if (state.currentHP >= state.maxHP) {
 						state.shillings += 1; // Refund cost
-						scenes['blackwater_tavern'].stock["Gruel"] += 1; // Refund stock
+                        // Refund logic is fine, but we don't need to increment stock here because we haven't decremented it yet
 						audioManager.playCoins();
-						return "Your natural health is full. The Gruel offers no benefit to your Spectral Shield. (Shilling refunded)";
+						return "Your natural health is full. (Shilling refunded)";
 					}
 					
 					const healAmount = 2;
@@ -3132,8 +3135,13 @@
 					
 					// FIX: Cap healing at state.maxHP (20)
 					state.currentHP = Math.min(state.maxHP, state.currentHP + healAmount);
+                    
+                    // FIX: ACTUALLY DECREMENT THE STOCK
+                    if (scenes['blackwater_tavern'].stock["Gruel"] > 0) {
+                        scenes['blackwater_tavern'].stock["Gruel"] -= 1;
+                    }
 					
-					return `Ate Gruel. Healed ${state.currentHP - oldHP} HP.`;
+					return `Ate Gruel. Healed ${state.currentHP - oldHP} HP. Stock decreased.`;
 				},
 				choices: [{ text: "Return to Tavern", nextScene: 'blackwater_tavern', type: 'travel', doomCost: 0 }]
 			},
