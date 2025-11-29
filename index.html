@@ -5354,11 +5354,7 @@
         async function init() {
             window.confirmReset = confirmReset;
             window.resetGame = resetGame; 
-            
-            // --- UI Update for Blink (Moved from the old UI section) ---
-            const blinkBtn = document.getElementById('btn-blink'); // SELECT THE BUTTON
-            blinkBtn.onclick = () => window.gameFunctions.triggerBlink(); 
-            // The visibility is still controlled in updateUI()
+           
 
             onAuthStateChanged(auth, async (u) => {
                 if (u) {
@@ -6392,17 +6388,6 @@
 						planarSkills.classList.remove('hidden');
 					} else {
 						planarSkills.classList.add('hidden');
-					}
-
-					// 3. Blink Button Specific Visibility
-					// This button sits inside the planar-skills-container
-					const blinkBtn = document.getElementById('btn-blink');
-					if (gameState.skills.includes("Blink")) {
-						blinkBtn.classList.remove('hidden');
-						// Add spectral styling to Blink if active
-						blinkBtn.classList.add('spectral-text-glow'); 
-					} else {
-						blinkBtn.classList.add('hidden');
 					}
 
 					// 4. Plane Walk Button Styling (Visual Feedback)
