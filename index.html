@@ -3941,6 +3941,44 @@
                     // Additional choices leading deeper into the mansion will be added here
                 ]
             },
+			'manor_hall_check': {
+                isLogic: true,
+                resolve: (roll) => roll >= 15 ? 'manor_hall_success' : 'manor_hall_fail'
+            },
+            'manor_hall_success': {
+                title: "Hidden Cache",
+                text: "Talon spots a misalignment in the spectral stones. You press a loose brick, revealing a stash left by a previous prisoner of the Manor.",
+                journal: "Found a hidden stash in the Grand Hall.",
+                onEnter: (state) => {
+                    state.hallLooted = true; // Set flag to hide button
+                    state.shillings += 15;
+                    audioManager.playCoins();
+                    return "Found 15 Shillings.";
+                },
+                choices: [{ text: "Return to Hall", nextScene: 'manor_hall', type: 'travel', tetherCost: 1 }]
+            },
+            'manor_hall_fail': {
+                title: "Automaton Patrol",
+                text: "You focus too intently on the wall and miss the sound of gears. A brass automaton phases through the floor, slashing you with a steam-blade before vanishing into the ceiling.",
+                journal: "Caught by a patrol in the Hall.",
+                onEnter: (state) => {
+                    state.currentHP = applyDamage(state.currentHP, 6);
+                    fxManager.flashRed();
+                    return "Took 6 Damage.";
+                },
+                choices: [
+                    { text: "Retreat to Foyer", nextScene: 'manor_foyer', type: 'travel', tetherCost: 1 },
+                     // Dead Man's Die Option
+                    { 
+                        text: "Cheat Fate (Use Dead Man's Die)", 
+                        nextScene: 'manor_hall_success', 
+                        type: 'action', 
+                        reqItem: "Dead Man's Die", 
+                        consume: true,
+                        customClass: 'btn-hero'
+                    }
+                ]
+            },
 
             'manor_library': {
                 title: "The Warden's Library (Ethereal)",
@@ -3955,7 +3993,8 @@
                         type: 'skill', 
                         skill: 'Investigation', 
                         dc: 12,
-                        tetherCost: 1
+                        tetherCost: 1,
+						reqNotItem: 'Manor Blueprint'
                     },
                     { text: "Return to Foyer", nextScene: 'manor_foyer', type: 'travel', tetherCost: 1 },
 					{ 
@@ -4001,6 +4040,7 @@
                     { text: "Return to Foyer", nextScene: 'manor_foyer', type: 'travel', tetherCost: 1 }
                 ]
             },
+			
 
             // THE ROBUST MAP SYSTEM
             'manor_map_view': {
