@@ -472,10 +472,10 @@
         }
         
         /* 7. SCENE IMAGE FILTER: Invert/Spectral */
-        body.plane-ethereal #scene-image {
-            filter: hue-rotate(190deg) saturate(0.8) contrast(1.2) brightness(0.8);
-            mix-blend-mode: luminosity; /* Ghostly B&W feel */
-        }
+		body.plane-ethereal #scene-image {
+			/* brightness increased to 1.1, contrast slightly lowered to prevent crushing blacks */
+			filter: hue-rotate(190deg) saturate(0.8) contrast(1.1) brightness(1.1);
+		}
 
         /* ACT 2: Tether Bar Glow */
         .bg-tether {
@@ -3918,107 +3918,65 @@
                 ]
             },
 
+
+			// --- ACT 2: THE MANOR WEB LAYOUT ---
+
             'manor_foyer': {
-                title: "The Grand Foyer (Ethereal)",
-                text: "The mansion's true glory is revealed. Statues of armored knights line the walls, but their armor is made of silver glass. To the <b>North</b> lies the Grand Hall. To the <b>West</b>, the smell of old paper drifts from the Library.",
-                journal: "Entered the Wolf King's Manor. The architecture is impossible, built of memory and glass.",
+                title: "The Grand Foyer",
+                text: "The Manor is a labyrinth of memory. The grand staircase ahead is shattered, floating in the void. Three arches stand before you, breathing cold mist.<br><br><b>West:</b> The Warden's Library.<br><b>East:</b> The Service Wing (Kitchens).<br><b>North:</b> The Grand Hall (Patrolled).",
+                journal: "The Foyer is the center. I can go West, East, or brave the North.",
                 choices: [
-                    { text: "Enter Library", nextScene: 'manor_library', type: 'travel', tetherCost: 1 },
-                    { text: "Enter Grand Hall", nextScene: 'manor_hall', type: 'travel', tetherCost: 1 },
-                    // Conditional Button: Only shows if Blueprint is owned
-                    // FIX: This button now uses the custom action type 'map_view' to trigger the capture logic
+                    { text: "Enter Library (West)", nextScene: 'manor_library', type: 'travel', tetherCost: 1 },
+                    { text: "Enter Kitchens (East)", nextScene: 'manor_kitchens', type: 'travel', tetherCost: 1 },
+                    { text: "Enter Grand Hall (North)", nextScene: 'manor_hall', type: 'travel', tetherCost: 1 },
                     { text: "Check Blueprint (Map)", nextScene: 'manor_map_view', type: 'map_view', reqItem: 'Manor Blueprint', tetherCost: 0 } 
                 ]
             },
-            
-            'manor_hall': {
-                title: "The Grand Hall (Ethereal)",
-                text: "The massive hall is mostly empty, lit by spectral chandeliers. You sense automated patrols of brass automatons passing through the walls in predictable patterns. You must be quick.",
-                journal: "The Grand Hall is heavily patrolled by automatons. I must be precise.",
-                choices: [
-                    { text: "Return to Foyer", nextScene: 'manor_foyer', type: 'travel', tetherCost: 1 },
-                    { text: "Search for a weak point (Talon)", nextScene: 'manor_hall_check', type: 'skill', dc: 15, skill: 'Perception', tetherCost: 1 }
-                    // Additional choices leading deeper into the mansion will be added here
-                ]
-            },
-			'manor_hall_check': {
-                isLogic: true,
-                resolve: (roll) => roll >= 15 ? 'manor_hall_success' : 'manor_hall_fail'
-            },
-            'manor_hall_success': {
-                title: "Hidden Cache",
-                text: "Talon spots a misalignment in the spectral stones. You press a loose brick, revealing a stash left by a previous prisoner of the Manor.",
-                journal: "Found a hidden stash in the Grand Hall.",
-                onEnter: (state) => {
-                    state.hallLooted = true; // Set flag to hide button
-                    state.shillings += 15;
-                    audioManager.playCoins();
-                    return "Found 15 Shillings.";
-                },
-                choices: [{ text: "Return to Hall", nextScene: 'manor_hall', type: 'travel', tetherCost: 1 }]
-            },
-            'manor_hall_fail': {
-                title: "Automaton Patrol",
-                text: "You focus too intently on the wall and miss the sound of gears. A brass automaton phases through the floor, slashing you with a steam-blade before vanishing into the ceiling.",
-                journal: "Caught by a patrol in the Hall.",
-                onEnter: (state) => {
-                    state.currentHP = applyDamage(state.currentHP, 6);
-                    fxManager.flashRed();
-                    return "Took 6 Damage.";
-                },
-                choices: [
-                    { text: "Retreat to Foyer", nextScene: 'manor_foyer', type: 'travel', tetherCost: 1 },
-                     // Dead Man's Die Option
-                    { 
-                        text: "Cheat Fate (Use Dead Man's Die)", 
-                        nextScene: 'manor_hall_success', 
-                        type: 'action', 
-                        reqItem: "Dead Man's Die", 
-                        consume: true,
-                        customClass: 'btn-hero'
-                    }
-                ]
-            },
 
+            // --- WEST WING (The Intel & Shortcut) ---
             'manor_library': {
-                title: "The Warden's Library (Ethereal)",
-                text: "Books float freely here, tethered by weak gravity chains. A large desk sits in the center. Quinn immediately flies toward a specific scroll case.",
+                title: "The Warden's Library",
+                text: "Books float freely here. Quinn flies toward a specific scroll case. A draft comes from a low grate near the floor, suggesting a ventilation shaft connecting to the East Wing.",
                 banter: {
-                    'quinn': "The architecture... it's designed to contain something, not keep people out. Look at these schematics!"
+                    'quinn': "The architecture is efficient. That vent leads to the kitchens. And this bookshelf... it's a door."
                 },
                 choices: [
                     { 
-                        text: "Quinn: Decipher the Schematics (Investigation)", 
+                        text: "Quinn: Decipher Schematics (Get Map)", 
                         nextScene: 'library_search_logic', 
                         type: 'skill', 
                         skill: 'Investigation', 
                         dc: 12,
                         tetherCost: 1,
-						reqNotItem: 'Manor Blueprint'
+                        reqNotItem: 'Manor Blueprint'
+                    },
+                    // LATERAL MOVE: Connects to East Wing
+                    { text: "Enter Crawlspace (To Kitchens)", nextScene: 'manor_crawlspace', type: 'travel', tetherCost: 1 },
+                    // FORWARD MOVE: Shortcut to end (Requires Map)
+                    { 
+                        text: "Open Secret Passage (Req: Blueprint)", 
+                        nextScene: 'manor_servants_passage', 
+                        type: 'travel', 
+                        reqItem: 'Manor Blueprint',
+                        tetherCost: 0,
+                        customClass: 'btn-success-glow'
                     },
                     { text: "Return to Foyer", nextScene: 'manor_foyer', type: 'travel', tetherCost: 1 },
-					{ 
-						text: "Check Blueprint (Map)", 
-						nextScene: 'manor_map_view', 
-						type: 'map_view', 
-						reqItem: 'Manor Blueprint', 
-						tetherCost: 0 
-					}
+                    { text: "Check Blueprint (Map)", nextScene: 'manor_map_view', type: 'map_view', reqItem: 'Manor Blueprint', tetherCost: 0 }
                 ]
             },
-
-            // LOGIC: Finding the Map
+            
+            // LOGIC: Finding the Map (Existing)
             'library_search_logic': {
                 isLogic: true,
                 resolve: (roll, state) => {
                     return roll >= 12 ? 'library_success' : 'library_fail';
                 }
             },
-
             'library_success': {
                 title: "The Blueprint Found",
-                text: "Quinn identifies the master document. It's not just a map; it's a containment chart. It shows the layout of the Manor and marks a room called 'The Anchor'.",
-                journal: "Found the Manor Blueprint. The Wolf King was a Planar Warden.",
+                text: "Quinn identifies the master document. It marks 'The Anchor' behind the Grand Hall and reveals a hidden servant's passage behind the bookcase.",
+                journal: "Found the Manor Blueprint. Revealed the Servant's Passage.",
                 onEnter: (state) => {
                     if (!state.inventory.includes("Manor Blueprint")) {
                         state.inventory.push("Manor Blueprint");
@@ -4028,32 +3986,182 @@
                 },
                 choices: [
                     { text: "Check Blueprint Now (Map)", nextScene: 'manor_map_view', type: 'travel', tetherCost: 0 },
+                    { text: "Return to Library", nextScene: 'manor_library', type: 'travel', tetherCost: 0 }
+                ]
+            },
+            'library_fail': {
+                title: "Lost Focus",
+                text: "The schematics are too complex. You cannot decipher the layout.",
+                choices: [{ text: "Return to Library", nextScene: 'manor_library', type: 'travel', tetherCost: 0 }]
+            },
+
+            // THE SHORTCUT SCENE
+            'manor_servants_passage': {
+                title: "The Servant's Passage",
+                text: "Guided by the Blueprint, you slide a bookshelf aside. A dusty, narrow tunnel bypasses the dangerous open spaces of the Manor, leading directly to the Grand Hall.",
+                journal: "Used the Blueprint to find a shortcut. Saved time.",
+                choices: [
+                    { text: "Emerge into Grand Hall", nextScene: 'manor_hall', type: 'travel', tetherCost: 0 } // Free move
+                ]
+            },
+
+            // --- THE INTERCONNECT (The Web) ---
+            'manor_crawlspace': {
+                title: "The Service Crawlspace",
+                text: "You are crawling inside the walls. It is tight, dark, and smells of rats. You can hear the hum of the Manor's heartbeat surrounding you. This tunnel connects the West and East wings.",
+                journal: "Took a shortcut through the walls. Tight squeeze.",
+                choices: [
+                    { text: "Crawl to Library (West)", nextScene: 'manor_library', type: 'travel', tetherCost: 1 },
+                    { text: "Crawl to Kitchens (East)", nextScene: 'manor_kitchens', type: 'travel', tetherCost: 1 }
+                ]
+            },
+
+            // --- EAST WING LOOP (Loot & Hazard) ---
+            'manor_kitchens': {
+                title: "The Ghost Kitchens",
+                text: "Spectral fires roar in cold hearths. Ghostly chefs prepare feasts that rot the instant they are plated. A heavy oak door leads further East to the Ballroom. A rusted grate sits low on the West wall.",
+                journal: "Found the Kitchens. They connect to the Library via a grate.",
+                onEnter: (state) => {
+                    // One-time loot spawn
+                    if (!state.inventory.includes("Rum")) {
+                         state.inventory.push("Rum");
+                         return "Found a bottle of spectral vintage (Rum).";
+                    }
+                    return null;
+                },
+                choices: [
+                    { text: "Push through to Ballroom", nextScene: 'manor_ballroom', type: 'travel', tetherCost: 1 },
+                    { text: "Enter Crawlspace (To Library)", nextScene: 'manor_crawlspace', type: 'travel', tetherCost: 1 },
                     { text: "Return to Foyer", nextScene: 'manor_foyer', type: 'travel', tetherCost: 1 }
+                ]
+            },
+
+            'manor_ballroom': {
+                title: "The Ballroom of the Damned",
+                text: "The Kitchens open into a massive Ballroom. Hundreds of ghosts dance in a swirling vortex. You can see the Grand Hall on the other side, but the dance floor is a hazard.",
+                journal: "Had to cross the Ballroom. The dancers are deadly.",
+                choices: [
+                    // Skill Check to cross
+                    { text: "Weave through the Dancers", nextScene: 'ballroom_dodge_logic', type: 'skill', dc: 14, skill: 'Athletics', tetherCost: 1 },
+                    // Hero Option
+                    { text: "Part the Crowd (Command)", nextScene: 'manor_hall', type: 'action', reqItem: "Captain's Tricorn", tetherCost: 1, customClass: 'btn-hero' },
+                    // Retreat
+                    { text: "Retreat to Kitchens", nextScene: 'manor_kitchens', type: 'travel', tetherCost: 1 }
+                ]
+            },
+            'ballroom_dodge_logic': {
+                isLogic: true,
+                resolve: (roll) => roll >= 14 ? 'manor_hall' : 'ballroom_fail'
+            },
+            'ballroom_fail': {
+                title: "Stepped on",
+                text: "You mistime your step and collide with a spinning couple. Their freezing touch saps your vitality. You stumble out the other side.",
+                onEnter: (state) => {
+                    state.currentHP = applyDamage(state.currentHP, 4);
+                    fxManager.flashRed();
+                    return "Took 4 Necrotic Damage.";
+                },
+                choices: [{ text: "Stumble into Grand Hall", nextScene: 'manor_hall', type: 'travel', tetherCost: 1 }]
+            },
+
+            // --- THE CONVERGENCE (Grand Hall) ---
+            'manor_hall': {
+                title: "The Grand Hall",
+                text: "All paths converge here. The Hall is massive and cold. Patrols of brass automatons phase through the walls. At the far end, a dizzying, spiraling staircase ascends into the dark.",
+                journal: "Reached the Grand Hall. The exit is blocked by the Penrose Staircase.",
+                choices: [
+                    // Talon's Loot Check (Existing)
+                    { text: "Search for a weak point (Talon)", nextScene: 'manor_hall_check', type: 'skill', dc: 15, skill: 'Perception', tetherCost: 1, reqNotFlag: 'hallLooted' },
+                    
+                    // The Goal
+                    { text: "Approach the Penrose Staircase", nextScene: 'manor_staircase', type: 'travel', tetherCost: 1 },
+                    
+                    // The Exits (Shows the open nature)
+                    { text: "Return to Foyer (South)", nextScene: 'manor_foyer', type: 'travel', tetherCost: 1 },
+                    { text: "Enter Ballroom (East)", nextScene: 'manor_ballroom', type: 'travel', tetherCost: 1 },
+                    
+                    { text: "Check Blueprint (Map)", nextScene: 'manor_map_view', type: 'map_view', reqItem: 'Manor Blueprint', tetherCost: 0 }
                 ]
             },
             
-            'library_fail': {
-                title: "Lost Focus",
-                text: "The schematics are too complex. The paper dissolves into mist as you touch it. You gain no immediate answers.",
-                journal: "Failed the Investigation check in the Library. Nothing found.",
+            // Existing Loot Logic for Hall
+            'manor_hall_check': {
+                isLogic: true,
+                resolve: (roll) => roll >= 15 ? 'manor_hall_success' : 'manor_hall_fail'
+            },
+            'manor_hall_success': {
+                title: "Hidden Cache",
+                text: "Talon spots a loose brick. You find a stash of old imperial coins.",
+                onEnter: (state) => {
+                    state.hallLooted = true; 
+                    state.shillings += 15;
+                    audioManager.playCoins();
+                    return "Found 15 Shillings.";
+                },
+                choices: [{ text: "Return to Hall", nextScene: 'manor_hall', type: 'travel', tetherCost: 1 }]
+            },
+            'manor_hall_fail': {
+                title: "Automaton Patrol",
+                text: "You focus too intently on the wall and miss the patrol. A brass blade grazes your arm.",
+                onEnter: (state) => {
+                    state.currentHP = applyDamage(state.currentHP, 6);
+                    fxManager.flashRed();
+                    return "Took 6 Damage.";
+                },
+                choices: [{ text: "Retreat to Hall", nextScene: 'manor_hall', type: 'travel', tetherCost: 1 }]
+            },
+
+            // --- THE FINALE OBSTACLE (Penrose Staircase) ---
+            'manor_staircase': {
+                title: "The Penrose Staircase",
+                text: "You step onto the stairs behind the Grand Hall. Looking up, you see the bottom of the staircase directly above you. It loops infinitely. Gravity shifts uncomfortably. Without a guide, you will be trapped in the loop.",
                 choices: [
-                    { text: "Return to Foyer", nextScene: 'manor_foyer', type: 'travel', tetherCost: 1 }
+                    // AUTO-SUCCESS with Blueprint
+                    { 
+                        text: "Follow Blueprint Instructions", 
+                        nextScene: 'manor_anchor_door', 
+                        type: 'action', 
+                        reqItem: 'Manor Blueprint',
+                        tetherCost: 1,
+                        customClass: 'btn-success-glow'
+                    },
+                    // Hard Skill Check (if they missed the map)
+                    { text: "Analyze Spatial Distortion", nextScene: 'staircase_logic', type: 'skill', dc: 16, skill: 'Investigation', tetherCost: 1 },
+                    { text: "Give Up (Return to Hall)", nextScene: 'manor_hall', type: 'travel', tetherCost: 1 }
                 ]
             },
-			
+            'staircase_logic': {
+                isLogic: true,
+                resolve: (roll) => roll >= 16 ? 'manor_anchor_door' : 'staircase_fail'
+            },
+            'staircase_fail': {
+                title: "Lost in Geometry",
+                text: "You climb for hours—or maybe seconds. You vomit from the vertigo and find yourself back at the bottom. The Tether weakens.",
+                onEnter: (state) => {
+                    state.tetherTimer = Math.max(0, state.tetherTimer - 2); // Time Penalty
+                    state.currentHP = applyDamage(state.currentHP, 2);
+                    return "Lost in the loop. -2 Additional Turns. Took 2 Damage.";
+                },
+                choices: [{ text: "Try Again", nextScene: 'manor_staircase', type: 'travel', tetherCost: 1 }]
+            },
 
-            // THE ROBUST MAP SYSTEM
+            // --- THE END OF ACT 2 ---
+            'manor_anchor_door': {
+                title: "The Anchor's Threshold",
+                text: "You solve the riddle of the stairs. A massive door pulsing with violet light stands before you. This is the heart of the anomaly. The Wolf King's ritual awaits.",
+                choices: [
+                    { text: "Begin the Final Ritual", nextScene: 'finale_ritual_start', type: 'travel', tetherCost: 0 }
+                ]
+            },
+
+            // MAP VIEW (EXISTING)
             'manor_map_view': {
                 title: "Architect's Blueprint",
-                text: "You unfurl the spectral chart. The ink glows, highlighting your current location within the vast, impossible architecture of the Manor.",
-                // Note: The image swapping logic lives in renderScene's choice handler
+                text: "The ink glows, showing the layout:<br><b>[West] Library</b> <-> <b>[East] Kitchens</b> (Connected via Crawlspace)<br><b>[North] Grand Hall</b> (Blocked by Patrols)<br><b>Secret Route:</b> Library -> Hall (Shortcut)",
                 onEnter: (state) => {
-                    // returnSceneId should already be set by the calling scene's handler
-                    // If it isn't set, default to Foyer
                     if (!state.returnSceneId) {
                         state.returnSceneId = 'manor_foyer'; 
                     }
-                    // Add visual class for map style (sepia tone/blueprint look)
                     document.body.classList.add('map-active');
                     return null;
                 },
@@ -4061,12 +4169,10 @@
                     { 
                         text: "Close Blueprint", 
                         type: 'action', 
-                        // Using a custom action to ensure we clean up the visual class
                         action: (state) => {
                             document.body.classList.remove('map-active');
-                            // USE the CAPTURED returnSceneId
                             const nextScene = state.returnSceneId || 'manor_foyer'; 
-                            state.returnSceneId = null; // Clear it after use
+                            state.returnSceneId = null; 
                             renderScene(nextScene); 
                             return "Closed Map.";
                         },
@@ -4094,6 +4200,7 @@
                     { text: "Wake up gasping (Return to Port Square)", nextScene: 'town_square', type: 'travel', tetherCost: 0 }
                 ]
             },
+			
             // --- END ACT 2 SCENES ---
 
             'edward_death': {
