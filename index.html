@@ -139,6 +139,12 @@
 			text-shadow: 0 0 5px rgba(220, 38, 38, 0.6);
 			font-weight: 700;
 		}
+		.text-blood {
+            color: #ef4444; /* Red-500 */
+            text-shadow: 0 0 8px rgba(220, 38, 38, 0.8); /* Deep Red Glow */
+            font-weight: 700;
+            font-family: 'Cinzel', serif; /* Makes it look regal */
+        }
 
 
         /* Custom glow for FREE USE / Mushroom */
@@ -2697,19 +2703,17 @@
             },
 
             'act3_intro_ship': {
-                title: "The Iron Lung",
-                text: `Weeks have passed since the Rift sealed. The chaos has subsided, leaving the Port a husk. You found a battered, but seaworthy, smuggling ketch on the docks. Quinn spent days charting a course in the Log. 'We're calling her <span class="text-item">${gameState.shipName}</span>, Captain,' he announces. 'And we're running low on supplies already.' A new world awaits beyond the fog line.`,
+                title: gameState.shipName, // Uses the new name as the Title!
+                text: `Quinn blows on the wet ink of the logbook. '<b><span class="text-item">${gameState.shipName}</span></b>,' he reads aloud. 'A fine name.'<br><br>He announces, 'We're running low on supplies already.' A new world awaits beyond the fog line.`,
                 journal: `Act 3 started. Acquired the ship, ${gameState.shipName}.`,
                 onEnter: (state) => {
                     state.act3Started = true;
                     state.act2Started = false; 
                     state.isEthereal = false;
-                    
-                    // FIX: Unlock the first Act 3 location immediately
                     state.unlocked_dogtooth = true; 
                     
                     document.body.classList.remove('plane-ethereal');
-                    return "Act 3 Commencing. Ship acquired. Bleak Dogtooth coordinates charted.";
+                    return `Act 3 Commencing. Ship named ${state.shipName}.`;
                 },
                 choices: [
                     { text: "Check the Map", nextScene: 'sea_map_hub', type: 'travel', doomCost: 0 }
@@ -2823,7 +2827,7 @@
             // WOLF HUB
             'bleak_dogtooth': {
                 title: "The Bleak Dogtooth",
-                text: "This jagged, wind-whipped island is home to the 'Lost Pack'—feral werewolves who have succumbed to savagery. They patrol the black rocks, snarling at the sea. You must find Silas before the tide washes him away.",
+                text: "This jagged, wind-whipped island is home to the <span class='text-danger' data-lore='Feral werewolves who have succumbed to savagery'>Lost Pack</span>. They patrol the black rocks, snarling at the sea. You must find Silas before the tide washes him away.",
                 onEnter: (state) => {
                     state.currentLocation = 'dogtooth';
                     if (state.companions.silas.joined) {
@@ -2892,7 +2896,7 @@
 			},
 			'dogtooth_lore_success': {
 				title: "The Pathology",
-				text: "Bones examines a fallen werewolf. 'This isn't just a curse,' he mutters. 'It's an engineered plague. The veins are black with alchemical residue.'",
+				text: "Bones examines a fallen werewolf with grim precision. 'This isn't just a curse,' he mutters, wiping <span class='text-void'>black ichor</span> from his knife. 'It's an engineered plague. The veins are clogged with alchemical residue.'",
 				journal: "Bones identified the Lycanthropy as an engineered plague. It seems the Vampires poisoned the wolves.",
 				onEnter: (state) => {
 					// Reward logic (e.g. Influence or just Lore)
@@ -2927,7 +2931,7 @@
             // VAMPIRE HUB (ENDGAME)
             'sanguine_spire_entry': {
                 title: "The Sanguine Spire",
-                text: "The sheer stone spire rises out of the ocean. It is capped by a gothic cathedral, pulsing with a deep, red light. This is the seat of the Sanguine Court.",
+                text: "The sheer stone spire rises out of the ocean. It is capped by a gothic cathedral, pulsing with a deep, red light. This is the seat of the <span class='text-danger'>Sanguine Court</span>.",
                 onEnter: (state) => {
                     state.currentLocation = 'spire';
                     return "The Spire is heavily defended. Brace for combat.";
@@ -2944,7 +2948,7 @@
 			// --- ENDGAME: SANGUINE SPIRE ---
             'sanguine_spire_combat': {
                 title: "The Sanguine Court",
-                text: "You enter the cathedral. Three Vampire Elders descend from the vaulted ceiling. They do not fear steel, but they hesitate when they see the <b>Sword of Valor</b> glowing in your hand.",
+                text: "You enter the cathedral. Three <span class='text-danger'>Vampire Elders</span> descend from the vaulted ceiling. They do not fear steel, but they hesitate when they see the <span class='text-item'>Sword of Valor</span> glowing in your hand.",
                 isBoss: true,
                 choices: [
                     { 
@@ -5064,7 +5068,37 @@
                 text: "You plant the Sword of Valor into the spectral anchor. The Ring of Brass flares, binding the energies. The Vanishing Manor implodes into a singularity of white light, dragging the corruption with it. <br><br>The weight of the Ethereal Plane lifts. You fall through the void, not into death, but into the salt spray of the material ocean.",
                 journal: "Closed the Rift at the Manor. Act 2 Complete.",
                 choices: [
-                    { text: "Wake up at Sea (Begin Act 3)", nextScene: 'act3_intro_ship', type: 'travel', doomCost: 0 }
+                    { text: "Wake up at Sea (Begin Act 3)", nextScene: 'act3_name_ship', type: 'travel', doomCost: 0 }
+                ]
+            },
+			
+			// --- NEW SCENE: SHIP NAMING ---
+            'act3_name_ship': {
+                title: "A New Vessel",
+                // We embed the Input Field directly in the text
+                text: `Weeks have passed since the Rift sealed. You found a battered, but seaworthy, smuggling ketch on the docks. It is ugly, scarred, and sturdy—perfect for a crew of the damned.<br><br>Quinn stands ready with a fresh page in the Log. "She's ours now, Captain," he says, quill poised. "But a ship without a name is bad luck. What do we call her?"<br><br>
+                <div class="mt-4 relative">
+                    <input type="text" id="ship-name-input" placeholder="The Iron Lung" autocomplete="off" maxlength="30" 
+                    class="w-full bg-gray-900 border border-amber-700/50 p-3 rounded text-amber-500 cinzel font-bold text-lg focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 shadow-inner placeholder-gray-700">
+                </div>`,
+                choices: [
+                    {
+                        text: "Christen the Ship",
+                        type: 'action',
+                        // Inline Action to capture the value
+                        action: (state) => {
+                            const input = document.getElementById('ship-name-input');
+                            let name = input.value.trim();
+                            
+                            // Default Fallback if they leave it empty
+                            if (!name) name = "The Iron Lung"; 
+                            
+                            state.shipName = name; // Save to State
+                            
+                            renderScene('act3_intro_ship'); // Proceed
+                            return `Christened the ship: <span class="text-item">${name}</span>.`;
+                        }
+                    }
                 ]
             },
 
@@ -5409,6 +5443,7 @@
 
             // NEW: Act 3 Reset flags
             gameState.act3Started = false;
+			gameState.shipName = "The Iron Lung";
             gameState.knownIslands = ['port_hub'];
             gameState.currentLocation = 'port_hub';
             gameState.supplies = 10;
@@ -5438,7 +5473,7 @@
             let html = '';
             if (type === 'entry') {
                 // Apply spectral-text-glow to crew names in the journal
-                const processedText = text.replace(/(Captain Gareth|Gareth|Quinn|Talon|Bones|Wolf King|Ring of Brass|Sword of Valor|Smelter|Chapel|Absorb Elements|Primeval Awareness|Phoenix Draft|Manor Blueprint)/g, '<span class="spectral-text-glow">$1</span>');
+                const processedText = text.replace(/(Captain Gareth|Gareth|Quinn|Talon|Bones|Silas|Wolf King|Ring of Brass|Sword of Valor|Smelter|Chapel|Sanguine Spire|Bleak Dogtooth|Vampire|Iron Lung|Absorb Elements|Primeval Awareness|Phoenix Draft|Manor Blueprint|Spectral Lantern)/g, '<span class="spectral-text-glow">$1</span>');
                 html = `<div class="journal-font pb-4 border-b border-gray-700/30 text-gray-400 fade-in">${processedText}</div>`;
             } else if (type === 'system') {
                 html = `<div class="text-xs text-amber-500 font-mono mb-2 fade-in">> ${text}</div>`;
