@@ -5615,7 +5615,7 @@
                     MARKET_BUY_OPTIONS.forEach(sale => {
                         const actualStock = currentSceneStock[sale.item] || 0;
                         const itemDef = itemRegistry[sale.item];
-                        const isHealing = itemDef && itemDef.name.includes('Heal');
+                        const isHealing = itemDef && (itemDef.name || '').includes('Heal');
                         const isFull = gameState.currentHP >= gameState.maxHP;
                         const canAfford = gameState.shillings >= sale.cost;
                         
