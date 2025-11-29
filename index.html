@@ -5562,7 +5562,7 @@
 
                
                 // 2. Standard Item Logic (Tutorial OR Act 1 OR Act 2)
-                else {
+                {
                     MARKET_BUY_OPTIONS.forEach(sale => {
                         const actualStock = currentSceneStock[sale.item] || 0;
                         const itemDef = itemRegistry[sale.item];
