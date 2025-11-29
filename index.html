@@ -4381,24 +4381,12 @@
                     gameState = savedState;
                     
                     // --- PERSIST SCENE STOCK CHANGES ---
-                    // This ensures any purchases/sales made before the last save persist 
-                    // on the scene object, not just in the state.
-                    if (data.market_stall_stock) {
-                         scenes['market_stall'].stock = data.market_stall_stock;
-                    }
-                    if (data.alchemist_triage_stock) {
-                        scenes['alchemist_triage'].stock = data.alchemist_triage_stock;
-                    }
-                    // NEW: Tavern Stock Persistence
-                    if (data.blackwater_tavern_stock) {
-                        scenes['blackwater_tavern'].stock = data.blackwater_tavern_stock;
-                    }
+                    if (data.market_stall_stock) scenes['market_stall'].stock = data.market_stall_stock;
+                    if (data.alchemist_triage_stock) scenes['alchemist_triage'].stock = data.alchemist_triage_stock;
+                    if (data.blackwater_tavern_stock) scenes['blackwater_tavern'].stock = data.blackwater_tavern_stock;
 
                     // --- ACT 2 STATE SYNC ---
-                    // If returning to a save where Act 2 had started, ensure CSS theme is applied
-                    if (gameState.isEthereal) {
-                        document.body.classList.add('plane-ethereal');
-                    }
+                    if (gameState.isEthereal) document.body.classList.add('plane-ethereal');
                     
                     renderScene(gameState.currentSceneId, false);
                     rebuildJournal();
@@ -4412,17 +4400,15 @@
                 if (snap.exists()) {
                     const data = snap.data();
                     if (JSON.stringify(data) !== JSON.stringify(gameState)) {
-                        
-                        // Apply scene specific stock changes from Firestore to the runtime scene object
+                        // Sync Stocks
                         if (data.market_stall_stock) {
                             scenes['market_stall'].stock = data.market_stall_stock;
-                            delete data.market_stall_stock; // Don't overwrite gameState with this old field
+                            delete data.market_stall_stock; 
                         }
                         if (data.alchemist_triage_stock) {
                             scenes['alchemist_triage'].stock = data.alchemist_triage_stock;
                             delete data.alchemist_triage_stock;
                         }
-                        // NEW: Tavern Stock Persistence
                         if (data.blackwater_tavern_stock) {
                             scenes['blackwater_tavern'].stock = data.blackwater_tavern_stock;
                             delete data.blackwater_tavern_stock;
@@ -4430,12 +4416,9 @@
 
                         gameState = { ...gameState, ...data };
                         
-                        // --- PLANAR THEME TOGGLE (ON REALTIME UPDATE) ---
-                        if (gameState.isEthereal) {
-                            document.body.classList.add('plane-ethereal');
-                        } else {
-                            document.body.classList.remove('plane-ethereal');
-                        }
+                        // --- PLANAR THEME TOGGLE ---
+                        if (gameState.isEthereal) document.body.classList.add('plane-ethereal');
+                        else document.body.classList.remove('plane-ethereal');
                         
                         updateUI();
                     }
@@ -4451,7 +4434,7 @@
             // --- ATTACH SCENE STOCK TO SAVED STATE ---
             safeState.market_stall_stock = scenes['market_stall'].stock;
             safeState.alchemist_triage_stock = scenes['alchemist_triage'].stock;
-            safeState.blackwater_tavern_stock = scenes['blackwater_tavern'].stock; // NEW: Tavern Stock Save
+            safeState.blackwater_tavern_stock = scenes['blackwater_tavern'].stock;
 
             await setDoc(docRef, safeState);
         }
@@ -4478,55 +4461,23 @@
         }
 
         async function resetGame() {
-            // Reset state
             gameState = createInitialState();
+            // Reset stocks
+            scenes['market_stall'].stock = { "Healing Potion": 1, "Rope": 1, "Torch": 1, "Curious Cargo": 1, "Rum": 0 };
+            scenes['alchemist_triage'].stock = { "Vitality Tincture": 2, "Smelling Salts": 3, "Flash Powder": 1, "Alchemical Fire": 1, "Holy Water": 1 };
+            scenes['blackwater_tavern'].stock = { "Gruel": 5 };
             
-            // Reset scene data manually (needed for market stock)
-            scenes['market_stall'].stock = {
-                "Healing Potion": 1,
-                "Rope": 1,
-                "Torch": 1,
-                "Curious Cargo": 1, 
-                "Rum": 0 
-            };
-            scenes['alchemist_triage'].stock = {
-                "Vitality Tincture": 2,
-                "Smelling Salts": 3,
-                "Flash Powder": 1,
-                "Alchemical Fire": 1, 
-                "Holy Water": 1 
-            };
-            scenes['blackwater_tavern'].stock = { // NEW: Tavern Stock Reset
-                "Gruel": 5 
-            };
-            
-            // FIX 1: Reset the Docks Work cost manually
+            // Reset Docks Cost
             const workBtn = scenes['town_docks'].choices.find(c => c.nextScene === 'docks_work');
-            if (workBtn) workBtn.costHP = 2; // Reset to base cost
+            if (workBtn) workBtn.costHP = 2; 
             
-            // Clear boss flags which may persist in the scene definitions (if not explicitly cleared on win/loss)
-            gameState.isAbsorbCharged = false;
-            gameState.isSurpriseRound = false;
-            gameState.isRiftCollapse = false;
-            // gameState.hasLoggedCollapse is already in createInitialState
-            gameState.act1Started = false; // Ensure Act 1 starts false on reset
-            // Reset one-time flags
-            gameState.hasObservedGambler = false;
-            gameState.hasSearchedSmugglerDrop = false;
-            // NEW: Docks work exhaustion counter reset
-            gameState.docksWorkCount = 0;
-            // NEW: Quinn's Logistics reset
-            gameState.quinnLogistics = false;
-            // NEW: Ethereal flag reset
             gameState.isEthereal = false;
-
+            document.body.classList.remove('plane-ethereal');
 
             document.getElementById('journal-content').innerHTML = '';
             await saveGame();
             renderScene('prologue_storm');
             rebuildJournal();
-            document.getElementById('inf-status-text').textContent = "Unknown to all";
-            document.getElementById('item-desc-area').textContent = "Hover over an item to inspect it.";
         }
 
         function rebuildJournal() {
@@ -4543,13 +4494,11 @@
         function addToHistory(text, type = 'entry') {
             let html = '';
             if (type === 'entry') {
-                // Apply spectral-text-glow to crew names in the journal
                 const processedText = text.replace(/(Captain Gareth|Gareth|Quinn|Talon|Bones|Wolf King|Ring of Brass|Sword of Valor|Smelter|Chapel|Absorb Elements|Primeval Awareness|Phoenix Draft|Manor Blueprint)/g, '<span class="spectral-text-glow">$1</span>');
                 html = `<div class="journal-font pb-4 border-b border-gray-700/30 text-gray-400 fade-in">${processedText}</div>`;
             } else if (type === 'system') {
                 html = `<div class="text-xs text-amber-500 font-mono mb-2 fade-in">> ${text}</div>`;
             } else if (type === 'roll') {
-                // Apply spectral-text-glow to roll results
                 html = `<div class="text-xs spectral-text-glow font-bold mb-2 fade-in font-serif">${text}</div>`;
             }
             gameState.history.push(html);
@@ -4560,114 +4509,23 @@
             const scene = scenes[sceneId];
             if (!scene) return;
             
-            // --- DEATH CHECK 0: Check previous state before processing current scene logic ---
-            // If the player entered this scene already dead (e.g., from damage applied in a previous scene's logic)
-            // This prevents a journal entry from the current scene being added before the death scene loads
+            // --- DEATH CHECK 0 ---
             if (gameState.currentHP === 0 && sceneId !== 'edward_death') {
                 renderScene('edward_death');
                 return;
             }
            
-
             // --- PLANAR THEME TOGGLE ---
-            // This applies the Act 2 CSS theme globally
-            if (gameState.isEthereal) {
-                document.body.classList.add('plane-ethereal');
-            } else {
-                document.body.classList.remove('plane-ethereal');
-            }
+            if (gameState.isEthereal) document.body.classList.add('plane-ethereal');
+            else document.body.classList.remove('plane-ethereal');
 
-            // ... existing updateUI code ...
-            const statsPanel = document.getElementById('stats-panel');
-
-
-            if (scene.isLogic) {
-                let roll = Math.floor(Math.random() * 20) + 1;
-                let crewUsedName = "None";
-                let logMsg = `Check (DC ${gameState.lastDC || 10}): Rolled d20 (${roll})`;
-                
-                // Clear last used crew ID before a new check
-                gameState.lastCrewUsedId = null;
-
-                if (activeCrewMember) {
-                    const isSkilled = getBonusForSkill(activeCrewMember, gameState.lastSkillType);
-                    const crewKey = activeCrewMember.id;
-                    
-                    if (isSkilled) { 
-                        // ACT 2 CHANGE: Ethereal Plane boosts crew power to D8
-                        const dieSize = gameState.isEthereal ? 8 : 4; 
-                        const bonus = Math.floor(Math.random() * dieSize) + 1;
-                        roll += bonus;
-                        crewUsedName = activeCrewMember.name;
-
-                        // Add d8 label if in Ethereal Plane
-                        const dieLabel = gameState.isEthereal ? `(Spectral D8!)` : `(${crewUsedName})`;
-
-                        // Use custom class for Spectral D8 roll
-                        logMsg += ` + <span class="${gameState.isEthereal ? 'text-spectral-d8' : ''}">${bonus}</span> ${dieLabel}`; 
-                        
-                        // MUSHROOM LOGIC CHECK (APPLY COST OR FREE USE)
-                        if (gameState.crewUseFree) {
-                            // Free use: DO NOT mark as used, but consume the mushroom effect.
-                            addToHistory(`*Pearlescent Mushroom consumed for FREE GUIDANCE.*`, 'system');
-                            gameState.crewUseFree = false; // CONSUME EFFECT
-                        } else {
-                            // Normal use: Mark as used.
-                            gameState.crew[crewKey].used = true;
-                        }
-                        
-                        // Store the ID of the crew member used on this check (used for Talon Cargo logic)
-                        if (roll >= gameState.lastDC) {
-                            gameState.lastCrewUsedId = crewKey;
-                        }
-                        
-                    } else if (gameState.crewUseFree) {
-                         // Crew selected, mushroom active, but SKILL DOESN'T MATCH.
-                         // No bonus is granted. Mushroom effect is conserved.
-                        crewUsedName = activeCrewMember.name;
-                        logMsg += ` + 0 (${crewUsedName} - Invalid Skill, Mushroom conserved)`;
-                        addToHistory(`*Mushroom conserved: ${crewUsedName} doesn't have expertise in ${gameState.lastSkillType}.*`, 'system');
-                        // DO NOT set crewUseFree = false here
-                    } else {
-                        // Crew selected, mushroom inactive, skill doesn't match.
-                        crewUsedName = activeCrewMember.name;
-                        logMsg += ` + 0 (${crewUsedName} - Invalid Skill)`;
-                        // Do not mark as used if skill was invalid
-                    }
-                    
-                    activeCrewMember = null;
-                }
-
-                addToHistory(`${logMsg} = ${roll}`, 'roll');
-                
-                // Resolve logic scene immediately based on this roll
-                const nextId = scene.resolve(roll, gameState); 
-                saveGame();
-                renderScene(nextId); 
-                return;
-            }
-
-            gameState.currentSceneId = sceneId;
-            
-			// --- FX TRIGGER LOGIC ---
-            // FX are cleared *before* the new scene FX are applied
+            // --- FX LOGIC ---
             fxManager.clearEffects(); 
-
-            // PRIORITY 1: Has the Rift Collapsed? (Permanent Game State)
-            // CHECK: If collapsed, the class is already handled in updateUI for persistence. 
-            // This section simply prevents the atmospheric pulse from overriding it.
-			// PRIORITY 2: Is the Rift Pulse active? (Atmospheric State)
             
-            // 1. Prologue (The Storm starts)
+            // Pulse Logic
             const isProloguePulse = ['prologue_storm', 'prologue_abyss'].includes(sceneId);
-
-            // 2. Act 1 Hubs (Only if Rift hasn't collapsed yet AND timer is not zero)
-            // Added check for doomTimer > 0 to prevent pulse from overriding the collapse effect on the final turn
             const isAct1Pulse = gameState.act1Started && !gameState.isRiftCollapse && gameState.doomTimer > 0 &&
                 ['town_square', 'lighthouse_vigil', 'smelter_stage1_start', 'chapel_stage1_reveal', 'town_docks', 'blackwater_tavern', 'alchemist_triage'].includes(sceneId);
-
-            // 3. Act 2 (The Ethereal Plane - Always active except on failure)
-            // This ensures the pulse effect applies to the Map View and Manor Rooms
             const isAct2Pulse = gameState.act2Started && sceneId !== 'act2_tether_fail';
 
             if (isProloguePulse || isAct1Pulse || isAct2Pulse) {
@@ -4676,933 +4534,435 @@
 
             if (scene.onEnter && logText) {
                 const msg = scene.onEnter(gameState);
-                // Apply damage and then check death immediately
                 if (msg) addToHistory(msg, 'system');
                 saveGame();
             }
 
-            // --- DOOM COUNTER LOGIC (Planar Instability) ---
-            const isBossScene = scenes[sceneId].isBoss;
-            
-            // The actual decrement logic is now inside the `btn.onclick` function.
-            // This logic below handles the state if the doom timer hit 0 on the last click.
-            
-            // ACT 1: DOOM COUNTER LOGIC
+            // --- DOOM/COLLAPSE LOGIC ---
             if (gameState.doomTimer <= 0 && gameState.act1Started) {
-                
-                // FIX 2B: Apply penalties and log the message ONLY ONCE
                 if (!gameState.isRiftCollapse && !gameState.hasLoggedCollapse) {
-                    
-                    // Set both collapse flags (The penalty applies here only once)
                     gameState.isRiftCollapse = true;
                     gameState.hasLoggedCollapse = true; 
-                    
-                    // Apply penalties and log the message
                     gameState.maxHP = Math.max(1, gameState.maxHP - 5);
-                    gameState.currentHP = Math.min(gameState.currentHP, gameState.maxHP); // Clamp current HP
-                    addToHistory(`!!! RIFT COLLAPSE !!! The veil has ruptured. All Skill Check DCs are permanently increased by 2. Max HP reduced by 5 due to toxic air.`, 'system');
+                    gameState.currentHP = Math.min(gameState.currentHP, gameState.maxHP);
+                    addToHistory(`!!! RIFT COLLAPSE !!! The veil has ruptured. Skill Check DCs +2. Max HP -5.`, 'system');
                 }
             }
             
-            // ACT 2: TETHER COUNTER LOGIC
+            // --- TETHER LOGIC ---
             if (gameState.tetherTimer <= 0 && gameState.act2Started && sceneId !== 'act2_tether_fail') {
-                 // Trigger the violent ejection
                  renderScene('act2_tether_fail');
                  return;
             }
             
-            // --- DEATH CHECK 1: Immediately check if onEnter killed the player ---
+            // --- DEATH CHECK 1 ---
             if (gameState.currentHP === 0 && sceneId !== 'edward_death') {
                 renderScene('edward_death');
                 return;
             }
 
-            // --- VIGNETTE CHECK (FIXED) ---
-            // Apply low health vignette if HP is <= 30%
+            // --- VIGNETTE ---
             const hpPct = (gameState.currentHP / gameState.maxHP) * 100;
-            if (hpPct <= 30) {
-                fxManager.setVignette(true);
-            } else {
-                fxManager.setVignette(false);
-            }
+            if (hpPct <= 30) fxManager.setVignette(true);
+            else fxManager.setVignette(false);
 
+            // Render Text
             const textEl = document.getElementById('main-scene-text');
-            // Check if we are in the Death scene to apply unique styling
             const isDeathScene = sceneId === 'edward_death';
-            
-            // Restore default text styling for normal scenes, use red only for death scene
             let titleClass = isDeathScene ? 'text-red-500' : 'text-amber-500';
             let textClass = isDeathScene ? 'text-red-300' : 'text-gray-300';
-
-            
             let finalHtml = `<h2 class="2xl cinzel ${titleClass} mb-2">${scene.title}</h2><p class="text-lg leading-relaxed ${textClass} fade-in">${scene.text}</p>`;
             
-            // --- BANTER INJECTION (AUTOMATIC) ---
-            
-            // 1. Scripted Banter (always prioritized if available)
+            // Render Banter
             if (scene.banter) {
                 Object.keys(scene.banter).forEach(crewId => {
                     if (gameState.crew[crewId] && !gameState.crew[crewId].used) {
-                        // Apply spectral glow to banter text (MODIFIED)
-                         finalHtml += `<div class="mt-4 spectral-text-glow italic border-l-2 border-blue-500 pl-3 fade-in">
-                                <span class="font-bold text-xs uppercase block mb-1">${gameState.crew[crewId].name}:</span>
-                                "${scene.banter[crewId]}"
-                              </div>`;
+                         finalHtml += `<div class="mt-4 spectral-text-glow italic border-l-2 border-blue-500 pl-3 fade-in"><span class="font-bold text-xs uppercase block mb-1">${gameState.crew[crewId].name}:</span>"${scene.banter[crewId]}"</div>`;
                     }
                 });
-            }
-            
-            // 2. Dynamic Banter Injection (20% chance on non-boss/non-scripted scenes)
-            const isScriptedScene = scene.banter || scene.isBoss || scene.isRest || scene.choices.some(c => c.type === 'skill');
-            // If the scene has no dedicated banter, is not a boss/rest scene, and we're past the prologue
-            if (!isScriptedScene && !sceneId.startsWith('prologue') && gameState.act1Started) {
+            } else if (!scene.isBoss && !scene.isRest && !sceneId.startsWith('prologue') && gameState.act1Started) {
                  const dynamicLine = getDynamicBanter();
                  if (dynamicLine) {
-                      finalHtml += `<div class="mt-4 spectral-text-glow italic border-l-2 border-blue-500 pl-3 fade-in">
-                            <span class="font-bold text-xs uppercase block mb-1">${dynamicLine.name}:</span>
-                            "${dynamicLine.line}"
-                          </div>`;
+                      finalHtml += `<div class="mt-4 spectral-text-glow italic border-l-2 border-blue-500 pl-3 fade-in"><span class="font-bold text-xs uppercase block mb-1">${dynamicLine.name}:</span>"${dynamicLine.line}"</div>`;
                  }
             }
             
             textEl.innerHTML = finalHtml;
             document.getElementById('scene-title').innerText = scene.title;
-            
             activeCrewMember = null; 
             
             generateSceneImage(sceneId);
-            renderChoices(scene.choices, isDeathScene); // Pass death status to renderChoices
+            renderChoices(scene.choices, isDeathScene);
             updateUI();
+            
+            // Handle Logic Scenes
+            if (scene.isLogic) {
+                let roll = Math.floor(Math.random() * 20) + 1;
+                let logMsg = `Check (DC ${gameState.lastDC || 10}): Rolled d20 (${roll})`;
+                
+                if (activeCrewMember) {
+                    const isSkilled = getBonusForSkill(activeCrewMember, gameState.lastSkillType);
+                    if (isSkilled) { 
+                        const dieSize = gameState.isEthereal ? 8 : 4; 
+                        const bonus = Math.floor(Math.random() * dieSize) + 1;
+                        roll += bonus;
+                        const dieLabel = gameState.isEthereal ? `(Spectral D8!)` : `(${activeCrewMember.name})`;
+                        logMsg += ` + <span class="${gameState.isEthereal ? 'text-spectral-d8' : ''}">${bonus}</span> ${dieLabel}`; 
+                        
+                        if (gameState.crewUseFree) {
+                            addToHistory(`*Pearlescent Mushroom consumed for FREE GUIDANCE.*`, 'system');
+                            gameState.crewUseFree = false; 
+                        } else {
+                            gameState.crew[activeCrewMember.id].used = true;
+                        }
+                        if (roll >= gameState.lastDC) gameState.lastCrewUsedId = activeCrewMember.id;
+                    } 
+                    activeCrewMember = null;
+                }
+
+                addToHistory(`${logMsg} = ${roll}`, 'roll');
+                const nextId = scene.resolve(roll, gameState); 
+                saveGame();
+                renderScene(nextId); 
+            }
         }
 
         function renderChoices(choices, isDeathScene = false) {
             const container = document.getElementById('choices-area');
             container.innerHTML = '';
-
-            // --- LOCAL STOCK UTILITY ---
             const currentSceneId = gameState.currentSceneId;
             const currentSceneStock = scenes[currentSceneId] ? scenes[currentSceneId].stock : {};
-            const marketStock = scenes['market_stall'].stock; // Reference for selling logic
-            
-            // Collect all choices, starting with static ones
+            const marketStock = scenes['market_stall'].stock;
             let processedChoices = [...choices]; 
-            
-            // --- DYNAMIC INJECTION: ALCHEMIST SECRET STOCK ---
-            // Inject trade option if on Alchemist Triage scene and has the coin, and Phoenix Draft hasn't been acquired
+
+            // --- DYNAMIC INJECTIONS ---
             if (currentSceneId === 'alchemist_triage' && gameState.inventory.includes('Strange Coin') && !gameState.inventory.includes('Phoenix Draft')) {
-                // Find insertion point before 'Sell Wares' or 'Return to Port Square'
-                const sellIndex = processedChoices.findIndex(c => c.nextScene === 'alchemist_sell');
-                const newChoice = {
-                    text: "Offer Strange Coin",
-                    nextScene: 'alchemist_secret_stock',
-                    type: 'action',
-                    reqItem: 'Strange Coin',
-                    consume: true,
-                    doomCost: 0
-                };
-
-                if (sellIndex !== -1) {
-                    processedChoices.splice(sellIndex, 0, newChoice);
-                } else {
-                    processedChoices.push(newChoice); // Fallback to end of list
-                }
+                processedChoices.unshift({ text: "Offer Strange Coin", nextScene: 'alchemist_secret_stock', type: 'action', reqItem: 'Strange Coin', consume: true, doomCost: 0 });
             }
-            // --- END DYNAMIC INJECTION ---
             
-            // --- DYNAMIC INJECTION: HORIZON WALKER STEP ---
             const hasRingAndBlade = gameState.inventory.includes("Ring of Brass") && gameState.inventory.includes("Sword of Valor");
-            const hasPlaneWalkSkill = gameState.skills.includes("Plane Walking");
-            
-            if (currentSceneId === 'town_square' && hasRingAndBlade && hasPlaneWalkSkill && gameState.isEthereal) {
-                const manorStepChoice = {
-                    text: "Step into the Vanishing Manor",
-                    nextScene: 'act2_arrival', // Start the Act 2 scene loop
-                    type: 'travel',
-                    customClass: 'btn-hero',
-                    doomCost: 0
-                };
-                // Prepend this to the choices list for high visibility
-                processedChoices.unshift(manorStepChoice);
+            if (currentSceneId === 'town_square' && hasRingAndBlade && gameState.skills.includes("Plane Walking") && gameState.isEthereal) {
+                processedChoices.unshift({ text: "Step into the Vanishing Manor", nextScene: 'act2_arrival', type: 'travel', customClass: 'btn-hero', doomCost: 0 });
             }
-            // --- END DYNAMIC INJECTION ---
 
-
-            // Handle dynamic generation for Market Scenes
+            // --- MARKET LOGIC ---
             if (currentSceneId === 'market_stall') {
-                // FIX 1: Retrieve all original navigation buttons first
                 const sellWaresNav = choices.find(c => c.nextScene === 'market_sell');
                 const leaveNav = choices.find(c => c.nextScene === 'market_crossroads');
-                
-                processedChoices = []; 
-
-                // 1. Generate Dynamic Buy Options
+                processedChoices = [];
                 MARKET_BUY_OPTIONS.forEach(sale => {
-                    // Check local stock for this item name
                     const actualStock = currentSceneStock[sale.item] || 0;
-                    
-                    // Check if player has max HP (if buying healing item)
                     const itemDef = itemRegistry[sale.item];
-					const isHealingItem = itemDef && itemDef.name && itemDef.name.includes('Heal');
+                    const isHealing = itemDef && itemDef.name.includes('Heal');
                     const isFullHP = gameState.currentHP >= gameState.maxHP;
-                    
-                    // RULE: Only display if in stock (actualStock > 0)
                     if (actualStock > 0) {
-                        processedChoices.push({
-                            text: `Buy ${sale.item.split('(')[0].trim()} (Stock: ${actualStock})`,
-                            nextScene: sale.nextScene,
-                            type: 'action',
-                            cost: sale.cost,
-                            stockItem: sale.item,
-                            doomCost: 0, // FIX: Market stall is PROLOGUE (no doom)
-                            isDisabled: isHealingItem && isFullHP
-                        });
+                        processedChoices.push({ text: `Buy ${sale.item.split('(')[0].trim()} (Stock: ${actualStock})`, nextScene: sale.nextScene, type: 'action', cost: sale.cost, stockItem: sale.item, doomCost: 0, isDisabled: isHealing && isFullHP });
                     }
                 });
-                
-                // 2. Add static navigation back in
-                // Rename the selling button text
-                if (sellWaresNav) {
-                    processedChoices.push(sellWaresNav);
-                }
-                
-                if (leaveNav) {
-                    processedChoices.push(leaveNav);
-                }
+                if (sellWaresNav) processedChoices.push(sellWaresNav);
+                if (leaveNav) processedChoices.push(leaveNav);
+            } 
+            // --- ALCHEMIST LOGIC ---
+            else if (currentSceneId === 'alchemist_triage') {
+                const sellNav = choices.find(c => c.nextScene === 'alchemist_sell');
+                const returnNav = choices.find(c => c.nextScene === 'town_square');
+                // Handle existing processedChoices (like the injected coin trade)
+                const injected = processedChoices.filter(c => c.nextScene === 'alchemist_secret_stock');
+                processedChoices = [...injected];
 
-            } else if (currentSceneId === 'market_sell') {
-                // Retrieve all original navigation buttons first
-                const backToBuyNav = choices.find(c => c.nextScene === 'market_stall');
-                const leaveNav = choices.find(c => c.nextScene === 'market_crossroads');
-                
-                processedChoices = []; 
-
-                // Get sell options from blueprint
-                const currentSellOptions = MARKET_SELL_OPTIONS;
-
-                // Generate Dynamic Sell Options
-				currentSellOptions.forEach(sell => {
-					// Check if the player has the item in inventory
-					if (gameState.inventory.includes(sell.item)) {
-						
-						// Special check for Curious Cargo: Market Merchant won't buy it if stock is 0 (one-time buy)
-						if (sell.item === 'Curious Cargo' && marketStock['Curious Cargo'] === 0) {
-							return; 
-						}
-						
-						processedChoices.push({
-							text: `Sell ${sell.item.split('(')[0].trim()} (+${sell.value}s)`, 
-							nextScene: sell.nextScene,
-							type: 'action',
-							reqItem: sell.item,
-							value: sell.value,
-							doomCost: sell.doomCost // Use explicit doomCost from blueprint (0 or 1 for cargo)
-						});
-					}
-				});
-				// Add back the navigation choices
-				if (backToBuyNav) {
-					processedChoices.push(backToBuyNav);
-				}
-				if (leaveNav) {
-					processedChoices.push(leaveNav);
-				}
-
-				} else if (currentSceneId === 'alchemist_triage') {
-					 // Isolate navigation choices and prepare to regenerate buy options
-					const sellWaresNav = processedChoices.find(c => c.nextScene === 'alchemist_sell');
-					const returnNav = processedChoices.find(c => c.nextScene === 'town_square');
-					const secretTrade = processedChoices.find(c => c.nextScene === 'alchemist_secret_stock'); // Get the injected choice
-
-					processedChoices = []; 
-
-					// 1. Inject the secret trade button first if it exists
-					if (secretTrade) {
-						processedChoices.push(secretTrade);
-					}
-
-					// 2. Generate Dynamic Buy Options
-					ALCHEMIST_BUY_OPTIONS.forEach(sale => {
-						const itemText = sale.item.split('(')[0].trim();
-						const actualStock = currentSceneStock[sale.item] || 0;
-						
-						// Check if buying healing item when full HP
-						const itemDef = itemRegistry[sale.item];
-						const isHealingItem = itemDef && (itemDef.name && (itemDef.name.includes('Tincture') || itemDef.name.includes('Potion')));
-						const isFullHP = gameState.currentHP >= gameState.maxHP;
-						
-						
-						// RULE: Only display if in stock (actualStock > 0)
-						if (actualStock > 0) {
-							processedChoices.push({
-								text: `Buy ${itemText} (${sale.cost}s)`,
-								nextScene: sale.nextScene,
-								type: 'action',
-								cost: sale.cost,
-								stockItem: sale.item,
-								doomCost: sale.doomCost, // FIX: Use explicit doomCost from blueprint (0)
-								isDisabled: isHealingItem && isFullHP
-							});
-						}
-					});
-					
-					// 3. Add static navigation back in
-					if (sellWaresNav) {
-						sellWaresNav.text = "Sell Wares (Premium)"; 
-						processedChoices.push(sellWaresNav);
-					}
-					
-					if (returnNav) {
-						processedChoices.push(returnNav);
-					}
-
-				} else if (currentSceneId === 'alchemist_sell') {
-					// Isolate navigation choices and prepare to regenerate sell options
-					const backToBuyNav = choices.find(c => c.nextScene === 'alchemist_triage');
-					const returnNav = choices.find(c => c.nextScene === 'town_square');
-					
-					processedChoices = []; 
-					
-					// Get sell options from blueprint
-					const currentSellOptions = ALCHEMIST_SELL_OPTIONS;
-
-					// Generate Dynamic Sell Options (Alchemist Stock)
-					currentSellOptions.forEach(sell => {
-						// RULE: Only display if player has the item in inventory
-						if (gameState.inventory.includes(sell.item)) {
-							// FIX: Check if selling back Alchemist stock that is already maxed
-							let isDisabled = false;
-							if (sell.nextScene === 'sell_tincture' && currentSceneStock["Vitality Tincture"] >= 2) {
-								isDisabled = true; // Cannot sell back if Alchemist is fully stocked (max 2)
-							}
-
-							processedChoices.push({
-								// FIX: Removed manual (+${sell.value}s) string to avoid duplication
-								text: `Sell ${sell.item.split('(')[0].trim()}`, 
-								nextScene: sell.nextScene,
-								type: 'action',
-								reqItem: sell.item,
-								value: sell.value,
-								doomCost: sell.doomCost, // FIX: Use explicit doomCost from blueprint (0)
-								isDisabled: isDisabled
-							});
-						}
-					});
-					// Add back the navigation choices
-					if (backToBuyNav) processedChoices.push(backToBuyNav);
-					if (returnNav) processedChoices.push(returnNav);
-				}
-				// NEW: Blackwater Tavern Rest/Gruel Logic (Task 2 & 3)
-				else if (currentSceneId === 'blackwater_tavern') {
-					const restOption = choices.find(c => c.nextScene === 'tavern_rest_success');
-					const returnOption = choices.find(c => c.nextScene === 'town_square');
-					const gamblerOption = choices.find(c => c.nextScene === 'tavern_gambler');
-					const infoSmelter = choices.find(c => c.nextScene === 'gather_info_smelter');
-					const infoChapel = choices.find(c => c.nextScene === 'gather_info_chapel');
-					const instantEat = choices.find(c => c.nextScene === 'eat_gruel_instant');
-					const buyToGo = choices.find(c => c.nextScene === 'buy_gruel_to_go');
-					
-					// Clear base choices to rebuild
-					processedChoices = []; 
-					const gruelStock = currentSceneStock['Gruel'] || 0;
-					const canAfford = gameState.shillings >= 1;
-					// Check if current HP is >= MaxHP (20). If so, healing is strictly wasteful/blocked by shield rule.
-					const isHealingWasteful = gameState.currentHP >= gameState.maxHP; 
-					
-					// 1. Instant Eat Gruel (conditional visibility/disability)
-					if (instantEat) {
-						let instantEatText = `Eat Gruel Now (Stock: ${gruelStock})`;
-						// Disable if full HP (20+), out of stock, or can't afford
-						let instantEatDisabled = !canAfford || gruelStock <= 0 || isHealingWasteful; 
-
-						processedChoices.push({
-							...instantEat, 
-							text: instantEatText, 
-							cost: instantEat.cost, 
-							doomCost: 0, 
-							isDisabled: instantEatDisabled,
-						});
-					}
-
-					// 2. Buy Gruel (To Go)
-					if (buyToGo) {
-						let buyToGoText = `Buy Gruel (To Go) (Stock: ${gruelStock})`;
-						// Disable if out of stock, or can't afford
-						let buyToGoDisabled = gruelStock <= 0 || !canAfford;
-
-						processedChoices.push({
-							...buyToGo,
-							text: buyToGoText,
-							cost: buyToGo.cost, 
-							doomCost: 0, 
-							isDisabled: buyToGoDisabled
-						});
-					}
-
-
-					// 3. Rest Option (Task 3 Fix: doomCost: 3 added in scene definition)
-					if (restOption) processedChoices.push(restOption);
-					
-					// 4. Info/Gambler options (non-cost options)
-					if (infoSmelter && !gameState.knowsSmelterSecret) processedChoices.push(infoSmelter);
-					if (infoChapel && !gameState.knowsChapelSecret) processedChoices.push(infoChapel);
-					
-					if (gamblerOption) processedChoices.push(gamblerOption);
-					if (returnOption) processedChoices.push(returnOption);
-
-				}
-				// NEW: Docks Dynamic Work Button logic
-				else if (currentSceneId === 'town_docks') {
-					 // The onEnter logic handles updating the costHP on the WORK button.
-					 const workBtn = choices.find(c => c.nextScene === 'docks_work');
-					 // The cost is calculated in the onEnter hook, so we retrieve the current value
-					 const currentCost = workBtn.costHP !== undefined ? workBtn.costHP : 2;
-					 const canAffordHP = gameState.currentHP > currentCost;
-					 
-					 // Find the button and update its isDisabled state based on HP cost
-					 const processedWorkBtn = {
-						...workBtn, 
-						text: workBtn.text, 
-						isDisabled: !canAffordHP,
-						// The doomCost: 1 is already on the button object itself
-					 };
-
-					 // Replace the original work button with the processed one
-					 processedChoices = processedChoices.map(c => c.nextScene === 'docks_work' ? processedWorkBtn : c);
-				}
-
-
-				// --- Process Choices and Create Buttons ---
-				processedChoices.forEach(choice => {
-					
-					// --- VISIBILITY (OMIT) CHECKS: Apply OMIT logic first ---
-					
-					// Check for required items (reqItem) and omit if missing.
-					if (choice.reqItem && !gameState.inventory.includes(choice.reqItem)) {
-						 // This correctly handles: Sell Curious Cargo, Search Smuggler's Drop (Ring of Brass), Use Rope, Use Torch
-						 return;
-					}
-					
-					// --- GENERAL REQUIREMENTS CHECK (Non-item reqs) ---
-					if (choice.reqSmuggler && gameState.influence < choice.reqSmuggler) return;
-					if (choice.reqGuard && gameState.influence > -choice.reqGuard) return;
-					
-					if (choice.reqNotItem && gameState.inventory.includes(choice.reqNotItem)) return; // NEW NOT ITEM CHECK
-					// NEW: Information Flag Check
-					if (choice.reqFlag && !gameState[choice.reqFlag]) return;
-					if (choice.reqNotFlag && gameState[choice.reqNotFlag]) return; // Task 4: Reverse logic check
-
-					// SKILL CHECK: If choice requires a skill, hide it if player doesn't have it
-					if (choice.reqSkill && !gameState.skills.includes(choice.reqSkill) && choice.type !== 'skill') return;
-
-
-					// --- DISABILITY (GREY OUT) CHECKS ---
-					let isDisabled = false;
-					let disabledClass = '';
-					
-					// Check 1: Affordability (Cost is defined for this choice AND player can't afford it)
-					if (choice.cost && gameState.shillings < choice.cost) {
-						isDisabled = true;
-						disabledClass = 'btn-disabled-cost';
-					}
-					// Check 2: Health Cost (Crucial Docks Fix)
-					if (choice.costHP !== undefined && gameState.currentHP <= choice.costHP) {
-						isDisabled = true;
-						disabledClass = 'btn-disabled-cost';
-					}
-					// Check 3: Custom disability flag (used for instant Gruel eat and now Buy Gruel)
-					if (choice.isDisabled) {
-						isDisabled = true;
-						disabledClass = 'btn-disabled-cost';
-					}
-					
-					
-					const btn = document.createElement('button');
-					
-					// Determine styling: Is this a Hero/Skill moment?
-					let isHeroButton = choice.reqSkill ? true : false;
-					let isCustomClassButton = choice.customClass ? true : false;
-					// FIXED LINE:
-					// Added "choice.nextScene &&" to ensure we don't crash on Reset buttons
-					let isTradeButton = choice.cost || choice.value || choice.shillingGain || (choice.nextScene && choice.nextScene.includes('sell') && currentSceneId.includes('alchemist'));
-					let isSkillCheck = choice.type === 'skill';
-
-					const alignmentClass = (isSkillCheck || isTradeButton || choice.chaosGain || choice.orderGain || choice.costHP !== undefined || choice.shillingGain || choice.doomCost !== undefined || choice.tetherCost !== undefined || choice.reqFlag) ? 'justify-start' : 'justify-between';
-					
-					let btnClass = "";
-					
-					if (isDeathScene) {
-						// Death button is always full red and large
-						btnClass = `btn-game w-full p-3 text-left rounded shadow flex items-center ${alignmentClass} cinzel font-bold bg-red-900 border-red-700 hover:bg-red-800 hover:border-amber-500 text-white text-xl text-center`;
-					} else if (isCustomClassButton) {
-						// Custom classes need the base styling mixed in for padding, shadow, etc.
-						content = `<span class="cinzel font-bold text-white">${rawText}</span>`;
-						
-						// NEW FIX: Success Glow Icon (Whisper)
-						if (choice.customClass === 'btn-success-glow') {
-							 icon = '<i class="fas fa-ear-listen text-gray-300"></i>';
-						}
-						// Custom Icon Logic for Keen Senses
-						else if (choice.customClass === 'btn-keen-senses') {
-							 icon = '<i class="fas fa-eye text-purple-300"></i>';
-						} else if (choice.customClass && choice.customClass.includes('spectral-active')) {
-							 // FIX 2: Captain's orders buttons use chevron and spectral glow
-							 icon = '<i class="fas fa-chevron-right text-white"></i>';
-						} else {
-							// General custom button icon (e.g. Fire/Shadow/Hero/Final Reset)
-							icon = '<i class="fas fa-chevron-right text-white"></i>';
-						}
-					}
-					
-					// Override icon for trade buttons
-					if (isTradeButton) {
-						icon = '<i class="fas fa-coins text-amber-500"></i>';
-					}
-					if (choice.type === 'reset') {
-						icon = '<i class="fas fa-sync-alt text-gray-400 group-hover:text-white"></i>';
-					}
-
-					if (isSkillCheck) {
-						// Skill notation and dice icon are aligned immediately after the label
-						// Apply spectral glow effect (MODIFIED)
-						supplementalText += ` <span class="spectral-text-glow text-sm uppercase tracking-wider ml-2 mr-4">[${choice.skill} DC ${choice.dc}]</span>`;
-						// Dice icon also receives spectral glow (MODIFIED)
-						icon = '<i class="fas fa-dice-d20 spectral-text-glow"></i>';
-					} else if (isHeroButton) {
-						// Hero Button Icon (NEW)
-						icon = '<i class="fas fa-star hero-icon"></i>'; 
-					}
-					
-					// --- Consistent Currency/Value/Influence Display ---
-					let indicators = [];
-
-					// 1. Shilling Cost/Value/Gain (Money Indicators)
-					if (choice.cost) {
-						indicators.push({ text: `-${choice.cost}s`, color: 'text-amber-500' });
-					} else if (choice.value) {
-						indicators.push({ text: `+${choice.value}s`, color: 'text-amber-500' });
-					} else if (choice.shillingGain) {
-						indicators.push({ text: `+${choice.shillingGain}s`, color: 'text-amber-500' });
-					}
-
-					// 2. Health Cost/Gain
-					// Use !== undefined check to include the 0 HP base cost for dynamic calculation
-					if (choice.costHP !== undefined) { 
-						indicators.push({ text: `-${choice.costHP} HP`, color: 'text-red-400' });
-					}
-
-					// 3. Chaos/Order Gain
-					if (choice.chaosGain) {
-						indicators.push({ text: `+${choice.chaosGain} Chaos`, color: 'text-emerald-400' });
-					} else if (choice.orderGain) {
-						indicators.push({ text: `+${choice.orderGain} Order`, color: 'text-blue-400' });
-					}
-					
-					// 4. Doom/Tether Cost
-					const isStandardAct1Scene = gameState.act1Started && !scenes[currentSceneId].isBoss && !scenes[currentSceneId].isRest;
-					
-					if (gameState.act1Started && gameState.quinnLogistics && isStandardAct1Scene) {
-						// ACT 1 DOOM DISPLAY
-						const hasExplicitCost = choice.doomCost !== undefined;
-						const cost = hasExplicitCost ? choice.doomCost : (isStandardAct1Scene ? 1 : 0);
-						
-						if (cost >= 0 && choice.type !== 'reset') {
-							if (cost > 0) {
-								indicators.push({ text: `-${cost} Time`, color: 'text-purple-400' }); 
-							} else if (cost === 0 && (hasExplicitCost || choice.type === 'travel')) {
-								indicators.push({ text: `0 Time`, color: 'text-purple-400' });
-							}
-						}
-					} else if (gameState.act2Started) {
-						// ACT 2 TETHER DISPLAY
-						const hasExplicitCost = choice.tetherCost !== undefined;
-						const cost = hasExplicitCost ? choice.tetherCost : (scenes[currentSceneId].isBoss || scenes[currentSceneId].isRest ? 0 : 1);
-						
-						// Only show if cost is greater than 0, OR if Quinn's logistics were active (for 0 cost display, though Quinn's logic is generally disabled in Act 2)
-						if (cost >= 0 && choice.type !== 'reset' && choice.type !== 'skill') {
-							// FIX: If we have tetherCost, show it. If not, default to 1 (unless rest/boss)
-							if (cost > 0) {
-								indicators.push({ text: `-${cost} Turns`, color: 'text-cyan-400' }); 
-							} else if (cost === 0 && hasExplicitCost) {
-								indicators.push({ text: `0 Turns`, color: 'text-cyan-400' });
-							}
-						}
-					}
-
-
-					// Build supplemental text string using all indicators
-					let indicatorString = '';
-					indicators.forEach(ind => {
-						// Append a space, then the indicator text, wrapped in its span
-						indicatorString += ` <span class="${ind.color} text-sm ml-1">(${ind.text})</span>`;
-					});
-
-					// 1. Always append the Skill Info (supplementalText) to the content if it exists.
-					// This ensures it renders even if there are no costs (indicatorString).
-					if (supplementalText) {
-						content += supplementalText;
-					}
-
-					// 2. Render the button HTML
-					if (indicatorString) {
-						// Case A: We have Costs/Gains/Indicators
-						// render content + indicators + right-aligned icon
-						// NEW: Wrap content for z-index layering
-						btn.innerHTML = `<div class="btn-content-wrapper ${alignmentClass}">${content} ${indicatorString} <span class="ml-auto">${icon}</span></div>`;
-					} else {
-						// Case B: No costs (Prologue/Standard Travel)
-						// We still add <span class="ml-auto"> to force the icon to the far right,
-						// which fixes the alignment issue for Skill Checks using 'justify-start'.
-						btn.innerHTML = `${content} <span class="ml-auto">${icon}</span>`;
-					}
-
-
-					container.appendChild(btn);
-				});
-				}
-
-				function updateUI() {
-					// PROLOGUE & LOG UI HANDLING
-					const statsPanel = document.getElementById('stats-panel');
-					const journalContainer = document.getElementById('journal-container');
-					const sceneId = gameState.currentSceneId;
-					
-					// --- ACT 2 UI TOGGLE ---
-					const tetherDisplay = document.getElementById('tether-display');
-					const planarSkills = document.getElementById('planar-skills-container');
-
-					if (gameState.act2Started) {
-						tetherDisplay.classList.remove('hidden');
-					} else {
-						tetherDisplay.classList.add('hidden');
-					}
-
-					if (gameState.skills.includes("Plane Walking")) {
-						planarSkills.classList.remove('hidden');
-					} else {
-						planarSkills.classList.add('hidden');
-					}
-					// --- END ACT 2 UI TOGGLE ---
-					
-					if (sceneId && sceneId.startsWith('prologue')) {
-						statsPanel.classList.add('prologue-blur');
-						journalContainer.classList.add('log-hidden');
-						journalContainer.classList.remove('log-visible');
-					} else {
-						statsPanel.classList.remove('prologue-blur');
-						statsPanel.classList.add('prologue-active');
-						
-						if(gameState.inventory.includes("Ship's Log")) {
-							journalContainer.classList.remove('log-hidden');
-							journalContainer.classList.add('log-visible');
-						} else {
-							journalContainer.classList.add('log-hidden');
-							journalContainer.classList.remove('log-visible');
-						}
-					}
-
-					// HP
-					const baseMaxHP = 20; // Define base max HP for display purposes
-					
-					// FIX 3: HP Display Logic (Handles Overheal)
-					// If current HP is 25 (overheal), the displayed max HP should still be 20.
-					const displayMaxHP = gameState.maxHP; // Should be 20 unless reduced by rift collapse
-					const hpToDisplay = gameState.currentHP;
-
-					// Bar calculation uses the actual maxHP for percentage
-					const hpPct = (hpToDisplay / displayMaxHP) * 100;
-					const bar = document.getElementById('hp-bar');
-					
-					bar.style.width = `${Math.min(100, hpPct)}%`;
-					bar.className = `h-full transition-all duration-500 ${hpToDisplay < (displayMaxHP * 0.3) ? 'bg-red-600 animate-pulse' : 'bg-red-800'}`;
-					
-					document.getElementById('hp-text').innerText = `${hpToDisplay}/${displayMaxHP}`; 
-
-					// Check for low health audio
-					audioManager.checkVulnerable(gameState.currentHP, gameState.maxHP);
-					
-					// Note: Vignette check moved to renderScene()
-					
-					// --- DOOM COUNTER UI ---
-					const doomDisplay = document.getElementById('doom-counter-display');
-					const doomText = document.getElementById('doom-timer-text');
-					const doomBar = document.getElementById('doom-bar');
-					const maxDoom = 20; 
-
-					if (gameState.act1Started) {
-						doomDisplay.classList.remove('hidden'); // Show the doom counter
-						doomText.textContent = `${gameState.doomTimer} Turns`;
-						const doomPct = (gameState.doomTimer / maxDoom) * 100;
-						doomBar.style.width = `${doomPct}%`;
-						
-						// 1. Reset base classes for bar and text
-						doomBar.classList.remove('bg-purple-600', 'bg-red-700', 'bg-yellow-600', 'animate-pulse');
-						doomText.classList.remove('text-red-500', 'text-yellow-500');
-						
-						// Ensure FX is removed if the collapse state is false
-						if (!gameState.isRiftCollapse) {
-							document.getElementById('fx-overlay').classList.remove('fx-rift-collapsed');
-						}
-
-
-						// 2. CHECK FOR PERMANENT COLLAPSE (Highest Priority)
-						if (gameState.isRiftCollapse) {
-							doomBar.classList.add('bg-red-700', 'animate-pulse');
-							doomText.textContent = `COLLAPSED!`;
-							doomText.classList.add('text-red-500');
-							
-							// FIX 2B: Force FX overlay back on every update if the collapse flag is true
-							document.getElementById('fx-overlay').classList.add('fx-rift-collapsed');
-						} 
-						// 3. Check for Low Timer Warning (only if NOT collapsed)
-						else if (gameState.doomTimer <= 5) {
-							doomBar.classList.add('bg-yellow-600', 'animate-pulse');
-							doomBar.classList.remove('bg-purple-600');
-							doomText.classList.add('text-yellow-500');
-						} 
-						// 4. Default State (Normal purple)
-						else {
-							doomBar.classList.add('bg-purple-600');
-						}
-					} else {
-						doomDisplay.classList.add('hidden'); // Hide doom counter outside Act 1
-						// FIX 2C: Ensure FX is removed if Act 1 is complete (i.e., we are in Act 2)
-						document.getElementById('fx-overlay').classList.remove('fx-rift-collapsed');
-					}
-					
-					// --- TETHER COUNTER UI (ACT 2) ---
-					const tetherText = document.getElementById('tether-text');
-					const tetherBar = document.getElementById('tether-bar');
-					const maxTether = 20; 
-
-					if (gameState.act2Started) {
-						tetherText.textContent = `${gameState.tetherTimer} Turns`;
-						const tetherPct = (gameState.tetherTimer / maxTether) * 100;
-						tetherBar.style.width = `${tetherPct}%`;
-						
-						// Warning color change when low
-						if (gameState.tetherTimer <= 5) {
-							tetherBar.style.boxShadow = '0 0 15px rgba(255, 69, 0, 0.8)'; // Orange/Red glow
-							tetherText.classList.add('text-red-400');
-						} else {
-							tetherBar.style.boxShadow = '0 0 10px rgba(34, 211, 238, 0.6)'; // Normal cyan glow
-							tetherText.classList.remove('text-red-400');
-						}
-					}
-					// --- END TETHER COUNTER UI ---
-
-
-					// Money
-					document.getElementById('shillings-display').innerText = gameState.shillings;
-					
-					// Influence
-					// NEW SCALING: Range is -50 to +50 (100 total points)
-					const inf = gameState.influence || 0;
-					// Calculation: (Current Influence + 50) / 100 * 100
-					const pct = ((inf + 50) / 100) * 100; 
-					const marker = document.getElementById('inf-marker');
-					if (marker) marker.style.left = `${Math.max(0, Math.min(100, pct))}%`;
-					
-					const infText = document.getElementById('inf-status-text');
-					if (infText) {
-						// Tier 4: Max Tiers (Beyond 30)
-						if (inf <= -30) infText.textContent = "Sworn to the Crown (Max Order)";
-						// Tier 3: Spyglass Active Tier (-30 to -15)
-						else if (inf <= -15) infText.textContent = "Watchman (Spyglass Active)"; 
-						// Tier 4: Max Tiers (Beyond 30)
-						else if (inf >= 30) infText.textContent = "Pirate Lord (Max Chaos)";
-						// Tier 3: Spyglass Active Tier (15 to 30)
-						else if (inf >= 15) infText.textContent = "Privateer (Spyglass Active)"; 
-						// Tier 1/2: Neutral Zone (-15 to 15)
-						else infText.textContent = "Neutral / Growing";
-					}
-
-					// Crew UI
-					const ind = document.getElementById('active-crew-indicator');
-					const nameSpan = document.getElementById('active-crew-name');
-					if (activeCrewMember) {
-						ind.classList.remove('hidden');
-						nameSpan.innerText = activeCrewMember.name;
-					} else {
-						ind.classList.add('hidden');
-					}
-
-					const crewContainer = document.getElementById('crew-panel');
-					crewContainer.innerHTML = '';
-					
-					// Define fixed order of keys
-					const crewOrder = ['gareth', 'quinn', 'talon', 'bones'];
-					
-					crewOrder.forEach(key => {
-						const c = gameState.crew[key];
-						if (!c) return; // Safety check
-
-						const btn = document.createElement('button');
-						const isSelected = activeCrewMember && activeCrewMember.name === c.name;
-						// Determine if this crew member is available for FREE USE
-						const isAvailableForFreeUse = gameState.crewUseFree && !c.used;
-
-						let baseClass = "p-2 rounded border text-left transition-all relative overflow-hidden ";
-						
-						
-						if (c.used) { 
-							// Used crew members are disabled
-							baseClass += "bg-black/50 border-gray-800 text-gray-700 cursor-not-allowed opacity-50";
-						} else if (gameState.crewUseFree && isSelected) {
-							 // Mushroom active AND this member is SELECTED: Apply purple glow to selected member
-							 baseClass += "crew-free-use-glow";
-						} else if (gameState.crewUseFree && !isSelected) {
-							// Mushroom active but NOT SELECTED: Apply purple pulse *only* if no crew member is active
-							if (!activeCrewMember) {
-								baseClass += "crew-free-use-glow";
-							} else {
-								 baseClass += "bg-gray-800 border-gray-600 text-gray-300 hover:border-gray-400 hover:bg-gray-700"; // Normal styling if another crew member is already selected
-							}
-						} else if (isSelected) {
-							// Standard selection glow
-							// Use new spectral-active class (MODIFIED)
-							baseClass += "spectral-active text-blue-100 ring-1 ring-blue-400";
-						} else {
-							baseClass += "bg-gray-800 border-gray-600 text-gray-300 hover:border-gray-400 hover:bg-gray-700";
-						}
-
-						// --- TUTORIAL PULSE LOGIC FIX ---
-						// Only pulse Quinn at the start if he is not used AND no one is selected
-						if (gameState.currentSceneId === 'start' && c.name === 'Quinn' && !c.used && !activeCrewMember) {
-							baseClass += " tutorial-pulse";
-						}
-						// --- END TUTORIAL PULSE FIX ---
-
-						btn.className = baseClass;
-						// Only disable if USED
-						btn.disabled = c.used; 
-						btn.innerHTML = `
-							<div class="font-bold text-[12px] cinzel leading-tight">${c.name}</div>
-							<div class="text-[10px] ${isSelected || isAvailableForFreeUse ? 'text-white' : 'text-gray-500'}">${c.skill}</div>
-							${c.used ? '<i class="fas fa-lock absolute top-1 right-1 text-[10px]"></i>' : ''}
-							${isAvailableForFreeUse ? '<i class="fas fa-star absolute top-1 right-1 text-[10px] text-purple-300"></i>' : ''}
-						`;
-						btn.onclick = () => {
-							audioManager.playClick();
-							
-							if (isSelected) {
-								activeCrewMember = null;
-							} else {
-								activeCrewMember = c;
-								audioManager.playGhost(); // Only play when selecting
-							}
-							updateUI();
-						};
-						crewContainer.appendChild(btn);
-					});
-
-					// Inventory List View
-					const invContainer = document.getElementById('inventory-panel');
-					invContainer.innerHTML = '';
-					
-					// SCALABILITY FIX: Add scrolling for large inventories
-					invContainer.className = "flex flex-col gap-1 max-h-[220px] overflow-y-auto pr-1"; // Added max-height & scroll
-
-					const descArea = document.getElementById('item-desc-area');
-					const defaultText = "Hover over an item to inspect it.";
-
-					// Reset description area appearance
-					descArea.innerText = defaultText;
-					descArea.classList.remove('text-amber-400');
-					descArea.classList.add('text-gray-400'); 
-					
-					if (gameState.inventory.length === 0) {
-						invContainer.innerHTML = '<div class="text-center text-[10px] text-gray-600 italic py-2">Inventory Empty</div>';
-					} else {
-					// SORTING LOGIC: Consumables First, then Newest at Top
-					// 1. Reverse the array first so newest items (end of array) come first.
-					// 2. Sort by type, returning 0 if types match to preserve the reversed (newest) order.
-					const sortedInventory = [...gameState.inventory].reverse().sort((a, b) => {
-						const itemA = itemRegistry[a] || { type: 'misc' };
-						const itemB = itemRegistry[b] || { type: 'misc' };
-
-						// Priority 1: Consumables float to the top
-						if (itemA.type === 'consumable' && itemB.type !== 'consumable') return -1;
-						if (itemA.type !== 'consumable' && itemB.type === 'consumable') return 1;
-
-						// Priority 2: Maintain relative order (which is now Newest-First due to .reverse())
-						return 0;
-					});
-
-						sortedInventory.forEach(itemName => {
-							let itemDef = itemRegistry[itemName] || { type: 'misc', icon: 'fa-box', color: 'text-gray-500', desc: "A strange item." };
-							
-							// --- DYNAMIC SPYGLASS DESCRIPTION ---
-							if (itemName === "Salt-Warped Spyglass") {
-								itemDef = { ...itemDef }; // Clone to avoid mutation
-								if (gameState.influence <= -5) {
-									itemDef.name = "Watchman's Spyglass (Order)";
-									itemDef.color = "text-blue-400";
-									itemDef.desc = "Passive: The lens aligns with Order. Damage taken reduced by 1.";
-								} else if (gameState.influence >= 5) {
-									itemDef.name = "Privateer's Spyglass (Chaos)";
-									itemDef.color = "text-emerald-400";
-									itemDef.desc = "Passive: The lens aligns with Chaos. Gain +1 coin on all earnings.";
-								}
-							}
-							// -----------------------------------
-							
-							const isConsumable = itemDef.type === 'consumable';
-							
-							const itemRow = document.createElement('div');
-							itemRow.className = `group w-full flex items-center justify-between p-2 rounded border transition-all cursor-default relative shrink-0 ${
-								isConsumable 
-								? 'bg-gray-900/80 border-emerald-900/50 hover:border-emerald-500 hover:bg-gray-800' 
-								: 'bg-gray-900/60 border-gray-800 hover:border-gray-600'
-							}`;
-
-							// Left Side: Icon + Name
-							const leftSide = document.createElement('div');
-							leftSide.className = 'flex items-center gap-3';
-							leftSide.innerHTML = `
-								<div class="text-lg w-5 text-center ${itemDef.color}"><i class="fas ${itemDef.icon}"></i></div>
-								<span class="text-xs cinzel text-gray-300 group-hover:text-gray-100 transition-colors">${itemDef.name || itemName.split('(')[0].trim()}</span>
-							`;
-							itemRow.appendChild(leftSide);
-
-							// Right Side: Action Button or Tag
-							const rightSide = document.createElement('div');
-							if (isConsumable && itemDef.btnText !== 'USE' && itemDef.btnText !== 'INSPECT' && itemDef.btnText !== 'THROW') { 
-								const actionBtn = document.createElement('button');
-								actionBtn.className = "px-2 py-1 bg-emerald-900/40 border border-emerald-600/30 text-emerald-500 text-[9px] font-bold rounded hover:bg-emerald-600 hover:text-white transition-all tracking-wider";
-								actionBtn.innerText = itemDef.btnText || "USE";
-								actionBtn.onclick = (e) => {
-									e.stopPropagation();
-									audioManager.playClick();
-									const result = itemDef.action(gameState);
-									addToHistory(result, 'system');
-									saveGame();
-									updateUI();
-								};
-								rightSide.appendChild(actionBtn);
-							} else {
-								const tag = document.createElement('span');
-								tag.className = "text-[9px] text-gray-600 uppercase tracking-wider font-bold opacity-50 group-hover:opacity-100 transition-opacity";
-								tag.innerText = itemDef.btnText || "PASSIVE";
-								rightSide.appendChild(tag);
-							}
-							itemRow.appendChild(rightSide);
-
-							// Hover Description Logic
-							itemRow.onmouseenter = () => {
-								descArea.innerText = itemDef.desc || defaultText;
-								descArea.classList.add('text-amber-400');
-								descArea.classList.remove('text-gray-400');
-							};
-							itemRow.onmouseleave = () => {
-								descArea.innerText = defaultText;
-								descArea.classList.remove('text-amber-400');
-                                descArea.classList.add('text-gray-400');
-                            };
-
-                            invContainer.appendChild(itemRow);
-                        });
+                ALCHEMIST_BUY_OPTIONS.forEach(sale => {
+                    const actualStock = currentSceneStock[sale.item] || 0;
+                    const itemDef = itemRegistry[sale.item];
+                    const isHealing = itemDef && (itemDef.name.includes('Tincture') || itemDef.name.includes('Potion'));
+                    const isFullHP = gameState.currentHP >= gameState.maxHP;
+                    if (actualStock > 0) {
+                        processedChoices.push({ text: `Buy ${sale.item.split('(')[0].trim()} (${sale.cost}s)`, nextScene: sale.nextScene, type: 'action', cost: sale.cost, stockItem: sale.item, doomCost: 0, isDisabled: isHealing && isFullHP });
                     }
+                });
+                if (sellNav) processedChoices.push(sellNav);
+                if (returnNav) processedChoices.push(returnNav);
+            }
+            // --- TAVERN LOGIC ---
+            else if (currentSceneId === 'blackwater_tavern') {
+                 // Rebuild tavern choices to update dynamic buttons
+                 processedChoices = processedChoices.map(c => {
+                     if (c.nextScene === 'eat_gruel_instant' || c.nextScene === 'buy_gruel_to_go') {
+                         const gruelStock = currentSceneStock['Gruel'] || 0;
+                         const canAfford = gameState.shillings >= 1;
+                         let isDisabled = gruelStock <= 0 || !canAfford;
+                         if (c.nextScene === 'eat_gruel_instant' && gameState.currentHP >= gameState.maxHP) isDisabled = true;
+                         return { ...c, text: `${c.text} (Stock: ${gruelStock})`, isDisabled: isDisabled };
+                     }
+                     return c;
+                 });
+            }
+            // --- DOCKS LOGIC ---
+            else if (currentSceneId === 'town_docks') {
+                 processedChoices = processedChoices.map(c => {
+                     if (c.nextScene === 'docks_work') {
+                         return { ...c, isDisabled: gameState.currentHP <= (c.costHP || 2) };
+                     }
+                     return c;
+                 });
+            }
+            
+            // --- RENDER BUTTONS ---
+            processedChoices.forEach(choice => {
+                if (choice.reqItem && !gameState.inventory.includes(choice.reqItem)) return;
+                if (choice.reqSmuggler && gameState.influence < choice.reqSmuggler) return;
+                if (choice.reqGuard && gameState.influence > -choice.reqGuard) return;
+                if (choice.reqNotItem && gameState.inventory.includes(choice.reqNotItem)) return;
+                if (choice.reqFlag && !gameState[choice.reqFlag]) return;
+                if (choice.reqNotFlag && gameState[choice.reqNotFlag]) return;
+                if (choice.reqSkill && !gameState.skills.includes(choice.reqSkill) && choice.type !== 'skill') return;
+
+                let isDisabled = choice.isDisabled;
+                let disabledClass = '';
+                if ((choice.cost && gameState.shillings < choice.cost) || (choice.costHP !== undefined && gameState.currentHP <= choice.costHP)) {
+                    isDisabled = true;
+                    disabledClass = 'btn-disabled-cost';
                 }
+
+                const btn = document.createElement('button');
+                const alignment = (choice.type === 'skill' || choice.cost || choice.value || choice.chaosGain || choice.orderGain) ? 'justify-start' : 'justify-between';
+                
+                let btnClass = `btn-game w-full text-left rounded shadow flex items-center ${alignment} cinzel font-bold bg-gray-800 border-gray-600 hover:border-amber-500 hover:bg-gray-750 text-gray-300 group`;
+                if (isDeathScene) btnClass = `btn-game w-full p-3 text-left rounded shadow flex items-center ${alignment} cinzel font-bold bg-red-900 border-red-700 hover:bg-red-800 hover:border-amber-500 text-white text-xl text-center`;
+                else if (choice.customClass) {
+                     if (choice.customClass.includes('spectral-active')) btnClass = `btn-game w-full text-left rounded shadow flex items-center ${alignment} cinzel font-bold mb-2 spectral-active text-blue-100 ring-1 ring-blue-400 hover:ring-white`;
+                     else btnClass = `btn-game w-full text-left rounded shadow flex items-center ${alignment} cinzel font-bold mb-2 ${choice.customClass}`;
+                }
+                if (isDisabled) {
+                    btnClass += ` ${disabledClass}`;
+                    btn.disabled = true;
+                }
+                btn.className = btnClass;
+
+                // Button Handler
+                const handleAction = () => {
+                    if (btn.disabled) { audioManager.playClick(); return; }
+                    audioManager.playClick();
+                    
+                    if (choice.type === 'reset') { resetGame(); return; }
+                    if (choice.nextScene === 'manor_map_view') { gameState.returnSceneId = gameState.currentSceneId; renderScene('manor_map_view'); return; }
+
+                    // *** CRITICAL FIX: Do NOT return early after action execution ***
+                    if (choice.action) {
+                        const result = choice.action(gameState);
+                        if (result) addToHistory(result, 'system');
+                    }
+                    
+                    if (choice.consume && choice.reqItem) {
+                        const idx = gameState.inventory.indexOf(choice.reqItem);
+                        if (idx > -1) { gameState.inventory.splice(idx, 1); addToHistory(`${choice.reqItem} used/discarded.`, 'system'); }
+                    }
+                    
+                    if (choice.cost) gameState.shillings -= choice.cost;
+                    if (choice.costHP !== undefined) gameState.currentHP = applyDamage(gameState.currentHP, choice.costHP);
+                    
+                    // Spyglass Passive
+                    if ((choice.shillingGain || choice.value) && gameState.inventory.includes("Salt-Warped Spyglass") && gameState.influence >= 15) {
+                        gameState.shillings += 1; addToHistory("Passive (Privateer): +1 Shilling.", 'system');
+                    }
+                    if (choice.shillingGain) gameState.shillings += choice.shillingGain;
+                    if (choice.value) gameState.shillings += choice.value;
+                    if (choice.chaosGain) gameState.influence = Math.min(50, gameState.influence + choice.chaosGain);
+                    if (choice.orderGain) gameState.influence = Math.max(-50, gameState.influence - choice.orderGain);
+                    
+                    // Timers
+                    if (gameState.act1Started && choice.doomCost !== undefined) gameState.doomTimer = Math.max(0, gameState.doomTimer - choice.doomCost);
+                    else if (gameState.act1Started && !scenes[gameState.currentSceneId].isBoss && !scenes[gameState.currentSceneId].isRest) gameState.doomTimer = Math.max(0, gameState.doomTimer - 1);
+                    
+                    if (gameState.act2Started && choice.tetherCost !== undefined) gameState.tetherTimer = Math.max(0, gameState.tetherTimer - choice.tetherCost);
+                    else if (gameState.act2Started && !scenes[gameState.currentSceneId].isBoss && !scenes[gameState.currentSceneId].isRest) gameState.tetherTimer = Math.max(0, gameState.tetherTimer - 1);
+
+                    // Transition
+                    if (choice.type === 'skill') {
+                        gameState.lastSkillType = choice.skill;
+                        gameState.lastDC = gameState.isRiftCollapse ? choice.dc + 2 : choice.dc;
+                        renderScene(choice.nextScene);
+                    } else {
+                        saveGame();
+                        renderScene(choice.nextScene);
+                    }
+                };
+
+                if (choice.type === 'hold') {
+                    let holdTimer = null;
+                    const duration = 3000;
+                    btn.style.setProperty('--channel-duration', `${duration}ms`);
+                    const start = (e) => {
+                        if(e.type==='touchstart') e.preventDefault();
+                        if(btn.disabled) return;
+                        btn.classList.add('channeling'); audioManager.playGhost();
+                        holdTimer = setTimeout(async () => {
+                            audioManager.playClash();
+                            fxManager.clearEffects();
+                            gameState.isEthereal = true;
+                            document.body.classList.add('plane-ethereal');
+                            await saveGame();
+                            renderScene(choice.nextScene);
+                        }, duration);
+                    };
+                    const end = () => { clearTimeout(holdTimer); btn.classList.remove('channeling'); };
+                    btn.addEventListener('mousedown', start); btn.addEventListener('mouseup', end); btn.addEventListener('mouseleave', end);
+                    btn.addEventListener('touchstart', start); btn.addEventListener('touchend', end);
+                } else {
+                    btn.onclick = handleAction;
+                }
+
+                // Content Rendering
+                let icon = '<i class="fas fa-chevron-right text-gray-300 group-hover:text-amber-100"></i>';
+                if (choice.customClass) {
+                     if (choice.customClass.includes('success')) icon = '<i class="fas fa-ear-listen text-gray-300"></i>';
+                     else if (choice.customClass.includes('keen')) icon = '<i class="fas fa-eye text-purple-300"></i>';
+                     else icon = '<i class="fas fa-chevron-right text-white"></i>';
+                }
+                if (choice.cost || choice.value || choice.shillingGain) icon = '<i class="fas fa-coins text-amber-500"></i>';
+                if (choice.type === 'reset') icon = '<i class="fas fa-sync-alt text-gray-400"></i>';
+                if (choice.type === 'skill') icon = '<i class="fas fa-dice-d20 spectral-text-glow"></i>';
+                
+                let indicators = [];
+                if (choice.cost) indicators.push({t: `-${choice.cost}s`, c:'text-amber-500'});
+                if (choice.value) indicators.push({t: `+${choice.value}s`, c:'text-amber-500'});
+                if (choice.shillingGain) indicators.push({t: `+${choice.shillingGain}s`, c:'text-amber-500'});
+                if (choice.costHP) indicators.push({t: `-${choice.costHP} HP`, c:'text-red-400'});
+                if (choice.chaosGain) indicators.push({t: `+${choice.chaosGain} Chaos`, c:'text-emerald-400'});
+                if (choice.orderGain) indicators.push({t: `+${choice.orderGain} Order`, c:'text-blue-400'});
+                
+                let indHtml = indicators.map(i => `<span class="${i.c} text-sm ml-1">(${i.t})</span>`).join('');
+                let mainText = `<span class="cinzel font-bold ${choice.customClass ? 'text-white' : 'text-gray-300 group-hover:text-amber-100'}">${choice.text}</span>`;
+                
+                if (choice.type === 'skill') mainText += ` <span class="spectral-text-glow text-sm uppercase tracking-wider ml-2">[${choice.skill} DC ${choice.dc}]</span>`;
+                
+                btn.innerHTML = `<div class="btn-content-wrapper ${alignment}">${mainText}${indHtml}<span class="ml-auto">${icon}</span></div>`;
+                container.appendChild(btn);
+            });
+        }
+
+        function updateUI() {
+            const sceneId = gameState.currentSceneId;
+            
+            // Panels
+            if (sceneId && sceneId.startsWith('prologue')) {
+                document.getElementById('stats-panel').classList.add('prologue-blur');
+                document.getElementById('journal-container').classList.add('log-hidden');
+            } else {
+                document.getElementById('stats-panel').classList.remove('prologue-blur');
+                if(gameState.inventory.includes("Ship's Log")) document.getElementById('journal-container').classList.remove('log-hidden');
+            }
+
+            // Act 2 Toggles
+            if (gameState.act2Started) document.getElementById('tether-display').classList.remove('hidden');
+            else document.getElementById('tether-display').classList.add('hidden');
+            if (gameState.skills.includes("Plane Walking")) document.getElementById('planar-skills-container').classList.remove('hidden');
+            else document.getElementById('planar-skills-container').classList.add('hidden');
+
+            // HP Bar
+            const hpPct = (gameState.currentHP / gameState.maxHP) * 100;
+            const bar = document.getElementById('hp-bar');
+            bar.style.width = `${Math.min(100, hpPct)}%`;
+            bar.className = `h-full transition-all duration-500 ${gameState.currentHP < (gameState.maxHP * 0.3) ? 'bg-red-600 animate-pulse' : 'bg-red-800'}`;
+            document.getElementById('hp-text').innerText = `${gameState.currentHP}/${gameState.maxHP}`;
+            audioManager.checkVulnerable(gameState.currentHP, gameState.maxHP);
+
+            // Doom/Tether UI
+            const doomDisplay = document.getElementById('doom-counter-display');
+            if (gameState.act1Started) {
+                doomDisplay.classList.remove('hidden');
+                document.getElementById('doom-timer-text').innerText = gameState.isRiftCollapse ? "COLLAPSED!" : `${gameState.doomTimer} Turns`;
+                document.getElementById('doom-bar').style.width = `${(gameState.doomTimer / 20) * 100}%`;
+                if (gameState.isRiftCollapse) {
+                    document.getElementById('doom-bar').className = "absolute inset-0 bg-red-700 animate-pulse";
+                    document.getElementById('fx-overlay').classList.add('fx-rift-collapsed');
+                } else {
+                    document.getElementById('doom-bar').className = "absolute inset-0 bg-purple-600";
+                    document.getElementById('fx-overlay').classList.remove('fx-rift-collapsed');
+                }
+            } else {
+                doomDisplay.classList.add('hidden');
+            }
+            
+            if (gameState.act2Started) {
+                document.getElementById('tether-text').innerText = `${gameState.tetherTimer} Turns`;
+                document.getElementById('tether-bar').style.width = `${(gameState.tetherTimer / 20) * 100}%`;
+            }
+
+            // Stats
+            document.getElementById('shillings-display').innerText = gameState.shillings;
+            const infPct = ((gameState.influence + 50) / 100) * 100;
+            document.getElementById('inf-marker').style.left = `${Math.max(0, Math.min(100, infPct))}%`;
+
+            // Crew Panel
+            const crewContainer = document.getElementById('crew-panel');
+            crewContainer.innerHTML = '';
+            ['gareth', 'quinn', 'talon', 'bones'].forEach(key => {
+                const c = gameState.crew[key];
+                const btn = document.createElement('button');
+                const isSelected = activeCrewMember && activeCrewMember.id === c.id;
+                let cls = "p-2 rounded border text-left transition-all relative overflow-hidden ";
+                
+                if (c.used) cls += "bg-black/50 border-gray-800 text-gray-700 cursor-not-allowed opacity-50";
+                else if (isSelected) cls += "spectral-active text-blue-100 ring-1 ring-blue-400";
+                else if (gameState.crewUseFree) cls += "crew-free-use-glow";
+                else cls += "bg-gray-800 border-gray-600 text-gray-300 hover:border-gray-400 hover:bg-gray-700";
+                
+                btn.className = cls;
+                btn.disabled = c.used;
+                btn.innerHTML = `<div class="font-bold text-[12px] cinzel">${c.name}</div><div class="text-[10px] text-gray-500">${c.skill}</div>`;
+                btn.onclick = () => {
+                    audioManager.playClick();
+                    if (isSelected) activeCrewMember = null;
+                    else { activeCrewMember = c; audioManager.playGhost(); }
+                    updateUI();
+                };
+                crewContainer.appendChild(btn);
+            });
+            
+            // Inventory
+            const invContainer = document.getElementById('inventory-panel');
+            invContainer.innerHTML = '';
+            const descArea = document.getElementById('item-desc-area');
+            
+            if (gameState.inventory.length === 0) invContainer.innerHTML = '<div class="text-center text-[10px] text-gray-600">Empty</div>';
+            else {
+                [...gameState.inventory].reverse().forEach(itemName => {
+                    let def = itemRegistry[itemName] || { icon: 'fa-box', color: 'text-gray-500' };
+                    if (itemName === "Salt-Warped Spyglass") {
+                        if (gameState.influence <= -5) { def = {...def, name:"Watchman's Spyglass", color:"text-blue-400"}; }
+                        else if (gameState.influence >= 5) { def = {...def, name:"Privateer's Spyglass", color:"text-emerald-400"}; }
+                    }
+                    
+                    const row = document.createElement('div');
+                    row.className = "w-full flex justify-between p-2 rounded border bg-gray-900/60 border-gray-800 hover:border-gray-600 cursor-default";
+                    
+                    // Action Button for Consumables
+                    let actionHtml = `<span class="text-[9px] text-gray-600 font-bold">PASSIVE</span>`;
+                    if (def.type === 'consumable') {
+                        actionHtml = `<button class="px-2 py-1 bg-emerald-900/40 border border-emerald-600/30 text-emerald-500 text-[9px] font-bold rounded hover:bg-emerald-600 hover:text-white" onclick="event.stopPropagation(); window.useItem('${itemName}')">${def.btnText || "USE"}</button>`;
+                    }
+
+                    row.innerHTML = `<div class="flex items-center gap-2"><div class="${def.color}"><i class="fas ${def.icon}"></i></div><span class="text-xs cinzel text-gray-300">${def.name || itemName}</span></div><div>${actionHtml}</div>`;
+                    
+                    row.onmouseenter = () => { descArea.innerText = def.desc || "Hover to inspect."; descArea.className = "text-[12px] h-8 italic mb-2 text-center flex items-center justify-center bg-gray-900/50 border border-gray-700/50 rounded px-2 text-amber-400"; };
+                    row.onmouseleave = () => { descArea.innerText = "Hover over an item to inspect it."; descArea.className = "text-[12px] h-8 italic mb-2 text-center flex items-center justify-center bg-gray-900/50 border border-gray-700/50 rounded px-2 text-gray-400"; };
+                    
+                    invContainer.appendChild(row);
+                });
+            }
+        }
+
+        // Helper to bridge HTML onclick to JS Module
+        window.useItem = (itemName) => {
+            const def = itemRegistry[itemName];
+            if (def && def.action) {
+                // audioManager.playClick(); // sound handled by updateUI loop usually, but ok here
+                const res = def.action(gameState);
+                addToHistory(res, 'system');
+                saveGame();
+                updateUI();
+            }
+        };
 
         init();
     </script>
