@@ -101,6 +101,45 @@
             font-weight: 700;
         }
         /* End Spectral Definitions */
+		
+		/* --- TEXT HIGHLIGHTING SYSTEM (New) --- */
+
+		/* Fire Path / Smelter / Heat */
+		.text-fire {
+			color: #fb923c; /* Orange-400 */
+			text-shadow: 0 0 8px rgba(249, 115, 22, 0.6);
+			font-weight: 700;
+		}
+
+		/* Shadow Path / Chapel / Void */
+		.text-void {
+			color: #c084fc; /* Purple-400 */
+			text-shadow: 0 0 8px rgba(147, 51, 234, 0.5);
+			font-weight: 700;
+		}
+
+		/* Horizon Walker / Ethereal / Ghostly */
+		/* Note: You used 'text-spectral' in Act 2 text, so we define it here to match */
+		.text-spectral {
+			color: #67e8f9; /* Cyan-300 */
+			text-shadow: 0 0 8px rgba(34, 211, 238, 0.6);
+			font-weight: 700;
+		}
+
+		/* Key Items / Gold / Objectives */
+		.text-item {
+			color: #fcd34d; /* Amber-300 */
+			text-shadow: 0 0 5px rgba(245, 158, 11, 0.4);
+			font-weight: 700;
+			border-bottom: 1px dotted #78350f; /* Subtle underline for items */
+		}
+
+		/* Enemies / Direct Danger */
+		.text-danger {
+			color: #f87171; /* Red-400 */
+			text-shadow: 0 0 5px rgba(220, 38, 38, 0.6);
+			font-weight: 700;
+		}
 
 
         /* Custom glow for FREE USE / Mushroom */
@@ -3153,7 +3192,8 @@
                         type: 'skill', 
                         dc: 15, 
                         skill: 'Athletics',
-                        orderGain: 5 
+                        orderGain: 5,
+						doomCost: 1						
                     },
                     // CHAOS PATH: Pragmatism/No Time Cost
                     { 
