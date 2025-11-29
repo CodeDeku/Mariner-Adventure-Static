@@ -2765,6 +2765,9 @@
             'sea_event_fog': {
                 title: "Ghost Fog",
                 text: "A bank of unnatural <span class='text-spectral'>Ghost Fog</span> rolls over the deck. The compass needle spins violently. If you press on, you risk striking a reef and losing supplies. Only the Light can guide you.",
+				banter: {
+                    'quinn': "That's a thick barrier. I think I can calculate the drift based on these old charts."
+                },
                 choices: [
                     // LANTERN OPTION (Preferred)
                     { 
@@ -2828,6 +2831,10 @@
                     }
                     return "A lone, disciplined figure stands apart from the feral pack. This must be Silas.";
                 },
+				banter: {
+                    'bones': "Look at the one on the rocks. That foam at the mouth isn't rage; it's sickness. The veins are black. Let me see what killed it.",
+                    'gareth': "They aren't soldiers; they're rabid dogs. Don't show fear. Stare them down. Make them remember who is at the top of the food chain."
+                },
                 choices: [
                     { 
                         text: "Show Ring of Brass (Recruit Silas)", 
@@ -2886,7 +2893,7 @@
 			'dogtooth_lore_success': {
 				title: "The Pathology",
 				text: "Bones examines a fallen werewolf. 'This isn't just a curse,' he mutters. 'It's an engineered plague. The veins are black with alchemical residue.'",
-				journal: "Bones identified the Lycanthropy as an engineered plague. (Lore Gained).",
+				journal: "Bones identified the Lycanthropy as an engineered plague. It seems the Vampires poisoned the wolves.",
 				onEnter: (state) => {
 					// Reward logic (e.g. Influence or just Lore)
 					state.influence += 2; 
@@ -2924,6 +2931,10 @@
                 onEnter: (state) => {
                     state.currentLocation = 'spire';
                     return "The Spire is heavily defended. Brace for combat.";
+                },
+				banter: {
+                    'talon': "I see movement on the parapets. They aren't hiding. They know we're here. Check your weapons.",
+                    'gareth': "Then let them look. We didn't come this far to sneak in the back door."
                 },
                 choices: [
                     { text: "Confront the Court", nextScene: 'sanguine_spire_combat', type: 'combat', doomCost: 0 },
