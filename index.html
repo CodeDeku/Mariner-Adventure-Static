@@ -924,6 +924,9 @@
             'manor_foyer': 'images/manor_foyer.jpg', // Foyer
             'manor_hall': 'images/manor_hall.jpg', // Hall (Placeholder)
             'manor_library': 'images/manor_library.jpg', // Library
+            'manor_automaton_encounter': 'images/brass_automaton.jpg', // Brass Automaton
+            'manor_ballroom': 'images/manor_ballroom.jpg', // Ballroom / Displacer Beast
+            'manor_kitchens': 'images/manor_kitchens.jpg', // Kitchens / Displacer Cub
             'act2_tether_fail': 'images/rift_collapse_red.jpg', // Ripped back image
             'manor_map_view': 'images/manor_blueprint.jpg', // Blueprint overlay image
             'act2_arrival': 'images/manor_ethereal.jpg', // Spectral Manor image
@@ -953,7 +956,7 @@
                 crew: {
                     gareth: { id: 'gareth', name: 'Captain Gareth', skill: 'Insight', used: false, desc: 'Add +1d4 to Initiative & Insight' },
                     quinn: { id: 'quinn', name: 'Quinn', skill: 'Investigation', used: false, desc: 'Add +1d4 to Investigation & History' },
-                    talon: { id: 'talon', name: 'Talon', skill: 'Perception', used: false, desc: 'Add +1d4 to Survival & Perception' },
+                    talon: { id: 'talon', name: 'Talon', skill: 'Survival', used: false, desc: 'Add +1d4 to Survival & Perception' },
                     bones: { id: 'bones', name: 'Bones', skill: 'Survival', used: false, desc: 'Add +1d4 to Nature & Foraging' }
                 },
                 history: [],
@@ -976,6 +979,9 @@
                 // NEW FLAG: Quinn's Logistics (Doom Cost UI Reveal)
                 quinnLogistics: false,
 				hasDivedTreasure: false,
+                // NEW ACT 2 FLAGS
+                hallLooted: false,
+                hasBlinkSkill: false, // Tracks the Displacer Cub companion event success
             };
         }
 
@@ -1008,6 +1014,23 @@
             
             // Reload Current Scene (To refresh options/text based on plane)
             renderScene(gameState.currentSceneId);
+        };
+
+        // 2. BLINK LOGIC
+        window.gameFunctions.triggerBlink = function() {
+            if (!gameState.skills.includes("Blink")) return;
+            
+            // Blink Logic: Skips the current encounter or hazard
+            // For this implementation, let's make it a narrative action that outputs to history
+            // and effectively "counts" as a success for logic checks if we pass a specific state flag.
+            addToHistory("*Blink* You phase through the Ethereal Plane, displacing yourself from danger.", 'system');
+            audioManager.playGhost();
+            
+            // If in combat/encounter, give a visual cue
+            fxManager.flashRed(); // Re-purpose flash for visual feedback
+            
+            // NOTE: The actual scene transition logic must be handled by the button click
+            // (e.g., btn-blink in the Automaton scene skips to manor_staircase)
         };
         // --- END WINDOW FUNCTIONS ---
 
@@ -1688,9 +1711,7 @@
                 text: "The men draw blades as you approach. 'One step closer and you're fish food!'",
                 journal: "Found the smugglers. They aren't friendly.",
                 choices: [
-                    // FIX: Changed type to 'dialogue' for max visibility of conditional travel
                     { text: "Flash 'The Mariner's Sign'", nextScene: 'smuggler_friend', type: 'dialogue', reqSmuggler: 3 },
-                    // FIX: Ensure 'Curious Cargo' button is only available if player has the item (reqItem is the correct check here)
                     { text: "Offer Curious Cargo", nextScene: 'smuggler_cargo', type: 'action', reqItem: 'Curious Cargo', chaosGain: 6 },
                     { text: "Buy safe passage", nextScene: 'smuggler_pay', type: 'action', cost: 5 },
                     { text: "Run to Market", nextScene: 'market_crossroads', type: 'dialogue' }
@@ -3906,7 +3927,7 @@
                     
                     // Grant Plane Walking Skill for subsequent use
                     if (!state.skills.includes("Plane Walking")) {
-                        state.skills.push("Plane Walking");
+                        state.skills.push("Spectral Lantern"); // Use Lantern as the item that grants the skill
                     }
 
                     // Reset all crew members now that they are buffed
@@ -4010,11 +4031,93 @@
             // --- THE INTERCONNECT (The Web) ---
             'manor_crawlspace': {
                 title: "The Service Crawlspace",
-                text: "You are crawling inside the walls. It is tight, dark, and smells of rats. You can hear the hum of the Manor's heartbeat surrounding you. This tunnel connects the West and East wings.",
-                journal: "Took a shortcut through the walls. Tight squeeze.",
+                text: "You are crawling inside the walls. It is tight, dark, and smells of rats. You hear a high-pitched, vibrating purr coming from a side vent.",
+                journal: "In the crawlspace, I heard something strange.",
                 choices: [
+                    // NEW EVENT TRIGGER (Displacer Cub)
+                    { 
+                        text: "Investigate Purring Sound", 
+                        nextScene: 'cub_encounter', 
+                        type: 'travel', 
+                        reqNotFlag: 'hasBlinkSkill', // Hide if already done
+                        tetherCost: 1 
+                    },
                     { text: "Crawl to Library (West)", nextScene: 'manor_library', type: 'travel', tetherCost: 1 },
                     { text: "Crawl to Kitchens (East)", nextScene: 'manor_kitchens', type: 'travel', tetherCost: 1 }
+                ]
+            },
+
+            // --- DISPLACER CUB SCENES ---
+            'cub_encounter': {
+                title: "The Displacer Cub",
+                text: "Huddled in the corner is a kitten-sized Displacer Cub. It hisses, flickering in and out of existence, terrified. It is starving. It seems to be phasing uncontrollably.",
+                journal: "Found a lost Displacer Cub in the walls.",
+                banter: {
+                    'bones': "It's not aggressive, Edward. It's starving. It can't control its shifts because it's weak."
+                },
+                choices: [
+                    // 1. BONES (Animal Handling) - Skill DC is adjusted in logic scene
+                    { 
+                        text: "Bones: Feed & Soothe", 
+                        nextScene: 'cub_tame_check', 
+                        type: 'skill', 
+                        dc: 12, 
+                        skill: 'Animal Handling', 
+                        tetherCost: 1
+                    },
+                    // 2. LEAVE
+                    { text: "Leave it be", nextScene: 'manor_crawlspace', type: 'travel', tetherCost: 0 }
+                ]
+            },
+            'cub_tame_check': {
+                isLogic: true,
+                resolve: (roll, state) => {
+                    let dc = state.lastDC;
+                    // Check if player has food (Rum or Gruel)
+                    if(state.inventory.includes('Gruel')) {
+                        dc = Math.max(5, dc - 3); // Lower DC slightly if they have gruel (small food)
+                        addToHistory(`DC reduced by 3 (Gruel). New DC: ${dc}`, 'roll');
+                        const idx = state.inventory.indexOf("Gruel");
+                        if (idx > -1) state.inventory.splice(idx, 1);
+                        addToHistory(`Gruel used and discarded.`, 'system');
+                    } else if (state.inventory.includes('Rum')) {
+                         dc = Math.max(5, dc - 5); // Lower DC more if they have rum (stronger effect)
+                         addToHistory(`DC reduced by 5 (Rum). New DC: ${dc}`, 'roll');
+                         const idx = state.inventory.indexOf("Rum");
+                         if (idx > -1) state.inventory.splice(idx, 1);
+                         addToHistory(`Rum used and discarded.`, 'system');
+                    }
+                    
+                    return roll >= dc ? 'cub_tame_success' : 'cub_tame_fail';
+                }
+            },
+            'cub_tame_success': {
+                title: "The Cub's Gift",
+                text: "You offer food and a steady hand. The cub eats effectively, stabilizing its phasing. It looks at you with deep, violet eyes, then headbutts your hand. <br><br>For a moment, your soul syncs with its frequency. You understand the geometry of the 'Blink'—a reflexive, planar hop.",
+                journal: "Saved the cub. Learned the Blink skill. The cub blinked away into the ether.",
+                onEnter: (state) => {
+                    if (!state.skills.includes("Blink")) {
+                        state.skills.push("Blink");
+                        state.hasBlinkSkill = true; // Flag to hide event later
+                        return "Learned Skill: Blink (Planar Displacement).";
+                    }
+                    return null;
+                },
+                choices: [
+                    { text: "Return to Crawlspace", nextScene: 'manor_crawlspace', type: 'travel', tetherCost: 0 }
+                ]
+            },
+            'cub_tame_fail': {
+                title: "A Sharp Bite",
+                text: "The starving cub mistakes your hand for prey. It bites you, then dissolves into the shadows, leaving you bleeding and alone.",
+                journal: "Failed to tame the cub. Took damage and it fled.",
+                onEnter: (state) => {
+                    state.currentHP = applyDamage(state.currentHP, 3);
+                    fxManager.flashRed();
+                    return "Took 3 Damage. Cub fled.";
+                },
+                choices: [
+                    { text: "Return to Crawlspace", nextScene: 'manor_crawlspace', type: 'travel', tetherCost: 1 }
                 ]
             },
 
@@ -4025,18 +4128,95 @@
                 journal: "Found the Kitchens. They connect to the Library via a grate.",
                 onEnter: (state) => {
                     // One-time loot spawn
-                    if (!state.inventory.includes("Rum")) {
-                         state.inventory.push("Rum");
-                         return "Found a bottle of spectral vintage (Rum).";
+                    if (!state.inventory.includes("Gruel")) {
+                         state.inventory.push("Gruel");
+                         return "Found a pouch of spectral sustenance (Gruel).";
                     }
                     return null;
                 },
                 choices: [
-                    { text: "Push through to Ballroom", nextScene: 'manor_ballroom', type: 'travel', tetherCost: 1 },
+                    // Changed to go to the Displacer Beast Encounter scene
+                    { text: "Push through to Ballroom", nextScene: 'manor_ballroom_encounter', type: 'travel', tetherCost: 1 },
                     { text: "Enter Crawlspace (To Library)", nextScene: 'manor_crawlspace', type: 'travel', tetherCost: 1 },
                     { text: "Return to Foyer", nextScene: 'manor_foyer', type: 'travel', tetherCost: 1 }
                 ]
             },
+            
+            // --- DISPLACER BEAST SCENES ---
+            'manor_ballroom_encounter': {
+                title: "The Phase Hunter",
+                text: "The Kitchens open into a massive Ballroom. Hundreds of ghosts dance in a swirling vortex. Suddenly, the ghosts vanish. The air shimmers. A massive, six-legged panther with tentacles sprouting from its shoulders materializes, then shifts two feet to the left. A **Displacer Beast**. It hunts not with eyes, but with planar vibration.",
+                journal: "Encountered a Displacer Beast in the Ballroom.",
+                isBoss: true, // Use boss flag for better handling
+                banter: {
+                    'talon': "Don't trust your eyes! It's projecting an image. Strike where it ISN'T."
+                },
+                choices: [
+                    // 1. ITEM COUNTER (Ring of Brass/Spyglass)
+                    { 
+                        text: "See the True Form (Ring/Spyglass)", 
+                        nextScene: 'beast_true_sight', 
+                        type: 'action', 
+                        reqItem: 'Ring of Brass', // Or check Spyglass in logic
+                        customClass: 'btn-keen-senses' 
+                    },
+                    // 2. TALON (Perception Check)
+                    { 
+                        text: "Talon: Track Planar Distortion", 
+                        nextScene: 'beast_track_logic', 
+                        type: 'skill', 
+                        dc: 16, 
+                        skill: 'Perception',
+                        tetherCost: 1 
+                    },
+                     // 3. BLINK (Reward from Cub)
+                    { 
+                        text: "Blink Past It", 
+                        nextScene: 'manor_hall', // Skips fight, goes to Grand Hall goal
+                        type: 'action', 
+                        reqSkill: 'Blink', // Requires the new skill
+                        customClass: 'btn-game spectral-active', // Spectral styling
+                        tetherCost: 1
+                    },
+                    // 4. RETREAT
+                    { text: "Retreat to Kitchens", nextScene: 'manor_kitchens', type: 'travel', tetherCost: 1 }
+                ]
+            },
+
+            'beast_true_sight': {
+                title: "The Illusion Breaks",
+                text: "Using the planar artifact, you see the beast's true location clearly. One precise strike sends it dissolving back into the ether, leaving only a shimmer of its passing.",
+                journal: "Used magical sight to defeat the Displacer Beast.",
+                onEnter: (state) => {
+                    // Check for Spyglass to see if it was the item used
+                    if(state.inventory.includes('Salt-Warped Spyglass') && !state.inventory.includes('Ring of Brass')) {
+                        return "Used Spyglass to locate the true form. Beast Banished.";
+                    }
+                    return "Used Ring of Brass to locate the true form. Beast Banished.";
+                },
+                choices: [{ text: "Enter Grand Hall", nextScene: 'manor_hall', type: 'travel', tetherCost: 0 }]
+            },
+
+            'beast_track_logic': {
+                isLogic: true,
+                resolve: (roll) => roll >= 16 ? 'beast_true_sight' : 'beast_fail'
+            },
+
+            'beast_fail': {
+                title: "Claws from Nowhere",
+                text: "You strike at the image, hitting nothing but air. The real beast rakes your back with its tentacles from the shadows.",
+                onEnter: (state) => {
+                    state.currentHP = applyDamage(state.currentHP, 8); // Heavy damage
+                    fxManager.flashRed();
+                    return "Took 8 Damage.";
+                },
+                choices: [
+                    { text: "Stumble into Grand Hall", nextScene: 'manor_hall', type: 'travel', tetherCost: 1 },
+                    { text: "Retreat to Kitchens", nextScene: 'manor_kitchens', type: 'travel', tetherCost: 1 }
+                ]
+            },
+            
+            // --- END DISPLACER BEAST SCENES ---
 
             'manor_ballroom': {
                 title: "The Ballroom of the Damned",
@@ -4075,12 +4255,13 @@
                     // Talon's Loot Check (Existing)
                     { text: "Search for a weak point (Talon)", nextScene: 'manor_hall_check', type: 'skill', dc: 15, skill: 'Perception', tetherCost: 1, reqNotFlag: 'hallLooted' },
                     
-                    // The Goal
-                    { text: "Approach the Penrose Staircase", nextScene: 'manor_staircase', type: 'travel', tetherCost: 1 },
+                    // The Goal - Changed to Automaton Encounter
+                    { text: "Approach the Penrose Staircase", nextScene: 'manor_automaton_encounter', type: 'travel', tetherCost: 1 },
                     
                     // The Exits (Shows the open nature)
                     { text: "Return to Foyer (South)", nextScene: 'manor_foyer', type: 'travel', tetherCost: 1 },
-                    { text: "Enter Ballroom (East)", nextScene: 'manor_ballroom', type: 'travel', tetherCost: 1 },
+                    // Changed to go to the Ballroom Encounter
+                    { text: "Enter Ballroom (East)", nextScene: 'manor_ballroom_encounter', type: 'travel', tetherCost: 1 }, 
                     
                     { text: "Check Blueprint (Map)", nextScene: 'manor_map_view', type: 'map_view', reqItem: 'Manor Blueprint', tetherCost: 0 }
                 ]
@@ -4112,6 +4293,82 @@
                 },
                 choices: [{ text: "Retreat to Hall", nextScene: 'manor_hall', type: 'travel', tetherCost: 1 }]
             },
+            
+            // --- BRASS AUTOMATON SCENES (NEW) ---
+            'manor_automaton_encounter': {
+                title: "The Brass Sentinel",
+                text: "You step on a loose flagstone, and the hum of the Manor spikes. A section of the wall rotates, revealing a **Brass Sentinel**. It is eight feet of clockwork perfection, wielding a glaive that crackles with lightning. It blocks the path to the Penrose Staircase. It does not speak; it only executes.",
+                journal: "Triggered a Brass Sentinel patrol. It blocked the way.",
+                isBoss: true, 
+                choices: [
+                    // 1. GARETH (Combat - Easy win with Sword of Valor)
+                    { 
+                        text: "Gareth: Sunder the Shell (Sword of Valor)", 
+                        nextScene: 'automaton_victory_sword', 
+                        type: 'action', 
+                        reqItem: 'Sword of Valor',
+                        customClass: 'btn-hero' 
+                    },
+                    // 2. QUINN (Logic - Skill Check)
+                    { 
+                        text: "Quinn: Target Gyro-Stabilizer", 
+                        nextScene: 'automaton_logic_check', 
+                        type: 'skill', 
+                        dc: 15, 
+                        skill: 'Investigation', 
+                        tetherCost: 1 
+                    },
+                    // 3. BLINK (Reward from Cub)
+                    { 
+                        text: "Blink Behind It", 
+                        nextScene: 'manor_staircase', // Skips fight, goes to goal
+                        type: 'action', 
+                        reqSkill: 'Blink', // Requires the new skill
+                        customClass: 'btn-game spectral-active', // Spectral styling
+                        tetherCost: 1
+                    },
+                    // 4. RETREAT
+                    { text: "Retreat to Grand Hall", nextScene: 'manor_hall', type: 'travel', tetherCost: 1 }
+                ]
+            },
+
+            'automaton_logic_check': {
+                isLogic: true,
+                resolve: (roll) => roll >= 15 ? 'automaton_disable_success' : 'automaton_disable_fail'
+            },
+
+            'automaton_victory_sword': {
+                title: "Scrap Metal",
+                text: "The Sword of Valor shears through the brass casing like paper. The Sentinel collapses in a heap of sparks and gears. The path to the stairs is clear.",
+                journal: "Destroyed the Automaton with the Sword of Valor.",
+                onEnter: (state) => {
+                    state.hallLooted = true; // Mark hall as safe
+                    audioManager.playClash();
+                    return "Automaton Defeated.";
+                },
+                choices: [{ text: "Approach Penrose Staircase", nextScene: 'manor_staircase', type: 'travel', tetherCost: 0 }]
+            },
+
+            'automaton_disable_success': {
+                title: "System Failure",
+                text: "Quinn identifies the exposed timing belt. A precise strike with your hilt jams the mechanism. The Sentinel freezes mid-swing.",
+                journal: "Successfully jammed the Brass Sentinel.",
+                choices: [{ text: "Approach Penrose Staircase", nextScene: 'manor_staircase', type: 'travel', tetherCost: 0 }]
+            },
+
+            'automaton_disable_fail': {
+                title: "Glaive Strike",
+                text: "You miss the timing window. The glaive catches you in the ribs, throwing you back down the hall.",
+                journal: "Failed to disable the Automaton. Took damage.",
+                onEnter: (state) => {
+                    state.currentHP = applyDamage(state.currentHP, 6);
+                    fxManager.flashRed();
+                    return "Took 6 Damage.";
+                },
+                choices: [{ text: "Recover in Grand Hall", nextScene: 'manor_hall', type: 'travel', tetherCost: 1 }]
+            },
+            
+            // --- END BRASS AUTOMATON SCENES ---
 
             // --- THE FINALE OBSTACLE (Penrose Staircase) ---
             'manor_staircase': {
@@ -4308,6 +4565,11 @@
         async function init() {
             window.confirmReset = confirmReset;
             window.resetGame = resetGame; 
+            
+            // --- UI Update for Blink (Moved from the old UI section) ---
+            const blinkBtn = document.getElementById('btn-blink'); // SELECT THE BUTTON
+            blinkBtn.onclick = () => window.gameFunctions.triggerBlink(); 
+            // The visibility is still controlled in updateUI()
 
             onAuthStateChanged(auth, async (u) => {
                 if (u) {
@@ -4483,6 +4745,12 @@
             gameState.quinnLogistics = false;
             // NEW: Ethereal flag reset
             gameState.isEthereal = false;
+            
+            // NEW: Act 2 Reset flags
+            gameState.hallLooted = false;
+            gameState.hasBlinkSkill = false;
+            gameState.act2Started = false;
+            gameState.tetherTimer = 20;
 
 
             document.getElementById('journal-content').innerHTML = '';
@@ -4516,7 +4784,7 @@
                 // Apply spectral-text-glow to roll results
                 html = `<div class="text-xs spectral-text-glow font-bold mb-2 fade-in font-serif">${text}</div>`;
             }
-            gameState.history.push(html);
+            if(html) gameState.history.push(html);
             rebuildJournal();
         }
         
@@ -4525,14 +4793,11 @@
             if (!scene) return;
             
             // --- DEATH CHECK 0: Check previous state before processing current scene logic ---
-            // If the player entered this scene already dead (e.g., from damage applied in a previous scene's logic)
-            // This prevents a journal entry from the current scene being added before the death scene loads
             if (gameState.currentHP === 0 && sceneId !== 'edward_death') {
                 renderScene('edward_death');
                 return;
             }
            
-
             // --- PLANAR THEME TOGGLE ---
             // This applies the Act 2 CSS theme globally
             if (gameState.isEthereal) {
@@ -4540,10 +4805,6 @@
             } else {
                 document.body.classList.remove('plane-ethereal');
             }
-
-            // ... existing updateUI code ...
-            const statsPanel = document.getElementById('stats-panel');
-
 
             if (scene.isLogic) {
                 let roll = Math.floor(Math.random() * 20) + 1;
@@ -5082,237 +5343,6 @@
 						btnClass = `btn-game w-full p-3 text-left rounded shadow flex items-center ${alignmentClass} cinzel font-bold bg-red-900 border-red-700 hover:bg-red-800 hover:border-amber-500 text-white text-xl text-center`;
 					} else if (isCustomClassButton) {
 						// Custom classes need the base styling mixed in for padding, shadow, etc.
-						// FIX 2: Check for Captain's Orders buttons (spectral-active) and style them similarly to Hero.
-						if (choice.customClass && choice.customClass.includes('spectral-active')) {
-							 btnClass = `btn-game w-full text-left rounded shadow flex items-center ${alignmentClass} cinzel font-bold mb-2 spectral-active text-blue-100 ring-1 ring-blue-400 hover:ring-white`;
-						} else {
-							// All other custom classes (fire/shadow/hero/keen)
-							btnClass = `btn-game w-full text-left rounded shadow flex items-center ${alignmentClass} cinzel font-bold mb-2 ${choice.customClass}`;
-						}
-					} else {
-						// STANDARD NARRATIVE/TRADE BUTTONS (Default grey button)
-						btnClass = `btn-game w-full text-left rounded shadow flex items-center ${alignmentClass} cinzel font-bold bg-gray-800 border-gray-600 hover:border-amber-500 hover:bg-gray-750 text-gray-300 group`;
-					}
-					
-					// Apply disability visual override if necessary
-					if (isDisabled) {
-						btnClass += ` ${disabledClass}`;
-						btn.disabled = true;
-					}
-
-
-
-					btn.className = btnClass;
-
-					// --- EVENT HANDLER SPLIT ---
-					
-					// 1. HOLD INTERACTION (EXCLUSIVE)
-					if (choice.type === 'hold') {
-						let holdTimer = null;
-						const duration = 3000; // Duration must match CSS logic
-						
-						// Sync CSS animation speed to JS timer
-						btn.style.setProperty('--channel-duration', `${duration}ms`);
-
-						const startChannel = (e) => {
-							// Prevent touch scrolling/selection while holding
-							if (e.type === 'touchstart') e.preventDefault(); 
-							
-							if (btn.disabled) return;
-							
-							btn.classList.add('channeling');
-							audioManager.playGhost(); 
-
-							holdTimer = setTimeout(async () => {
-								// SUCCESS: Channel Complete
-								audioManager.playClash(); 
-								
-								// *** ACT 2 TRANSITION FIX: Apply Ethereal theme immediately before renderScene ***
-								fxManager.setVignette(false); // FIX 1: Explicitly disable the low HP vignette
-								fxManager.clearEffects();     // FIX 1: Clear persistent visual effects (rift collapsed/pulse)
-								
-								gameState.isEthereal = true; // Set the state
-								document.body.classList.add('plane-ethereal'); // Apply the CSS class immediately
-								await saveGame(); // Save the state change before rendering the next scene to ensure persistence
-								
-								renderScene(choice.nextScene);
-							}, duration);
-						};
-
-						const cancelChannel = (e) => {
-							if (holdTimer) {
-								clearTimeout(holdTimer);
-								holdTimer = null;
-							}
-							btn.classList.remove('channeling');
-						};
-
-						// Mouse Events
-						btn.addEventListener('mousedown', startChannel);
-						btn.addEventListener('mouseup', cancelChannel);
-						btn.addEventListener('mouseleave', cancelChannel);
-
-						// Touch Events (Mobile)
-						btn.addEventListener('touchstart', startChannel);
-						btn.addEventListener('touchend', cancelChannel);
-						
-						// CRITICAL: Kill standard click so a quick tap does nothing
-						btn.onclick = null; 
-					} 
-					
-					// 2. STANDARD CLICK INTERACTION (EXCLUSIVE)
-					else {
-						btn.onclick = (e) => {
-							// If disabled, just play click sound and stop execution
-							if (btn.disabled) {
-								 audioManager.playClick();
-								 return;
-							}
-							
-							// --- MAP LOGIC HOOK ---
-							if (choice.nextScene === 'manor_map_view') {
-								 // Set the return point to the CURRENT scene before leaving
-								 // The renderScene logic for manor_map_view handles the actual rendering and saving
-								 gameState.returnSceneId = gameState.currentSceneId; 
-								 renderScene('manor_map_view');
-								 return;
-							}
-
-							audioManager.playClick();
-							
-							if (choice.action && typeof choice.action === 'function') {
-								const result = choice.action(gameState);
-								if (result) addToHistory(result, 'system');
-								return; 
-							}
-							
-							if (choice.type === 'reset') {
-								resetGame();
-								return;
-							}
-							
-							// Mushroom Warning Check
-							if (gameState.crewUseFree && choice.type !== 'skill' && choice.type !== 'dialogue' && !choice.nextScene.includes('captain_orders')) {
-								addToHistory(`*Warning: The Pearlescent Mushroom's clarity is best saved for a crucial skill check.*`, 'system');
-							}
-
-							// Stock Checks
-							if (choice.type === 'action' && (currentSceneId === 'market_stall' || currentSceneId === 'alchemist_triage' || currentSceneId === 'blackwater_tavern') && choice.stockItem) {
-								 const currentStock = scenes[currentSceneId].stock[choice.stockItem] || 0;
-								 if (currentStock <= 0) {
-									addToHistory(`${choice.stockItem} is out of stock.`, 'system');
-									renderScene(currentSceneId); 
-									return;
-								}
-							}
-							
-							// Curious Cargo Check
-							if (choice.type === 'action' && choice.reqItem === 'Curious Cargo' && currentSceneId === 'market_sell') {
-								 if (marketStock['Curious Cargo'] <= 0) {
-									addToHistory(`The Market Merchant has no need for another Curious Cargo.`, 'system');
-									renderScene(currentSceneId);
-									return;
-								}
-							}
-
-							// Consume Items
-							if (choice.consume && choice.reqItem) {
-								const idx = gameState.inventory.indexOf(choice.reqItem);
-								if (idx > -1) {
-									gameState.inventory.splice(idx, 1);
-									addToHistory(`${choice.reqItem} used and discarded.`, 'system');
-								}
-							}
-
-							// Journal Entry
-							const currentScene = scenes[gameState.currentSceneId];
-							if (currentScene.journal !== null && currentScene.journal !== undefined) {
-								addToHistory(currentScene.journal, 'entry');
-							}
-
-							// Apply Costs & Gains
-							if (choice.cost) gameState.shillings -= choice.cost;
-							if (choice.costHP !== undefined) gameState.currentHP = applyDamage(gameState.currentHP, choice.costHP);
-
-							// --- SPYGLASS PASSIVE: CHAOS (AVARICE) ---
-							let extraGold = 0;
-							// Check if the choice gives money (shillingGain or value)
-							// UPDATED THRESHOLD: 15
-							if ((choice.shillingGain || choice.value) && gameState.inventory.includes("Salt-Warped Spyglass") && gameState.influence >= 15) {
-								 extraGold = 1;
-								 addToHistory("Passive (Privateer's Lens): Found +1 extra Shilling.", 'system');
-							}
-						  
-							// FIX: Ensure extraGold is included in the money addition
-							if (choice.shillingGain) gameState.shillings += (choice.shillingGain + extraGold);
-							if (choice.value) gameState.shillings += (choice.value + extraGold);
-							
-							// UPDATED CLAMPING: Max 50
-							if (choice.chaosGain) gameState.influence = Math.min(50, gameState.influence + choice.chaosGain);
-							// UPDATED CLAMPING: Max -50
-							if (choice.orderGain) gameState.influence = Math.max(-50, gameState.influence - choice.orderGain); 
-							
-							// Crew Selection Hook
-							if (choice.nextScene === 'lighthouse_morning' && currentSceneId === 'captain_orders' && choice.onSelect) {
-								choice.onSelect(gameState);
-							}
-
-							// --- TURN COUNTER DECREMENT (ACT 1 & ACT 2) ---
-
-							// ACT 1: DOOM COUNTER DECREMENT (1)
-							if (gameState.act1Started && choice.doomCost !== 0) {
-								const cost = choice.doomCost !== undefined ? choice.doomCost : 1; 
-								gameState.doomTimer = Math.max(0, gameState.doomTimer - cost);
-								
-								if (gameState.doomTimer > 0) {
-									addToHistory(`Rift Stability: ${gameState.doomTimer} turns remaining.`, 'system');
-								}
-								
-								// Collapse logic handled in renderScene after the click
-							}
-
-							// ACT 2: TETHER STABILITY DECREMENT (2)
-							if (gameState.act2Started && choice.tetherCost !== 0) {
-								 const cost = choice.tetherCost !== undefined ? choice.tetherCost : 1; 
-								 gameState.tetherTimer = Math.max(0, gameState.tetherTimer - cost);
-								 
-								 // Ejection logic handled in renderScene after the click
-							}
-
-							// Handle Skill Checks vs Standard Navigation
-							if (choice.type === 'skill') {
-								gameState.lastSkillType = choice.skill;
-								let finalDC = choice.dc;
-								// Check for permanent difficulty increase after rift collapse
-								if (gameState.isRiftCollapse) { 
-									finalDC += 2;
-									addToHistory(`Rift Penalty: DC increased by 2 (New DC: ${finalDC})`, 'system');
-								}
-								gameState.lastDC = finalDC;
-								renderScene(choice.nextScene);
-								return;
-							}
-							
-							if (choice.type !== 'skill') {
-								renderScene(choice.nextScene);
-							}
-						};
-					}
-
-
-					
-					// Default icon for travel/dialogue buttons
-					let icon = '<i class="fas fa-chevron-right text-gray-300 group-hover:text-amber-100"></i>';
-					
-					// Get the *raw* button text without cost duplication.
-					let rawText = choice.text; 
-					
-					let content = `<span class="cinzel font-bold text-gray-300 group-hover:text-amber-100">${rawText}</span>`;
-					let supplementalText = '';
-					
-					// Check if button is colored and adjust default icon color
-					if (isCustomClassButton) {
-						// Custom classes need the base styling mixed in for padding, shadow, etc.
 						content = `<span class="cinzel font-bold text-white">${rawText}</span>`;
 						
 						// NEW FIX: Success Glow Icon (Whisper)
@@ -5454,12 +5484,21 @@
 						tetherDisplay.classList.add('hidden');
 					}
 
-					if (gameState.skills.includes("Plane Walking")) {
+					if (gameState.skills.includes("Plane Walking") || gameState.skills.includes("Blink")) {
 						planarSkills.classList.remove('hidden');
 					} else {
 						planarSkills.classList.add('hidden');
 					}
 					// --- END ACT 2 UI TOGGLE ---
+					
+					// --- BLINK BUTTON VISIBILITY ---
+					const blinkBtn = document.getElementById('btn-blink');
+					if (gameState.skills.includes("Blink")) {
+						blinkBtn.classList.remove('hidden');
+					} else {
+						blinkBtn.classList.add('hidden');
+					}
+
 					
 					if (sceneId && sceneId.startsWith('prologue')) {
 						statsPanel.classList.add('prologue-blur');
