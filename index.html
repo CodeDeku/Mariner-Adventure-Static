@@ -2443,63 +2443,69 @@
                     { text: "Rest at The Blackwater Tavern", nextScene: 'blackwater_tavern', type: 'travel', doomCost: 0 },
                     { text: "Explore the Docks", nextScene: 'town_docks', type: 'travel', doomCost: 0 } // NEW DOCKS BUTTON
                 ],
-                onEnter: (state) => {
-                    const hasRing = state.inventory.includes("Ring of Brass");
-                    const hasBlade = state.inventory.includes("Sword of Valor");
-                    
-                    // Base choices for the hub
-                    let newChoices = [
-                        { 
-                            text: "Investigate Smelter District", 
-                            nextScene: 'smelter_entry', 
-                            type: 'travel', 
-                            reqNotItem: 'Sword of Valor', // Blade from Fire Path
-                            customClass: 'btn-fire-glow' 
-                        },
-                        { 
-                            text: "Investigate Sunken Chapel", 
-                            nextScene: 'chapel_entry', 
-                            type: 'travel',
-                            reqNotItem: 'Ring of Brass', // Ring from Shadow Path
-                            customClass: 'btn-shadow-glow' 
-                        },
-                        { text: "Visit The Triage Alchemist", nextScene: 'alchemist_triage', type: 'travel', doomCost: 0 },
-                        { text: "Rest at The Blackwater Tavern", nextScene: 'blackwater_tavern', type: 'travel', doomCost: 0 },
-                        { text: "Explore the Docks", nextScene: 'town_docks', type: 'travel', doomCost: 0 } // NEW DOCKS BUTTON
-                    ];
+                // Inside scenes['town_square']:
+				onEnter: (state) => {
+					const hasRing = state.inventory.includes("Ring of Brass");
+					const hasBlade = state.inventory.includes("Sword of Valor");
+					
+					// Base choices for the hub
+					let newChoices = [
+						{ 
+							text: "Investigate Smelter District", 
+							nextScene: 'smelter_entry', 
+							type: 'travel', 
+							reqNotItem: 'Sword of Valor', 
+							customClass: 'btn-fire-glow' 
+						},
+						{ 
+							text: "Investigate Sunken Chapel", 
+							nextScene: 'chapel_entry', 
+							type: 'travel',
+							reqNotItem: 'Ring of Brass', 
+							customClass: 'btn-shadow-glow' 
+						},
+						{ text: "Visit The Triage Alchemist", nextScene: 'alchemist_triage', type: 'travel', doomCost: 0 },
+						{ text: "Rest at The Blackwater Tavern", nextScene: 'blackwater_tavern', type: 'travel', doomCost: 0 },
+						{ text: "Explore the Docks", nextScene: 'town_docks', type: 'travel', doomCost: 0 }
+					];
 
-                    // STATE 2: FINALE UNLOCKED
+					// STATE 2: FINALE UNLOCKED
 					if (hasRing && hasBlade) {
-						// Added: Void/Spectral styling for the Rift description
 						scenes['town_square'].text = "The <span class='text-void'>Rift</span> is tearing the sky apart. <span class='text-spectral'>Violet lightning</span> strikes the cobblestones. You have the <span class='text-item'>Ring</span> and the <span class='text-item'>Blade</span>. The Ritual is the only way to close this wound.";
-						// ... choices setup ...
-						return "Finale Unlocked.";
+						
+						// FIX: Add the Ritual Button to the TOP of the choices list
+						newChoices.unshift({
+							text: "Begin the Final Ritual", 
+							nextScene: 'finale_ritual_start', 
+							type: 'travel', 
+							customClass: 'btn-hero', // Make it glow blue
+							doomCost: 0
+						});
+						
+						// Update choices immediately
+						scenes['town_square'].choices = newChoices;
+						
+						return "Finale Unlocked."; // Now safe to return
 					}
 					
-					// Dynamic Text Logic
+					// Normal Text Logic (runs only if finale is NOT unlocked)
 					if (hasRing) {
-						// Added: Void styling for the fog
 						scenes['town_square'].text = "You return with the <span class='text-item'>Ring of Brass</span>. Fog from the Sunken Chapel is flooding the streets, choking the light. The <span class='text-void'>Shadow threat</span> has escalated while you were away. You must pursue the Fire Path now.";
 					} 
 					else if (hasBlade) {
-						// Added: Fire styling for the ash
 						scenes['town_square'].text = "You return with the <span class='text-item'>Sword of Valor</span>. Ash falls from the Smelter District like <span class='text-fire'>gray snow</span>. The <span class='text-fire'>Fire threat</span> has escalated while you were away. You must pursue the Shadow Path now.";
 					} 
 					else {
-						// Added: Fire/Void styling for the initial description
 						scenes['town_square'].text = "The Port is in chaos. Civilians flee toward the docks. To the East, the Smelter District burns with <span class='text-fire'>unnatural heat</span>. To the West, the Sunken Chapel lies in a pool of <span class='text-void'>dark fog</span>. Your Compass tracks both.";
 					}
-                    
-                    // Filter choices based on acquired items
-                    scenes['town_square'].choices = newChoices.filter(choice => {
-                        // Hide Fire Path if Blade is acquired (unless it's the Ritual scene)
-                        if (choice.nextScene === 'smelter_entry' && hasBlade) return false;
-                        // Hide Shadow Path if Ring is acquired
-                        if (choice.nextScene === 'chapel_entry' && hasRing) return false;
-                        return true;
-                    });
-                    
-                },
+					
+					// Filter choices based on acquired items (Normal State)
+					scenes['town_square'].choices = newChoices.filter(choice => {
+						if (choice.nextScene === 'smelter_entry' && hasBlade) return false;
+						if (choice.nextScene === 'chapel_entry' && hasRing) return false;
+						return true;
+					});
+				},
                 // Choices now generated in onEnter
             },
             
@@ -4921,9 +4927,33 @@
                 renderScene('edward_death');
                 return;
             }
+
+            // --- DOOM COUNTER LOGIC (MOVED TO TOP - FIX 1) ---
+            // Process timer checks BEFORE generating text/UI to ensure instant feedback
+            
+            // ACT 1: DOOM COUNTER LOGIC
+            if (gameState.doomTimer <= 0 && gameState.act1Started) {
+                // FIX: Apply penalties and set flags BEFORE onEnter runs
+                if (!gameState.isRiftCollapse && !gameState.hasLoggedCollapse) {
+                    gameState.isRiftCollapse = true;
+                    gameState.hasLoggedCollapse = true; 
+                    
+                    // Apply penalties
+                    gameState.maxHP = Math.max(1, gameState.maxHP - 5);
+                    gameState.currentHP = Math.min(gameState.currentHP, gameState.maxHP); // Clamp current HP
+                    
+                    // Log immediately so it appears above scene text
+                    addToHistory(`!!! RIFT COLLAPSE !!! The veil has ruptured. All Skill Check DCs are permanently increased by 2. Max HP reduced by 5 due to toxic air.`, 'system');
+                }
+            }
+            
+            // ACT 2: TETHER COUNTER LOGIC (Check immediately on render)
+            if (gameState.tetherTimer <= 0 && gameState.act2Started && sceneId !== 'act2_tether_fail') {
+                 renderScene('act2_tether_fail');
+                 return;
+            }
            
             // --- PLANAR THEME TOGGLE ---
-            // This applies the Act 2 CSS theme globally
             if (gameState.isEthereal) {
                 document.body.classList.add('plane-ethereal');
             } else {
@@ -5030,36 +5060,6 @@
                 saveGame();
             }
 
-            // --- DOOM COUNTER LOGIC (Planar Instability) ---
-            const isBossScene = scenes[sceneId].isBoss;
-            
-            // The actual decrement logic is now inside the `btn.onclick` function.
-            // This logic below handles the state if the doom timer hit 0 on the last click.
-            
-            // ACT 1: DOOM COUNTER LOGIC
-            if (gameState.doomTimer <= 0 && gameState.act1Started) {
-                
-                // FIX 2B: Apply penalties and log the message ONLY ONCE
-                if (!gameState.isRiftCollapse && !gameState.hasLoggedCollapse) {
-                    
-                    // Set both collapse flags (The penalty applies here only once)
-                    gameState.isRiftCollapse = true;
-                    gameState.hasLoggedCollapse = true; 
-                    
-                    // Apply penalties and log the message
-                    gameState.maxHP = Math.max(1, gameState.maxHP - 5);
-                    gameState.currentHP = Math.min(gameState.currentHP, gameState.maxHP); // Clamp current HP
-                    addToHistory(`!!! RIFT COLLAPSE !!! The veil has ruptured. All Skill Check DCs are permanently increased by 2. Max HP reduced by 5 due to toxic air.`, 'system');
-                }
-            }
-            
-            // ACT 2: TETHER COUNTER LOGIC
-            if (gameState.tetherTimer <= 0 && gameState.act2Started && sceneId !== 'act2_tether_fail') {
-                 // Trigger the violent ejection
-                 renderScene('act2_tether_fail');
-                 return;
-            }
-            
             // --- DEATH CHECK 1: Immediately check if onEnter killed the player ---
             if (gameState.currentHP === 0 && sceneId !== 'edward_death') {
                 renderScene('edward_death');
