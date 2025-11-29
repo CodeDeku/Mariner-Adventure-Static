@@ -1439,7 +1439,7 @@
             },
             'prologue_abyss': {
                 title: "The God of the Deep",
-				text: "A wave of pure magical force shatters the hull. The freezing dark claims you instantly. You sink, drifting into the abyss, and see IT rising—a colossal shadow, vast as a mountain. The screams of Gareth, Quinn, Talon, and Bones are silenced by the water... only to re-ignite inside your skull, burning hotter than the freezing deep.",
+				text: "The deck of <span class='text-spectral'>The Trident's Kiss</span> heaves. The sky isn't just storming; it hates you. Above, the clouds are a bleeding violet bruise. Captain Gareth stands at the wheel, singing against the gale. '...But who pays the toll for the army of dead?!' he roars. Quinn is frantically tying down crates, screaming that the manifest is slipping away.",
 				journal: "I died. I know I died. But the Shadow beneath the waves spat me back out. Now, I am not alone in my own skin.",
                 choices: [
                     { text: "Gasp for air (Wake Up)", nextScene: 'start', type: 'travel' }
@@ -1447,7 +1447,7 @@
             },
 			'start': {
                 title: "The Wreckage",
-				text: "You gasp, lungs burning, and retch salt water onto the grey sand. The storm has passed, but the silence of the beach is a lie. Inside your mind, the scream of the dying ship continues. They don't realize they are dead.<br><br>You find your hand cramping, clutching the Captain's Tricorn Hat with a death grip. Beside you, the Compass hums with a violet vibration. You are alive, but you have become a life raft for the damned.",
+				text: "You gasp, lungs burning, and retch salt water onto the grey sand. The storm has passed, but the silence of the beach is a lie. Inside your mind, the scream of the dying ship continues. They don't realize they are dead.<br><br>You find your hand cramping, clutching the <span class='text-item'>Captain's Tricorn Hat</span> with a death grip. Beside you, the <span class='text-item'>Compass</span> hums with a <span class='text-void'>violet vibration</span>. You are alive, but you have become a life raft for the damned.",
 				journal: "Woke up choking on sand. Gareth's hat is in my hand—I can't let go of it. The Compass is screaming, and the crew... they are loud. So loud. They don't know they're ghosts.",
 				banter: {
 					'quinn': "The manifest! The logs! We can't be erased, Edward. Find the records or we never existed!"
@@ -1476,7 +1476,7 @@
             } ,
 			'wreckage_success': {
                 title: "Salvage",
-				text: "Quinn guides your hand to a buried chest. Inside, a pouch of Shillings and a Rusted Cutlass. You strap the blade to your belt—the rust flakes away as your hand touches the hilt, remembering a fight you haven't fought yet. Quinn points frantically to a damp book lying nearby—the Ship's Log.",
+				text: "Quinn guides your hand to a buried chest. Inside, a pouch of <span class='text-item'>Shillings</span> and a <span class='text-item'>Rusted Cutlass</span>. You strap the blade to your belt—the rust flakes away as your hand touches the hilt, remembering a fight you haven't fought yet. Quinn points frantically to a damp book lying nearby—the <span class='text-item'>Ship's Log</span>.",
 				journal: "Salvaged what I could. A rusted blade feels heavy, but Quinn finally shut up once I found the Log. Writing this down gives me something to focus on besides the voices.",
                 onEnter: (state) => {
                     const items = ["Rusted Cutlass", "Ship's Log"];
@@ -1516,7 +1516,7 @@
             },
             'treeline': {
                 title: "The Whispering Woods",
-                text: "The forest looms ahead. As you step forward, Quinn screams in your mind. 'The Log! Don't leave the history!' You stumble, looking down to see the water-logged Ship's Log at your feet. You pick it up to silence him.",
+                text: "The forest looms ahead. As you step forward, Quinn screams in your mind. 'The Log! Don't leave the history!' You stumble, looking down to see the water-logged <span class='text-item'>Ship's Log</span> at your feet. You pick it up to silence him.",
                 journal: "Quinn wouldn't let me leave without the Log. I found it at the treeline.",
                 onEnter: (state) => {
                     if(!state.inventory.includes("Ship's Log")) {
@@ -2182,8 +2182,7 @@
             // --- ACT 1: LEVEL UP SEQUENCE (SKILL UNLOCK) ---
             'lighthouse_morning': {
                 title: "The First Morning",
-                text: "The chaotic surge of power that courses through you is threatening to splinter your mind. You pull the **Compass** from your belt—its needle is violently vibrating, demanding command. You must give the raw planar energy shape by focusing entirely on a single technique. **This choice is absolute.** The path you forge now is permanent, Mariner; it will determine your strength and define the immediate danger you face in the Port of Shadows.",
-                journal: "The crew warned me of Fire and Shadow. I must choose how to prepare.",
+                text: "The chaotic surge of power that courses through you is threatening to splinter your mind. You pull the <span class='text-item'>Compass</span> from your belt—its needle is violently vibrating, demanding command. You must give the raw planar energy shape by focusing entirely on a single technique. <span class='text-danger'>This choice is absolute.</span> The path you forge now is permanent, Mariner; it will determine your strength and define the immediate danger you face in the Port of Shadows.",
                 banter: { // Now uses the built-in Banter system
                     'gareth': "The town is bleeding. Fire and ruin in the Smelter District.",
                     'talon': "Things that refuse to stay dead hide in the fog of the Sunken Chapel."
@@ -2248,7 +2247,7 @@
             // --- NEW SCENE: CLIFFSIDE OVERLOOK ---
             'cliffside_overlook': {
                 title: "Cliffside Overlook",
-                text: "The path winds along the sheer cliff face, providing a terrifying view of the Port of Shadows below. You see the chaos: smoke rising from the **Smelter** and a thick, unnatural fog shrouding the **Chapel** district. You must decide whether to scan the area for threats or hasten your descent.",
+                text: "The path winds along the sheer cliff face, providing a terrifying view of the Port of Shadows below. You see the chaos: smoke rising from the <span class='text-fire'>Smelter District</span> and a thick, unnatural fog shrouding the <span class='text-void'>Sunken Chapel</span>. You must decide whether to scan the area for threats or hasten your descent.",
                 journal: "Reached the overlook. The Port is a warzone. Must be cautious.",
 				banter: {
 						'talon': "Wait. Look at the shadows near those rocks. People leave valuable things behind when they run.", // Hints at Perception DC 14
@@ -2357,7 +2356,7 @@
             
             'town_descent': {
 				title: "The Descent",
-				text: "You arrive at the main city gate. The chaos here is raw. Your Compass vibrates violently, the needle splitting in two. One ghostly needle glows <span class='text-orange-500'>Orange</span> toward the Smelter. The other turns <span class='text-gray-500'>Black</span> toward the Chapel.",
+				text: "You arrive at the main city gate. The chaos here is raw. Your <span class='text-item'>Compass</span> vibrates violently, the needle splitting in two. One ghostly needle glows <span class='text-fire'>Orange</span> toward the Smelter. The other turns <span class='text-void'>Black</span> toward the Chapel.",
 				journal: "The Compass cracked. It's pulling me apart. Smelter fire to the East, Chapel fog to the West. Gareth is right—I can't save everyone. I have to choose.",
 				banter: {
 					'gareth': "Hold fast! A Captain who chases two headings sails in circles! Choose a target, Mister Jones. Fire or Fog—pick your poison!"
@@ -2413,30 +2412,27 @@
                         { text: "Explore the Docks", nextScene: 'town_docks', type: 'travel', doomCost: 0 } // NEW DOCKS BUTTON
                     ];
 
-                    // STATE 2: FINALE UNLOCKED - Remove exploration choices, force ritual preparation
-                    if (hasRing && hasBlade) {
-                        scenes['town_square'].text = "The Rift is tearing the sky apart. Violet lightning strikes the cobblestones. You have the Ring and the Blade. The Wolf King's ritual is the only way to close this wound.";
-                        newChoices = [
-                            { text: "Prepare the Wolf King's Ritual", nextScene: 'finale_ritual_start', type: 'combat', customClass: 'btn-hero' },
-                            { text: "Visit Madam Alara, The Triage Alchemist", nextScene: 'alchemist_triage', type: 'travel', doomCost: 0 },
-                            { text: "Rest at The Blackwater Tavern", nextScene: 'blackwater_tavern', type: 'travel', doomCost: 0 },
-                            // ADDED DOCKS BACK FOR LATE-GAME TRADING/HEALING
-                            { text: "Explore the Docks", nextScene: 'town_docks', type: 'travel', doomCost: 0 } 
-                        ];
-                        scenes['town_square'].choices = newChoices;
-                        return "Finale Unlocked.";
-                    }
-                    
-                    // Dynamic Text Logic
-                    if (hasRing) {
-                        scenes['town_square'].text = "You return with the Ring of Brass. Fog from the Sunken Chapel is flooding the streets, choking the light. The Shadow threat has escalated while you were away. You must pursue the Fire Path now.";
-                    } 
-                    else if (hasBlade) {
-                        scenes['town_square'].text = "You return with the Sword of Valor. Ash falls from the Smelter District like gray snow. The Fire threat has escalated while you were away. You must pursue the Shadow Path now.";
-                    } 
-                    else {
-                        scenes['town_square'].text = "The Port is in chaos. Civilians flee toward the docks. To the East, the Smelter District burns with an unnatural heat. To the West, the Sunken Chapel lies in a pool of dark fog. Your Compass tracks both.";
-                    }
+                    // STATE 2: FINALE UNLOCKED
+					if (hasRing && hasBlade) {
+						// Added: Void/Spectral styling for the Rift description
+						scenes['town_square'].text = "The <span class='text-void'>Rift</span> is tearing the sky apart. <span class='text-spectral'>Violet lightning</span> strikes the cobblestones. You have the <span class='text-item'>Ring</span> and the <span class='text-item'>Blade</span>. The Ritual is the only way to close this wound.";
+						// ... choices setup ...
+						return "Finale Unlocked.";
+					}
+					
+					// Dynamic Text Logic
+					if (hasRing) {
+						// Added: Void styling for the fog
+						scenes['town_square'].text = "You return with the <span class='text-item'>Ring of Brass</span>. Fog from the Sunken Chapel is flooding the streets, choking the light. The <span class='text-void'>Shadow threat</span> has escalated while you were away. You must pursue the Fire Path now.";
+					} 
+					else if (hasBlade) {
+						// Added: Fire styling for the ash
+						scenes['town_square'].text = "You return with the <span class='text-item'>Sword of Valor</span>. Ash falls from the Smelter District like <span class='text-fire'>gray snow</span>. The <span class='text-fire'>Fire threat</span> has escalated while you were away. You must pursue the Shadow Path now.";
+					} 
+					else {
+						// Added: Fire/Void styling for the initial description
+						scenes['town_square'].text = "The Port is in chaos. Civilians flee toward the docks. To the East, the Smelter District burns with <span class='text-fire'>unnatural heat</span>. To the West, the Sunken Chapel lies in a pool of <span class='text-void'>dark fog</span>. Your Compass tracks both.";
+					}
                     
                     // Filter choices based on acquired items
                     scenes['town_square'].choices = newChoices.filter(choice => {
@@ -3016,7 +3012,7 @@
             },
             'gather_info_chapel': {
                 title: "Sunken Chapel Tip",
-                text: "The pale gravedigger warns you, 'Don't follow the sound; follow the silence. The paths are a maze, but the silent, **weeping angel statues** mark the safe, true route.'",
+                text: "The pale gravedigger warns you, 'Don't follow the sound; follow the silence. The paths are a maze, but the silent, <span class='text-void'>weeping angel statues</span> mark the safe, true route.'",
                 journal: "Learned the safe route through the Sunken Chapel's Fog Maze.",
                 choices: [{ text: "Return to Tavern", nextScene: 'blackwater_tavern', type: 'travel', doomCost: 0 }],
                 onEnter: (state) => {
@@ -3029,7 +3025,7 @@
             // --- FIRE PATH SCENES ---
             'smelter_entry': {
                 title: "Smelter District: Steam Vents",
-                text: "The path is blocked by a burst steam pipe spitting magical fire. The main valve is screaming and rusted over. You need to use your abilities or brute force here.",
+                text: "The path is blocked by a burst steam pipe spitting <span class='text-fire'>magical fire</span>. The main valve is screaming and rusted over. You need to use your abilities or brute force here.",
 				journal: "The heat hit me like a hammer. The pipes were screaming. Quinn started shouting about torque and pressure, but Talon just pointed at the walls.",
                 banter: {
 					'quinn': "That valve isn't jammed; it's pressurized! Use your head, not your muscle!", // Hints at Investigation DC 15
@@ -3144,7 +3140,7 @@
             // --- NEW SCENE: SMELTER ANTECHAMBER (Order/Chaos Choice) ---
             'smelter_workers': {
                 title: "Smelter District: Trapped Workers",
-                text: "You enter the main engine room. A heavy support beam has collapsed, trapping three exhausted workers near the pit. They beg for aid. The structural groans suggest you have very little time.",
+                text: "You enter the main engine room. A heavy support beam has collapsed, trapping three exhausted workers near the pit. They beg for aid. The structural groans suggest you have <span class='text-danger'>very little time</span>.",
                 journal: "I found men pinned by a beam, baking alive. I had to choose between saving them and securing the primary objective.",
 				banter: {
 					'gareth': "Heave! Put your back into it! A Captain protects his people!" // Hints at Athletics DC 15
@@ -3231,7 +3227,7 @@
             // --- NEW MULTI-STAGE BOSS FIGHT: SLAG HORROR ---
             'smelter_stage1_start': {
                 title: "Slag Horror: Stage 1 - The Heat Wave",
-                text: "The <span class='text-red-500 font-bold'>Slag Horror</span> rises from the molten iron, its core glowing. It prepares to spew a wave of magma. You must find a way to mitigate the heat to get close enough to strike. You spot the hilt of the **Sword of Valor** suspended in its chest.",
+                text: "The <span class='text-danger'>Slag Horror</span> rises from the molten iron, its core glowing. It prepares to spew a <span class='text-fire'>wave of magma</span>. You must find a way to mitigate the heat to get close enough to strike. You spot the hilt of the <span class='text-item'>Sword of Valor</span> suspended in its chest.",
 				journal: "The beast rose from the slag, dripping liquid iron. It didn't look like a monster; it looked like an industrial accident given hate and form.",
 				banter: {
 					'gareth': "It's winding up! Don't stand there—move!" // Hints at Athletics DC 14
@@ -3522,7 +3518,7 @@
             // --- SHADOW PATH SCENES ---
             'chapel_entry': {
                 title: "Sunken Chapel: The Fog Maze",
-                text: "The cemetery is covered in unnatural fog. The paths loop back on themselves, and you cannot see. The silence here is heavy.",
+                text: "The cemetery is covered in <span class='text-void'>unnatural fog</span>. The paths loop back on themselves, and you cannot see. The silence here is heavy.",
 				journal: "The silence of the Chapel was heavy. The fog felt intentional. It wanted me lost.",
                 banter: {
 					'talon': "The fog moves against the wind. Something is disturbing it.", // Hints at Perception DC 15
@@ -3683,7 +3679,7 @@
             // --- NEW MULTI-STAGE BOSS FIGHT: DROWNED SPECTRE ---
             'chapel_stage1_reveal': {
                 title: "Drowned Spectre: Stage 1 - The Ambush",
-                text: "The crypt is flooded. The <span class='text-gray-400 font-bold'>Drowned Spectre</span> is present but invisible in the thick, churning black fog. It will strike from the dark unless you can pinpoint its true location. On its skeletal finger glints the **Ring of Brass**.",
+                text: "The crypt is flooded. The <span class='text-danger'>Drowned Spectre</span> is present but invisible in the thick, churning <span class='text-void'>black fog</span>. It will strike from the dark unless you can pinpoint its true location. On its skeletal finger glints the <span class='text-item'>Ring of Brass</span>.",
 				journal: "The Spectre was everywhere and nowhere. A cold touch on my neck. A whisper in my ear. Talon told me to stop looking with my eyes.",
 				banter: {
 					'talon': "It's circling us. Stop looking with your eyes. Watch for the displacement in the fog." // Hints at Perception DC 14
@@ -3910,43 +3906,43 @@
 
             // --- ACT 2 SCENES (NEW) ---
             'act2_arrival': {
-                title: "The Vanishing Manor",
-                text: "The world shatters. The Port of Shadows—the Smelter, the Chapel—they dissolve into mist. You are no longer on the Material Plane. You materialize on the cold marble floor of a glorious, hidden estate. This is the **Vanishing Manor**, the Ethereal fortress of the Wolf King. Your planar intervention has caused a massive **recoil**.<br><br>The voices of your crew are crystal clear now. They are not in your head; they are standing beside you, radiating power. But your physical form is rejecting this plane. You are unraveling—you have limited time to find answers and escape.",
-                journal: "I closed the Rift, but the recoil threw me into the Ethereal Plane. I am truly the Mariner of the Damned now.",
-                onEnter: (state) => {
-                    // --- WORLD STATE: RIFT CLOSED & ETHEREAL START ---
-                    state.act1Started = false;      // Hides Doom UI Bar & Stops Button Turn Counts
-                    state.isRiftCollapse = false;   // Removes Purple/Red Overlay logic
-                    state.doomTimer = 0;            // Resets the internal counter (cleanup)
-                    state.quinnLogistics = false;   // Hides the "0 Turns" text on buttons
-                    
-                    // ACT 2 INIT
-                    state.act2Started = true;       // Enables Tether Timer/Logic
-                    state.isEthereal = true;        // Sets Ethereal Plane theme/Dice Buff
-                    state.tetherTimer = 20;         // Starts the Ticking Clock
-                    
-                    // Grant Plane Walking Skill for subsequent use
-                    if (!state.skills.includes("Plane Walking")) {
-                        state.skills.push("Spectral Lantern"); // Use Lantern as the item that grants the skill
-                    }
+				title: "The Vanishing Manor",
+				text: "The world shatters. The Port of Shadows—the Smelter, the Chapel—they dissolve into mist. You are no longer on the Material Plane. You materialize on the cold marble floor of a glorious, hidden estate. This is the <span class='text-spectral'>Vanishing Manor</span>, the Ethereal fortress of the Wolf King. Your planar intervention has caused a massive <span class='text-void'>recoil</span>.<br><br>The voices of your crew are crystal clear now. They are not in your head; they are standing beside you, radiating power. But your physical form is rejecting this plane. You are unraveling—you have <span class='text-danger'>limited time</span> to find answers and escape.",
+				journal: "I closed the Rift, but the recoil threw me into the Ethereal Plane. I am truly the Mariner of the Damned now.",
+				onEnter: (state) => {
+					// --- WORLD STATE: RIFT CLOSED & ETHEREAL START ---
+					state.act1Started = false;
+					state.isRiftCollapse = false;
+					state.doomTimer = 0;
+					state.quinnLogistics = false;
+					
+					// ACT 2 INIT
+					state.act2Started = true;
+					state.isEthereal = true;
+					state.tetherTimer = 20;
+					
+					// FIX: Corrected skill name to "Plane Walking" to match updateUI logic
+					if (!state.skills.includes("Plane Walking")) {
+						state.skills.push("Plane Walking"); 
+					}
 
-                    // Reset all crew members now that they are buffed
-                    Object.keys(state.crew).forEach(k => state.crew[k].used = false);
+					// Reset all crew members now that they are buffed
+					Object.keys(state.crew).forEach(k => state.crew[k].used = false);
 
-                    document.getElementById('tether-display').classList.remove('hidden');
-                    return "Act 1 Complete. Tether Unstable: 20 Turns remaining.";
-                },
-                choices: [
-                    { text: "Enter the Foyer", nextScene: 'manor_foyer', type: 'travel', tetherCost: 1 }
-                ]
-            },
+					document.getElementById('tether-display').classList.remove('hidden');
+					return "Act 1 Complete. Tether Unstable: 20 Turns remaining.";
+				},
+				choices: [
+					{ text: "Enter the Foyer", nextScene: 'manor_foyer', type: 'travel', tetherCost: 1 }
+				]
+			},
 
 
 			// --- ACT 2: THE MANOR WEB LAYOUT ---
 
             'manor_foyer': {
                 title: "The Grand Foyer",
-                text: "The Manor is a labyrinth of memory. The grand staircase ahead is shattered, floating in the void. Three arches stand before you, breathing cold mist.<br><br><b>West:</b> The Warden's Library.<br><b>East:</b> The Service Wing (Kitchens).<br><b>North:</b> The Grand Hall (Patrolled).",
+                text: "The Manor is a labyrinth of memory. The grand staircase ahead is shattered, floating in the void. Three arches stand before you, breathing cold mist.<br><br><b>West:</b> <span class='memory-keyword' data-lore='A repository of planar maps and the Wolf King’s contracts.'>The Warden's Library</span><br><b>East:</b> The Service Wing (Kitchens).<br><b>North:</b> The Grand Hall (Patrolled).",
                 journal: "The Foyer is the center. I can go West, East, or brave the North.",
                 choices: [
                     { text: "Enter Library (West)", nextScene: 'manor_library', type: 'travel', tetherCost: 1 },
@@ -3959,7 +3955,7 @@
             // --- WEST WING (The Intel & Shortcut) ---
             'manor_library': {
                 title: "The Warden's Library",
-                text: "Books float freely here. Quinn flies toward a specific scroll case. A draft comes from a low grate near the floor, suggesting a ventilation shaft connecting to the East Wing.",
+                text: "Books float freely here. Quinn flies toward a specific scroll case. A draft comes from a low grate near the floor, suggesting a <span class='memory-keyword' data-lore='Small tunnels used by maintenance constructs.'>ventilation shaft</span> connecting to the East Wing.",
                 banter: {
                     'quinn': "The architecture is efficient. That vent leads to the kitchens. And this bookshelf... it's a door."
                 },
@@ -4050,7 +4046,7 @@
             // --- DISPLACER CUB SCENES ---
             'cub_encounter': {
                 title: "The Displacer Cub",
-                text: "Huddled in the corner is a kitten-sized Displacer Cub. It hisses, flickering in and out of existence, terrified. It is starving. It seems to be phasing uncontrollably.",
+                text: "Huddled in the corner is a kitten-sized <span class='text-void'>Displacer Cub</span>. It hisses, flickering in and out of existence, terrified. It is starving. It seems to be phasing uncontrollably.",
                 journal: "Found a lost Displacer Cub in the walls.",
                 banter: {
                     'bones': "It's not aggressive, Edward. It's starving. It can't control its shifts because it's weak."
@@ -4093,7 +4089,7 @@
             },
             'cub_tame_success': {
                 title: "The Cub's Gift",
-                text: "You offer food and a steady hand. The cub eats effectively, stabilizing its phasing. It looks at you with deep, violet eyes, then headbutts your hand. <br><br>For a moment, your soul syncs with its frequency. You understand the geometry of the 'Blink'—a reflexive, planar hop.",
+                text: "You offer food and a steady hand. The cub eats effectively, stabilizing its phasing. It looks at you with deep, violet eyes, then headbutts your hand. <br><br>For a moment, your soul syncs with its frequency. You understand the geometry of the <span class='text-spectral'>Blink</span>—a reflexive, planar hop.",
                 journal: "Saved the cub. Learned the Blink skill. The cub blinked away into the ether.",
                 onEnter: (state) => {
                     if (!state.skills.includes("Blink")) {
@@ -4145,7 +4141,7 @@
             // --- DISPLACER BEAST SCENES ---
             'manor_ballroom_encounter': {
                 title: "The Phase Hunter",
-                text: "The Kitchens open into a massive Ballroom. Hundreds of ghosts dance in a swirling vortex. Suddenly, the ghosts vanish. The air shimmers. A massive, six-legged panther with tentacles sprouting from its shoulders materializes, then shifts two feet to the left. A **Displacer Beast**. It hunts not with eyes, but with planar vibration.",
+                text: "The Kitchens open into a massive Ballroom. Hundreds of ghosts dance in a swirling vortex. Suddenly, the ghosts vanish. The air shimmers. A massive, six-legged panther with tentacles sprouting from its shoulders materializes, then shifts two feet to the left. A <span class='memory-keyword' data-lore='A predatory fey creature that projects a magical illusion of itself to confuse prey.'>Displacer Beast</span>. It hunts not with eyes, but with planar vibration.",
                 journal: "Encountered a Displacer Beast in the Ballroom.",
                 isBoss: true, // Use boss flag for better handling
                 banter: {
@@ -4249,7 +4245,7 @@
             // --- THE CONVERGENCE (Grand Hall) ---
             'manor_hall': {
                 title: "The Grand Hall",
-                text: "All paths converge here. The Hall is massive and cold. Patrols of brass automatons phase through the walls. At the far end, a dizzying, spiraling staircase ascends into the dark.",
+                text: "All paths converge here. The Hall is massive and cold. Patrols of <span class='text-danger'>Brass Automatons</span> phase through the walls. At the far end, a dizzying, spiraling <span class='text-spectral'>Penrose Staircase</span> ascends into the dark.",
                 journal: "Reached the Grand Hall. The exit is blocked by the Penrose Staircase.",
                 choices: [
                     // Talon's Loot Check (Existing)
@@ -4297,7 +4293,7 @@
             // --- BRASS AUTOMATON SCENES (NEW) ---
             'manor_automaton_encounter': {
                 title: "The Brass Sentinel",
-                text: "You step on a loose flagstone, and the hum of the Manor spikes. A section of the wall rotates, revealing a **Brass Sentinel**. It is eight feet of clockwork perfection, wielding a glaive that crackles with lightning. It blocks the path to the Penrose Staircase. It does not speak; it only executes.",
+                text: "You step on a loose flagstone, and the hum of the Manor spikes. A section of the wall rotates, revealing a <span class='text-danger'>Brass Sentinel</span>. It is eight feet of clockwork perfection, wielding a glaive that crackles with lightning. It blocks the path to the <span class='text-spectral'>Penrose Staircase</span>. It does not speak; it only executes.",
                 journal: "Triggered a Brass Sentinel patrol. It blocked the way.",
                 isBoss: true, 
                 choices: [
@@ -5422,16 +5418,44 @@
 					const tetherDisplay = document.getElementById('tether-display');
 					const planarSkills = document.getElementById('planar-skills-container');
 
+					// 1. Tether Bar Visibility
 					if (gameState.act2Started) {
 						tetherDisplay.classList.remove('hidden');
 					} else {
 						tetherDisplay.classList.add('hidden');
 					}
 
+					// 2. Planar Skills Menu Visibility
+					// Shows if you have EITHER Plane Walking (Default Act 2) OR Blink (Cub Reward)
 					if (gameState.skills.includes("Plane Walking") || gameState.skills.includes("Blink")) {
 						planarSkills.classList.remove('hidden');
 					} else {
 						planarSkills.classList.add('hidden');
+					}
+
+					// 3. Blink Button Specific Visibility
+					// This button sits inside the planar-skills-container
+					const blinkBtn = document.getElementById('btn-blink');
+					if (gameState.skills.includes("Blink")) {
+						blinkBtn.classList.remove('hidden');
+						// Add spectral styling to Blink if active
+						blinkBtn.classList.add('spectral-text-glow'); 
+					} else {
+						blinkBtn.classList.add('hidden');
+					}
+
+					// 4. Plane Walk Button Styling (Visual Feedback)
+					const planeWalkBtn = document.getElementById('btn-plane-walk');
+					if (gameState.isEthereal) {
+						// Visual cue that you are currently Ethereal
+						planeWalkBtn.classList.add('border-cyan-400', 'bg-cyan-900/40');
+						planeWalkBtn.classList.remove('border-cyan-700', 'bg-gray-900/80');
+						planeWalkBtn.innerHTML = `<span class="text-[10px] cinzel font-bold text-cyan-300">Return to Material</span><i class="fas fa-shoe-prints text-cyan-300"></i>`;
+					} else {
+						// Visual cue that you are Material
+						planeWalkBtn.classList.remove('border-cyan-400', 'bg-cyan-900/40');
+						planeWalkBtn.classList.add('border-cyan-700', 'bg-gray-900/80');
+						planeWalkBtn.innerHTML = `<span class="text-[10px] cinzel font-bold">Plane Walk</span><i class="fas fa-shoe-prints text-cyan-600"></i>`;
 					}
 					// --- END ACT 2 UI TOGGLE ---
 					
