@@ -1627,6 +1627,34 @@
                     return msg;
                 },
                 choices: [
+                    { text: "Assess Injuries", nextScene: 'start_medicine_check', type: 'skill', dc: 10, skill: 'Medicine' },
+                    { text: "Search the debris", nextScene: 'wreckage_search', type: 'skill', dc: 8, skill: 'Investigation' },
+                    { text: "Head toward the treeline", nextScene: 'treeline', type: 'travel' }
+                ]
+            },
+            
+            // NEW LOGIC SCENES FOR START
+            'start_medicine_check': {
+                isLogic: true,
+                resolve: (roll) => roll >= 10 ? 'start_medicine_success' : 'start_medicine_fail'
+            },
+            'start_medicine_success': {
+                title: "Field Triage",
+                text: "Bones guides your hands. You find a patch of sea-kelp to bind the worst of the cuts and cough the remaining water from your lungs. You feel steady.",
+                onEnter: (state) => {
+                    // Heal 2 HP (up to max)
+                    state.currentHP = Math.min(state.maxHP, state.currentHP + 2);
+                    return "Bones stabilized you. Healed 2 HP.";
+                },
+                choices: [
+                    { text: "Search the debris", nextScene: 'wreckage_search', type: 'skill', dc: 8, skill: 'Investigation' },
+                    { text: "Head toward the treeline", nextScene: 'treeline', type: 'travel' }
+                ]
+            },
+            'start_medicine_fail': {
+                title: "Shaking Hands",
+                text: "You try to check your wounds, but your hands are shaking too violently from the cold. You accomplish nothing.",
+                choices: [
                     { text: "Search the debris", nextScene: 'wreckage_search', type: 'skill', dc: 8, skill: 'Investigation' },
                     { text: "Head toward the treeline", nextScene: 'treeline', type: 'travel' }
                 ]
@@ -2146,11 +2174,11 @@
 				text: "The air is thick and smells of rot. It is pitch black. You can hear things skittering on the damp stone, but you cannot see them.",
 				journal: "The caves felt heavy, like the stone was trying to push the air out of my lungs. Bones told me to close my eyes and smell the way forward.",
                 banter: {
-                    'bones': "That air is thick. Your eyes are useless here. Light a torch, Edward."
+                    'bones': "That air is thick. Your eyes are useless here. Locate the draft or light a torch."
                 },
                 choices: [
                     { text: "Light Torch (Safe Passage)", nextScene: 'dark_caves_illuminated', type: 'action', reqItem: 'Torch', consume: true },
-                    { text: "Stumble in Dark", nextScene: 'dark_check', type: 'skill', dc: 14, skill: 'Perception' } // Clean text
+                    { text: "Navigate by Airflow", nextScene: 'dark_check', type: 'skill', dc: 14, skill: 'Nature' } 
                 ]
             },
             // Updated Mushroom Scene
@@ -2755,8 +2783,13 @@
                         suppliesCost: 2,
                         customClass: 'btn-keen-senses'
                     },
-                    { text: "Brute Force Through", nextScene: 'sea_fog_fail', type: 'skill', dc: 15, skill: 'Athletics' }
+                    { text: "Recall Ancient Charts", nextScene: 'sea_fog_history_logic', type: 'skill', dc: 14, skill: 'History' },
+					{ text: "Brute Force Through", nextScene: 'sea_fog_fail', type: 'skill', dc: 15, skill: 'Athletics' }
                 ]
+            },
+			'sea_fog_history_logic': {
+                isLogic: true,
+                resolve: (roll) => roll >= 14 ? 'sea_fog_success' : 'sea_fog_fail'
             },
             'sea_fog_success': {
                 title: "The True Course",
@@ -2811,9 +2844,40 @@
 						dc: 14, 
 						skill: 'Medicine'
 					},
-                    { text: "Return to Sea Map", nextScene: 'sea_map_hub', type: 'travel', doomCost: 0 }
+                    { text: "Cow the Pack", nextScene: 'dogtooth_intimidate_logic', type: 'skill', dc: 15, skill: 'Intimidation' },
+					{ text: "Return to Sea Map", nextScene: 'sea_map_hub', type: 'travel', doomCost: 0 }
 					
                 ]
+            },
+            'dogtooth_intimidate_logic': {
+                isLogic: true,
+                resolve: (roll, state) => {
+                     // Check Tricorn Bonus
+                     if (state.inventory.includes("Captain's Tricorn")) {
+                        roll += 1;
+                        addToHistory(`Passive Bonus (Tricorn): +1`, 'roll');
+                     }
+                     return roll >= 15 ? 'dogtooth_intimidate_success' : 'dogtooth_intimidate_fail';
+                }
+            },
+            'dogtooth_intimidate_success': {
+                title: "Alpha Status",
+                text: "You channel Gareth's roaring voice. The feral wolves whine and retreat, leaving a path to the shoreline clear. You find a washed-up crate they were guarding.",
+                onEnter: (state) => {
+                    state.supplies = Math.min(20, state.supplies + 3);
+                    return "Scared off the pack. Found 3 Supplies.";
+                },
+                choices: [{ text: "Return to Bleak Dogtooth", nextScene: 'bleak_dogtooth', type: 'travel', doomCost: 0 }]
+            },
+            'dogtooth_intimidate_fail': {
+                title: "The Pack Snaps",
+                text: "Your voice cracks. The wolves smell weakness and lunge.",
+                onEnter: (state) => {
+                    state.currentHP = applyDamage(state.currentHP, 4);
+                    fxManager.flashRed();
+                    return "Intimidation failed. Took 4 Damage.";
+                },
+                choices: [{ text: "Return to Bleak Dogtooth", nextScene: 'bleak_dogtooth', type: 'travel', doomCost: 0 }]
             },
 			'dogtooth_lore_check': {
 				isLogic: true,
@@ -4705,13 +4769,33 @@
                 text: "The Kitchens open into a massive Ballroom. Hundreds of ghosts dance in a swirling vortex. You can see the Grand Hall on the other side, but the dance floor is a hazard.",
                 journal: "Had to cross the Ballroom. The dancers are deadly.",
                 choices: [
-                    // Skill Check to cross
+                    { text: "Predict the Pattern (Insight DC 14)", nextScene: 'ballroom_insight_logic', type: 'skill', dc: 14, skill: 'Insight', tetherCost: 1 },
+                    { text: "Gareth: Command the Crowd", nextScene: 'ballroom_intimidate_logic', type: 'skill', dc: 15, skill: 'Intimidation', tetherCost: 1 },
                     { text: "Weave through the Dancers", nextScene: 'ballroom_dodge_logic', type: 'skill', dc: 14, skill: 'Athletics', tetherCost: 1 },
-                    // Hero Option
-                    { text: "Part the Crowd (Command)", nextScene: 'manor_hall', type: 'action', reqItem: "Captain's Tricorn", tetherCost: 1, customClass: 'btn-hero' },
-                    // Retreat
                     { text: "Retreat to Kitchens", nextScene: 'manor_kitchens', type: 'travel', tetherCost: 1 }
                 ]
+            },
+            'ballroom_intimidate_logic': {
+                isLogic: true,
+                resolve: (roll, state) => {
+                    // Apply Passive Bonus for Tricorn (Since they likely have it, this makes Gareth very strong here)
+                    if (state.inventory.includes("Captain's Tricorn")) {
+                        roll += 1;
+                        addToHistory(`Passive Bonus (Captain's Tricorn): +1`, 'roll');
+                    }
+                    return roll >= 15 ? 'ballroom_intimidate_success' : 'ballroom_fail';
+                }
+            },
+            'ballroom_intimidate_success': {
+                title: "The Dead Obey",
+                text: "You channel the authority of the Captain. 'MAKE WAY!' you roar. The command strikes the spectral dancers with physical force. They halt mid-step and part like a dead sea, creating a clear, frozen path to the Grand Hall.",
+                journal: "Gareth commanded the ghosts to part. We walked through untouched.",
+                onEnter: (state) => {
+                    // Optional: Reward Influence for a cool moment
+                    state.influence += 2; 
+                    return "Command Successful. Chaos +2.";
+                },
+                choices: [{ text: "Enter Grand Hall", nextScene: 'manor_hall', type: 'travel', tetherCost: 0 }]
             },
             'ballroom_dodge_logic': {
                 isLogic: true,
