@@ -332,6 +332,14 @@
             transform: translateY(-1px);
         }
 		
+		/* --- PLANESWALK BUTTON --- */
+		.btn-planewalk-reveal {
+            animation: spectral-pulse 2s infinite; 
+            background-color: rgba(30, 58, 138, 0.3);
+            border-color: #60a5fa !important;
+            color: #cffafe !important; /* Cyan-50 */
+        }
+		
 		/* --- PULSE BUTTON (AMBER) --- */
         .btn-pulse {
             background: linear-gradient(90deg, rgba(120, 53, 15, 0.6) 0%, rgba(69, 26, 3, 0.8) 100%);
@@ -696,10 +704,18 @@
                 <!-- END ACT 3 SUPPLIES DISPLAY -->
 
 
-                <div class="grid grid-cols-1 gap-2 text-sm">
-                    <div class="bg-gray-900 p-2 rounded border border-gray-700 flex items-center justify-between">
-                        <span class="text-amber-500 cinzel"><i class="fas fa-coins mr-2"></i>Shillings</span>
-                        <span id="shillings-display" class="font-bold text-gray-200">0</span>
+                <div class="flex flex-col gap-2 text-sm">
+                    
+                    <div class="flex gap-2">
+                        <div class="bg-gray-900 p-2 rounded border border-gray-700 flex items-center justify-between flex-1 transition-all">
+                            <span class="text-amber-500 cinzel"><i class="fas fa-coins mr-2"></i>Coin</span>
+                            <span id="shillings-display" class="font-bold text-gray-200">0</span>
+                        </div>
+
+                        <div id="supplies-display" class="bg-gray-900 p-2 rounded border border-gray-700 flex items-center justify-between flex-1 hidden fade-in">
+                            <span class="text-indigo-400 cinzel"><i class="fas fa-anchor mr-2"></i>Supply</span>
+                            <span id="supplies-count" class="font-bold text-gray-200">0</span>
+                        </div>
                     </div>
 
                     <div class="bg-gray-900 p-2 rounded border border-gray-700 flex flex-col text-[10px] gap-2 relative">
@@ -1062,7 +1078,7 @@
             // Note: Initial stock is defined on the scene objects (e.g., scenes['market_stall'].stock)
             return {
                 currentSceneId: 'prologue_storm', 
-                currentHP: 15,
+                currentHP: 20,
                 maxHP: 20,
                 shillings: 0, 
                 // NEW ACT 2 STATE
@@ -1628,6 +1644,11 @@
                 title: "The God of the Deep",
 				text: "A wave of pure magical force shatters the hull. The freezing dark claims you instantly. You sink, drifting into the abyss, and see IT rising—a colossal shadow, vast as a mountain. The screams of Gareth, Quinn, Talon, and Bones are silenced by the water... only to re-ignite inside your skull, burning hotter than the freezing deep.",
 				journal: "I died. I know I died. But the Shadow beneath the waves spat me back out. Now, I am not alone in my own skin.",
+				onEnter: (state) => {
+                    state.currentHP = applyDamage(state.currentHP, 5);
+                    fxManager.flashRed();
+                    return "The magical wave crushed you. Took 5 Damage.";
+                },
                 choices: [
                     { text: "Gasp for air (Wake Up)", nextScene: 'start', type: 'travel' }
                 ]
@@ -2623,14 +2644,15 @@
                                 nextScene: 'wolf_estate_safe', 
                                 type: 'travel', 
                                 reqFlag: 'isEthereal',
-                                customClass: 'spectral-active',
+                                customClass: 'btn-planewalk-reveal',
                                 doomCost: 0
                             },
                             // Return to Sea (The "Leave" button)
                             { 
-                                text: `Ship: Navigate the Open Sea (${state.shipName})`, 
+                                text: `Navigate the Open Sea (${state.shipName})`, 
                                 nextScene: 'sea_map_hub', 
                                 type: 'travel', 
+                                customClass: 'btn-anchor', // ADDED: Matches nautical theme
                                 doomCost: 0 
                             },
                             // Essential Shops & Work
@@ -2989,10 +3011,10 @@
                         
                         scenes['dogtooth_cliff_wall'].choices = [
                             { 
-                                text: "Enter the Sanctuary (Approach Silas)", 
+                                text: "Enter the Sanctuary", 
                                 nextScene: 'silas_recruit_success', 
                                 type: 'travel',
-                                customClass: 'spectral-active' 
+                                customClass: 'btn-planewalk-reveal' 
                             }
                         ];
                         return "The Ethereal Plane reveals the truth. Path found.";
@@ -6156,6 +6178,7 @@
 					else if (choice.customClass === 'btn-keen-senses') icon = '<i class="fas fa-eye text-purple-300"></i>';
                     else if (choice.customClass === 'btn-lantern-glow') icon = '<i class="fas fa-lightbulb text-yellow-300"></i>';
 					else if (choice.customClass === 'btn-anchor') icon = '<i class="fas fa-anchor text-cyan-300"></i>';
+					else if (choice.customClass === 'btn-planewalk-reveal') icon = '<i class="fas fa-shoe-prints text-cyan-300"></i>';
 					else if (choice.customClass === 'btn-pulse') icon = '<i class="fas fa-ring text-amber-300"></i>';					
 					else icon = '<i class="fas fa-chevron-right text-white"></i>'; // Default carrot icon
 
@@ -6405,9 +6428,7 @@
 						tetherDisplay.classList.add('hidden');
 					}
 
-					// 2. Planar Skills Menu Visibility
-					// Shows if you have EITHER Plane Walking (Default Act 2) OR Blink (Cub Reward)
-					if (gameState.skills.includes("Plane Walking") || gameState.skills.includes("Blink")) {
+					if (gameState.skills.includes("Plane Walking")) {
 						planarSkills.classList.remove('hidden');
 					} else {
 						planarSkills.classList.add('hidden');
