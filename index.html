@@ -976,6 +976,8 @@
                 // NEW FLAG: Quinn's Logistics (Doom Cost UI Reveal)
                 quinnLogistics: false,
 				hasDivedTreasure: false,
+                // NEW FLAG FOR LIBRARY SEARCH (Act 2)
+                librarySearchAttempted: false, 
             };
         }
 
@@ -1424,7 +1426,7 @@
             },
 			'start': {
                 title: "The Wreckage",
-				text: "You gasp, lungs burning, and retch salt water onto the grey sand. The storm has passed, but the silence of the beach is a lie. Inside your mind, the scream of the dying ship continues. They don't realize they are dead.<br><br>You find your hand cramping, clutching the Captain's Tricorn Hat with a death grip. Beside you, the Compass hums with a violet vibration. You are alive, but you have become a life raft for the damned.",
+				text: "You gasp, lungs burning, and retch salt water onto the grey sand. The storm has passed, but the silence of the beach is a lie. Inside your mind, the scream of the dying ship continues. They don't realize they are dead.<br><br>You find your hand cramping, clutching the Captain's Tricorn Hat with a death grip. Beside you, the <span class='text-cyan-400 font-bold'>Compass</span> hums with a violet vibration. You are alive, but you have become a life raft for the damned.",
 				journal: "Woke up choking on sand. Gareth's hat is in my hand—I can't let go of it. The Compass is screaming, and the crew... they are loud. So loud. They don't know they're ghosts.",
 				banter: {
 					'quinn': "The manifest! The logs! We can't be erased, Edward. Find the records or we never existed!"
@@ -1926,7 +1928,6 @@
                     fxManager.flashRed();
                     return "Took 5 Scratch Damage."; 
                 },
-                // Redirects to lighthouse_arrival to proceed to faction_check
                 choices: [
                     { text: "Keep Climbing (Arrive at Lighthouse)", nextScene: 'lighthouse_arrival', type: 'travel' },
                     // NEW: Dead Man's Die Cheat Fate option
@@ -1980,7 +1981,6 @@
                     fxManager.flashRed();
                     return "Took 4 Damage."; 
                 },
-                // Redirects to lighthouse_arrival to proceed to faction_check
                 choices: [
                     { text: "Limp to the Exit", nextScene: 'lighthouse_arrival', type: 'travel' },
                     // NEW: Dead Man's Die Cheat Fate option
@@ -2161,11 +2161,11 @@
             // --- ACT 1: LEVEL UP SEQUENCE (SKILL UNLOCK) ---
             'lighthouse_morning': {
                 title: "The First Morning",
-                text: "The chaotic surge of power that courses through you is threatening to splinter your mind. You pull the **Compass** from your belt—its needle is violently vibrating, demanding command. You must give the raw planar energy shape by focusing entirely on a single technique. **This choice is absolute.** The path you forge now is permanent, Mariner; it will determine your strength and define the immediate danger you face in the Port of Shadows.",
+                text: "The chaotic surge of power that courses through you is threatening to splinter your mind. You pull the <span class='text-cyan-400 font-bold'>Compass</span> from your belt—its needle is violently vibrating, demanding command. You must give the raw planar energy shape by focusing entirely on a single technique. <span class='text-red-500 font-bold'>This choice is absolute.</span> The path you forge now is permanent, Mariner; it will determine your strength and define the immediate danger you face in the Port of Shadows.",
                 journal: "The crew warned me of Fire and Shadow. I must choose how to prepare.",
                 banter: { // Now uses the built-in Banter system
-                    'gareth': "The town is bleeding. Fire and ruin in the Smelter District.",
-                    'talon': "Things that refuse to stay dead hide in the fog of the Sunken Chapel."
+                    'gareth': "The town is bleeding. Fire and ruin in the <span class='text-orange-500 font-bold'>Smelter</span> District.",
+                    'talon': "Things that refuse to stay dead hide in the fog of the Sunken <span class='text-purple-400 font-bold'>Chapel</span>."
                 },
                 choices: [
                     { 
@@ -2227,7 +2227,7 @@
             // --- NEW SCENE: CLIFFSIDE OVERLOOK ---
             'cliffside_overlook': {
                 title: "Cliffside Overlook",
-                text: "The path winds along the sheer cliff face, providing a terrifying view of the Port of Shadows below. You see the chaos: smoke rising from the **Smelter** and a thick, unnatural fog shrouding the **Chapel** district. You must decide whether to scan the area for threats or hasten your descent.",
+                text: "The path winds along the sheer cliff face, providing a terrifying view of the Port of Shadows below. You see the chaos: smoke rising from the <span class='text-orange-500 font-bold'>Smelter</span> and a thick, unnatural fog shrouding the <span class='text-purple-400 font-bold'>Chapel</span> district. You must decide whether to scan the area for threats or hasten your descent.",
                 journal: "Reached the overlook. The Port is a warzone. Must be cautious.",
 				banter: {
 						'talon': "Wait. Look at the shadows near those rocks. People leave valuable things behind when they run.", // Hints at Perception DC 14
@@ -2336,7 +2336,7 @@
             
             'town_descent': {
 				title: "The Descent",
-				text: "You arrive at the main city gate. The chaos here is raw. Your Compass vibrates violently, the needle splitting in two. One ghostly needle glows <span class='text-orange-500'>Orange</span> toward the Smelter. The other turns <span class='text-gray-500'>Black</span> toward the Chapel.",
+				text: "You arrive at the main city gate. The chaos here is raw. Your <span class='text-cyan-400 font-bold'>Compass</span> vibrates violently, the needle splitting in two. One ghostly needle glows <span class='text-orange-500'>Orange</span> toward the <span class='text-orange-500 font-bold'>Smelter</span>. The other turns <span class='text-gray-500'>Black</span> toward the <span class='text-purple-400 font-bold'>Chapel</span>.",
 				journal: "The Compass cracked. It's pulling me apart. Smelter fire to the East, Chapel fog to the West. Gareth is right—I can't save everyone. I have to choose.",
 				banter: {
 					'gareth': "Hold fast! A Captain who chases two headings sails in circles! Choose a target, Mister Jones. Fire or Fog—pick your poison!"
@@ -2392,18 +2392,35 @@
                         { text: "Explore the Docks", nextScene: 'town_docks', type: 'travel', doomCost: 0 } // NEW DOCKS BUTTON
                     ];
 
-                    // STATE 2: FINALE UNLOCKED - Remove exploration choices, force ritual preparation
+                    // STATE 2: FINALE UNLOCKED - Handle Ritual vs. Anchored Portal
                     if (hasRing && hasBlade) {
-                        scenes['town_square'].text = "The Rift is tearing the sky apart. Violet lightning strikes the cobblestones. You have the Ring and the Blade. The Wolf King's ritual is the only way to close this wound.";
-                        newChoices = [
-                            { text: "Prepare the Wolf King's Ritual", nextScene: 'finale_ritual_start', type: 'combat', customClass: 'btn-hero' },
-                            { text: "Visit Madam Alara, The Triage Alchemist", nextScene: 'alchemist_triage', type: 'travel', doomCost: 0 },
-                            { text: "Rest at The Blackwater Tavern", nextScene: 'blackwater_tavern', type: 'travel', doomCost: 0 },
-                            // ADDED DOCKS BACK FOR LATE-GAME TRADING/HEALING
-                            { text: "Explore the Docks", nextScene: 'town_docks', type: 'travel', doomCost: 0 } 
-                        ];
-                        scenes['town_square'].choices = newChoices;
-                        return "Finale Unlocked.";
+                        // Check for the SKILL (Plane Walking) which is acquired immediately upon first successful entry.
+                        const hasPlaneWalkSkill = state.skills.includes("Plane Walking");
+                        
+                        if (hasPlaneWalkSkill) {
+                             // Portal Anchored: Tell player to use the sidebar skill. Remove Ritual button.
+                             scenes['town_square'].text = "The Rift is stable, anchored by your planar knowledge. Use the <span class='text-cyan-400 font-bold'>Horizon Walker</span> ability in the sidebar to step into the Ethereal Plane and return to the Manor.";
+                             
+                             // Keep the base navigation choices, filtering out the Ritual button if it was there.
+                             newChoices = [
+                                 { text: "Visit The Triage Alchemist", nextScene: 'alchemist_triage', type: 'travel', doomCost: 0 },
+                                 { text: "Rest at The Blackwater Tavern", nextScene: 'blackwater_tavern', type: 'travel', doomCost: 0 },
+                                 { text: "Explore the Docks", nextScene: 'town_docks', type: 'travel', doomCost: 0 } 
+                             ];
+                             scenes['town_square'].choices = newChoices;
+                             return "Finale Unlocked (Portal Anchored).";
+                        } else {
+                            // First time: Must perform Ritual to acquire the skill/anchor
+                            scenes['town_square'].text = "The Rift is tearing the sky apart. Violet lightning strikes the cobblestones. You have the Ring and the Blade. The Wolf King's ritual is the only way to close this wound.";
+                            newChoices = [
+                                { text: "Prepare the Wolf King's Ritual", nextScene: 'finale_ritual_start', type: 'combat', customClass: 'btn-hero' },
+                                { text: "Visit Madam Alara", nextScene: 'alchemist_triage', type: 'travel', doomCost: 0 },
+                                { text: "Rest at Tavern", nextScene: 'blackwater_tavern', type: 'travel', doomCost: 0 },
+                                { text: "Explore the Docks", nextScene: 'town_docks', type: 'travel', doomCost: 0 } 
+                            ];
+                            scenes['town_square'].choices = newChoices;
+                            return "Finale Unlocked.";
+                        }
                     }
                     
                     // Dynamic Text Logic
@@ -2985,7 +3002,7 @@
             // NEW: INFORMATION SCENES
             'gather_info_smelter': {
                 title: "Smelter District Tip",
-                text: "The exhausted engineer whispers, 'The release valves are rusted shut. Quinn's knowledge won't work unless you know the **counter-clockwise, double-turn** trick. That'll save your life.'",
+                text: "The exhausted engineer whispers, 'The release valves are rusted shut. Quinn's knowledge won't work unless you know the <span class='text-amber-400 font-bold'>counter-clockwise, double-turn</span> trick. That'll save your life.'",
                 journal: "Learned the secret to bypassing the Smelter's Steam Hazard.",
                 choices: [{ text: "Return to Tavern", nextScene: 'blackwater_tavern', type: 'travel', doomCost: 0 }],
                 onEnter: (state) => {
@@ -2995,7 +3012,7 @@
             },
             'gather_info_chapel': {
                 title: "Sunken Chapel Tip",
-                text: "The pale gravedigger warns you, 'Don't follow the sound; follow the silence. The paths are a maze, but the silent, **weeping angel statues** mark the safe, true route.'",
+                text: "The pale gravedigger warns you, 'Don't follow the sound; follow the silence. The paths are a maze, but the silent, <span class='text-purple-400 font-bold'>weeping angel statues</span> mark the safe, true route.'",
                 journal: "Learned the safe route through the Sunken Chapel's Fog Maze.",
                 choices: [{ text: "Return to Tavern", nextScene: 'blackwater_tavern', type: 'travel', doomCost: 0 }],
                 onEnter: (state) => {
@@ -3210,7 +3227,7 @@
             // --- NEW MULTI-STAGE BOSS FIGHT: SLAG HORROR ---
             'smelter_stage1_start': {
                 title: "Slag Horror: Stage 1 - The Heat Wave",
-                text: "The <span class='text-red-500 font-bold'>Slag Horror</span> rises from the molten iron, its core glowing. It prepares to spew a wave of magma. You must find a way to mitigate the heat to get close enough to strike. You spot the hilt of the **Sword of Valor** suspended in its chest.",
+                text: "The <span class='text-red-500 font-bold'>Slag Horror</span> rises from the molten iron, its core glowing. It prepares to spew a wave of magma. You must find a way to mitigate the heat to get close enough to strike. You spot the hilt of the <span class='text-blue-400 font-bold'>Sword of Valor</span> suspended in its chest.",
 				journal: "The beast rose from the slag, dripping liquid iron. It didn't look like a monster; it looked like an industrial accident given hate and form.",
 				banter: {
 					'gareth': "It's winding up! Don't stand there—move!" // Hints at Athletics DC 14
@@ -3334,7 +3351,7 @@
             // Victory scenes consolidated (all grant Sword of Valor)
             'smelter_victory_lubricant': {
                 title: "Slag Horror Defeated",
-                text: "The Slag Horror is shattered. The **Sword of Valor** is yours.",
+                text: "The Slag Horror is shattered. The <span class='text-blue-400 font-bold'>Sword of Valor</span> is yours.",
                 journal: "Defeated the Slag Horror and claimed the Sword of Valor.",
                 choices: [{ text: "Return to Town Square", nextScene: 'town_square', type: 'travel', }],
                 onEnter: (state) => {
@@ -3365,7 +3382,7 @@
             },
             'smelter_victory_ring': {
                 title: "Slag Horror Defeated",
-                text: "The Slag Horror is shattered. The **Sword of Valor** is yours.",
+                text: "The Slag Horror is shattered. The <span class='text-blue-400 font-bold'>Sword of Valor</span> is yours.",
                 journal: "Flawless victory over the Slag Horror using the Ring's power. Claimed the Sword of Valor.",
                 choices: [{ text: "Return to Town Square", nextScene: 'town_square', type: 'travel' }],
                 onEnter: (state) => {
@@ -3396,7 +3413,7 @@
             },
             'smelter_victory_item': {
                 title: "Slag Horror Defeated",
-                text: "The Slag Horror is shattered. The **Sword of Valor** is yours.",
+                text: "The Slag Horror is shattered. The <span class='text-blue-400 font-bold'>Sword of Valor</span> is yours.",
                 journal: "Used Holy Water to defeat the Slag Horror. Claimed the Sword of Valor.",
                 choices: [{ text: "Return to Town Square", nextScene: 'town_square', type: 'travel' }],
                 onEnter: (state) => {
@@ -3427,7 +3444,7 @@
             },
             'smelter_victory_skill': {
                 title: "Slag Horror Defeated",
-                text: "The Slag Horror is shattered. The **Sword of Valor** is yours. You are scorched by the blast.",
+                text: "The Slag Horror is shattered. The <span class='text-blue-400 font-bold'>Sword of Valor</span> is yours. You are scorched by the blast.",
                 journal: "Defeated the Slag Horror with Absorb Elements. Claimed the Sword of Valor.",
                 choices: [{ text: "Return to Town Square", nextScene: 'town_square', type: 'travel' }],
                 onEnter: (state) => {
@@ -3462,7 +3479,7 @@
             },
             'smelter_victory_brute': {
                 title: "Slag Horror Defeated",
-                text: "The Slag Horror is shattered. The **Sword of Valor** is yours. You are heavily wounded.",
+                text: "The Slag Horror is shattered. The <span class='text-blue-400 font-bold'>Sword of Valor</span> is yours. You are heavily wounded.",
                 journal: "Brute force victory over the Slag Horror, taking heavy damage. Claimed the Sword of Valor.",
                 choices: [{ text: "Limp to Town Square", nextScene: 'town_square', type: 'travel', doomCost: 2 }],
                 onEnter: (state) => {
@@ -3662,7 +3679,7 @@
             // --- NEW MULTI-STAGE BOSS FIGHT: DROWNED SPECTRE ---
             'chapel_stage1_reveal': {
                 title: "Drowned Spectre: Stage 1 - The Ambush",
-                text: "The crypt is flooded. The <span class='text-gray-400 font-bold'>Drowned Spectre</span> is present but invisible in the thick, churning black fog. It will strike from the dark unless you can pinpoint its true location. On its skeletal finger glints the **Ring of Brass**.",
+                text: "The crypt is flooded. The <span class='text-gray-400 font-bold'>Drowned Spectre</span> is present but invisible in the thick, churning black fog. It will strike from the dark unless you can pinpoint its true location. On its skeletal finger glints the <span class='text-amber-500 font-bold'>Ring of Brass</span>.",
 				journal: "The Spectre was everywhere and nowhere. A cold touch on my neck. A whisper in my ear. Talon told me to stop looking with my eyes.",
 				banter: {
 					'talon': "It's circling us. Stop looking with your eyes. Watch for the displacement in the fog." // Hints at Perception DC 14
@@ -3809,7 +3826,7 @@
             // Victory scenes consolidated (all grant Ring of Brass)
              'chapel_victory_water': {
                 title: "Drowned Spectre Defeated",
-                text: "The Drowned Spectre is banished. The **Ring of Brass** is yours. You are drenched, but victorious.",
+                text: "The Drowned Spectre is banished. The <span class='text-amber-500 font-bold'>Ring of Brass</span> is yours. You are drenched, but victorious.",
                 journal: "Used Holy Water to defeat the Drowned Spectre. Claimed the Ring of Brass.",
                 choices: [{ text: "Return to Town Square", nextScene: 'town_square', type: 'travel' }],
                 onEnter: (state) => {
@@ -3822,7 +3839,7 @@
             },
             'chapel_victory_sword': {
                 title: "Drowned Spectre Defeated",
-                text: "The Drowned Spectre is banished. The **Ring of Brass** is yours. The Sword cuts through the void.",
+                text: "The Drowned Spectre is banished. The <span class='text-amber-500 font-bold'>Ring of Brass</span> is yours. The Sword cuts through the void.",
                 journal: "Flawless victory over the Spectre using the Sword of Valor. Claimed the Ring of Brass.",
                 choices: [{ text: "Return to Town Square", nextScene: 'town_square', type: 'travel' }],
                 onEnter: (state) => {
@@ -3833,7 +3850,7 @@
             },
             'chapel_victory_item': {
                 title: "Drowned Spectre Defeated",
-                text: "The Drowned Spectre is banished. The **Ring of Brass** is yours. The Alchemical fire burns away the shadows.",
+                text: "The Drowned Spectre is banished. The <span class='text-amber-500 font-bold'>Ring of Brass</span> is yours. The Alchemical fire burns away the shadows.",
                 journal: "Used Alchemical Fire to defeat the Drowned Spectre. Claimed the Ring of Brass.",
                 choices: [{ text: "Return to Town Square", nextScene: 'town_square', type: 'travel' }],
                 onEnter: (state) => {
@@ -3846,7 +3863,7 @@
             },
             'chapel_victory_skill': {
                 title: "Drowned Spectre Defeated",
-                text: "The Drowned Spectre is banished. The **Ring of Brass** is yours. You are drained but intact.",
+                text: "The Drowned Spectre is banished. The <span class='text-amber-500 font-bold'>Ring of Brass</span> is yours. You are drained but intact.",
                 journal: "Defeated the Spectre with Primeval Awareness. Claimed the Ring of Brass.",
                 choices: [{ text: "Return to Town Square", nextScene: 'town_square', type: 'travel' }],
                 onEnter: (state) => {
@@ -3859,7 +3876,7 @@
             },
             'chapel_victory_brute': {
                 title: "Drowned Spectre Defeated",
-                text: "The Drowned Spectre is banished. The **Ring of Brass** is yours. Your mind is fractured by the psychic blow.",
+                text: "The Drowned Spectre is banished. The <span class='text-amber-500 font-bold'>Ring of Brass</span> is yours. Your mind is fractured by the psychic blow.",
                 journal: "Brute force victory over the Spectre, taking heavy sanity damage. Claimed the Ring of Brass.",
                 choices: [{ text: "Limp to Town Square", nextScene: 'town_square', type: 'travel', doomCost: 2 }],
                 onEnter: (state) => {
@@ -3890,7 +3907,7 @@
             // --- ACT 2 SCENES (NEW) ---
             'act2_arrival': {
                 title: "The Vanishing Manor",
-                text: "The world shatters. The Port of Shadows—the Smelter, the Chapel—they dissolve into mist. You are no longer on the Material Plane. You materialize on the cold marble floor of a glorious, hidden estate. This is the **Vanishing Manor**, the Ethereal fortress of the Wolf King. Your planar intervention has caused a massive **recoil**.<br><br>The voices of your crew are crystal clear now. They are not in your head; they are standing beside you, radiating power. But your physical form is rejecting this plane. You are unraveling—you have limited time to find answers and escape.",
+                text: "The world shatters. The Port of Shadows—the Smelter, the Chapel—they dissolve into mist. You are no longer on the Material Plane. You materialize on the cold marble floor of a glorious, hidden estate. This is the <span class='text-cyan-400 font-bold'>Vanishing Manor</span>, the Ethereal fortress of the Wolf King. Your planar intervention has caused a massive <span class='text-purple-400 font-bold'>recoil</span>.<br><br>The voices of your crew are crystal clear now. They are not in your head; they are standing beside you, radiating power. But your physical form is rejecting this plane. You are unraveling—you have limited time to find answers and escape.",
                 journal: "I closed the Rift, but the recoil threw me into the Ethereal Plane. I am truly the Mariner of the Damned now.",
                 onEnter: (state) => {
                     // --- WORLD STATE: RIFT CLOSED & ETHEREAL START ---
@@ -3907,10 +3924,16 @@
                     // Grant Plane Walking Skill for subsequent use
                     if (!state.skills.includes("Plane Walking")) {
                         state.skills.push("Plane Walking");
+                        // Grant the Spectral Lantern which acts as the physical 'Anchor' for the ability
+                        if (!state.inventory.includes("Spectral Lantern")) {
+                            state.inventory.push("Spectral Lantern");
+                            addToHistory("The ritual stabilizes into a physical form: A Spectral Lantern manifests in your hand.", "system");
+                        }
                     }
 
                     // Reset all crew members now that they are buffed
                     Object.keys(state.crew).forEach(k => state.crew[k].used = false);
+                    state.librarySearchAttempted = false; // Allow searching again on new run
 
                     document.getElementById('tether-display').classList.remove('hidden');
                     return "Act 1 Complete. Tether Unstable: 20 Turns remaining.";
@@ -3950,7 +3973,8 @@
                         skill: 'Investigation', 
                         dc: 12,
                         tetherCost: 1,
-                        reqNotItem: 'Manor Blueprint'
+                        reqNotItem: 'Manor Blueprint',
+                        reqNotFlag: 'librarySearchAttempted'
                     },
                     // LATERAL MOVE: Connects to East Wing
                     { text: "Enter Crawlspace (To Kitchens)", nextScene: 'manor_crawlspace', type: 'travel', tetherCost: 1 },
@@ -3972,6 +3996,7 @@
             'library_search_logic': {
                 isLogic: true,
                 resolve: (roll, state) => {
+                    state.librarySearchAttempted = true; // Mark as attempted
                     return roll >= 12 ? 'library_success' : 'library_fail';
                 }
             },
@@ -4165,6 +4190,7 @@
                         state.returnSceneId = 'manor_foyer'; 
                     }
                     document.body.classList.add('map-active');
+                    // FIX: Return null to prevent journal entry when opening map
                     return null;
                 },
                 choices: [
@@ -4176,6 +4202,8 @@
                             const nextScene = state.returnSceneId || 'manor_foyer'; 
                             state.returnSceneId = null; 
                             renderScene(nextScene); 
+                            // FIX: Return null to prevent journal entry when closing map
+                            return null;
                         },
                         tetherCost: 0 
                     }
@@ -4195,6 +4223,14 @@
                     
                     document.body.classList.remove('plane-ethereal');
                     fxManager.flashRed();
+
+                    // DISSOLVE THE BLUEPRINT
+                    const mapIdx = state.inventory.indexOf("Manor Blueprint");
+                    if (mapIdx > -1) {
+                        state.inventory.splice(mapIdx, 1);
+                        addToHistory("As you crash back into reality, the Manor Blueprint dissolves into ash in your hands.", "system");
+                    }
+
                     return "Tether Failed! Took 8 Psychic DMG. Forcibly Returned to Port Square.";
                 },
                 choices: [
@@ -4772,6 +4808,23 @@
                 }
             }
             // --- END DYNAMIC INJECTION ---
+            
+            // --- DYNAMIC INJECTION: HORIZON WALKER STEP ---
+            const hasRingAndBlade = gameState.inventory.includes("Ring of Brass") && gameState.inventory.includes("Sword of Valor");
+            const hasPlaneWalkSkill = gameState.skills.includes("Plane Walking");
+            
+            if (currentSceneId === 'town_square' && hasRingAndBlade && hasPlaneWalkSkill && gameState.isEthereal) {
+                const manorStepChoice = {
+                    text: "Step into the Vanishing Manor",
+                    nextScene: 'act2_arrival', // Start the Act 2 scene loop
+                    type: 'travel',
+                    customClass: 'btn-hero',
+                    doomCost: 0
+                };
+                // Prepend this to the choices list for high visibility
+                processedChoices.unshift(manorStepChoice);
+            }
+            // --- END DYNAMIC INJECTION ---
 
 
             // Handle dynamic generation for Market Scenes
@@ -5081,237 +5134,6 @@
 						// Death button is always full red and large
 						btnClass = `btn-game w-full p-3 text-left rounded shadow flex items-center ${alignmentClass} cinzel font-bold bg-red-900 border-red-700 hover:bg-red-800 hover:border-amber-500 text-white text-xl text-center`;
 					} else if (isCustomClassButton) {
-						// Custom classes need the base styling mixed in for padding, shadow, etc.
-						// FIX 2: Check for Captain's Orders buttons (spectral-active) and style them similarly to Hero.
-						if (choice.customClass && choice.customClass.includes('spectral-active')) {
-							 btnClass = `btn-game w-full text-left rounded shadow flex items-center ${alignmentClass} cinzel font-bold mb-2 spectral-active text-blue-100 ring-1 ring-blue-400 hover:ring-white`;
-						} else {
-							// All other custom classes (fire/shadow/hero/keen)
-							btnClass = `btn-game w-full text-left rounded shadow flex items-center ${alignmentClass} cinzel font-bold mb-2 ${choice.customClass}`;
-						}
-					} else {
-						// STANDARD NARRATIVE/TRADE BUTTONS (Default grey button)
-						btnClass = `btn-game w-full text-left rounded shadow flex items-center ${alignmentClass} cinzel font-bold bg-gray-800 border-gray-600 hover:border-amber-500 hover:bg-gray-750 text-gray-300 group`;
-					}
-					
-					// Apply disability visual override if necessary
-					if (isDisabled) {
-						btnClass += ` ${disabledClass}`;
-						btn.disabled = true;
-					}
-
-
-
-					btn.className = btnClass;
-
-					// --- EVENT HANDLER SPLIT ---
-					
-					// 1. HOLD INTERACTION (EXCLUSIVE)
-					if (choice.type === 'hold') {
-						let holdTimer = null;
-						const duration = 3000; // Duration must match CSS logic
-						
-						// Sync CSS animation speed to JS timer
-						btn.style.setProperty('--channel-duration', `${duration}ms`);
-
-						const startChannel = (e) => {
-							// Prevent touch scrolling/selection while holding
-							if (e.type === 'touchstart') e.preventDefault(); 
-							
-							if (btn.disabled) return;
-							
-							btn.classList.add('channeling');
-							audioManager.playGhost(); 
-
-							holdTimer = setTimeout(async () => {
-								// SUCCESS: Channel Complete
-								audioManager.playClash(); 
-								
-								// *** ACT 2 TRANSITION FIX: Apply Ethereal theme immediately before renderScene ***
-								fxManager.setVignette(false); // FIX 1: Explicitly disable the low HP vignette
-								fxManager.clearEffects();     // FIX 1: Clear persistent visual effects (rift collapsed/pulse)
-								
-								gameState.isEthereal = true; // Set the state
-								document.body.classList.add('plane-ethereal'); // Apply the CSS class immediately
-								await saveGame(); // Save the state change before rendering the next scene to ensure persistence
-								
-								renderScene(choice.nextScene);
-							}, duration);
-						};
-
-						const cancelChannel = (e) => {
-							if (holdTimer) {
-								clearTimeout(holdTimer);
-								holdTimer = null;
-							}
-							btn.classList.remove('channeling');
-						};
-
-						// Mouse Events
-						btn.addEventListener('mousedown', startChannel);
-						btn.addEventListener('mouseup', cancelChannel);
-						btn.addEventListener('mouseleave', cancelChannel);
-
-						// Touch Events (Mobile)
-						btn.addEventListener('touchstart', startChannel);
-						btn.addEventListener('touchend', cancelChannel);
-						
-						// CRITICAL: Kill standard click so a quick tap does nothing
-						btn.onclick = null; 
-					} 
-					
-					// 2. STANDARD CLICK INTERACTION (EXCLUSIVE)
-					else {
-						btn.onclick = (e) => {
-							// If disabled, just play click sound and stop execution
-							if (btn.disabled) {
-								 audioManager.playClick();
-								 return;
-							}
-							
-							// --- MAP LOGIC HOOK ---
-							if (choice.nextScene === 'manor_map_view') {
-								 // Set the return point to the CURRENT scene before leaving
-								 // The renderScene logic for manor_map_view handles the actual rendering and saving
-								 gameState.returnSceneId = gameState.currentSceneId; 
-								 renderScene('manor_map_view');
-								 return;
-							}
-
-							audioManager.playClick();
-							
-							if (choice.action && typeof choice.action === 'function') {
-								const result = choice.action(gameState);
-								if (result) addToHistory(result, 'system');
-								return; 
-							}
-							
-							if (choice.type === 'reset') {
-								resetGame();
-								return;
-							}
-							
-							// Mushroom Warning Check
-							if (gameState.crewUseFree && choice.type !== 'skill' && choice.type !== 'dialogue' && !choice.nextScene.includes('captain_orders')) {
-								addToHistory(`*Warning: The Pearlescent Mushroom's clarity is best saved for a crucial skill check.*`, 'system');
-							}
-
-							// Stock Checks
-							if (choice.type === 'action' && (currentSceneId === 'market_stall' || currentSceneId === 'alchemist_triage' || currentSceneId === 'blackwater_tavern') && choice.stockItem) {
-								 const currentStock = scenes[currentSceneId].stock[choice.stockItem] || 0;
-								 if (currentStock <= 0) {
-									addToHistory(`${choice.stockItem} is out of stock.`, 'system');
-									renderScene(currentSceneId); 
-									return;
-								}
-							}
-							
-							// Curious Cargo Check
-							if (choice.type === 'action' && choice.reqItem === 'Curious Cargo' && currentSceneId === 'market_sell') {
-								 if (marketStock['Curious Cargo'] <= 0) {
-									addToHistory(`The Market Merchant has no need for another Curious Cargo.`, 'system');
-									renderScene(currentSceneId);
-									return;
-								}
-							}
-
-							// Consume Items
-							if (choice.consume && choice.reqItem) {
-								const idx = gameState.inventory.indexOf(choice.reqItem);
-								if (idx > -1) {
-									gameState.inventory.splice(idx, 1);
-									addToHistory(`${choice.reqItem} used and discarded.`, 'system');
-								}
-							}
-
-							// Journal Entry
-							const currentScene = scenes[gameState.currentSceneId];
-							if (currentScene.journal !== null && currentScene.journal !== undefined) {
-								addToHistory(currentScene.journal, 'entry');
-							}
-
-							// Apply Costs & Gains
-							if (choice.cost) gameState.shillings -= choice.cost;
-							if (choice.costHP !== undefined) gameState.currentHP = applyDamage(gameState.currentHP, choice.costHP);
-
-							// --- SPYGLASS PASSIVE: CHAOS (AVARICE) ---
-							let extraGold = 0;
-							// Check if the choice gives money (shillingGain or value)
-							// UPDATED THRESHOLD: 15
-							if ((choice.shillingGain || choice.value) && gameState.inventory.includes("Salt-Warped Spyglass") && gameState.influence >= 15) {
-								 extraGold = 1;
-								 addToHistory("Passive (Privateer's Lens): Found +1 extra Shilling.", 'system');
-							}
-						  
-							// FIX: Ensure extraGold is included in the money addition
-							if (choice.shillingGain) gameState.shillings += (choice.shillingGain + extraGold);
-							if (choice.value) gameState.shillings += (choice.value + extraGold);
-							
-							// UPDATED CLAMPING: Max 50
-							if (choice.chaosGain) gameState.influence = Math.min(50, gameState.influence + choice.chaosGain);
-							// UPDATED CLAMPING: Max -50
-							if (choice.orderGain) gameState.influence = Math.max(-50, gameState.influence - choice.orderGain); 
-							
-							// Crew Selection Hook
-							if (choice.nextScene === 'lighthouse_morning' && currentSceneId === 'captain_orders' && choice.onSelect) {
-								choice.onSelect(gameState);
-							}
-
-							// --- TURN COUNTER DECREMENT (ACT 1 & ACT 2) ---
-
-							// ACT 1: DOOM COUNTER DECREMENT (1)
-							if (gameState.act1Started && choice.doomCost !== 0) {
-								const cost = choice.doomCost !== undefined ? choice.doomCost : 1; 
-								gameState.doomTimer = Math.max(0, gameState.doomTimer - cost);
-								
-								if (gameState.doomTimer > 0) {
-									addToHistory(`Rift Stability: ${gameState.doomTimer} turns remaining.`, 'system');
-								}
-								
-								// Collapse logic handled in renderScene after the click
-							}
-
-							// ACT 2: TETHER STABILITY DECREMENT (2)
-							if (gameState.act2Started && choice.tetherCost !== 0) {
-								 const cost = choice.tetherCost !== undefined ? choice.tetherCost : 1; 
-								 gameState.tetherTimer = Math.max(0, gameState.tetherTimer - cost);
-								 
-								 // Ejection logic handled in renderScene after the click
-							}
-
-							// Handle Skill Checks vs Standard Navigation
-							if (choice.type === 'skill') {
-								gameState.lastSkillType = choice.skill;
-								let finalDC = choice.dc;
-								// Check for permanent difficulty increase after rift collapse
-								if (gameState.isRiftCollapse) { 
-									finalDC += 2;
-									addToHistory(`Rift Penalty: DC increased by 2 (New DC: ${finalDC})`, 'system');
-								}
-								gameState.lastDC = finalDC;
-								renderScene(choice.nextScene);
-								return;
-							}
-							
-							if (choice.type !== 'skill') {
-								renderScene(choice.nextScene);
-							}
-						};
-					}
-
-
-					
-					// Default icon for travel/dialogue buttons
-					let icon = '<i class="fas fa-chevron-right text-gray-300 group-hover:text-amber-100"></i>';
-					
-					// Get the *raw* button text without cost duplication.
-					let rawText = choice.text; 
-					
-					let content = `<span class="cinzel font-bold text-gray-300 group-hover:text-amber-100">${rawText}</span>`;
-					let supplementalText = '';
-					
-					// Check if button is colored and adjust default icon color
-					if (isCustomClassButton) {
 						// Custom classes need the base styling mixed in for padding, shadow, etc.
 						content = `<span class="cinzel font-bold text-white">${rawText}</span>`;
 						
@@ -5774,13 +5596,13 @@
 							itemRow.onmouseleave = () => {
 								descArea.innerText = defaultText;
 								descArea.classList.remove('text-amber-400');
-								descArea.classList.add('text-gray-400');
-							};
+                                descArea.classList.add('text-gray-400');
+                            };
 
-							invContainer.appendChild(itemRow);
-						});
-					}
-				}
+                            invContainer.appendChild(itemRow);
+                        });
+                    }
+                }
 
         init();
     </script>
