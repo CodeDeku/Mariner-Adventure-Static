@@ -2611,7 +2611,7 @@
                         
                         // 2. Safe House Reveal Text (If Ethereal)
                         if (state.isEthereal) {
-                            desc += "<br><br><span class='text-spectral'>The Veil thins. The iron gates of the Wolf King's Estate shimmer into existence where a brick wall stood moments ago.</span>";
+                            desc += "<br><br><span class='text-spectral'>The Veil thins</span>. The iron gates of the Wolf King's Estate shimmer into existence where a brick wall stood moments ago.";
                         }
                         scenes['town_square'].text = desc;
 
@@ -4573,11 +4573,6 @@
                         state.inventory.push("Spectral Lantern");
                     }
 
-                    // GRANT SKILL: PLANE WALKING (Mechanic derived from Lantern)
-                    if (!state.skills.includes("Plane Walking")) {
-                        state.skills.push("Plane Walking"); 
-                    }
-
                     // Reset all crew members now that they are buffed
                     Object.keys(state.crew).forEach(k => state.crew[k].used = false);
 
@@ -4613,7 +4608,7 @@
                 },
                 choices: [
                     { 
-                        text: "Quinn: Decipher Archives", 
+                        text: "Decipher Archives", 
                         nextScene: 'library_search_logic', 
                         type: 'skill', 
                         skill: 'History', 
@@ -4621,17 +4616,15 @@
                         tetherCost: 1,
                         reqNotItem: 'Manor Blueprint'
                     },
-                    // LATERAL MOVE: Connects to East Wing
-                    { text: "Enter Crawlspace (To Kitchens)", nextScene: 'manor_crawlspace', type: 'travel', tetherCost: 1 },
-                    // FORWARD MOVE: Shortcut to end (Requires Map)
                     { 
-                        text: "Open Secret Passage (Req: Blueprint)", 
+                        text: "Open Secret Passage", 
                         nextScene: 'manor_servants_passage', 
                         type: 'travel', 
                         reqItem: 'Manor Blueprint',
                         tetherCost: 0,
                         customClass: 'btn-success-glow'
                     },
+                    { text: "Enter Crawlspace (To Kitchens)", nextScene: 'manor_crawlspace', type: 'travel', tetherCost: 1 },
                     { text: "Return to Foyer", nextScene: 'manor_foyer', type: 'travel', tetherCost: 1 },
                     { text: "Check Blueprint (Map)", nextScene: 'manor_map_view', type: 'map_view', reqItem: 'Manor Blueprint', tetherCost: 0 }
                 ]
@@ -5020,14 +5013,14 @@
 				isBoss: true, 
 				choices: [
 					{ 
-						text: "Gareth: Sunder (Sword of Valor)", 
-						nextScene: 'automaton_victory_sword', 
-						type: 'action', 
+						text: "Sunder", 
+						nextScene: 'automaton_sunder_logic', 
+						type: 'skill', 
+						skill: 'Athletics',
+                        dc: 15,
 						reqItem: 'Sword of Valor',
 						customClass: 'btn-hero' 
 					},
-					
-					// Blink Bypass
 					{ 
 						text: "Command Blink: Phase Shift", 
 						nextScene: 'automaton_blink_bypass', // New scene
@@ -5036,24 +5029,43 @@
 						customClass: 'spectral-active',
 						tetherCost: 1
 					},
-					// Quinn's Logic check is now HARDER
 					{ 
-						text: "Quinn: Target Stabilizer", 
+						text: "Target Stabilizer", 
 						nextScene: 'automaton_logic_check', 
 						type: 'skill', 
 						dc: 16, // Increased from 15
 						skill: 'Investigation', 
 						tetherCost: 1 
 					},
-					// Brute Force Option (New)
 					{
-						text: "Brute Force (Take Damage)",
+						text: "Brute Force",
 						nextScene: 'automaton_brute_force',
 						type: 'combat',
 						doomCost: 0
 					}
 				]
 			},
+			
+			// LOGIC: Sunder Check
+            'automaton_sunder_logic': {
+                isLogic: true,
+                resolve: (roll) => roll >= 15 ? 'automaton_victory_sword' : 'automaton_sunder_fail'
+            },
+            
+            // FAIL STATE: Standard punishment loop (Boss lives)
+            'automaton_sunder_fail': {
+                title: "Parried",
+                text: "You swing the Sword of Valor with all your might, but the Sentinel reads the arc perfectly. It catches your blade on its glaive haft and kicks you back with hydraulic force.",
+                onEnter: (state) => {
+                    state.currentHP = applyDamage(state.currentHP, 6); // Punishment Damage
+                    fxManager.flashRed();
+                    return "Sunder Failed. Took 6 Damage.";
+                },
+                choices: [
+                    // Return to the fight menu
+                    { text: "Recover and Engage", nextScene: 'manor_automaton_encounter', type: 'travel', tetherCost: 1 } 
+                ]
+            },
 			
 			'automaton_blink_bypass': {
 				title: "Phase Shift",
@@ -5174,10 +5186,21 @@
                     class="w-full bg-gray-900 border border-amber-700/50 p-3 rounded text-amber-500 cinzel font-bold text-lg focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 shadow-inner placeholder-gray-700">
                 </div>`,
 				onEnter: (state) => {
-                    // FIX: Ensure Ethereal mode is completely gone
+                    // 1. HARD STOP ACT 2 UI
+                    state.act2Started = false; // Hides Tether Bar immediately
+                    state.tetherTimer = 0;
                     state.isEthereal = false;
                     document.body.classList.remove('plane-ethereal');
-                    return null;
+                    
+                    // 2. TIME SKIP HEAL
+                    state.currentHP = state.maxHP;
+                    
+                    // 3. GRANT SKILL (Learned during downtime)
+                    if (!state.skills.includes("Plane Walking")) {
+                        state.skills.push("Plane Walking"); 
+                    }
+
+                    return "Time Skip: HP Restored. Mastered 'Plane Walking' skill.";
                 },
                 choices: [
                     {
