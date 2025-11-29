@@ -3958,7 +3958,7 @@
                 isBoss: true, 
                 choices: [
                     { 
-                        text: "Channel the Power (3s Hold)", 
+                        text: "Channel the Power", 
                         nextScene: 'act2_arrival', // Jumps directly to Act 2 start scene
                         type: 'hold', 
                         customClass: 'btn-channel',
@@ -3969,36 +3969,41 @@
 
             // --- ACT 2 SCENES (NEW) ---
             'act2_arrival': {
-				title: "The Vanishing Manor",
-				text: "The world shatters. The Port of Shadows—the Smelter, the Chapel—they dissolve into mist. You are no longer on the Material Plane. You materialize on the cold marble floor of a glorious, hidden estate. This is the <span class='text-spectral'>Vanishing Manor</span>, the Ethereal fortress of the Wolf King. Your planar intervention has caused a massive <span class='text-void'>recoil</span>.<br><br>The voices of your crew are crystal clear now. They are not in your head; they are standing beside you, radiating power. But your physical form is rejecting this plane. You are unraveling—you have <span class='text-danger'>limited time</span> to find answers and escape.",
-				journal: "I closed the Rift, but the recoil threw me into the Ethereal Plane. I am truly the Mariner of the Damned now.",
-				onEnter: (state) => {
-					// --- WORLD STATE: RIFT CLOSED & ETHEREAL START ---
-					state.act1Started = false;
-					state.isRiftCollapse = false;
-					state.doomTimer = 0;
-					state.quinnLogistics = false;
-					
-					// ACT 2 INIT
-					state.act2Started = true;
-					state.isEthereal = true;
-					state.tetherTimer = 20;
-					
-					// FIX: Corrected skill name to "Plane Walking" to match updateUI logic
-					if (!state.skills.includes("Plane Walking")) {
-						state.skills.push("Plane Walking"); 
-					}
+                title: "The Vanishing Manor",
+                text: "The world doesn't just break; it inverts. You stand in the center of the Port of Shadows, but it is a silent, <span class='text-void'>grey echo</span> of the city you knew. Ash falls *upwards* into a void-black sky. The ruins of the Smelter are merely skeletal ghosts in the distance. <br><br>But here, where the muddy town square should be, stands a pristine, glorious estate: The <span class='text-spectral'>Vanishing Manor</span>. It exists in the negative space of the world.<br><br>A solitary lamp post stands at the gates, holding a heavy brass lantern burning with cold, pale fire. You take the <span class='text-item'>Spectral Lantern</span> from its hook to light your path. The voices of your crew are crystal clear here—they are standing right beside you.",
+                journal: "The Material Plane is an echo here. I found the Vanishing Manor sitting right on top of the town square. Took a Spectral Lantern to light the way.",
+                onEnter: (state) => {
+                    // --- WORLD STATE: RIFT CLOSED & ETHEREAL START ---
+                    state.act1Started = false;
+                    state.isRiftCollapse = false;
+                    state.doomTimer = 0;
+                    state.quinnLogistics = false;
+                    
+                    // ACT 2 INIT
+                    state.act2Started = true;
+                    state.isEthereal = true;
+                    state.tetherTimer = 20;
+                    
+                    // GRANT ITEM: SPECTRAL LANTERN (Narrative Item)
+                    if (!state.inventory.includes("Spectral Lantern")) {
+                        state.inventory.push("Spectral Lantern");
+                    }
 
-					// Reset all crew members now that they are buffed
-					Object.keys(state.crew).forEach(k => state.crew[k].used = false);
+                    // GRANT SKILL: PLANE WALKING (Mechanic derived from Lantern)
+                    if (!state.skills.includes("Plane Walking")) {
+                        state.skills.push("Plane Walking"); 
+                    }
 
-					document.getElementById('tether-display').classList.remove('hidden');
-					return "Act 1 Complete. Tether Unstable: 20 Turns remaining.";
-				},
-				choices: [
-					{ text: "Enter the Foyer", nextScene: 'manor_foyer', type: 'travel', tetherCost: 1 }
-				]
-			},
+                    // Reset all crew members now that they are buffed
+                    Object.keys(state.crew).forEach(k => state.crew[k].used = false);
+
+                    document.getElementById('tether-display').classList.remove('hidden');
+                    return "Act 1 Complete. Acquired Spectral Lantern. Tether Unstable.";
+                },
+                choices: [
+                    { text: "Enter the Foyer", nextScene: 'manor_foyer', type: 'travel', tetherCost: 1 }
+                ]
+            },
 
 
 			// --- ACT 2: THE MANOR WEB LAYOUT ---
