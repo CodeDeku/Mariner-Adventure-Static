@@ -420,14 +420,22 @@
         }
 
         /* 3. PANEL TRANSFORMATIONS: Wood/Stone becomes Void Glass */
-        /* Targets: Stats Panel, Main Text Area, Journal Container */
-        body.plane-ethereal .bg-gray-800,
-        body.plane-ethereal .bg-gray-900,
-        body.plane-ethereal .bg-\[\#111318\] { 
-            background-color: rgba(15, 23, 42, 0.8) !important; /* Slate-900 semi-transparent */
-            backdrop-filter: blur(5px); /* Glass effect */
-            box-shadow: 0 0 30px rgba(34, 211, 238, 0.05); /* Slight cyan ambient glow */
-        }
+		/* Targets ONLY: Stats Panel, Main Text Area (by ID or direct child), Journal Container */
+		body.plane-ethereal #stats-panel,
+		body.plane-ethereal #main-scene-text,
+		body.plane-ethereal #journal-container { 
+			background-color: rgba(15, 23, 42, 0.8) !important; 
+			backdrop-filter: blur(5px); 
+			box-shadow: 0 0 30px rgba(34, 211, 238, 0.05); /* The glow you want on containers */
+		}
+
+		/* Remove the generic background override that affects internal divs */
+		body.plane-ethereal .bg-gray-800:not(#stats-panel):not(#journal-container),
+		body.plane-ethereal .bg-gray-900 {
+			/* Optional: You can still tint them slightly if you want, but remove the box-shadow */
+			background-color: rgba(15, 23, 42, 0.6) !important;
+			box-shadow: none !important; 
+		}
 
         /* 4. BORDER GLOW: Rusted Iron becomes Starlight Silver */
         body.plane-ethereal .border-gray-700,
@@ -798,13 +806,17 @@
 		class FXManager {
 			constructor() {
 				this.overlay = document.getElementById('fx-overlay');
-				// NEW: Capture the separate vignette element
 				this.vignette = document.getElementById('vignette-overlay');
 			}
 
 			clearEffects() {
-				// Only clear the Rift/Atmosphere effects from the main overlay
-				this.overlay.classList.remove('fx-rift-pulse', 'fx-rift-collapsed', 'fx-flash-red'); 
+				// Only clear pulse/flash. If Rift Collapse is active, DO NOT remove that class.
+				this.overlay.classList.remove('fx-rift-pulse', 'fx-flash-red'); 
+				
+				// Only remove collapse if the game state says it's NOT collapsed (handled via logic elsewhere, or explicit removal here if you prefer safety)
+				if (!gameState.isRiftCollapse) {
+					this.overlay.classList.remove('fx-rift-collapsed');
+				}
 			}
 
 			flashRed() {
@@ -4995,6 +5007,12 @@
 
 							audioManager.playClick();
 							
+							if (choice.action && typeof choice.action === 'function') {
+								const result = choice.action(gameState);
+								if (result) addToHistory(result, 'system');
+								return; 
+							}
+							
 							if (choice.type === 'reset') {
 								resetGame();
 								return;
@@ -5325,7 +5343,7 @@
 						doomBar.classList.remove('bg-purple-600', 'bg-red-700', 'bg-yellow-600', 'animate-pulse');
 						doomText.classList.remove('text-red-500', 'text-yellow-500');
 						
-						// FIX 2A: Ensure FX is removed if the collapse state is false
+						// Ensure FX is removed if the collapse state is false
 						if (!gameState.isRiftCollapse) {
 							document.getElementById('fx-overlay').classList.remove('fx-rift-collapsed');
 						}
