@@ -5056,18 +5056,24 @@
             document.getElementById('shillings-display').innerText = gameState.shillings;
             
             // Influence
+            // NEW SCALING: Range is -50 to +50 (100 total points)
             const inf = gameState.influence || 0;
-            const pct = ((inf + 20) / 40) * 100;
+            // Calculation: (Current Influence + 50) / 100 * 100
+            const pct = ((inf + 50) / 100) * 100; 
             const marker = document.getElementById('inf-marker');
             if (marker) marker.style.left = `${Math.max(0, Math.min(100, pct))}%`;
             
             const infText = document.getElementById('inf-status-text');
             if (infText) {
-                // Spyglass power activates at +/- 15. Max status is beyond 30.
+                // Tier 4: Max Tiers (Beyond 30)
                 if (inf <= -30) infText.textContent = "Sworn to the Crown (Max Order)";
-                else if (inf <= -15) infText.textContent = "Watchman (Spyglass Active)"; // Order Active: -15 to -30
+                // Tier 3: Spyglass Active Tier (-30 to -15)
+                else if (inf <= -15) infText.textContent = "Watchman (Spyglass Active)"; 
+                // Tier 4: Max Tiers (Beyond 30)
                 else if (inf >= 30) infText.textContent = "Pirate Lord (Max Chaos)";
-                else if (inf >= 15) infText.textContent = "Privateer (Spyglass Active)"; // Chaos Active: 15 to 30
+                // Tier 3: Spyglass Active Tier (15 to 30)
+                else if (inf >= 15) infText.textContent = "Privateer (Spyglass Active)"; 
+                // Tier 1/2: Neutral Zone (-15 to 15)
                 else infText.textContent = "Neutral / Growing";
             }
 
