@@ -6597,10 +6597,6 @@
 						}
 
 						// --- TUTORIAL PULSE LOGIC FIX ---
-						// Pulse at the start if not used AND no one is selected
-						if (gameState.currentSceneId === 'start' && c.name === 'Quinn' && !c.used && !activeCrewMember) {
-							baseClass += " tutorial-pulse";
-						}
 						if (gameState.currentSceneId === 'start' && !c.used && !activeCrewMember) {
                             if (c.name === 'Quinn' || c.name === 'Bones') {
                                 baseClass += " tutorial-pulse";
