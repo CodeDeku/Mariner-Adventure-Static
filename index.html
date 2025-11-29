@@ -5586,14 +5586,6 @@
 						planeWalkBtn.innerHTML = `<span class="text-[10px] cinzel font-bold">Plane Walk</span><i class="fas fa-shoe-prints text-cyan-600"></i>`;
 					}
 					// --- END ACT 2 UI TOGGLE ---
-					
-					// --- BLINK BUTTON VISIBILITY ---
-					const blinkBtn = document.getElementById('btn-blink');
-					if (gameState.skills.includes("Blink")) {
-						blinkBtn.classList.remove('hidden');
-					} else {
-						blinkBtn.classList.add('hidden');
-					}
 
 					
 					if (sceneId && sceneId.startsWith('prologue')) {
