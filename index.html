@@ -331,6 +331,20 @@
             border-color: #67e8f9; 
             transform: translateY(-1px);
         }
+		
+		/* --- PULSE BUTTON (AMBER) --- */
+        .btn-pulse {
+            background: linear-gradient(90deg, rgba(120, 53, 15, 0.6) 0%, rgba(69, 26, 3, 0.8) 100%);
+            border: 1px solid #f59e0b; /* Amber-500 */
+            color: #fef3c7; /* Amber-100 */
+            box-shadow: 0 0 10px rgba(245, 158, 11, 0.2);
+            animation: pulse-amber 2s infinite; /* Reusing existing pulse animation */
+        }
+        .btn-pulse:hover {
+            border-color: #fbbf24;
+            box-shadow: 0 0 15px rgba(245, 158, 11, 0.5);
+            transform: translateY(-1px);
+        }
 
 
         /* --- LORE TOOLTIPS --- */
@@ -452,16 +466,16 @@
 		
 		/* --- HEARTBEAT VIGNETTE FX --- */
         @keyframes heartbeat-anim {
-            0% { box-shadow: inset 0 0 40px 10px rgba(234, 88, 12, 0.2); } /* Orange-600 low */
-            50% { box-shadow: inset 0 0 100px 30px rgba(245, 158, 11, 0.5); } /* Amber-500 high */
-            100% { box-shadow: inset 0 0 40px 10px rgba(234, 88, 12, 0.2); }
+            0% { box-shadow: inset 0 0 20px 5px rgba(234, 88, 12, 0.1); } /* Reduced Spread/Opacity */
+            50% { box-shadow: inset 0 0 60px 20px rgba(245, 158, 11, 0.3); } 
+            100% { box-shadow: inset 0 0 20px 5px rgba(234, 88, 12, 0.1); }
         }
         .fx-heartbeat-slow {
             animation: heartbeat-anim 3s infinite ease-in-out;
-            opacity: 1 !important; /* Force visibility */
+            opacity: 1 !important; 
         }
         .fx-heartbeat-fast {
-            animation: heartbeat-anim 0.8s infinite ease-in-out; /* Much faster */
+            animation: heartbeat-anim 0.8s infinite ease-in-out; 
             opacity: 1 !important;
         }
 
@@ -735,14 +749,6 @@
                             <span class="text-[10px] cinzel font-bold">Plane Walk</span>
                             <i class="fas fa-shoe-prints text-cyan-400 group-hover:text-white transition-colors"></i>
                         </button>
-                        <!-- Blink (Displacer Cub) Slot - Added later but kept in the structure -->
-                        <button id="btn-blink" class="hidden p-2 rounded border border-purple-700 bg-gray-900/80 text-purple-200 hover:bg-purple-900/50 transition-all flex items-center justify-between group">
-							<div class="flex flex-col text-left">
-								<span class="text-[10px] cinzel font-bold">Companion: Blink</span>
-								<span class="text-[9px] text-purple-400 italic">Click to Phase Rest (-2 Turns)</span>
-							</div>
-							<i class="fas fa-paw text-purple-400 group-hover:text-white transition-colors"></i>
-						</button>
                     </div>
                 </div>
                 <!-- END ACT 2 PLANAR SKILLS -->
@@ -1648,7 +1654,7 @@
                 },
                 choices: [
                     { text: "Assess Injuries", nextScene: 'start_medicine_check', type: 'skill', dc: 10, skill: 'Medicine' },
-                    { text: "Quinn: Search the debris", nextScene: 'wreckage_search', type: 'skill', dc: 8, skill: 'Investigation' },
+                    { text: "Search Debris", nextScene: 'wreckage_search', type: 'skill', dc: 8, skill: 'Investigation' },
                     { text: "Head toward the treeline", nextScene: 'treeline', type: 'travel' }
                 ]
             },
@@ -2663,7 +2669,7 @@
 
                     // Finale Unlocked State
                     if (hasRing && hasBlade) {
-                        scenes['town_square'].text = "The <span class='text-void'>Rift</span> is tearing the sky apart. <span class='text-spectral'>Violet lightning</span> strikes the cobblestones. You have the <span class='text-item'>Ring</span> and the <span class='text-item'>Blade</span>. The Ritual is the only way to close this wound.";
+                        scenes['town_square'].text = "The <span class='text-void'>Rift</span> is tearing the sky apart. Violet lightning strikes the cobblestones. You have the <span class='text-item'>Ring</span> and the <span class='text-item'>Blade</span>. The Ritual is the only way to close this wound.";
                         
                         newChoices.unshift({
                             text: "Begin the Final Ritual", 
@@ -2760,7 +2766,7 @@
 
             'sea_map_hub': {
                 title: "The Open Sea: Navigation Hub",
-                text: "You stand at the wheel of the Iron Lung, the world laid out on the chart. To sail, you must expend Supplies.",
+                text: "You stand at the wheel of the ${gameState.shipName}, the world laid out on the chart. To sail, you must expend Supplies.",
                 journal: "Navigating the coast. Must manage Supplies.",
                 onEnter: (state) => {
                     // Clear Heartbeat FX when leaving Dogtooth
@@ -2898,7 +2904,7 @@
                         type: 'travel', 
                         reqItem: 'Ring of Brass',
                         reqNotFlag: 'companions.silas.joined',
-                        customClass: 'btn-keen-senses'
+                        customClass: 'btn-pulse'
                     },
                     { text: "Bones: Examine the Dead (Medicine DC 14)", nextScene: 'dogtooth_lore_check', type: 'skill', dc: 14, skill: 'Medicine' },
                     { text: "Gareth: Cow the Pack (Intimidation DC 15)", nextScene: 'dogtooth_intimidate_logic', type: 'skill', dc: 15, skill: 'Intimidation' },
@@ -3294,14 +3300,16 @@
                         nextScene: 'gather_info_smelter', 
                         type: 'dialogue', 
                         reqNotFlag: 'knowsSmelterSecret',
-                        doomCost: 1 // FIX: Dialogue/Action costs 1 turn in a hub
+                        reqNotItem: 'Sword of Valor', // ADDED: Hide if you have the Sword
+                        doomCost: 1 
                     },
                     { 
                         text: "Listen to Gravedigger's Warnings (Chapel)", 
                         nextScene: 'gather_info_chapel', 
                         type: 'dialogue', 
                         reqNotFlag: 'knowsChapelSecret',
-                        doomCost: 1 // FIX: Dialogue/Action costs 1 turn in a hub
+                        reqNotItem: 'Ring of Brass', // ADDED: Hide if you have the Ring
+                        doomCost: 1 
                     },
                     { 
                         // FIX: Added reqNotFlag for visibility (Task 3 Fix)
@@ -5019,15 +5027,7 @@
 						reqItem: 'Sword of Valor',
 						customClass: 'btn-hero' 
 					},
-					// Quinn's Logic check is now HARDER
-					{ 
-						text: "Quinn: Target Stabilizer", 
-						nextScene: 'automaton_logic_check', 
-						type: 'skill', 
-						dc: 16, // Increased from 15
-						skill: 'Investigation', 
-						tetherCost: 1 
-					},
+					
 					// Blink Bypass
 					{ 
 						text: "Command Blink: Phase Shift", 
@@ -5036,6 +5036,15 @@
 						reqSkill: 'Blink', 
 						customClass: 'spectral-active',
 						tetherCost: 1
+					},
+					// Quinn's Logic check is now HARDER
+					{ 
+						text: "Quinn: Target Stabilizer", 
+						nextScene: 'automaton_logic_check', 
+						type: 'skill', 
+						dc: 16, // Increased from 15
+						skill: 'Investigation', 
+						tetherCost: 1 
 					},
 					// Brute Force Option (New)
 					{
@@ -5586,6 +5595,13 @@
                 renderScene('edward_death');
                 return;
             }
+			// --- DYNAMIC TITLE INJECTION ---
+            // Fixes the issue where the scene title was static
+            if (sceneId === 'act3_intro_ship' || sceneId === 'sea_map_hub') {
+                if (gameState.shipName) {
+                    scene.title = gameState.shipName;
+                }
+            }
 
             // --- DOOM COUNTER LOGIC (MOVED TO TOP - FIX 1) ---
             // Process timer checks BEFORE generating text/UI to ensure instant feedback
@@ -6111,7 +6127,8 @@
 					if (choice.customClass === 'btn-success-glow') icon = '<i class="fas fa-ear-listen text-gray-300"></i>';
 					else if (choice.customClass === 'btn-keen-senses') icon = '<i class="fas fa-eye text-purple-300"></i>';
                     else if (choice.customClass === 'btn-lantern-glow') icon = '<i class="fas fa-lightbulb text-yellow-300"></i>';
-					else if (choice.customClass === 'btn-anchor') icon = '<i class="fas fa-anchor text-cyan-300"></i>'; 
+					else if (choice.customClass === 'btn-anchor') icon = '<i class="fas fa-anchor text-cyan-300"></i>';
+					else if (choice.customClass === 'btn-pulse') icon = '<i class="fas fa-ring text-amber-300"></i>';					
 					else icon = '<i class="fas fa-chevron-right text-white"></i>'; // Default carrot icon
 
                     // Special handling for Captain's Orders styling
@@ -6330,7 +6347,7 @@
                     const suppliesDisplay = document.getElementById('supplies-display');
                     const companionPanel = document.getElementById('companion-panel');
                     
-                    // 1. Supplies always show in Act 3
+                    // 1. Supplies (Act 3 Only)
                     if (gameState.act3Started) {
                         suppliesDisplay.classList.remove('hidden');
                         document.getElementById('supplies-count').innerText = gameState.supplies;
@@ -6338,15 +6355,16 @@
                         suppliesDisplay.classList.add('hidden');
                     }
 
-                    // 2. Allies Panel ONLY shows if you have a companion
-                    const hasAllies = Object.values(gameState.companions).some(c => c.joined);
-                    if (hasAllies) {
+                    // 2. Allies Panel (Shows if Silas OR Blink is present)
+                    const hasSilas = Object.values(gameState.companions).some(c => c.joined);
+                    const hasBlink = gameState.skills.includes("Blink");
+                    
+                    if (hasSilas || hasBlink) {
                         companionPanel.classList.remove('hidden');
                         renderCompanions();
                     } else {
                         companionPanel.classList.add('hidden');
-                    }
-                    // --- END ACT 3 UI TOGGLE ---
+                    }                    // --- END ACT 3 UI TOGGLE ---
                     
 					// --- ACT 2 UI TOGGLE ---
 					const tetherDisplay = document.getElementById('tether-display');
@@ -6613,12 +6631,31 @@
 						crewContainer.appendChild(btn);
 					});
                     
-                    // --- COMPANIONS LIST (ACT 3) ---
+                    // --- COMPANIONS LIST (ACT 3 & ACT 2) ---
                     function renderCompanions() {
                         const companionList = document.getElementById('companions-list');
                         companionList.innerHTML = '';
 
-                        // Silas
+                        // 1. BLINK (The Displacer Cub)
+                        if (gameState.skills.includes("Blink")) {
+                             const blinkDiv = document.createElement('div');
+                             // Green Styling (Emerald) to match Silas
+                             blinkDiv.className = `p-2 rounded border border-emerald-700 bg-gray-900/80 shadow flex items-center justify-between transition-colors cursor-pointer hover:bg-emerald-900/30 group`;
+                             blinkDiv.innerHTML = `
+                                <div class="flex items-center gap-2">
+                                    <i class="fas fa-paw text-xl text-emerald-400 group-hover:text-white transition-colors"></i>
+                                    <div class="flex flex-col text-left leading-tight">
+                                        <span class="font-bold text-xs cinzel text-emerald-300">Blink</span>
+                                        <span class="text-[10px] text-gray-500 italic">Phase Shift (Click to Rest)</span>
+                                    </div>
+                                </div>
+                             `;
+                             // Add Click Handler directly here
+                             blinkDiv.onclick = () => window.gameFunctions.triggerBlink();
+                             companionList.appendChild(blinkDiv);
+                        }
+
+                        // 2. SILAS (The Seneschal)
                         if (gameState.companions.silas.joined) {
                             const silas = gameState.companions.silas;
                              const silasDiv = document.createElement('div');
