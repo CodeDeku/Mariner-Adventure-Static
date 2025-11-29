@@ -450,6 +450,21 @@
 		.vignette-active {
 			opacity: 1 !important;
 		}
+		
+		/* --- HEARTBEAT VIGNETTE FX --- */
+        @keyframes heartbeat-anim {
+            0% { box-shadow: inset 0 0 40px 10px rgba(234, 88, 12, 0.2); } /* Orange-600 low */
+            50% { box-shadow: inset 0 0 100px 30px rgba(245, 158, 11, 0.5); } /* Amber-500 high */
+            100% { box-shadow: inset 0 0 40px 10px rgba(234, 88, 12, 0.2); }
+        }
+        .fx-heartbeat-slow {
+            animation: heartbeat-anim 3s infinite ease-in-out;
+            opacity: 1 !important; /* Force visibility */
+        }
+        .fx-heartbeat-fast {
+            animation: heartbeat-anim 0.8s infinite ease-in-out; /* Much faster */
+            opacity: 1 !important;
+        }
 
         .water-stained {
             background-color: #1e293b;
@@ -2547,14 +2562,13 @@
 			// --- NEW NARRATIVE SCENE: THE STRANGER ---
             'meeting_the_stranger': {
                 title: "The Stranger",
-                text: "A figure in stained robes stumbles up the path, clutching a satchel bursting with parchment. He freezes when he sees you, his eyes wide and bloodshot behind cracked spectacles.<br><br>'You... you're going the wrong way,' he wheezes. 'The geometry... it's failing down there. The Wolf King's math is unraveling.'<br><br>Before you can speak, he thrusts a heavy brass spyglass into your chest. 'I don't want to see the fissures anymore. Take it! Let it show you what you are.' He scrambles past you up the cliff, leaving you with the weight of his terror in your hands.",
-                journal: "Met a frantic stranger fleeing the city. He forced his Spyglass into my hands before running.",
+                text: "A figure in stained robes stumbles up the path, clutching a satchel. He freezes, eyes wide behind cracked spectacles.<br><br>'You... you're going the wrong way,' he wheezes. 'The Anchor is broken! The Wolf King's math is unraveling!'<br><br>Before you can speak, he thrusts a <span class='text-item'>Salt-Warped Spyglass</span> into your chest. 'I don't want to see the fissures anymore. Take it! Let it show you the rot.' He scrambles past you, fleeing the city.",
+                journal: "Met a frantic stranger. He raved about a 'Broken Anchor' and forced his Spyglass on me.",
                 banter: {
-                    'gareth': "He reeks of fear, Edward. And something else...",
-                    'talon': "He was running from something specific. Not the fire."
+                    'quinn': "Math doesn't unravel. But... if the Anchor he speaks of is a planar binding, we are all in grave danger.",
+                    'gareth': "Let him run. We walk into the fire, not away from it."
                 },
                 onEnter: (state) => {
-                     // Auto-acquire the item
                      if (!state.inventory.includes("Salt-Warped Spyglass")) {
                         state.inventory.push("Salt-Warped Spyglass");
                         return "Received Salt-Warped Spyglass.";
@@ -2672,7 +2686,7 @@
                         scenes['town_square'].text = "You return with the <span class='text-item'>Sword of Valor</span>. Ash falls from the Smelter District like <span class='text-fire'>gray snow</span>. The <span class='text-fire'>Fire threat</span> has escalated. You must pursue the Shadow Path now.";
                     } 
                     else {
-                        scenes['town_square'].text = "The Port is in chaos. Civilians flee toward the docks. To the East, the Smelter burns. To the West, the Chapel lies in fog. Your Compass tracks both.";
+                        scenes['town_square'].text = "The Port is in chaos. Civilians flee toward the docks. You check the <span class='text-item'>Compass</span>. The needle splits violently, vibrating between two distinct sources of planar interference:<br><br>1. An intense <span class='text-fire'>Heat Signature</span> from the Smelter District.<br>2. A deep <span class='text-void'>Void Pocket</span> in the Sunken Chapel.<br><br>To stabilize the Rift, you must investigate both.";
                     }
                     
                     // Filter choices based on acquired items
@@ -2725,7 +2739,9 @@
                 text: "You stand at the wheel of the Iron Lung, the world laid out on the chart. To sail, you must expend Supplies.",
                 journal: "Navigating the coast. Must manage Supplies.",
                 onEnter: (state) => {
-                    // This scene is the travel menu, so we update the location text
+                    // Clear Heartbeat FX when leaving Dogtooth
+                    document.getElementById('vignette-overlay').classList.remove('fx-heartbeat-slow', 'fx-heartbeat-fast');
+                    
                     return `Current Location: ${state.currentLocation}. Supplies: ${state.supplies}/20.`;
                 },
                 choices: [
@@ -2828,40 +2844,41 @@
                 choices: [{ text: "Repair and Continue", nextScene: 'sea_map_hub', type: 'travel', doomCost: 0 }]
             },
             
-            // WOLF HUB
             'bleak_dogtooth': {
                 title: "The Bleak Dogtooth",
-                text: "This jagged, wind-whipped island is home to the <span class='text-danger' data-lore='Feral werewolves who have succumbed to savagery'>Lost Pack</span>. They patrol the black rocks, snarling at the sea. You must find Silas before the tide washes him away.",
+                text: "This jagged, wind-whipped island is home to the <span class='text-danger' data-lore='Feral werewolves who have succumbed to savagery'>Lost Pack</span>. Once noble guardians, they are now broken things, patrolling the black rocks and snarling at the sea.<br><br>The <span class='text-item'>Ring of Brass</span> begins to throb against your finger. It is a slow, rhythmic heat—like a heartbeat calling out to its own kind. The signal pulls you away from the shore, toward the high cliffs.",
                 onEnter: (state) => {
                     state.currentLocation = 'dogtooth';
+                    const overlay = document.getElementById('vignette-overlay');
+                    
                     if (state.companions.silas.joined) {
+                        // SAFETY: Ensure it is OFF if he is here
+                        overlay.classList.remove('fx-heartbeat-slow', 'fx-heartbeat-fast');
                         return "Silas is with you. The Lost Pack growls but backs away.";
+                    } else {
+                        // LOGIC FIX: Remove FAST pulse if returning from the Cliff, then add SLOW
+                        overlay.classList.remove('fx-heartbeat-fast');
+                        overlay.classList.add('fx-heartbeat-slow');
+                        return "The Ring pulses. Someone is here.";
                     }
-                    return "A lone, disciplined figure stands apart from the feral pack. This must be Silas.";
                 },
-				banter: {
+                banter: {
                     'bones': "Look at the one on the rocks. That foam at the mouth isn't rage; it's sickness. The veins are black. Let me see what killed it.",
                     'gareth': "They aren't soldiers; they're rabid dogs. Don't show fear. Stare them down. Make them remember who is at the top of the food chain."
                 },
                 choices: [
+                    // CHANGED: No recruit button here. You must hunt.
                     { 
-                        text: "Show Ring of Brass (Recruit Silas)", 
-                        nextScene: 'silas_recruit_success', 
-                        type: 'action', 
+                        text: "Follow the Ring's Pulse (Search Cliffs)", 
+                        nextScene: 'dogtooth_cliff_wall', 
+                        type: 'travel', 
                         reqItem: 'Ring of Brass',
                         reqNotFlag: 'companions.silas.joined',
                         customClass: 'btn-keen-senses'
                     },
-                    { 
-						text: "Bones: Examine the Dead",
-						nextScene: 'dogtooth_lore_check', 
-						type: 'skill', 
-						dc: 14, 
-						skill: 'Medicine'
-					},
-                    { text: "Cow the Pack", nextScene: 'dogtooth_intimidate_logic', type: 'skill', dc: 15, skill: 'Intimidation' },
+                    { text: "Bones: Examine the Dead (Medicine DC 14)", nextScene: 'dogtooth_lore_check', type: 'skill', dc: 14, skill: 'Medicine' },
+                    { text: "Gareth: Cow the Pack (Intimidation DC 15)", nextScene: 'dogtooth_intimidate_logic', type: 'skill', dc: 15, skill: 'Intimidation' },
 					{ text: "Return to Sea Map", nextScene: 'sea_map_hub', type: 'travel', doomCost: 0 }
-					
                 ]
             },
             'dogtooth_intimidate_logic': {
@@ -2914,6 +2931,45 @@
 				text: "The physiology is too alien. You cannot determine the cause of their feral state.",
 				choices: [{ text: "Return to Bleak Dogtooth", nextScene: 'bleak_dogtooth', type: 'travel', doomCost: 0 }]
 			},
+			// --- NEW: THE HORIZON WALKER PUZZLE ---
+            'dogtooth_cliff_wall': {
+                title: "The Dead End",
+                text: "", // Populated dynamically based on Plane
+                onEnter: (state) => {
+                    // Only pulse if Silas isn't joined yet
+                    if (!state.companions.silas.joined) {
+                        document.getElementById('vignette-overlay').classList.remove('fx-heartbeat-slow');
+                        document.getElementById('vignette-overlay').classList.add('fx-heartbeat-fast');
+                    } else {
+                        // Safety clear
+                        document.getElementById('vignette-overlay').classList.remove('fx-heartbeat-slow', 'fx-heartbeat-fast');
+                    }
+
+                    // STATE CHECK: Material vs Ethereal
+                    if (!state.isEthereal) {
+                        scenes['dogtooth_cliff_wall'].text = "You follow the pulse to a sheer granite cliff face. The path ends here. There are no caves, no tracks, nothing.<br><br>Yet, the <span class='text-item'>Ring of Brass</span> is screaming now, burning your finger. The heartbeat is deafening. It insists that the path continues <i>forward</i>, straight into the solid rock. The geometry of this place is wrong.";
+                        
+                        scenes['dogtooth_cliff_wall'].choices = [
+                            { text: "Touch the Rock Wall", action: () => "Solid stone. Cold and unyielding.", type: 'action' },
+                            { text: "Return to Shore", nextScene: 'bleak_dogtooth', type: 'travel', doomCost: 0 }
+                        ];
+                        return "The signal is strongest here, but the way is blocked. Think like a Horizon Walker.";
+                    } else {
+                        // ETHEREAL STATE (Success)
+                        scenes['dogtooth_cliff_wall'].text = "As you step into the Ethereal Plane, the granite cliff dissolves into a curtain of grey mist. The heartbeat syncs with the thrum of the spectral world.<br><br>Beyond the veil, a hidden sanctuary is revealed—a cave that exists only in the echo of the world. Standing at the entrance is a lone, disciplined figure in tattered armor, watching you with eyes of gold.";
+                        
+                        scenes['dogtooth_cliff_wall'].choices = [
+                            { 
+                                text: "Enter the Sanctuary (Approach Silas)", 
+                                nextScene: 'silas_recruit_success', 
+                                type: 'travel',
+                                customClass: 'spectral-active' 
+                            }
+                        ];
+                        return "The Ethereal Plane reveals the truth. Path found.";
+                    }
+                }
+            },
 
             'silas_recruit_success': {
                 title: "Silas, The Seneschal",
@@ -2921,11 +2977,11 @@
                 journal: "Recruited Silas, the Wolf King's Seneschal. (Companion Gained).",
                 onEnter: (state) => {
                     state.companions.silas.joined = true;
-                    
-                    // FIX: Set the reqFlag for the Spire button
                     state.unlocked_spire = true;
-                    // Also keep knownIslands for consistency if needed later
                     state.knownIslands.push('sanguine_spire_entry');
+                    
+                    // KILL SWITCH: Remove the heartbeat immediately
+                    document.getElementById('vignette-overlay').classList.remove('fx-heartbeat-slow', 'fx-heartbeat-fast');
                     
                     return "Silas joined the crew. Sanguine Spire coordinates unlocked.";
                 },
@@ -2952,7 +3008,7 @@
 			// --- ENDGAME: SANGUINE SPIRE ---
             'sanguine_spire_combat': {
                 title: "The Sanguine Court",
-                text: "You enter the cathedral. Three <span class='text-danger'>Vampire Elders</span> descend from the vaulted ceiling. They do not fear steel, but they hesitate when they see the <span class='text-item'>Sword of Valor</span> glowing in your hand.",
+                text: "You enter the cathedral. Three <span class='text-danger'>Vampire Elders</span> descend from the vaulted ceiling. 'The Mariner,' one hisses, seeing the <span class='text-item'>Ring of Brass</span>. 'You carry the Wolf's trinkets. You think they will save you? We broke his kingdom, and we will break you.'",
                 isBoss: true,
                 choices: [
                     { 
@@ -5069,8 +5125,8 @@
             // NEW SCENE: Bridges Act 2 to Act 3
             'act2_finale_resolution': {
                 title: "The World Restored",
-                text: "You plant the Sword of Valor into the spectral anchor. The Ring of Brass flares, binding the energies. The Vanishing Manor implodes into a singularity of white light, dragging the corruption with it. <br><br>The weight of the Ethereal Plane lifts. You fall through the void, not into death, but into the salt spray of the material ocean.",
-                journal: "Closed the Rift at the Manor. Act 2 Complete.",
+                text: "You plant the Sword of Valor into the spectral anchor. The Ring of Brass flares, binding the energies. The Vanishing Manor implodes into a singularity of white light.<br><br>While you were in the Ethereal, your <span class='text-item'>Compass</span> spun wildly, drunk on the infinite directions of the void. But as the weight of the Ethereal lifts and you fall back into the salt spray of the material ocean, the needle slams to a halt. It doesn't point North. It locks onto a single, unwavering heading deep in the open sea. The storm is over, but the signal remains.",
+                journal: "Closed the Rift. The Compass has stopped spinning and locked onto a new target.",
                 choices: [
                     { text: "Wake up at Sea (Begin Act 3)", nextScene: 'act3_name_ship', type: 'travel', doomCost: 0 }
                 ]
