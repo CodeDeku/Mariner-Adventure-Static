@@ -4625,8 +4625,9 @@
             // 1. Prologue (The Storm starts)
             const isProloguePulse = ['prologue_storm', 'prologue_abyss'].includes(sceneId);
 
-            // 2. Act 1 Hubs (Only if Rift hasn't collapsed yet)
-            const isAct1Pulse = gameState.act1Started && !gameState.isRiftCollapse && 
+            // 2. Act 1 Hubs (Only if Rift hasn't collapsed yet AND timer is not zero)
+            // Added check for doomTimer > 0 to prevent pulse from overriding the collapse effect on the final turn
+            const isAct1Pulse = gameState.act1Started && !gameState.isRiftCollapse && gameState.doomTimer > 0 &&
                 ['town_square', 'lighthouse_vigil', 'smelter_stage1_start', 'chapel_stage1_reveal', 'town_docks', 'blackwater_tavern', 'alchemist_triage'].includes(sceneId);
 
             // 3. Act 2 (The Ethereal Plane - Always active except on failure)
