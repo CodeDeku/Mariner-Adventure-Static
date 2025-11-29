@@ -2747,9 +2747,9 @@
             },
 
             'act3_intro_ship': {
-                title: gameState.shipName, // Uses the new name as the Title!
-                text: `Quinn blows on the wet ink of the logbook. '<b><span class="text-item">${gameState.shipName}</span></b>,' he reads aloud. 'A fine name.'<br><br>He announces, 'We're running low on supplies already.' A new world awaits beyond the fog line.`,
-                journal: `Act 3 started. Acquired the ship, ${gameState.shipName}.`,
+                title: "The Ship", // Placeholder
+                text: `Quinn blows on the wet ink of the logbook. '<b><span class="text-item">[SHIP_NAME]</span></b>,' he reads aloud. 'A fine name.'<br><br>He announces, 'We're running low on supplies already.' A new world awaits beyond the fog line.`,
+                journal: `Act 3 started. Acquired the ship.`,
                 onEnter: (state) => {
                     state.act3Started = true;
                     state.act2Started = false; 
@@ -2757,7 +2757,7 @@
                     state.unlocked_dogtooth = true; 
                     
                     document.body.classList.remove('plane-ethereal');
-                    return `Act 3 Commencing. Ship named ${state.shipName}.`;
+                    return `Act 3 Commencing. Ship acquired. Bleak Dogtooth coordinates charted.`;
                 },
                 choices: [
                     { text: "Check the Map", nextScene: 'sea_map_hub', type: 'travel', doomCost: 0 }
@@ -2766,7 +2766,7 @@
 
             'sea_map_hub': {
                 title: "The Open Sea: Navigation Hub",
-                text: "You stand at the wheel of the ${gameState.shipName}, the world laid out on the chart. To sail, you must expend Supplies.",
+                text: "You stand at the wheel of your ship, the world laid out on the chart. To sail, you must expend Supplies.",
                 journal: "Navigating the coast. Must manage Supplies.",
                 onEnter: (state) => {
                     // Clear Heartbeat FX when leaving Dogtooth
@@ -2775,7 +2775,6 @@
                     return `Current Location: ${state.currentLocation}. Supplies: ${state.supplies}/20.`;
                 },
                 choices: [
-                    // Added customClass: 'btn-anchor' to all navigation options
                     { text: "Sail to Port of Shadows", nextScene: 'travel_to_port', type: 'travel', suppliesCost: 2, customClass: 'btn-anchor' },
                     { text: "Sail to Bleak Dogtooth", nextScene: 'travel_to_dogtooth', type: 'travel', suppliesCost: 5, reqFlag: 'unlocked_dogtooth', customClass: 'btn-anchor' },
                     { text: "Sail to Sanguine Spire", nextScene: 'travel_to_spire', type: 'travel', suppliesCost: 8, reqFlag: 'unlocked_spire', customClass: 'btn-anchor' }
@@ -5590,16 +5589,26 @@
             const scene = scenes[sceneId];
             if (!scene) return;
             
-            // --- DEATH CHECK 0: Check previous state before processing current scene logic ---
+            // --- DEATH CHECK 0 ---
             if (gameState.currentHP === 0 && sceneId !== 'edward_death') {
                 renderScene('edward_death');
                 return;
             }
-			// --- DYNAMIC TITLE INJECTION ---
-            // Fixes the issue where the scene title was static
+
+            // --- DYNAMIC CONTENT INJECTION (Fixes the Ship Name) ---
+            // We create a copy of the text/title so we don't permanently modify the source object
+            let displayTitle = scene.title;
+            let displayText = scene.text;
+
             if (sceneId === 'act3_intro_ship' || sceneId === 'sea_map_hub') {
                 if (gameState.shipName) {
-                    scene.title = gameState.shipName;
+                    // Inject Title
+                    displayTitle = gameState.shipName;
+                    
+                    // Inject Text (Swap the placeholder for the real name)
+                    // We check if the text contains the placeholder or generic term
+                    displayText = displayText.replace('[SHIP_NAME]', gameState.shipName);
+                    displayText = displayText.replace('your ship', `the ${gameState.shipName}`);
                 }
             }
 
@@ -5765,7 +5774,7 @@
             let textClass = isDeathScene ? 'text-red-300' : 'text-gray-300';
 
             
-            let finalHtml = `<h2 class="2xl cinzel ${titleClass} mb-2">${scene.title}</h2><p class="text-lg leading-relaxed ${textClass} fade-in">${scene.text}</p>`;
+            let finalHtml = `<h2 class="2xl cinzel ${titleClass} mb-2">${displayTitle}</h2><p class="text-lg leading-relaxed ${textClass} fade-in">${displayText}</p>`;
             
             // --- BANTER INJECTION (AUTOMATIC) ---
             
@@ -5796,7 +5805,7 @@
             }
             
             textEl.innerHTML = finalHtml;
-            document.getElementById('scene-title').innerText = scene.title;
+            document.getElementById('scene-title').innerText = displayTitle;
             
             activeCrewMember = null; 
             
