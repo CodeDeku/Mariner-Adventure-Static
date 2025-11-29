@@ -312,6 +312,20 @@
              transform: none; /* No lift effect on hover */
              box-shadow: none;
         }
+		
+		/* --- ANCHOR / NAVIGATION BUTTON --- */
+        .btn-anchor {
+            background: linear-gradient(90deg, #0e7490 0%, #164e63 100%); /* Cyan-700 -> Cyan-900 */
+            border: 1px solid #06b6d4; /* Cyan-500 */
+            color: #cffafe; /* Cyan-50 */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+        }
+        .btn-anchor:hover {
+            background: linear-gradient(90deg, #0891b2 0%, #155e75 100%);
+            border-color: #67e8f9; /* Cyan-300 */
+            box-shadow: 0 0 15px rgba(34, 211, 238, 0.4); /* Cyan Glow */
+            transform: translateY(-1px);
+        }
 
 
         /* --- LORE TOOLTIPS --- */
@@ -1452,7 +1466,7 @@
             "Spectral Lantern": {
                 name: "Spectral Lantern",
                 type: 'key',
-                icon: 'fa-lightbulb', 
+                icon: 'fa-meteor', 
                 color: 'text-yellow-300',
                 btnText: "PASSIVE",
                 desc: "Key: Grants the ability to Planar Walk, stabilizing the tether's exit."
@@ -2684,10 +2698,10 @@
                     return `Current Location: ${state.currentLocation}. Supplies: ${state.supplies}/20.`;
                 },
                 choices: [
-                    // Choices dynamically populated based on knownIslands
-                    { text: "Sail to Port of Shadows", nextScene: 'travel_to_port', type: 'travel', suppliesCost: 2 },
-                    { text: "Sail to Bleak Dogtooth", nextScene: 'travel_to_dogtooth', type: 'travel', suppliesCost: 5, reqFlag: 'unlocked_dogtooth' },
-                    { text: "Sail to Sanguine Spire", nextScene: 'travel_to_spire', type: 'travel', suppliesCost: 8, reqFlag: 'unlocked_spire' }
+                    // Added customClass: 'btn-anchor' to all navigation options
+                    { text: "Sail to Port of Shadows", nextScene: 'travel_to_port', type: 'travel', suppliesCost: 2, customClass: 'btn-anchor' },
+                    { text: "Sail to Bleak Dogtooth", nextScene: 'travel_to_dogtooth', type: 'travel', suppliesCost: 5, reqFlag: 'unlocked_dogtooth', customClass: 'btn-anchor' },
+                    { text: "Sail to Sanguine Spire", nextScene: 'travel_to_spire', type: 'travel', suppliesCost: 8, reqFlag: 'unlocked_spire', customClass: 'btn-anchor' }
                 ]
             },
 
@@ -2791,10 +2805,37 @@
                         reqNotFlag: 'companions.silas.joined',
                         customClass: 'btn-keen-senses'
                     },
-                    { text: "Hunt for Lore (Perception DC 14)", nextScene: 'dogtooth_lore_check', type: 'skill', dc: 14, skill: 'Perception' },
+                    { 
+						text: "Bones: Examine the Dead", // Changed text
+						nextScene: 'dogtooth_lore_check', 
+						type: 'skill', 
+						dc: 14, 
+						skill: 'Medicine' // Changed from Perception
+					},
                     { text: "Return to Sea Map", nextScene: 'sea_map_hub', type: 'travel', doomCost: 0 }
+					
                 ]
             },
+			'dogtooth_lore_check': {
+				isLogic: true,
+				resolve: (roll) => roll >= 14 ? 'dogtooth_lore_success' : 'dogtooth_lore_fail'
+			},
+			'dogtooth_lore_success': {
+				title: "The Pathology",
+				text: "Bones examines a fallen werewolf. 'This isn't just a curse,' he mutters. 'It's an engineered plague. The veins are black with alchemical residue.'",
+				journal: "Bones identified the Lycanthropy as an engineered plague. (Lore Gained).",
+				onEnter: (state) => {
+					// Reward logic (e.g. Influence or just Lore)
+					state.influence += 2; 
+					return "Lore Gained. Chaos +2.";
+				},
+				choices: [{ text: "Return to Bleak Dogtooth", nextScene: 'bleak_dogtooth', type: 'travel', doomCost: 0 }]
+			},
+			'dogtooth_lore_fail': {
+				title: "Unknown Affliction",
+				text: "The physiology is too alien. You cannot determine the cause of their feral state.",
+				choices: [{ text: "Return to Bleak Dogtooth", nextScene: 'bleak_dogtooth', type: 'travel', doomCost: 0 }]
+			},
 
             'silas_recruit_success': {
                 title: "Silas, The Seneschal",
@@ -4500,7 +4541,7 @@
                         nextScene: 'cub_tame_check', 
                         type: 'skill', 
                         dc: 12, 
-                        skill: 'Animal Handling', 
+                        skill: 'Nature', 
                         tetherCost: 1
                     },
                     // 2. LEAVE
@@ -5848,8 +5889,9 @@
 					content = `<span class="cinzel font-bold text-white">${rawText}</span>`;
 					if (choice.customClass === 'btn-success-glow') icon = '<i class="fas fa-ear-listen text-gray-300"></i>';
 					else if (choice.customClass === 'btn-keen-senses') icon = '<i class="fas fa-eye text-purple-300"></i>';
-                    else if (choice.customClass === 'btn-lantern-glow') icon = '<i class="fas fa-lightbulb text-yellow-300"></i>'; // NEW LANTERN ICON
-					else icon = '<i class="fas fa-chevron-right text-white"></i>'; // Default custom icon
+                    else if (choice.customClass === 'btn-lantern-glow') icon = '<i class="fas fa-lightbulb text-yellow-300"></i>';
+					else if (choice.customClass === 'btn-anchor') icon = '<i class="fas fa-anchor text-cyan-300"></i>'; 
+					else icon = '<i class="fas fa-chevron-right text-white"></i>'; // Default carrot icon
 
                     // Special handling for Captain's Orders styling
 					if (choice.customClass && choice.customClass.includes('spectral-active')) {
@@ -6067,13 +6109,20 @@
                     const suppliesDisplay = document.getElementById('supplies-display');
                     const companionPanel = document.getElementById('companion-panel');
                     
+                    // 1. Supplies always show in Act 3
                     if (gameState.act3Started) {
                         suppliesDisplay.classList.remove('hidden');
-                        companionPanel.classList.remove('hidden');
                         document.getElementById('supplies-count').innerText = gameState.supplies;
-                        renderCompanions();
                     } else {
                         suppliesDisplay.classList.add('hidden');
+                    }
+
+                    // 2. Allies Panel ONLY shows if you have a companion
+                    const hasAllies = Object.values(gameState.companions).some(c => c.joined);
+                    if (hasAllies) {
+                        companionPanel.classList.remove('hidden');
+                        renderCompanions();
+                    } else {
                         companionPanel.classList.add('hidden');
                     }
                     // --- END ACT 3 UI TOGGLE ---
@@ -6350,7 +6399,7 @@
                              silasDiv.className = `p-2 rounded border border-emerald-700 bg-gray-900/80 shadow flex items-center justify-between transition-colors`;
                              silasDiv.innerHTML = `
                                 <div class="flex items-center gap-2">
-                                    <i class="fas fa-wolf text-xl text-emerald-400"></i>
+                                    <i class="fas fa-moon text-xl text-emerald-400"></i>
                                     <div class="flex flex-col text-left leading-tight">
                                         <span class="font-bold text-xs cinzel text-emerald-300">${silas.name}</span>
                                         <span class="text-[10px] text-gray-500 italic">Seneschal (Pack Tactics)</span>
@@ -6358,7 +6407,6 @@
                                 </div>
                              `;
                              companionList.appendChild(silasDiv);
-                             companionPanel.classList.remove('hidden'); // Ensure panel is visible if Silas is joined
                         }
                     }
                     // This function is called earlier in updateUI if act3Started is true.
