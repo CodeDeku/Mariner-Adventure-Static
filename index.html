@@ -668,10 +668,13 @@
                             <i class="fas fa-shoe-prints text-cyan-400 group-hover:text-white transition-colors"></i>
                         </button>
                         <!-- Blink (Displacer Cub) Slot - Added later but kept in the structure -->
-                        <button id="btn-blink" class="hidden p-2 rounded border border-purple-700 bg-gray-900/80 text-purple-200 hover:bg-purple-900/50 transition-all flex items-center justify-between">
-                            <span class="text-[10px] cinzel font-bold">Blink</span>
-                            <i class="fas fa-paw text-purple-400"></i>
-                        </button>
+                        <button id="btn-blink" class="hidden p-2 rounded border border-purple-700 bg-gray-900/80 text-purple-200 hover:bg-purple-900/50 transition-all flex items-center justify-between group">
+							<div class="flex flex-col text-left">
+								<span class="text-[10px] cinzel font-bold">Companion: Blink</span>
+								<span class="text-[9px] text-purple-400 italic">Click to Phase Rest (-2 Turns)</span>
+							</div>
+							<i class="fas fa-cat text-purple-400 group-hover:text-white transition-colors"></i>
+						</button>
                     </div>
                 </div>
                 <!-- END ACT 2 PLANAR SKILLS -->
@@ -1055,22 +1058,36 @@
             renderScene(gameState.currentSceneId);
         };
 
-        // 2. BLINK LOGIC
-        window.gameFunctions.triggerBlink = function() {
-            if (!gameState.skills.includes("Blink")) return;
-            
-            // Blink Logic: Skips the current encounter or hazard
-            // For this implementation, let's make it a narrative action that outputs to history
-            // and effectively "counts" as a success for logic checks if we pass a specific state flag.
-            addToHistory("*Blink* You phase through the Ethereal Plane, displacing yourself from danger.", 'system');
-            audioManager.playGhost();
-            
-            // If in combat/encounter, give a visual cue
-            fxManager.flashRed(); // Re-purpose flash for visual feedback
-            
-            // NOTE: The actual scene transition logic must be handled by the button click
-            // (e.g., btn-blink in the Automaton scene skips to manor_staircase)
-        };
+        // 2. BLINK LOGIC (Companion Interaction)
+			window.gameFunctions.triggerBlink = function() {
+				if (!gameState.skills.includes("Blink")) return;
+
+				// SCENARIO A: In a Boss Fight / Danger Scene
+				// If the player clicks the button during a fight, give a hint or minor assist
+				const currentScene = scenes[gameState.currentSceneId];
+				if (currentScene.isBoss) {
+					addToHistory("Blink hisses at the enemy, his fur shifting colors. Look for a [Command Blink] option in the choices!", "system");
+					audioManager.playGhost();
+					return;
+				}
+
+				// SCENARIO B: Exploration Mode (The "Rest" Mechanic)
+				// Clicking Blink in a safe area lets you "Phase Out" to rest slightly, but it costs Time (Tether).
+				if (gameState.tetherTimer > 2) {
+					gameState.tetherTimer -= 2; // Cost 2 Turns
+					const heal = Math.floor(Math.random() * 4) + 1; // Heal 1d4
+					gameState.currentHP = Math.min(gameState.maxHP, gameState.currentHP + heal);
+					
+					addToHistory(`*You and Blink phase into the deep ether for a moment of respite.*`, 'entry');
+					addToHistory(`Healed ${heal} HP. Tether reduced by 2 turns.`, 'system');
+					audioManager.playGhost();
+					
+					// Refresh UI to show HP/Tether change
+					updateUI(); 
+				} else {
+					addToHistory("The Tether is too unstable to phase out right now!", "system");
+				}
+			};
         // --- END WINDOW FUNCTIONS ---
 
 
@@ -4180,44 +4197,48 @@
             
             // --- DISPLACER BEAST SCENES ---
             'manor_ballroom_encounter': {
-                title: "The Phase Hunter",
-                text: "The Kitchens open into a massive Ballroom. Hundreds of ghosts dance in a swirling vortex. Suddenly, the ghosts vanish. The air shimmers. A massive, six-legged panther with tentacles sprouting from its shoulders materializes, then shifts two feet to the left. A <span class='memory-keyword' data-lore='A predatory fey creature that projects a magical illusion of itself to confuse prey.'>Displacer Beast</span>. It hunts not with eyes, but with planar vibration.",
-                journal: "Encountered a Displacer Beast in the Ballroom.",
-                isBoss: true, // Use boss flag for better handling
-                banter: {
-                    'talon': "Don't trust your eyes! It's projecting an image. Strike where it ISN'T."
-                },
-                choices: [
-                    // 1. ITEM COUNTER (Ring of Brass/Spyglass)
-                    { 
-                        text: "See the True Form (Ring/Spyglass)", 
-                        nextScene: 'beast_true_sight', 
-                        type: 'action', 
-                        reqItem: 'Ring of Brass', // Or check Spyglass in logic
-                        customClass: 'btn-keen-senses' 
-                    },
-                    // 2. TALON (Perception Check)
-                    { 
-                        text: "Talon: Track Planar Distortion", 
-                        nextScene: 'beast_track_logic', 
-                        type: 'skill', 
-                        dc: 16, 
-                        skill: 'Perception',
-                        tetherCost: 1 
-                    },
-                     // 3. BLINK (Reward from Cub)
-                    { 
-                        text: "Blink Past It", 
-                        nextScene: 'manor_hall', // Skips fight, goes to Grand Hall goal
-                        type: 'action', 
-                        reqSkill: 'Blink', // Requires the new skill
-                        customClass: 'btn-game spectral-active', // Spectral styling
-                        tetherCost: 1
-                    },
-                    // 4. RETREAT
-                    { text: "Retreat to Kitchens", nextScene: 'manor_kitchens', type: 'travel', tetherCost: 1 }
-                ]
-            },
+				title: "The Phase Hunter",
+				text: "The air shimmers. A massive, six-legged panther materializes, then shifts two feet to the left. A <span class='text-danger'>Displacer Beast</span>. It hunts not with eyes, but with planar vibration. It blocks the path to the Hall.",
+				journal: "Encountered a Displacer Beast.",
+				isBoss: true, 
+				choices: [
+					// 1. BLINK (The Companion Interaction) - Now a distinct "Companion" action
+					{ 
+						text: "Command Blink: Distract the Beast", 
+						nextScene: 'beast_blink_distract', // New Scene below
+						type: 'action', 
+						reqSkill: 'Blink', 
+						customClass: 'spectral-active', // Blue Glow
+						tetherCost: 1
+					},
+					// 2. ITEM COUNTER 
+					{ 
+						text: "See True Form (Ring/Spyglass)", 
+						nextScene: 'beast_true_sight', 
+						type: 'action', 
+						reqItem: 'Ring of Brass', 
+						customClass: 'btn-keen-senses' 
+					},
+					// 3. TALON (Harder DC)
+					{ 
+						text: "Talon: Track Planar Distortion", 
+						nextScene: 'beast_track_logic', 
+						type: 'skill', 
+						dc: 17, // Increased DC from 16 to 17
+						skill: 'Perception',
+						tetherCost: 1 
+					},
+					// 4. RETREAT (High Cost)
+					{ text: "Retreat to Kitchens", nextScene: 'manor_kitchens', type: 'travel', tetherCost: 2 } // Retreating costs 2 turns now
+				]
+			},
+			
+			'beast_blink_distract': {
+				title: "A Game of Shadows",
+				text: "You whistle sharply. Blink phases out of your pack, appearing behind the massive Displacer Beast. He chirps—a sound that cuts through the ether. The beast spins around, confused by the familiar planar signature. <br><br>While the mother is distracted by the cub, you slip past into the shadows of the Hall. Blink rejoins you moments later, vibrating with adrenaline.",
+				journal: "Blink distracted the Displacer Beast. We slipped past unharmed.",
+				choices: [{ text: "Enter Grand Hall", nextScene: 'manor_hall', type: 'travel', tetherCost: 0 }]
+			},
 
             'beast_true_sight': {
                 title: "The Illusion Breaks",
@@ -4305,20 +4326,67 @@
             
             // Existing Loot Logic for Hall
             'manor_hall_check': {
-                isLogic: true,
-                resolve: (roll) => roll >= 15 ? 'manor_hall_success' : 'manor_hall_fail'
-            },
-            'manor_hall_success': {
-                title: "Hidden Cache",
-                text: "Talon spots a loose brick. You find a stash of old imperial coins.",
-                onEnter: (state) => {
-                    state.hallLooted = true; 
-                    state.shillings += 15;
-                    audioManager.playCoins();
-                    return "Found 15 Shillings.";
-                },
-                choices: [{ text: "Return to Hall", nextScene: 'manor_hall', type: 'travel', tetherCost: 1 }]
-            },
+				isLogic: true,
+				resolve: (roll) => roll >= 15 ? 'manor_mimic_reveal' : 'manor_mimic_trap'
+			},
+			'manor_mimic_reveal': {
+				title: "The Breathing Chest",
+				text: "Talon grabs your wrist just as you reach for the ornate chest. 'Look closely,' he hisses. 'The wood grain... it's pulsing.' The chest is a <span class='text-danger'>Mimic</span>, waiting for a meal.",
+				journal: "Talon spotted a Mimic before I touched it.",
+				choices: [
+					{ 
+						text: "Strike First (Surprise Attack)", 
+						nextScene: 'manor_mimic_victory', 
+						type: 'combat',
+						customClass: 'btn-hero' // Hero button for the ambush
+					},
+					{ text: "Leave it alone", nextScene: 'manor_hall', type: 'travel', tetherCost: 0 }
+				]
+			},
+			'manor_mimic_trap': {
+				title: "The Maw",
+				text: "You lift the lid, and the lid bites back. Serrated wood-teeth clamp onto your arm. The <span class='text-danger'>Mimic</span> screeches, its pseudopods thrashing.",
+				journal: "I triggered a Mimic trap. It bit deep.",
+				onEnter: (state) => {
+					state.currentHP = applyDamage(state.currentHP, 6); // Initial Bite Damage
+					fxManager.flashRed();
+					return "Ambushed! Took 6 Damage.";
+				},
+				choices: [
+					{ 
+						text: "Kill it (Combat)", 
+						nextScene: 'manor_mimic_victory_combat', 
+						type: 'combat',
+						doomCost: 0 
+					}
+				]
+			},
+			'manor_mimic_victory': {
+				title: "Splintered Wood",
+				text: "You shatter the creature's carapace before it can react. Amidst the purple gore and splinters, you find the creature's stomach contents: undigested gold.",
+				journal: "Killed the Mimic. Looted the gold.",
+				onEnter: (state) => {
+					state.hallLooted = true; 
+					state.shillings += 20; // High Reward
+					audioManager.playCoins();
+					return "Mimic Defeated. Found 20 Shillings.";
+				},
+				choices: [{ text: "Return to Hall", nextScene: 'manor_hall', type: 'travel', tetherCost: 1 }]
+			},
+			'manor_mimic_victory_combat': {
+				title: "Wood and Blood",
+				text: "You hack the creature apart, but not before it thrashes wildly, bruising your ribs. It dissolves into sludge, leaving behind a pile of coins.",
+				journal: "Survived the Mimic fight.",
+				onEnter: (state) => {
+					state.currentHP = applyDamage(state.currentHP, 4); // Extra Combat Damage
+					state.hallLooted = true; 
+					state.shillings += 20; 
+					audioManager.playCoins();
+					fxManager.flashRed();
+					return "Mimic Dead. Took 4 DMG. Found 20 Shillings.";
+				},
+				choices: [{ text: "Return to Hall", nextScene: 'manor_hall', type: 'travel', tetherCost: 1 }]
+			},
             'manor_hall_fail': {
                 title: "Automaton Patrol",
                 text: "You focus too intently on the wall and miss the patrol. A brass blade grazes your arm.",
@@ -4332,41 +4400,61 @@
             
             // --- BRASS AUTOMATON SCENES (NEW) ---
             'manor_automaton_encounter': {
-                title: "The Brass Sentinel",
-                text: "You step on a loose flagstone, and the hum of the Manor spikes. A section of the wall rotates, revealing a <span class='text-danger'>Brass Sentinel</span>. It is eight feet of clockwork perfection, wielding a glaive that crackles with lightning. It blocks the path to the <span class='text-spectral'>Penrose Staircase</span>. It does not speak; it only executes.",
-                journal: "Triggered a Brass Sentinel patrol. It blocked the way.",
-                isBoss: true, 
-                choices: [
-                    // 1. GARETH (Combat - Easy win with Sword of Valor)
-                    { 
-                        text: "Gareth: Sunder the Shell (Sword of Valor)", 
-                        nextScene: 'automaton_victory_sword', 
-                        type: 'action', 
-                        reqItem: 'Sword of Valor',
-                        customClass: 'btn-hero' 
-                    },
-                    // 2. QUINN (Logic - Skill Check)
-                    { 
-                        text: "Quinn: Target Gyro-Stabilizer", 
-                        nextScene: 'automaton_logic_check', 
-                        type: 'skill', 
-                        dc: 15, 
-                        skill: 'Investigation', 
-                        tetherCost: 1 
-                    },
-                    // 3. BLINK (Reward from Cub)
-                    { 
-                        text: "Blink Behind It", 
-                        nextScene: 'manor_staircase', // Skips fight, goes to goal
-                        type: 'action', 
-                        reqSkill: 'Blink', // Requires the new skill
-                        customClass: 'btn-game spectral-active', // Spectral styling
-                        tetherCost: 1
-                    },
-                    // 4. RETREAT
-                    { text: "Retreat to Grand Hall", nextScene: 'manor_hall', type: 'travel', tetherCost: 1 }
-                ]
-            },
+				title: "The Brass Sentinel",
+				text: "A <span class='text-danger'>Brass Sentinel</span> blocks the path. Eight feet of clockwork perfection, wielding a lightning-wreathed glaive.",
+				isBoss: true, 
+				choices: [
+					{ 
+						text: "Gareth: Sunder (Sword of Valor)", 
+						nextScene: 'automaton_victory_sword', 
+						type: 'action', 
+						reqItem: 'Sword of Valor',
+						customClass: 'btn-hero' 
+					},
+					// Quinn's Logic check is now HARDER
+					{ 
+						text: "Quinn: Target Stabilizer", 
+						nextScene: 'automaton_logic_check', 
+						type: 'skill', 
+						dc: 16, // Increased from 15
+						skill: 'Investigation', 
+						tetherCost: 1 
+					},
+					// Blink Bypass
+					{ 
+						text: "Command Blink: Phase Shift", 
+						nextScene: 'automaton_blink_bypass', // New scene
+						type: 'action', 
+						reqSkill: 'Blink', 
+						customClass: 'spectral-active',
+						tetherCost: 1
+					},
+					// Brute Force Option (New)
+					{
+						text: "Brute Force (Take Damage)",
+						nextScene: 'automaton_brute_force',
+						type: 'combat',
+						doomCost: 0
+					}
+				]
+			},
+			
+			'automaton_blink_bypass': {
+				title: "Phase Shift",
+				text: "You grab Blink's fur. The cub activates his displacement field, extending it to you. For a split second, you exist everywhere and nowhere. The Sentinel's glaive passes harmlessly through your chest as you materialize behind it.",
+				journal: "Blink phased us through the Automaton's attack.",
+				choices: [{ text: "Ascend the Staircase", nextScene: 'manor_staircase', type: 'travel', tetherCost: 0 }]
+			},
+			'automaton_brute_force': {
+				title: "Metal on Bone",
+				text: "You lack the finesse to disable it, so you simply charge. The glaive cuts deep, searing your flesh with lightning, but you shoulder-check the machine into the wall, breaking its gyroscope. It falls, twitching.",
+				onEnter: (state) => {
+					state.currentHP = applyDamage(state.currentHP, 10); // Heavy Damage
+					fxManager.flashRed();
+					return "Automaton Destroyed. Took 10 Damage.";
+				},
+				choices: [{ text: "Ascend the Staircase", nextScene: 'manor_staircase', type: 'travel', tetherCost: 0 }]
+			},
 
             'automaton_logic_check': {
                 isLogic: true,
