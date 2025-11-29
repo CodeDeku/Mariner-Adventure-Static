@@ -180,7 +180,7 @@
         /* --- HERO / ABILITY BUTTON STYLING (UNIFIED SIZE) --- */
         
         /* Base styles for all glowing/custom buttons */
-        .btn-hero, .btn-fire-glow, .btn-shadow-glow, .btn-success-glow, .btn-keen-senses {
+        .btn-hero, .btn-fire-glow, .btn-shadow-glow, .btn-success-glow, .btn-keen-senses, .btn-lantern-glow {
             padding: 12px; /* FORCED CONSISTENT PADDING (p-3 equivalent) */
             text-align: left;
             text-transform: uppercase;
@@ -281,6 +281,23 @@
         .btn-keen-senses:hover {
             border-color: #c084fc; /* Brighter border on hover */
             background-color: #334155; /* Slightly lighter background on hover */
+            transform: translateY(-1px);
+        }
+
+        /* --- SPECTRAL LANTERN GLOW (NEW) --- */
+        @keyframes lantern-pulse {
+            0%, 100% { box-shadow: 0 0 5px rgba(253, 224, 71, 0.4); border-color: #fde047; }
+            50% { box-shadow: 0 0 15px rgba(253, 224, 71, 0.7); border-color: #fef08a; }
+        }
+        .btn-lantern-glow {
+            background: linear-gradient(90deg, rgba(88, 28, 135, 0.3) 0%, rgba(15, 23, 42, 0.5) 100%); /* Dark Violet/Blue gradient */
+            border: 1px solid #fde047; /* Yellow-300 */
+            color: #fefce8; /* Yellow-50 */
+            animation: lantern-pulse 3s infinite;
+        }
+        .btn-lantern-glow:hover {
+            border-color: #fef08a; 
+            box-shadow: 0 0 20px rgba(253, 224, 71, 0.8);
             transform: translateY(-1px);
         }
 
@@ -498,7 +515,7 @@
 
         /* 6. STANDARD BUTTON OVERRIDE (The "Normal" Travel Buttons) */
         /* We target the standard grey buttons specifically */
-        body.plane-ethereal .btn-game:not(.btn-hero):not(.btn-fire-glow):not(.btn-shadow-glow):not(.btn-success-glow):not(.btn-keen-senses) {
+        body.plane-ethereal .btn-game:not(.btn-hero):not(.btn-fire-glow):not(.btn-shadow-glow):not(.btn-success-glow):not(.btn-keen-senses):not(.btn-lantern-glow) {
             background: linear-gradient(90deg, rgba(30, 27, 75, 0.9) 0%, rgba(15, 23, 42, 0.9) 100%) !important; /* Indigo-950 */
             border-color: #4f46e5 !important; /* Indigo-600 */
             color: #e0e7ff !important; /* Indigo-100 */
@@ -624,6 +641,13 @@
                 </div>
                 <!-- END ACT 2 TETHER DISPLAY -->
 
+                <!-- ACT 3: SUPPLIES DISPLAY (NEW) -->
+                <div id="supplies-display" class="bg-gray-900 p-2 rounded border border-gray-700 flex items-center justify-between hidden">
+                    <span class="text-indigo-400 cinzel"><i class="fas fa-anchor mr-2"></i>Supplies (Ship)</span>
+                    <span id="supplies-count" class="font-bold text-gray-200">0</span>
+                </div>
+                <!-- END ACT 3 SUPPLIES DISPLAY -->
+
 
                 <div class="grid grid-cols-1 gap-2 text-sm">
                     <div class="bg-gray-900 p-2 rounded border border-gray-700 flex items-center justify-between">
@@ -646,6 +670,17 @@
                         <div class="text-center text-[10px] text-gray-500 italic" id="inf-status-text">Unknown to all</div>
                     </div>
                 </div>
+
+                <!-- ACT 3: COMPANION PANEL (NEW) -->
+                <div id="companion-panel" class="hidden mb-2 pb-2 fade-in clean-spectral-title">
+                    <div class="flex justify-between items-end mb-1 clean-spectral-title">
+                        <span class="text-xs cinzel text-emerald-400"><i class="fas fa-paw mr-1"></i> Allies</span>
+                    </div>
+                    <div id="companions-list" class="flex flex-col gap-2">
+                        <!-- Silas will be dynamically added here -->
+                    </div>
+                </div>
+                <!-- END ACT 3 COMPANION PANEL -->
 
                 <div>
                     <div class="flex justify-between items-end border-b border-gray-700 pb-1 mb-2 clean-spectral-title">
@@ -908,7 +943,7 @@
 			'smuggler_pay': 'images/smuggler_pay.jpg', 
 			'market_crossroads': 'images/market.jpg',
 			'market_stall': 'images/merchant.jpg',
-			'market_sell': 'images/merchant.jpg', 
+			'market_sell': 'images/merchant.jpg',
 			'buy_potion': 'images/merchant.jpg',
 			'buy_rope': 'images/merchant.jpg',
 			'buy_torch': 'images/merchant.jpg',
@@ -972,7 +1007,14 @@
             'act2_tether_fail': 'images/rift_collapse_red.jpg', // Ripped back image
             'manor_map_view': 'images/manor_blueprint.jpg', // Blueprint overlay image
             'act2_arrival': 'images/manor_ethereal.jpg', // Spectral Manor image
-            
+
+            // --- ACT 3 SCENE IMAGES (NEW) ---
+            'act3_intro_ship': 'images/pirate_ship_at_sea.jpg', // Edward acquires a ship
+            'sea_map_hub': 'images/map_compass.jpg', // Map View
+            'bleak_dogtooth': 'images/bleak_coast.jpg', // Werewolf Hub
+            'sanguine_spire_entry': 'images/gothic_sea_spire.jpg', // Vampire Hub
+            'sea_event_fog': 'images/fog_at_sea.jpg', // Travel Event
+
 			'default': 'https://placehold.co/600x400/0f172a/1e293b?text=The+Void' 
 		};
         
@@ -1024,6 +1066,21 @@
                 // NEW ACT 2 FLAGS
                 hallLooted: false,
                 hasBlinkSkill: false, // Tracks the Displacer Cub companion event success
+                // NEW ACT 3 FLAGS (CORE STATE)
+                act3Started: false,
+                shipName: "The Iron Lung",
+                supplies: 10,       // New Resource (Max 20)
+                knownIslands: ['port_hub'], // Initial Hub Unlocked
+                currentLocation: 'port_hub', // Current position in the world
+                companions: {
+                    silas: { 
+                        joined: false, 
+                        name: "Silas", 
+                        desc: "Wolf King's Seneschal (Passive: Pack Tactics)",
+                        active: false 
+                    }
+                },
+                // END ACT 3 FLAGS
             };
         }
 
@@ -1090,6 +1147,35 @@
 			};
         // --- END WINDOW FUNCTIONS ---
 
+        // --- NEW DAMAGE CALCULATION LOGIC (VAMPIRE SCALING) ---
+        function calculatePlayerDamage(enemyType) {
+            let dmg = Math.floor(Math.random() * 8) + 4; // Base D8+Bonus
+            
+            if (gameState.inventory.includes("Sword of Valor")) {
+                dmg += 1; // Base +1 from artifact description
+                
+                // VAMPIRE SCALING LOGIC
+                if (enemyType === "Vampire Thrall") dmg += 2; // Lesser +2 (Total +3)
+                else if (enemyType === "Vampire Bride") dmg += 3; // Greater +3 (Total +4)
+                else if (enemyType === "Vampire Elder") dmg += 4; // Elder +4 (Total +5)
+
+                if (enemyType.includes("Vampire")) {
+                    addToHistory(`The Sword of Valor strikes deep (+${dmg - 4} bonus damage).`, 'system');
+                }
+            }
+            return dmg;
+        }
+
+        // --- ENEMY DEFINITION (FOR SCALING TEST) ---
+        // This is a dummy definition used only for the damage calculation test
+        const enemyRegistry = {
+            "thrall": { type: "Vampire Thrall" },
+            "bride": { type: "Vampire Bride" },
+            "elder": { type: "Vampire Elder" },
+            "ghoul": { type: "Ghoul" } // Non-Vampire Undead
+        };
+        // --- END ENEMY DEFINITION ---
+
 
         // Interactive Items Definition
         const itemRegistry = {
@@ -1135,7 +1221,7 @@
 					const healAmount = 2;
 					const oldHP = state.currentHP;
 					
-					// FIX: Cap healing at state.maxHP (20), never MAX_OVERHEAL_CAP (25)
+					// FIX: Cap healing at state.maxHP (20)
 					state.currentHP = Math.min(state.maxHP, state.currentHP + healAmount);
 					
 					// Only consume item if we actually healed
@@ -1190,12 +1276,15 @@
                     if (state.crewUseFree) {
                         return "The residual clarity remains. You can only benefit from one mushroom at a time.";
                     }
-                    state.crewUseFree = true;
-                    // FIX 2: Mushroom consumption added here
-                    const idx = state.inventory.indexOf("Pearlescent Mushroom");
-                    if (idx > -1) state.inventory.splice(idx, 1);
-                    
-                    return `Consumed Pearlescent Mushroom. Clarity gained! (Free Guiding Voice available)`;
+
+                    // Only consume item if we actually set the flag
+                    if (!state.crewUseFree) {
+                        state.crewUseFree = true;
+                        const idx = state.inventory.indexOf("Pearlescent Mushroom");
+                        if (idx > -1) state.inventory.splice(idx, 1);
+                        return `Consumed Pearlescent Mushroom. Clarity gained! (Free Guiding Voice available)`;
+                    }
+                    return null;
                 }
             },
             "Curious Cargo": { // NEW ITEM: Influence driver
@@ -1261,7 +1350,7 @@
                 type: 'key', 
                 icon: 'fa-cross', 
                 color: 'text-blue-500', 
-                desc: "Legendary (Wolves of Valor): +1 to attack/damage. Deals extra Force damage to Undead. Required for the Ritual." 
+                desc: "Legendary (Wolves of Valor): +1 to attack/damage. Deals extra Force damage to Undead, scaling with their age." 
             },
 			"Compass": { type: 'key', icon: 'fa-compass', color: 'text-indigo-400', desc: "Passive: Violently hums near planar energy." },
             
@@ -1445,7 +1534,6 @@
         ];
         
         // NEW: Triage Alchemist Stock Definition
-        // FIX: Set doomCost to 0 on the *blueprint* for sales actions, but the button logic overrides based on the scene flow
         const ALCHEMIST_BUY_OPTIONS = [
             { item: "Vitality Tincture", nextScene: 'buy_tincture', cost: 15, doomCost: 0 },
             { item: "Smelling Salts", nextScene: 'buy_salts', cost: 8, doomCost: 0 },
@@ -1457,6 +1545,12 @@
         // NEW: Tavern Gruel Stock Definition
         const TAVERN_BUY_OPTIONS = [
              { item: "Gruel", nextScene: 'buy_gruel_to_go', cost: 1 } // Renamed 'Buy Gruel' to 'Buy Gruel (To Go)'
+        ];
+
+        // NEW: Ship Supplies Options
+        const SHIP_SUPPLIES_OPTIONS = [
+             { item: "Supplies", nextScene: 'buy_supplies_5', cost: 10, amount: 5 },
+             { item: "Supplies", nextScene: 'buy_supplies_10', cost: 18, amount: 10 }
         ];
 
         const MARKET_SELL_OPTIONS = [
@@ -1821,19 +1915,16 @@
                 title: "The Merchant",
                 text: "A hooded figure displays goods on a crate. 'Coin for survival, traveler?'",
                 journal: null,
-                // --- LOCAL STOCK DEFINITION ---
                 stock: {
                     "Healing Potion": 1,
                     "Rope": 1,
                     "Torch": 1,
-                    "Curious Cargo": 1, // Logic: He wants to BUY 1. He does not sell this.
-                    "Rum": 0 // Starts at 0. He only sells it if you sell him one first.
+                    "Curious Cargo": 1, 
+                    "Rum": 0 
                 },
-                // --- END LOCAL STOCK ---
                 banter: {
                     'quinn': "Buy what you can, but we need inventory, not junk."
                 },
-                // FIX 1: Initial choices defined here, rendered by renderChoices
                 choices: [
                     { text: "Sell Wares", nextScene: 'market_sell', type: 'travel', doomCost: 0 }, 
                     { text: "Leave", nextScene: 'market_crossroads', type: 'travel', doomCost: 0 }
@@ -1842,10 +1933,9 @@
             'market_sell': {
                 title: "The Merchant - Selling",
                 text: "The merchant eyes your gear. 'I can take some of that off your hands for a fair price.'",
-                journal: null,
-                // FIX 1: Initial choices defined here, rendered by renderChoices
                 choices: [
-                    { text: "Back to Buying", nextScene: 'market_stall', type: 'travel', doomCost: 0 }
+                    { text: "Back to Buying", nextScene: 'market_stall', type: 'travel', doomCost: 0 },
+                    { text: "Leave", nextScene: 'market_crossroads', type: 'travel', doomCost: 0 }
                 ]
             },
             // Merchant Sale Scene (Coin Only, No Influence)
@@ -1968,6 +2058,30 @@
                 },
                 choices: [{ text: "Return to Merchant", nextScene: 'market_stall', type: 'travel', doomCost: 0 }]
             },
+            // NEW SCENES: BUYING SUPPLIES (Only visible after ship acquired)
+            'buy_supplies_5': {
+                title: "Purchase Supplies",
+                text: "You load 5 units of salted meat and fresh water onto the dock cart.",
+                journal: "Purchased 5 units of Ship Supplies.",
+                onEnter: (state) => { 
+                    state.supplies = Math.min(20, state.supplies + 5);
+                    audioManager.playCoins();
+                    return "Acquired 5 Supplies."; 
+                },
+                choices: [{ text: "Return to Merchant", nextScene: 'market_stall', type: 'travel', doomCost: 0 }]
+            },
+            'buy_supplies_10': {
+                title: "Purchase Supplies",
+                text: "You acquire a significant load of long-term stores for your voyage.",
+                journal: "Purchased 10 units of Ship Supplies.",
+                onEnter: (state) => { 
+                    state.supplies = Math.min(20, state.supplies + 10);
+                    audioManager.playCoins();
+                    return "Acquired 10 Supplies."; 
+                },
+                choices: [{ text: "Return to Merchant", nextScene: 'market_stall', type: 'travel', doomCost: 0 }]
+            },
+
             'lighthouse_split': {
                 title: "The Final Approach",
                 text: "The Lighthouse stands atop a jagged cliff. Two paths present themselves: a sheer climb up the rock face, or a dark, winding tunnel through the sea caves below.",
@@ -2022,7 +2136,7 @@
 				text: "The air is thick and smells of rot. It is pitch black. You can hear things skittering on the damp stone, but you cannot see them.",
 				journal: "The caves felt heavy, like the stone was trying to push the air out of my lungs. Bones told me to close my eyes and smell the way forward.",
                 banter: {
-                    'bones': "Your eyes are useless here. Damp... dark... good place for mushrooms, bad for ankles."
+                    'bones': "That air is thick. Your eyes are useless here. Light a torch, Edward."
                 },
                 choices: [
                     { text: "Light Torch (Safe Passage)", nextScene: 'dark_caves_illuminated', type: 'action', reqItem: 'Torch', consume: true },
@@ -2045,7 +2159,6 @@
             },
             'dark_check': {
                 isLogic: true,
-                // FIX: Direct successful roll to faction_check
                 resolve: (roll) => roll >= 14 ? 'faction_check' : 'dark_fail'
             },
             'dark_fail': {
@@ -2423,93 +2536,353 @@
             },
             'town_square': {
                 title: "Port of Shadows",
-                text: "", // Dynamic text populated by onEnter
-                choices: [
-                    { 
-                        text: "Investigate Smelter District", 
-                        nextScene: 'smelter_entry', 
-                        type: 'travel', 
-                        reqNotItem: 'Sword of Valor', // Blade from Fire Path
-                        customClass: 'btn-fire-glow' 
-                    },
-                    { 
-                        text: "Investigate Sunken Chapel", 
-                        nextScene: 'chapel_entry', 
-                        type: 'travel',
-                        reqNotItem: 'Ring of Brass', // Ring from Shadow Path
-                        customClass: 'btn-shadow-glow'						
-                    },
-                    { text: "Visit The Triage Alchemist", nextScene: 'alchemist_triage', type: 'travel', doomCost: 0 },
-                    { text: "Rest at The Blackwater Tavern", nextScene: 'blackwater_tavern', type: 'travel', doomCost: 0 },
-                    { text: "Explore the Docks", nextScene: 'town_docks', type: 'travel', doomCost: 0 } // NEW DOCKS BUTTON
-                ],
-                // Inside scenes['town_square']:
-				onEnter: (state) => {
-					const hasRing = state.inventory.includes("Ring of Brass");
-					const hasBlade = state.inventory.includes("Sword of Valor");
-					
-					// Base choices for the hub
-					let newChoices = [
-						{ 
-							text: "Investigate Smelter District", 
-							nextScene: 'smelter_entry', 
-							type: 'travel', 
-							reqNotItem: 'Sword of Valor', 
-							customClass: 'btn-fire-glow' 
-						},
-						{ 
-							text: "Investigate Sunken Chapel", 
-							nextScene: 'chapel_entry', 
-							type: 'travel',
-							reqNotItem: 'Ring of Brass', 
-							customClass: 'btn-shadow-glow' 
-						},
-						{ text: "Visit The Triage Alchemist", nextScene: 'alchemist_triage', type: 'travel', doomCost: 0 },
-						{ text: "Rest at The Blackwater Tavern", nextScene: 'blackwater_tavern', type: 'travel', doomCost: 0 },
-						{ text: "Explore the Docks", nextScene: 'town_docks', type: 'travel', doomCost: 0 }
-					];
+                text: "", // Populated dynamically
+                choices: [], // Populated dynamically
+                onEnter: (state) => {
+                    // --- ACT 3 STATE (HIGHEST PRIORITY) ---
+                    if (state.act3Started) {
+                        state.currentLocation = 'port_hub'; // Mark location for trading
 
-					// STATE 2: FINALE UNLOCKED
-					if (hasRing && hasBlade) {
-						scenes['town_square'].text = "The <span class='text-void'>Rift</span> is tearing the sky apart. <span class='text-spectral'>Violet lightning</span> strikes the cobblestones. You have the <span class='text-item'>Ring</span> and the <span class='text-item'>Blade</span>. The Ritual is the only way to close this wound.";
-						
-						// FIX: Add the Ritual Button to the TOP of the choices list
-						newChoices.unshift({
-							text: "Begin the Final Ritual", 
-							nextScene: 'finale_ritual_start', 
-							type: 'travel', 
-							customClass: 'btn-hero', // Make it glow blue
-							doomCost: 0
-						});
-						
-						// Update choices immediately
-						scenes['town_square'].choices = newChoices;
-						
-						return "Finale Unlocked."; // Now safe to return
-					}
-					
-					// Normal Text Logic (runs only if finale is NOT unlocked)
-					if (hasRing) {
-						scenes['town_square'].text = "You return with the <span class='text-item'>Ring of Brass</span>. Fog from the Sunken Chapel is flooding the streets, choking the light. The <span class='text-void'>Shadow threat</span> has escalated while you were away. You must pursue the Fire Path now.";
-					} 
-					else if (hasBlade) {
-						scenes['town_square'].text = "You return with the <span class='text-item'>Sword of Valor</span>. Ash falls from the Smelter District like <span class='text-fire'>gray snow</span>. The <span class='text-fire'>Fire threat</span> has escalated while you were away. You must pursue the Shadow Path now.";
-					} 
-					else {
-						scenes['town_square'].text = "The Port is in chaos. Civilians flee toward the docks. To the East, the Smelter District burns with <span class='text-fire'>unnatural heat</span>. To the West, the Sunken Chapel lies in a pool of <span class='text-void'>dark fog</span>. Your Compass tracks both.";
-					}
-					
-					// Filter choices based on acquired items (Normal State)
-					scenes['town_square'].choices = newChoices.filter(choice => {
-						if (choice.nextScene === 'smelter_entry' && hasBlade) return false;
-						if (choice.nextScene === 'chapel_entry' && hasRing) return false;
-						return true;
-					});
-				},
-                // Choices now generated in onEnter
+                        // 1. Dynamic Text for Act 3
+                        let desc = "The air here is cold and still. The Vampire presence is subtle but palpable. The familiar docks and taverns now feel like traps.";
+                        
+                        // 2. Safe House Reveal Text (If Ethereal)
+                        if (state.isEthereal) {
+                            desc += "<br><br><span class='text-spectral'>The Veil thins. The iron gates of the Wolf King's Estate shimmer into existence where a brick wall stood moments ago.</span>";
+                        }
+                        scenes['town_square'].text = desc;
+
+                        // 3. Dynamic Choices for Act 3
+                        scenes['town_square'].choices = [
+                            // Safe House (Only if Ethereal)
+                            { 
+                                text: "Enter the Vanishing Gates (Safehouse)", 
+                                nextScene: 'wolf_estate_safe', 
+                                type: 'travel', 
+                                reqFlag: 'isEthereal',
+                                customClass: 'spectral-active',
+                                doomCost: 0
+                            },
+                            // Return to Sea (The "Leave" button)
+                            { 
+                                text: `Ship: Navigate the Open Sea (${state.shipName})`, 
+                                nextScene: 'sea_map_hub', 
+                                type: 'travel', 
+                                doomCost: 0 
+                            },
+                            // Essential Shops & Work
+                            // Essential Shops & Work
+							{ text: "Visit The Triage Alchemist", nextScene: 'alchemist_triage', type: 'travel', doomCost: 0 },
+							{ text: "Go to The Harbor Provisioner", nextScene: 'port_provisioner', type: 'travel', doomCost: 0 }, // Points to new Act 3 shop,
+                            { text: "Rest at The Blackwater Tavern", nextScene: 'blackwater_tavern', type: 'travel', doomCost: 0 },
+							{ text: "Explore the Docks", nextScene: 'town_docks', type: 'travel', doomCost: 0 } 
+                        ];
+                        
+                        return null; // STOP here. Do not run Act 1 logic.
+                    }
+
+                    // --- ACT 1 & ACT 2 LOGIC (EXISTING) ---
+                    const hasRing = state.inventory.includes("Ring of Brass");
+                    const hasBlade = state.inventory.includes("Sword of Valor");
+                    
+                    let newChoices = [
+                        { 
+                            text: "Investigate Smelter District", 
+                            nextScene: 'smelter_entry', 
+                            type: 'travel', 
+                            reqNotItem: 'Sword of Valor', 
+                            customClass: 'btn-fire-glow' 
+                        },
+                        { 
+                            text: "Investigate Sunken Chapel", 
+                            nextScene: 'chapel_entry', 
+                            type: 'travel',
+                            reqNotItem: 'Ring of Brass', 
+                            customClass: 'btn-shadow-glow' 
+                        },
+                        { text: "Visit The Triage Alchemist", nextScene: 'alchemist_triage', type: 'travel', doomCost: 0 },
+                        { text: "Rest at The Blackwater Tavern", nextScene: 'blackwater_tavern', type: 'travel', doomCost: 0 },
+                        { text: "Explore the Docks", nextScene: 'town_docks', type: 'travel', doomCost: 0 }
+                    ];
+
+                    // Finale Unlocked State
+                    if (hasRing && hasBlade) {
+                        scenes['town_square'].text = "The <span class='text-void'>Rift</span> is tearing the sky apart. <span class='text-spectral'>Violet lightning</span> strikes the cobblestones. You have the <span class='text-item'>Ring</span> and the <span class='text-item'>Blade</span>. The Ritual is the only way to close this wound.";
+                        
+                        newChoices.unshift({
+                            text: "Begin the Final Ritual", 
+                            nextScene: 'finale_ritual_start', 
+                            type: 'travel', 
+                            customClass: 'btn-hero', 
+                            doomCost: 0
+                        });
+                        
+                        scenes['town_square'].choices = newChoices;
+                        return "Finale Unlocked.";
+                    }
+                    
+                    // Normal Act 1 State
+                    if (hasRing) {
+                        scenes['town_square'].text = "You return with the <span class='text-item'>Ring of Brass</span>. Fog from the Sunken Chapel is flooding the streets. The <span class='text-void'>Shadow threat</span> has escalated. You must pursue the Fire Path now.";
+                    } 
+                    else if (hasBlade) {
+                        scenes['town_square'].text = "You return with the <span class='text-item'>Sword of Valor</span>. Ash falls from the Smelter District like <span class='text-fire'>gray snow</span>. The <span class='text-fire'>Fire threat</span> has escalated. You must pursue the Shadow Path now.";
+                    } 
+                    else {
+                        scenes['town_square'].text = "The Port is in chaos. Civilians flee toward the docks. To the East, the Smelter burns. To the West, the Chapel lies in fog. Your Compass tracks both.";
+                    }
+                    
+                    // Filter choices based on acquired items
+                    scenes['town_square'].choices = newChoices.filter(choice => {
+                        if (choice.nextScene === 'smelter_entry' && hasBlade) return false;
+                        if (choice.nextScene === 'chapel_entry' && hasRing) return false;
+                        return true;
+                    });
+                }
             },
             
-            // --- NEW HUB SCENES ---
+            // --- NEW ACT 3 SCENES ---
+            'port_provisioner': {
+                title: "The Harbor Provisioner",
+                text: "A gruff quartermaster stands behind a reinforced counter near the docks. He doesn't deal in potions or trinkets; he deals in fuel for the long voyage. 'Ship needs meat and fresh water if you want to clear the horizon,' he grunts.",
+                choices: [
+                    { text: "Sell Wares", nextScene: 'port_provisioner_sell', type: 'travel', doomCost: 0 },
+                    { text: "Return to Port Square", nextScene: 'town_square', type: 'travel', doomCost: 0 }
+                ]
+            },
+            'port_provisioner_sell': {
+                title: "The Harbor Provisioner - Selling",
+                text: "The quartermaster eyes your gear. 'I can take the surplus off your hands. Coin buys hardtack.'",
+                choices: [
+                    { text: "Back to Buying", nextScene: 'port_provisioner', type: 'travel', doomCost: 0 },
+                    { text: "Return to Port Square", nextScene: 'town_square', type: 'travel', doomCost: 0 }
+                ]
+            },
+
+            'act3_intro_ship': {
+                title: "The Iron Lung",
+                text: `Weeks have passed since the Rift sealed. The chaos has subsided, leaving the Port a husk. You found a battered, but seaworthy, smuggling ketch on the docks. Quinn spent days charting a course in the Log. 'We're calling her <span class="text-item">${gameState.shipName}</span>, Captain,' he announces. 'And we're running low on supplies already.' A new world awaits beyond the fog line.`,
+                journal: `Act 3 started. Acquired the ship, ${gameState.shipName}.`,
+                onEnter: (state) => {
+                    state.act3Started = true;
+                    state.act2Started = false; // Officially end Act 2 state
+                    state.isEthereal = false;
+                    document.body.classList.remove('plane-ethereal');
+                    return "Act 3 Commencing. Ship acquired. Set course!";
+                },
+                choices: [
+                    { text: "Check the Map", nextScene: 'sea_map_hub', type: 'travel', doomCost: 0 }
+                ]
+            },
+
+            'sea_map_hub': {
+                title: "The Open Sea: Navigation Hub",
+                text: "You stand at the wheel of the Iron Lung, the world laid out on the chart. To sail, you must expend Supplies.",
+                journal: "Navigating the coast. Must manage Supplies.",
+                onEnter: (state) => {
+                    // This scene is the travel menu, so we update the location text
+                    return `Current Location: ${state.currentLocation}. Supplies: ${state.supplies}/20.`;
+                },
+                choices: [
+                    // Choices dynamically populated based on knownIslands
+                    { text: "Sail to Port of Shadows", nextScene: 'travel_to_port', type: 'travel', suppliesCost: 2 },
+                    { text: "Sail to Bleak Dogtooth", nextScene: 'travel_to_dogtooth', type: 'travel', suppliesCost: 5, reqFlag: 'unlocked_dogtooth' },
+                    { text: "Sail to Sanguine Spire", nextScene: 'travel_to_spire', type: 'travel', suppliesCost: 8, reqFlag: 'unlocked_spire' }
+                ]
+            },
+
+            // LOGIC GATEWAYS FOR TRAVEL
+            'travel_to_port': {
+                isLogic: true,
+                resolve: (roll, state) => {
+                    state.supplies -= 2;
+                    state.currentLocation = 'port_hub';
+                    if (Math.random() < 0.3) return 'sea_event_fog';
+                    return 'town_square';
+                }
+            },
+            'travel_to_dogtooth': {
+                 isLogic: true,
+                resolve: (roll, state) => {
+                    state.supplies -= 5;
+                    state.currentLocation = 'dogtooth';
+                    if (Math.random() < 0.3) return 'sea_event_fog'; 
+                    return 'bleak_dogtooth'; 
+                }
+            },
+            'travel_to_spire': {
+                 isLogic: true,
+                resolve: (roll, state) => {
+                    state.supplies -= 8;
+                    state.currentLocation = 'spire';
+                    if (Math.random() < 0.3) return 'sea_event_fog'; 
+                    return 'sanguine_spire_entry'; 
+                }
+            },
+
+            // SEA EVENT SCENES (NEW)
+            'sea_event_fog': {
+                title: "Ghost Fog",
+                text: "A bank of unnatural <span class='text-spectral'>Ghost Fog</span> rolls over the deck. The compass needle spins violently. If you press on, you risk striking a reef and losing supplies. Only the Light can guide you.",
+                choices: [
+                    // LANTERN OPTION (Preferred)
+                    { 
+                        text: "Spectral Lantern: Cut a Path", 
+                        nextScene: 'sea_fog_success', 
+                        type: 'action', 
+                        reqItem: 'Spectral Lantern',
+                        customClass: 'btn-lantern-glow'
+                    },
+                    // KEEN SENSES (Consumes supplies, secondary option)
+                    { 
+                        text: "Ring of Brass: Keen Senses Navigation (-2 Supplies)", 
+                        nextScene: 'sea_fog_partial', 
+                        type: 'action', 
+                        reqItem: 'Ring of Brass',
+                        suppliesCost: 2,
+                        customClass: 'btn-keen-senses'
+                    },
+                    { text: "Brute Force Through", nextScene: 'sea_fog_fail', type: 'skill', dc: 15, skill: 'Athletics' }
+                ]
+            },
+            'sea_fog_success': {
+                title: "The True Course",
+                text: "The **Spectral Lantern** cuts a path through the mist, revealing safe waters that don't exist in the material world. You bypass the hazard flawlessly.",
+                choices: [{ text: "Continue Journey", nextScene: 'sea_map_hub', type: 'travel', doomCost: 0 }]
+            },
+            'sea_fog_partial': {
+                title: "Slow Going",
+                text: "The **Ring of Brass** amplifies the sound of waves against the hidden reefs, allowing you to proceed, but the delay costs precious resources.",
+                onEnter: (state) => {
+                    state.supplies = Math.max(0, state.supplies - 2);
+                    return "Navigated safely, but lost 2 Supplies.";
+                },
+                choices: [{ text: "Continue Journey", nextScene: 'sea_map_hub', type: 'travel', doomCost: 0 }]
+            },
+            'sea_fog_fail': {
+                title: "Shipwrecked",
+                text: "You strike an unseen reef. The hull groans, and your ship takes heavy damage.",
+                onEnter: (state) => {
+                    state.currentHP = applyDamage(state.currentHP, 5);
+                    state.supplies = Math.max(0, state.supplies - 4);
+                    fxManager.flashRed();
+                    return "Ship struck reef! Took 5 HP damage. Lost 4 Supplies.";
+                },
+                choices: [{ text: "Repair and Continue", nextScene: 'sea_map_hub', type: 'travel', doomCost: 0 }]
+            },
+            
+            // WOLF HUB
+            'bleak_dogtooth': {
+                title: "The Bleak Dogtooth",
+                text: "This jagged, wind-whipped island is home to the 'Lost Pack'—feral werewolves who have succumbed to savagery. They patrol the black rocks, snarling at the sea. You must find Silas before the tide washes him away.",
+                onEnter: (state) => {
+                    state.currentLocation = 'dogtooth';
+                    if (state.companions.silas.joined) {
+                        return "Silas is with you. The Lost Pack growls but backs away.";
+                    }
+                    return "A lone, disciplined figure stands apart from the feral pack. This must be Silas.";
+                },
+                choices: [
+                    { 
+                        text: "Show Ring of Brass (Recruit Silas)", 
+                        nextScene: 'silas_recruit_success', 
+                        type: 'action', 
+                        reqItem: 'Ring of Brass',
+                        reqNotFlag: 'companions.silas.joined',
+                        customClass: 'btn-keen-senses'
+                    },
+                    { text: "Hunt for Lore (Perception DC 14)", nextScene: 'dogtooth_lore_check', type: 'skill', dc: 14, skill: 'Perception' },
+                    { text: "Return to Sea Map", nextScene: 'sea_map_hub', type: 'travel', doomCost: 0 }
+                ]
+            },
+
+            'silas_recruit_success': {
+                title: "Silas, The Seneschal",
+                text: "Silas drops his guard, his eyes fixed on the Ring. He recognizes the Wolf King's symbol. 'I thought I was the last to carry the code. Forgive me, Captain. I serve the Order. I serve you.' He takes his place at your side.",
+                journal: "Recruited Silas, the Wolf King's Seneschal. (Companion Gained).",
+                onEnter: (state) => {
+                    state.companions.silas.joined = true;
+                    // Unlock the Vampire Hub (since Silas can help track them)
+                    state.knownIslands.push('sanguine_spire_entry');
+                    return "Silas joined the crew. Sanguine Spire unlocked on the map.";
+                },
+                choices: [{ text: "Return to Bleak Dogtooth", nextScene: 'bleak_dogtooth', type: 'travel', doomCost: 0 }]
+            },
+
+            // VAMPIRE HUB (ENDGAME)
+            'sanguine_spire_entry': {
+                title: "The Sanguine Spire",
+                text: "The sheer stone spire rises out of the ocean. It is capped by a gothic cathedral, pulsing with a deep, red light. This is the seat of the Sanguine Court.",
+                onEnter: (state) => {
+                    state.currentLocation = 'spire';
+                    return "The Spire is heavily defended. Brace for combat.";
+                },
+                choices: [
+                    { text: "Confront the Court", nextScene: 'sanguine_spire_combat', type: 'combat', doomCost: 0 },
+                    { text: "Return to Sea Map", nextScene: 'sea_map_hub', type: 'travel', doomCost: 0 }
+                ]
+            },
+			// --- ENDGAME: SANGUINE SPIRE ---
+            'sanguine_spire_combat': {
+                title: "The Sanguine Court",
+                text: "You enter the cathedral. Three Vampire Elders descend from the vaulted ceiling. They do not fear steel, but they hesitate when they see the <b>Sword of Valor</b> glowing in your hand.",
+                isBoss: true,
+                choices: [
+                    { 
+                        text: "Duel the Elders (Sword of Valor)", 
+                        nextScene: 'spire_victory', 
+                        type: 'combat', 
+                        // Visual only: Shows player they are using the artifacts
+                        onSelect: (state) => {
+                            // Calculates damage 4-12 base + 1 Sword + 4 Elder Bonus = 9-17 Dmg
+                            // We treat this as a narrative win for this version
+                            audioManager.playClash();
+                            return "The Sword of Valor strikes with the fury of the Wolf King (+5 DMG vs Vampires).";
+                        }
+                    }
+                ]
+            },
+            'spire_victory': {
+                title: "The Sun Rises",
+                text: "The Elders turn to ash under the bite of the Wolf King's blade. As the last one falls, the unnatural fog lifts from the ocean. The Curse is broken. <br><br>The Trident's Kiss crew appears one last time, saluting you before fading into the morning light. You are the Mariner, and the sea is finally yours.",
+                choices: [
+                    { text: "The End (Return to Menu)", type: 'reset', customClass: 'btn-hero' }
+                ]
+            },
+
+            // WOLF KING'S ESTATE (SAFE HOUSE)
+            'wolf_estate_safe': {
+                title: "Wolf King's Estate (Safe House)",
+                text: "The Manor is sealed in the spectral echo. Here, the planar barriers are reinforced, and the Sanguine Court cannot reach you. This is the only place to truly rest.",
+                isRest: true,
+                choices: [
+                    { text: "Take a Long Rest", nextScene: 'act3_long_rest', type: 'action', doomCost: 0 },
+                    // CHANGED nextScene below to 'town_square'
+                    { text: "Exit to Port Square (Material)", nextScene: 'town_square', type: 'action', action: (state) => {
+                        state.isEthereal = false;
+                        renderScene('town_square');
+                    }, doomCost: 0}
+                ]
+            },
+            'act3_long_rest': {
+                title: "A Deep Respite",
+                text: "You collapse into a spectral hammock. The crew murmurs softly. Your strength is restored.",
+                journal: "Restored strength at the Wolf King's Estate.",
+                isRest: true,
+                onEnter: (state) => {
+                    if (state.currentHP < state.maxHP) {
+                        state.currentHP = state.maxHP;
+                    }
+                    Object.keys(state.crew).forEach(k => state.crew[k].used = false);
+                    state.docksWorkCount = 0;
+                    return "HP, Crew Use, and Exhaustion Restored.";
+                },
+                choices: [{ text: "Awaken", nextScene: 'wolf_estate_safe', type: 'travel', doomCost: 0 }]
+            },
+
+            // --- END NEW ACT 3 SCENES ---
+
+
             // DOCKS SCENE (NEW) - Includes dynamic cost calculation
             'town_docks': {
                 title: "The Rotting Docks",
@@ -3276,14 +3649,7 @@
                         consume: true,
                         customClass: 'btn-hero'
                     }
-                ],
-                onEnter: (state) => {
-                    state.currentHP = applyDamage(state.currentHP, 3);
-                    fxManager.flashRed();
-                    // UPDATED CLAMPING
-                    state.influence = Math.max(-50, state.influence - 2); // Minor Order loss from failure
-                    return "Took 3 Psychic Damage. Order +2 (Failed Rescue).";
-                },
+                ]
             },
             // --- END SMELTER ANTECHAMBER ---
             
@@ -3984,7 +4350,7 @@
                     state.isEthereal = true;
                     state.tetherTimer = 20;
                     
-                    // GRANT ITEM: SPECTRAL LANTERN (Narrative Item)
+                    // GRANT ITEM: SPECTRAL LANTERN (Mechanic item for Plane Walking/Sea Event)
                     if (!state.inventory.includes("Spectral Lantern")) {
                         state.inventory.push("Spectral Lantern");
                     }
@@ -4544,7 +4910,18 @@
                 title: "The Anchor's Threshold",
                 text: "You solve the riddle of the stairs. A massive door pulsing with violet light stands before you. This is the heart of the anomaly. The Wolf King's ritual awaits.",
                 choices: [
-                    { text: "Begin the Final Ritual", nextScene: 'finale_ritual_start', type: 'travel', tetherCost: 0 }
+                    // CHANGE: Point to a specific Act 2 Finale resolution, not the generic start
+                    { text: "Perform the Binding Ritual", nextScene: 'act2_finale_resolution', type: 'hold', customClass: 'btn-channel', tetherCost: 0 }
+                ]
+            },
+
+            // NEW SCENE: Bridges Act 2 to Act 3
+            'act2_finale_resolution': {
+                title: "The World Restored",
+                text: "You plant the Sword of Valor into the spectral anchor. The Ring of Brass flares, binding the energies. The Vanishing Manor implodes into a singularity of white light, dragging the corruption with it. <br><br>The weight of the Ethereal Plane lifts. You fall through the void, not into death, but into the salt spray of the material ocean.",
+                journal: "Closed the Rift at the Manor. Act 2 Complete.",
+                choices: [
+                    { text: "Wake up at Sea (Begin Act 3)", nextScene: 'act3_intro_ship', type: 'travel', doomCost: 0 }
                 ]
             },
 
@@ -4887,6 +5264,13 @@
             gameState.act2Started = false;
             gameState.tetherTimer = 20;
 
+            // NEW: Act 3 Reset flags
+            gameState.act3Started = false;
+            gameState.knownIslands = ['port_hub'];
+            gameState.currentLocation = 'port_hub';
+            gameState.supplies = 10;
+            gameState.companions.silas.joined = false;
+
 
             document.getElementById('journal-content').innerHTML = '';
             await saveGame();
@@ -5022,6 +5406,12 @@
                     activeCrewMember = null;
                 }
 
+                // APPLY RIFT PENALTY TO FINAL ROLL (FIX 2)
+                if (gameState.isRiftCollapse) {
+                    roll = Math.max(1, roll - 2); 
+                    logMsg += ` - 2 (Rift Penalty)`;
+                }
+
                 addToHistory(`${logMsg} = ${roll}`, 'roll');
                 
                 // Resolve logic scene immediately based on this roll
@@ -5155,37 +5545,58 @@
                 if (sellIndex !== -1) processedChoices.splice(sellIndex, 0, newChoice);
                 else processedChoices.push(newChoice); 
             }
-
-            // --- DYNAMIC STOCK LOGIC ---
+            
+            // --- DYNAMIC STOCK LOGIC: MARKET ---
             if (currentSceneId === 'market_stall') {
                 const sellWaresNav = choices.find(c => c.nextScene === 'market_sell');
-                const leaveNav = choices.find(c => c.nextScene === 'market_crossroads');
+                
+                // LOGIC FIX: "No Backtracking"
+                // If Act 1, 2, or 3 has started, we are in the Port (town_square).
+                // We only return to 'market_crossroads' if we are still in the Prologue/Tutorial.
+                const isMainGame = gameState.act1Started || gameState.act2Started || gameState.act3Started;
+                const returnTarget = isMainGame ? 'town_square' : 'market_crossroads';
+                
+                const leaveNav = { text: "Leave", nextScene: returnTarget, type: 'travel', doomCost: 0 };
+                
                 processedChoices = []; 
 
-                MARKET_BUY_OPTIONS.forEach(sale => {
-                    const actualStock = currentSceneStock[sale.item] || 0;
-                    const itemDef = itemRegistry[sale.item];
-					const isHealingItem = itemDef && itemDef.name && itemDef.name.includes('Heal');
-                    const isFullHP = gameState.currentHP >= gameState.maxHP;
-                    
-                    if (actualStock > 0) {
-                        processedChoices.push({
-                            text: `Buy ${sale.item.split('(')[0].trim()} (Stock: ${actualStock})`,
-                            nextScene: sale.nextScene,
-                            type: 'action',
-                            cost: sale.cost,
-                            stockItem: sale.item,
-                            doomCost: 0,
-                            isDisabled: isHealingItem && isFullHP
-                        });
-                    }
-                });
-                if (sellWaresNav) processedChoices.push(sellWaresNav);
-                if (leaveNav) processedChoices.push(leaveNav);
+               
+                // 2. Standard Item Logic (Tutorial OR Act 1 OR Act 2)
+                else {
+                    MARKET_BUY_OPTIONS.forEach(sale => {
+                        const actualStock = currentSceneStock[sale.item] || 0;
+                        const itemDef = itemRegistry[sale.item];
+                        const isHealing = itemDef && itemDef.name.includes('Heal');
+                        const isFull = gameState.currentHP >= gameState.maxHP;
+                        const canAfford = gameState.shillings >= sale.cost;
+                        
+                        if (actualStock > 0) {
+                            processedChoices.push({
+                                text: `Buy ${sale.item.split('(')[0].trim()} (Stock: ${actualStock})`,
+                                nextScene: sale.nextScene,
+                                type: 'action',
+                                cost: sale.cost,
+                                stockItem: sale.item,
+                                doomCost: 0,
+                                isDisabled: !canAfford || (isHealing && isFull)
+                            });
+                        }
+                    });
+                }
 
-            } else if (currentSceneId === 'market_sell') {
+                if (sellWaresNav) processedChoices.push(sellWaresNav);
+                processedChoices.push(leaveNav); // Uses the corrected target
+            }
+			
+			else if (currentSceneId === 'market_sell') {
                 const backToBuyNav = choices.find(c => c.nextScene === 'market_stall');
-                const leaveNav = choices.find(c => c.nextScene === 'market_crossroads');
+                
+                // LOGIC FIX: Match the "No Backtracking" logic from market_stall
+                const isMainGame = gameState.act1Started || gameState.act2Started || gameState.act3Started;
+                const returnTarget = isMainGame ? 'town_square' : 'market_crossroads';
+                
+                const leaveNav = { text: "Stop Selling", nextScene: returnTarget, type: 'travel', doomCost: 0 };
+                
                 processedChoices = []; 
 
 				MARKET_SELL_OPTIONS.forEach(sell => {
@@ -5202,23 +5613,28 @@
 					}
 				});
 				if (backToBuyNav) processedChoices.push(backToBuyNav);
-				if (leaveNav) processedChoices.push(leaveNav);
+				processedChoices.push(leaveNav);
+            } else if (currentSceneId === 'alchemist_triage') {
+				const sellWaresNav = choices.find(c => c.nextScene === 'alchemist_sell'); // Use choices.find
+                const secretTrade = processedChoices.find(c => c.nextScene === 'alchemist_secret_stock');
+				
+                // FIX: Define dynamic return path (Act 3 Hub vs Act 1 Hub)
+				const returnTarget = 'town_square'; 
+				const returnNav = { text: "Return to Town", nextScene: returnTarget, type: 'travel', doomCost: 0 };
 
-			} else if (currentSceneId === 'alchemist_triage') {
-				const sellWaresNav = processedChoices.find(c => c.nextScene === 'alchemist_sell');
-				const returnNav = processedChoices.find(c => c.nextScene === 'town_square');
-				const secretTrade = processedChoices.find(c => c.nextScene === 'alchemist_secret_stock');
 				processedChoices = []; 
 
 				if (secretTrade) processedChoices.push(secretTrade);
 
+				// ... (Existing Alchemist Stock Logic) ...
 				ALCHEMIST_BUY_OPTIONS.forEach(sale => {
 					const itemText = sale.item.split('(')[0].trim();
 					const actualStock = currentSceneStock[sale.item] || 0;
 					const itemDef = itemRegistry[sale.item];
 					const isHealingItem = itemDef && (itemDef.name && (itemDef.name.includes('Tincture') || itemDef.name.includes('Potion')));
 					const isFullHP = gameState.currentHP >= gameState.maxHP;
-					
+					const canAfford = gameState.shillings >= sale.cost;
+
 					if (actualStock > 0) {
 						processedChoices.push({
 							text: `Buy ${itemText} (${sale.cost}s)`,
@@ -5227,17 +5643,28 @@
 							cost: sale.cost,
 							stockItem: sale.item,
 							doomCost: sale.doomCost, 
-							isDisabled: isHealingItem && isFullHP
+							isDisabled: !canAfford || (isHealingItem && isFullHP)
 						});
 					}
 				});
-				if (sellWaresNav) { sellWaresNav.text = "Sell Wares (Premium)"; processedChoices.push(sellWaresNav); }
-				if (returnNav) processedChoices.push(returnNav);
 
-			} else if (currentSceneId === 'alchemist_sell') {
+				if (sellWaresNav) { 
+                    // Update sell button to match return logic
+                    const sellBtn = { ...sellWaresNav, text: "Sell Wares (Premium)" };
+                    processedChoices.push(sellBtn); 
+                }
+				processedChoices.push(returnNav);
+			} 
+			
+			
+			else if (currentSceneId === 'alchemist_sell') {
 				const backToBuyNav = choices.find(c => c.nextScene === 'alchemist_triage');
-				const returnNav = choices.find(c => c.nextScene === 'town_square');
-				processedChoices = []; 
+				
+                // FIX: Remove 'town_square_act3_hub'. The Alchemist is ONLY in the Town Square.
+                // We hardcode this because the Alchemist does not exist in the Tutorial.
+				const returnNav = { text: "Return to Town", nextScene: 'town_square', type: 'travel', doomCost: 0 };
+				
+                processedChoices = []; 
 				
 				ALCHEMIST_SELL_OPTIONS.forEach(sell => {
 					if (gameState.inventory.includes(sell.item)) {
@@ -5256,9 +5683,8 @@
 					}
 				});
 				if (backToBuyNav) processedChoices.push(backToBuyNav);
-				if (returnNav) processedChoices.push(returnNav);
-
-			} else if (currentSceneId === 'blackwater_tavern') {
+				processedChoices.push(returnNav);
+            } else if (currentSceneId === 'blackwater_tavern') {
 				const restOption = choices.find(c => c.nextScene === 'tavern_rest_success');
 				const returnOption = choices.find(c => c.nextScene === 'town_square');
 				const gamblerOption = choices.find(c => c.nextScene === 'tavern_gambler');
@@ -5298,6 +5724,72 @@
 				 const processedWorkBtn = { ...workBtn, isDisabled: gameState.currentHP <= currentCost };
 				 processedChoices = processedChoices.map(c => c.nextScene === 'docks_work' ? processedWorkBtn : c);
 			}
+			
+			
+			// --- ACT 3 PROVISIONER LOGIC ---
+            else if (currentSceneId === 'port_provisioner') {
+                const sellNav = choices.find(c => c.nextScene === 'port_provisioner_sell');
+                const returnNav = choices.find(c => c.nextScene === 'town_square');
+                
+                processedChoices = [];
+
+                // 1. Inject Supply Buying Options
+                SHIP_SUPPLIES_OPTIONS.forEach(sale => {
+                    const canAfford = gameState.shillings >= sale.cost;
+                    const isMax = gameState.supplies >= 20;
+                    processedChoices.push({
+                        text: `Buy ${sale.amount} Supplies (${sale.cost}s)`,
+                        nextScene: sale.nextScene,
+                        type: 'action',
+                        cost: sale.cost,
+                        doomCost: 0,
+                        isDisabled: !canAfford || isMax
+                    });
+                });
+
+                if (sellNav) processedChoices.push(sellNav);
+                if (returnNav) processedChoices.push(returnNav);
+            }
+            
+            // --- ACT 3 PROVISIONER SELL LOGIC ---
+            else if (currentSceneId === 'port_provisioner_sell') {
+                const buyNav = choices.find(c => c.nextScene === 'port_provisioner');
+                const returnNav = choices.find(c => c.nextScene === 'town_square');
+                
+                processedChoices = [];
+
+                // Reuse standard sell options, but point them to the new scene loop if needed
+                // Or simply let them process. For simplicity, we can reuse MARKET_SELL_OPTIONS
+                // but we need to ensure the "nextScene" doesn't loop us back to the Intro.
+                
+                // We will manually build the sell list for Act 3 to ensure safety
+                MARKET_SELL_OPTIONS.forEach(sell => {
+                    if (gameState.inventory.includes(sell.item)) {
+                        // In Act 3, we don't need to check stock for Curious Cargo, the provisioner always buys it
+                        processedChoices.push({
+                            text: `Sell ${sell.item.split('(')[0].trim()} (+${sell.value}s)`, 
+                            // We use 'port_provisioner_sell' as the target to stay in this menu
+                            nextScene: 'port_provisioner_sell', 
+                            type: 'action',
+                            reqItem: sell.item,
+                            value: sell.value,
+                            doomCost: 0,
+                            action: (state) => {
+                                // Inline action to handle the sale and stay in the scene
+                                const idx = state.inventory.indexOf(sell.item);
+                                if (idx > -1) state.inventory.splice(idx, 1);
+                                return `Sold ${sell.item}.`;
+                            }
+                        });
+                    }
+                });
+
+                if (buyNav) processedChoices.push(buyNav);
+                if (returnNav) processedChoices.push(returnNav);
+            }	
+			
+			
+			
 
 			// --- BUTTON GENERATION LOOP ---
 			processedChoices.forEach(choice => {
@@ -5322,8 +5814,13 @@
 				let isDisabled = false;
 				let disabledClass = '';
 				
+				// CHECK 1: Shilling Cost
 				if (choice.cost && gameState.shillings < choice.cost) { isDisabled = true; disabledClass = 'btn-disabled-cost'; }
+                // CHECK 2: Supplies Cost (ACT 3)
+                if (choice.suppliesCost && gameState.supplies < choice.suppliesCost) { isDisabled = true; disabledClass = 'btn-disabled-cost'; }
+				// CHECK 3: HP Cost
 				if (choice.costHP !== undefined && gameState.currentHP <= choice.costHP) { isDisabled = true; disabledClass = 'btn-disabled-cost'; }
+				// CHECK 4: Scene-specific flag disable (e.g., healing when full)
 				if (choice.isDisabled) { isDisabled = true; disabledClass = 'btn-disabled-cost'; }
 				
 				const btn = document.createElement('button');
@@ -5334,7 +5831,7 @@
 				let isTradeButton = choice.cost || choice.value || choice.shillingGain || (choice.nextScene && choice.nextScene.includes('sell') && currentSceneId.includes('alchemist'));
 				let isSkillCheck = choice.type === 'skill';
 
-				const alignmentClass = (isSkillCheck || isTradeButton || choice.chaosGain || choice.orderGain || choice.costHP !== undefined || choice.shillingGain || choice.doomCost !== undefined || choice.tetherCost !== undefined || choice.reqFlag) ? 'justify-start' : 'justify-between';
+				const alignmentClass = (isSkillCheck || isTradeButton || choice.chaosGain || choice.orderGain || choice.costHP !== undefined || choice.shillingGain || choice.doomCost !== undefined || choice.tetherCost !== undefined || choice.suppliesCost !== undefined || choice.reqFlag) ? 'justify-start' : 'justify-between';
 				let btnClass = "";
 				
 				if (isDeathScene) {
@@ -5343,6 +5840,7 @@
 					content = `<span class="cinzel font-bold text-white">${rawText}</span>`;
 					if (choice.customClass === 'btn-success-glow') icon = '<i class="fas fa-ear-listen text-gray-300"></i>';
 					else if (choice.customClass === 'btn-keen-senses') icon = '<i class="fas fa-eye text-purple-300"></i>';
+                    else if (choice.customClass === 'btn-lantern-glow') icon = '<i class="fas fa-lightbulb text-yellow-300"></i>'; // NEW LANTERN ICON
 					else icon = '<i class="fas fa-chevron-right text-white"></i>'; // Default custom icon
 
                     // Special handling for Captain's Orders styling
@@ -5426,6 +5924,7 @@
 							addToHistory(`*Warning: The Pearlescent Mushroom's clarity is best saved for a crucial skill check.*`, 'system');
 						}
 
+						// STOCK CHECK (for buying/selling)
 						if (choice.type === 'action' && (currentSceneId === 'market_stall' || currentSceneId === 'alchemist_triage' || currentSceneId === 'blackwater_tavern') && choice.stockItem) {
 							 const currentStock = scenes[currentSceneId].stock[choice.stockItem] || 0;
 							 if (currentStock <= 0) {
@@ -5474,6 +5973,7 @@
 							choice.onSelect(gameState);
 						}
 
+                        // DOOM/TETHER/SUPPLY COSTS
 						if (gameState.act1Started && choice.doomCost !== 0) {
 							const cost = choice.doomCost !== undefined ? choice.doomCost : 1; 
 							gameState.doomTimer = Math.max(0, gameState.doomTimer - cost);
@@ -5484,6 +5984,11 @@
 							 const cost = choice.tetherCost !== undefined ? choice.tetherCost : 1; 
 							 gameState.tetherTimer = Math.max(0, gameState.tetherTimer - cost);
 						}
+                        
+                        if (gameState.act3Started && choice.suppliesCost) {
+                            // Supply logic is handled in the logic gate scene (travel_to_X)
+                            // This button only passes the cost for UI display purposes
+                        }
 
 						if (choice.type === 'skill') {
 							gameState.lastSkillType = choice.skill;
@@ -5505,6 +6010,9 @@
 				if (choice.cost) indicators.push({ text: `-${choice.cost}s`, color: 'text-amber-500' });
 				else if (choice.value) indicators.push({ text: `+${choice.value}s`, color: 'text-amber-500' });
 				else if (choice.shillingGain) indicators.push({ text: `+${choice.shillingGain}s`, color: 'text-amber-500' });
+                
+                // NEW: Supplies Cost indicator (ACT 3)
+                if (choice.suppliesCost) indicators.push({ text: `-${choice.suppliesCost} Supplies`, color: 'text-indigo-400' });
 
 				if (choice.costHP !== undefined) indicators.push({ text: `-${choice.costHP} HP`, color: 'text-red-400' });
 				if (choice.chaosGain) indicators.push({ text: `+${choice.chaosGain} Chaos`, color: 'text-emerald-400' });
@@ -5547,6 +6055,21 @@
 					const journalContainer = document.getElementById('journal-container');
 					const sceneId = gameState.currentSceneId;
 					
+                    // --- ACT 3 UI TOGGLE ---
+                    const suppliesDisplay = document.getElementById('supplies-display');
+                    const companionPanel = document.getElementById('companion-panel');
+                    
+                    if (gameState.act3Started) {
+                        suppliesDisplay.classList.remove('hidden');
+                        companionPanel.classList.remove('hidden');
+                        document.getElementById('supplies-count').innerText = gameState.supplies;
+                        renderCompanions();
+                    } else {
+                        suppliesDisplay.classList.add('hidden');
+                        companionPanel.classList.add('hidden');
+                    }
+                    // --- END ACT 3 UI TOGGLE ---
+                    
 					// --- ACT 2 UI TOGGLE ---
 					const tetherDisplay = document.getElementById('tether-display');
 					const planarSkills = document.getElementById('planar-skills-container');
@@ -5579,16 +6102,18 @@
 
 					// 4. Plane Walk Button Styling (Visual Feedback)
 					const planeWalkBtn = document.getElementById('btn-plane-walk');
-					if (gameState.isEthereal) {
-						// Visual cue that you are currently Ethereal
-						planeWalkBtn.classList.add('border-cyan-400', 'bg-cyan-900/40');
-						planeWalkBtn.classList.remove('border-cyan-700', 'bg-gray-900/80');
-						planeWalkBtn.innerHTML = `<span class="text-[10px] cinzel font-bold text-cyan-300">Return to Material</span><i class="fas fa-shoe-prints text-cyan-300"></i>`;
-					} else {
-						// Visual cue that you are Material
-						planeWalkBtn.classList.remove('border-cyan-400', 'bg-cyan-900/40');
-						planeWalkBtn.classList.add('border-cyan-700', 'bg-gray-900/80');
-						planeWalkBtn.innerHTML = `<span class="text-[10px] cinzel font-bold">Plane Walk</span><i class="fas fa-shoe-prints text-cyan-600"></i>`;
+					if (gameState.skills.includes("Plane Walking")) {
+						if (gameState.isEthereal) {
+							// Visual cue that you are currently Ethereal
+							planeWalkBtn.classList.add('border-cyan-400', 'bg-cyan-900/40');
+							planeWalkBtn.classList.remove('border-cyan-700', 'bg-gray-900/80');
+							planeWalkBtn.innerHTML = `<span class="text-[10px] cinzel font-bold text-cyan-300">Return to Material</span><i class="fas fa-shoe-prints text-cyan-300"></i>`;
+						} else {
+							// Visual cue that you are Material
+							planeWalkBtn.classList.remove('border-cyan-400', 'bg-cyan-900/40');
+							planeWalkBtn.classList.add('border-cyan-700', 'bg-gray-900/80');
+							planeWalkBtn.innerHTML = `<span class="text-[10px] cinzel font-bold">Plane Walk</span><i class="fas fa-shoe-prints text-cyan-600"></i>`;
+						}
 					}
 					// --- END ACT 2 UI TOGGLE ---
 
@@ -5638,7 +6163,7 @@
 					const doomBar = document.getElementById('doom-bar');
 					const maxDoom = 20; 
 
-					if (gameState.act1Started) {
+					if (gameState.act1Started && !gameState.act2Started && !gameState.act3Started) {
 						doomDisplay.classList.remove('hidden'); // Show the doom counter
 						doomText.textContent = `${gameState.doomTimer} Turns`;
 						const doomPct = (gameState.doomTimer / maxDoom) * 100;
@@ -5675,7 +6200,7 @@
 						}
 					} else {
 						doomDisplay.classList.add('hidden'); // Hide doom counter outside Act 1
-						// FIX 2C: Ensure FX is removed if Act 1 is complete (i.e., we are in Act 2)
+						// FIX 2C: Ensure FX is removed if Act 1 is complete (i.e., we are in Act 2/3)
 						document.getElementById('fx-overlay').classList.remove('fx-rift-collapsed');
 					}
 					
@@ -5716,7 +6241,7 @@
 					if (infText) {
 						// Tier 4: Max Tiers (Beyond 30)
 						if (inf <= -30) infText.textContent = "Sworn to the Crown (Max Order)";
-						// Tier 3: Spyglass Active Tier (-30 to -15)
+						// Tier 3: Spyglass Active Tier (-15 to -30)
 						else if (inf <= -15) infText.textContent = "Watchman (Spyglass Active)"; 
 						// Tier 4: Max Tiers (Beyond 30)
 						else if (inf >= 30) infText.textContent = "Pirate Lord (Max Chaos)";
@@ -5804,7 +6329,32 @@
 						};
 						crewContainer.appendChild(btn);
 					});
+                    
+                    // --- COMPANIONS LIST (ACT 3) ---
+                    function renderCompanions() {
+                        const companionList = document.getElementById('companions-list');
+                        companionList.innerHTML = '';
 
+                        // Silas
+                        if (gameState.companions.silas.joined) {
+                            const silas = gameState.companions.silas;
+                             const silasDiv = document.createElement('div');
+                             silasDiv.className = `p-2 rounded border border-emerald-700 bg-gray-900/80 shadow flex items-center justify-between transition-colors`;
+                             silasDiv.innerHTML = `
+                                <div class="flex items-center gap-2">
+                                    <i class="fas fa-wolf text-xl text-emerald-400"></i>
+                                    <div class="flex flex-col text-left leading-tight">
+                                        <span class="font-bold text-xs cinzel text-emerald-300">${silas.name}</span>
+                                        <span class="text-[10px] text-gray-500 italic">Seneschal (Pack Tactics)</span>
+                                    </div>
+                                </div>
+                             `;
+                             companionList.appendChild(silasDiv);
+                             companionPanel.classList.remove('hidden'); // Ensure panel is visible if Silas is joined
+                        }
+                    }
+                    // This function is called earlier in updateUI if act3Started is true.
+					
 					// Inventory List View
 					const invContainer = document.getElementById('inventory-panel');
 					invContainer.innerHTML = '';
@@ -5852,7 +6402,11 @@
 									itemDef.name = "Privateer's Spyglass (Chaos)";
 									itemDef.color = "text-emerald-400";
 									itemDef.desc = "Passive: The lens aligns with Chaos. Gain +1 coin on all earnings.";
-								}
+								} else {
+                                    itemDef.name = "Salt-Warped Spyglass";
+                                    itemDef.color = "text-cyan-400";
+                                    itemDef.desc = "Key: The lens seems to shift focus on its own. (Awaiting Alignment)";
+                                }
 							}
 							// -----------------------------------
 							
