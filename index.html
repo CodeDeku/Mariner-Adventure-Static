@@ -1051,10 +1051,10 @@
                 crewUseFree: false, 
                 lastCrewUsedId: null, 
                 crew: {
-                    gareth: { id: 'gareth', name: 'Captain Gareth', skill: 'Insight', used: false, desc: 'Add +1d4 to Initiative & Insight' },
-                    quinn: { id: 'quinn', name: 'Quinn', skill: 'Investigation', used: false, desc: 'Add +1d4 to Investigation & History' },
-                    talon: { id: 'talon', name: 'Talon', skill: 'Survival', used: false, desc: 'Add +1d4 to Survival & Perception' },
-                    bones: { id: 'bones', name: 'Bones', skill: 'Survival', used: false, desc: 'Add +1d4 to Nature & Foraging' }
+                    gareth: { id: 'gareth', name: 'Captain Gareth', skill: 'Insight & Intimidation', used: false, desc: 'Add +1d4 to Insight & Intimidation' },
+                    quinn: { id: 'quinn', name: 'Quinn', skill: 'Investigation & History', used: false, desc: 'Add +1d4 to Investigation & History' },
+                    talon: { id: 'talon', name: 'Talon', skill: 'Survival & Perception', used: false, desc: 'Add +1d4 to Survival & Perception' },
+                    bones: { id: 'bones', name: 'Bones', skill: 'Nature & Medicine', used: false, desc: 'Add +1d4 to Nature & Medicine' }
                 },
                 history: [],
                 // NEW: Information Flags for Act 1 Shortcuts
@@ -1476,10 +1476,10 @@
         function getBonusForSkill(crewMember, skillType) {
             // Mapping based on character sheet
             const expertise = {
-                'Captain Gareth': ['Insight', 'Initiative'],
+                'Captain Gareth': ['Insight', 'Intimidation'],
                 'Quinn': ['Investigation', 'History'],
                 'Talon': ['Survival', 'Perception'],
-                'Bones': ['Survival', 'Nature', 'Medical'] // Bones has overlaps
+                'Bones': ['Nature', 'Medicine']
             };
 
             const allowedSkills = expertise[crewMember.name] || [];
@@ -1791,7 +1791,7 @@
                     { text: "Bribe him", nextScene: 'guard_bribe', type: 'action', cost: 5 }, 
                     // Order Gain Choice
                     { text: "Show Respect", nextScene: 'guard_respect', type: 'dialogue', orderGain: 4 },
-                    { text: "Intimidate him", nextScene: 'guard_intimidate_check', type: 'skill', dc: 13, skill: 'Insight' }, // Clean text
+                    { text: "Intimidate him", nextScene: 'guard_intimidate_check', type: 'skill', dc: 13, skill: 'Intimidation' }, // Clean text
                     { text: "Attack", nextScene: 'combat_guard', type: 'combat' }
                 ]
             },
@@ -1826,7 +1826,6 @@
                     // Passive Bonus: Captain's Tricorn (+1 Intimidation)
                     if (state.inventory.includes("Captain's Tricorn")) {
                         finalRoll += 1;
-                        // Passing 'roll' as the type makes this text Blue/Spectral to match the dice log
                         addToHistory(`Passive Bonus (Captain's Tricorn): +1. Final Result: ${finalRoll}`, 'roll');
                     }
                     
@@ -2806,11 +2805,11 @@
                         customClass: 'btn-keen-senses'
                     },
                     { 
-						text: "Bones: Examine the Dead", // Changed text
+						text: "Bones: Examine the Dead",
 						nextScene: 'dogtooth_lore_check', 
 						type: 'skill', 
 						dc: 14, 
-						skill: 'Medicine' // Changed from Perception
+						skill: 'Medicine'
 					},
                     { text: "Return to Sea Map", nextScene: 'sea_map_hub', type: 'travel', doomCost: 0 }
 					
@@ -4444,10 +4443,10 @@
                 },
                 choices: [
                     { 
-                        text: "Quinn: Decipher Schematics (Get Map)", 
+                        text: "Quinn: Decipher Archives", 
                         nextScene: 'library_search_logic', 
                         type: 'skill', 
-                        skill: 'Investigation', 
+                        skill: 'History', 
                         dc: 12,
                         tetherCost: 1,
                         reqNotItem: 'Manor Blueprint'
