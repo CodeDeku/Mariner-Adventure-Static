@@ -321,15 +321,14 @@
 		
 		/* --- ANCHOR / NAVIGATION BUTTON --- */
         .btn-anchor {
-            background: linear-gradient(90deg, #0e7490 0%, #164e63 100%); /* Cyan-700 -> Cyan-900 */
-            border: 1px solid #06b6d4; /* Cyan-500 */
-            color: #cffafe; /* Cyan-50 */
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+            background-color: #1f2937; 
+            border: 1px solid #06b6d4; /* Cyan border to distinguish it slightly */
+            color: #e5e7eb;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
         .btn-anchor:hover {
-            background: linear-gradient(90deg, #0891b2 0%, #155e75 100%);
-            border-color: #67e8f9; /* Cyan-300 */
-            box-shadow: 0 0 15px rgba(34, 211, 238, 0.4); /* Cyan Glow */
+            background-color: #374151;
+            border-color: #67e8f9; 
             transform: translateY(-1px);
         }
 
@@ -1057,7 +1056,7 @@
             // Note: Initial stock is defined on the scene objects (e.g., scenes['market_stall'].stock)
             return {
                 currentSceneId: 'prologue_storm', 
-                currentHP: 20,
+                currentHP: 15,
                 maxHP: 20,
                 shillings: 0, 
                 // NEW ACT 2 STATE
@@ -1649,7 +1648,7 @@
                 },
                 choices: [
                     { text: "Assess Injuries", nextScene: 'start_medicine_check', type: 'skill', dc: 10, skill: 'Medicine' },
-                    { text: "Search the debris", nextScene: 'wreckage_search', type: 'skill', dc: 8, skill: 'Investigation' },
+                    { text: "Quinn: Search the debris", nextScene: 'wreckage_search', type: 'skill', dc: 8, skill: 'Investigation' },
                     { text: "Head toward the treeline", nextScene: 'treeline', type: 'travel' }
                 ]
             },
@@ -2668,7 +2667,7 @@
                         
                         newChoices.unshift({
                             text: "Begin the Final Ritual", 
-                            nextScene: 'finale_ritual_start', 
+                            nextScene: 'ritual_entry_logic', // CHANGED: Points to logic gate
                             type: 'travel', 
                             customClass: 'btn-hero', 
                             doomCost: 0
@@ -2696,6 +2695,31 @@
                         return true;
                     });
                 }
+            },
+			
+			// LOGIC: Check if Rift is Collapsed
+            'ritual_entry_logic': {
+                isLogic: true,
+                resolve: (roll, state) => {
+                    if (state.isRiftCollapse) return 'rift_collapse_punishment';
+                    return 'finale_ritual_start';
+                }
+            },
+
+            // NEW SCENE: The Consequence
+            'rift_collapse_punishment': {
+                title: "The Ruptured Veil",
+                text: "You attempt to approach the anchor, but the collapsed Rift has birthed a <span class='text-void'>Void Guardian</span>. A shapeless entity of pure entropy blocks your path. Because the stability was lost, you must fight your way to the circle.",
+                journal: "The Rift collapsed. I had to fight a Void Guardian to reach the ritual site.",
+                onEnter: (state) => {
+                    // Automatic Damage Tax
+                    state.currentHP = applyDamage(state.currentHP, 6);
+                    fxManager.flashRed();
+                    return "Rift Penalty: Ambushed by Void Guardian. Took 6 Damage.";
+                },
+                choices: [
+                    { text: "Kill it and Enter the Circle", nextScene: 'finale_ritual_start', type: 'combat', doomCost: 0 }
+                ]
             },
             
             // --- NEW ACT 3 SCENES ---
@@ -5115,10 +5139,10 @@
             // --- THE END OF ACT 2 ---
             'manor_anchor_door': {
                 title: "The Anchor's Threshold",
-                text: "You solve the riddle of the stairs. A massive door pulsing with violet light stands before you. This is the heart of the anomaly. The Wolf King's ritual awaits.",
+                text: "You solve the riddle of the stairs. A massive door pulsing with violet light stands before you. This is the heart of the anomaly. The Wolf King's ritual awaits. <br><br><span class='text-purple-400 italic'>Hold the button to channel the ritual...</span>",
                 choices: [
                     // CHANGE: Point to a specific Act 2 Finale resolution, not the generic start
-                    { text: "Perform the Binding Ritual", nextScene: 'act2_finale_resolution', type: 'hold', customClass: 'btn-channel', tetherCost: 0 }
+                    { text: "Perform Binding Ritual", nextScene: 'act2_finale_resolution', type: 'hold', customClass: 'btn-channel', tetherCost: 0 }
                 ]
             },
 
@@ -5141,21 +5165,29 @@
                     <input type="text" id="ship-name-input" placeholder="The Iron Lung" autocomplete="off" maxlength="30" 
                     class="w-full bg-gray-900 border border-amber-700/50 p-3 rounded text-amber-500 cinzel font-bold text-lg focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 shadow-inner placeholder-gray-700">
                 </div>`,
+				onEnter: (state) => {
+                    // FIX: Ensure Ethereal mode is completely gone
+                    state.isEthereal = false;
+                    document.body.classList.remove('plane-ethereal');
+                    return null;
+                },
                 choices: [
                     {
                         text: "Christen the Ship",
                         type: 'action',
-                        // Inline Action to capture the value
                         action: (state) => {
                             const input = document.getElementById('ship-name-input');
-                            let name = input.value.trim();
+                            let name = "";
                             
-                            // Default Fallback if they leave it empty
+                            // Robust check for value
+                            if (input && input.value) {
+                                name = input.value.trim();
+                            }
+                            
                             if (!name) name = "The Iron Lung"; 
                             
-                            state.shipName = name; // Save to State
-                            
-                            renderScene('act3_intro_ship'); // Proceed
+                            state.shipName = name; 
+                            renderScene('act3_intro_ship'); 
                             return `Christened the ship: <span class="text-item">${name}</span>.`;
                         }
                     }
@@ -6547,9 +6579,14 @@
 						}
 
 						// --- TUTORIAL PULSE LOGIC FIX ---
-						// Only pulse Quinn at the start if he is not used AND no one is selected
+						// Pulse at the start if not used AND no one is selected
 						if (gameState.currentSceneId === 'start' && c.name === 'Quinn' && !c.used && !activeCrewMember) {
 							baseClass += " tutorial-pulse";
+						}
+						if (gameState.currentSceneId === 'start' && !c.used && !activeCrewMember) {
+                            if (c.name === 'Quinn' || c.name === 'Bones') {
+                                baseClass += " tutorial-pulse";
+                            }
 						}
 						// --- END TUTORIAL PULSE FIX ---
 
