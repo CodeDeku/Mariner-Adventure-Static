@@ -7085,7 +7085,7 @@
 					});
                     
 					// --- COMPANIONS LIST (ACT 3 & ACT 2) ---
-                    function renderCompanions() { 
+                    function renderCompanions() => { 
 						const companionList = document.getElementById('companions-list');
 						companionList.innerHTML = ''; 
 						companionList.className = "grid grid-cols-2 gap-2";
@@ -7112,7 +7112,7 @@
 								` : ''}
 							`;
 							companionList.appendChild(silasDiv);
-						}
+						};
 						
 						// Blink (Phase-Cub / Evasion)
 						if (gameState.hasBlink) {
