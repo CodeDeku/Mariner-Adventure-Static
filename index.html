@@ -5378,10 +5378,13 @@
             };
         }
 
-        async function init() {
+			async function init() {
             window.confirmReset = confirmReset;
             window.resetGame = resetGame; 
-           
+            
+            // --- UI Update for Blink (Restored) ---
+            const blinkBtn = document.getElementById('btn-blink'); 
+            if(blinkBtn) blinkBtn.onclick = () => window.gameFunctions.triggerBlink(); 
 
             onAuthStateChanged(auth, async (u) => {
                 if (u) {
@@ -6391,14 +6394,15 @@
 
                     // 2. Allies Panel (Shows if Silas OR Blink is present)
                     const hasSilas = Object.values(gameState.companions).some(c => c.joined);
-                    const hasBlink = gameState.skills.includes("Blink");
+                    // REMOVED hasBlink CHECK
                     
-                    if (hasSilas || hasBlink) {
+                    if (hasSilas) {
                         companionPanel.classList.remove('hidden');
                         renderCompanions();
                     } else {
                         companionPanel.classList.add('hidden');
-                    }                    // --- END ACT 3 UI TOGGLE ---
+                    }
+					// --- END ACT 3 UI TOGGLE ---
                     
 					// --- ACT 2 UI TOGGLE ---
 					const tetherDisplay = document.getElementById('tether-display');
@@ -6411,26 +6415,21 @@
 						tetherDisplay.classList.add('hidden');
 					}
 
-					if (gameState.skills.includes("Plane Walking")) {
+					// 2. Planar Skills Menu Visibility
+					if (gameState.skills.includes("Plane Walking") || gameState.skills.includes("Blink")) {
 						planarSkills.classList.remove('hidden');
 					} else {
 						planarSkills.classList.add('hidden');
 					}
 
-					// 4. Plane Walk Button Styling (Visual Feedback)
-					const planeWalkBtn = document.getElementById('btn-plane-walk');
-					if (gameState.skills.includes("Plane Walking")) {
-						if (gameState.isEthereal) {
-							// Visual cue that you are currently Ethereal
-							planeWalkBtn.classList.add('border-cyan-400', 'bg-cyan-900/40');
-							planeWalkBtn.classList.remove('border-cyan-700', 'bg-gray-900/80');
-							planeWalkBtn.innerHTML = `<span class="text-[10px] cinzel font-bold text-cyan-300">Return to Material</span><i class="fas fa-shoe-prints text-cyan-300"></i>`;
-						} else {
-							// Visual cue that you are Material
-							planeWalkBtn.classList.remove('border-cyan-400', 'bg-cyan-900/40');
-							planeWalkBtn.classList.add('border-cyan-700', 'bg-gray-900/80');
-							planeWalkBtn.innerHTML = `<span class="text-[10px] cinzel font-bold">Plane Walk</span><i class="fas fa-shoe-prints text-cyan-600"></i>`;
-						}
+					// 3. Blink Button Specific Visibility
+					const blinkBtn = document.getElementById('btn-blink');
+					if (gameState.skills.includes("Blink")) {
+						blinkBtn.classList.remove('hidden');
+                        // Add glow if active/usable context exists (optional styling)
+                        blinkBtn.classList.add('spectral-text-glow');
+					} else {
+						blinkBtn.classList.add('hidden');
 					}
 					// --- END ACT 2 UI TOGGLE ---
 
@@ -6653,25 +6652,6 @@
                         const companionList = document.getElementById('companions-list');
                         companionList.innerHTML = '';
 						companionList.className = "grid grid-cols-2 gap-2";
-
-                        // 1. BLINK (The Displacer Cub)
-                        if (gameState.skills.includes("Blink")) {
-                             const blinkDiv = document.createElement('div');
-                             // Green Styling (Emerald) to match Silas
-                             blinkDiv.className = `p-2 rounded border border-emerald-700 bg-gray-900/80 shadow flex items-center justify-between transition-colors cursor-pointer hover:bg-emerald-900/30 group`;
-                             blinkDiv.innerHTML = `
-                                <div class="flex items-center gap-2">
-                                    <i class="fas fa-paw text-xl text-emerald-400 group-hover:text-white transition-colors"></i>
-                                    <div class="flex flex-col text-left leading-tight">
-                                        <span class="font-bold text-xs cinzel text-emerald-300">Blink</span>
-                                        <span class="text-[10px] text-gray-500 italic">Phase Shift (Click to Rest)</span>
-                                    </div>
-                                </div>
-                             `;
-                             // Add Click Handler directly here
-                             blinkDiv.onclick = () => window.gameFunctions.triggerBlink();
-                             companionList.appendChild(blinkDiv);
-                        }
 
                         // 2. SILAS (The Seneschal)
                         if (gameState.companions.silas.joined) {
