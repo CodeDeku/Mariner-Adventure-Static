@@ -1115,6 +1115,114 @@
         
         // --- WINDOW FUNCTIONS FOR HTML BUTTONS ---
         window.gameFunctions = {};
+		
+		// --- COMBAT ENGINE (BOSS BATTLES) ---
+
+        function initCombat(enemyName, hp, damageRange) {
+            gameState.isBossCombat = true;
+            gameState.currentEnemy = enemyName;
+            gameState.enemyHP = hp;
+            gameState.maxEnemyHP = hp;
+            gameState.enemyDamageRange = damageRange; // e.g., [6, 10]
+            
+            // Reset Ally Cooldowns
+            gameState.allyCooldowns.silas = 0;
+            gameState.allyCooldowns.blink = 0;
+        }
+
+        window.resolveCombatRound = function(attackType) {
+            const state = gameState;
+            let playerDmg = 0;
+            let log = "";
+            
+            // 1. CALCULATE PLAYER DAMAGE
+            if (attackType === 'valor_strike') {
+                // Base: 1d8+1 -> Avg 5. + Bonus vs Vampires.
+                playerDmg = Math.floor(Math.random() * 8) + 6; 
+                // Theme: The Sword is designed for this fight.
+                log += "The Sword of Valor flares with white fire! ";
+            } 
+            else if (attackType === 'heavy_strike') {
+                // Generic heavy weapon (if they somehow lost the sword)
+                playerDmg = Math.floor(Math.random() * 6) + 2; 
+            }
+            else if (attackType === 'item_holy_water') {
+                playerDmg = 25; // Massive damage vs Vampires
+                log += "The Holy Water burns their flesh like acid! ";
+            }
+            else if (attackType === 'item_fire') {
+                playerDmg = 20; 
+                log += "The Alchemical Fire engulfs them! ";
+            }
+            else if (attackType === 'item_flash') {
+                // Utility: Doesn't damage, but prevents enemy attack this turn
+                playerDmg = 0;
+                log += "Flash Powder blinds them! They cannot strike back this turn. ";
+            }
+
+            // BLINK CRIT MODIFIER (Phase Shift)
+           if (state.nextAttackCrit && playerDmg > 0) {
+                playerDmg = Math.floor(playerDmg * 2.5); // Massive Crit
+                state.nextAttackCrit = false;
+                // CHANGED: text-purple-400 to text-emerald-400
+                log += "<span class='text-emerald-400 font-bold'>PHASE STRIKE! (Crit)</span> ";
+            }
+
+            // APPLY DAMAGE TO BOSS
+            state.enemyHP -= playerDmg;
+            if (playerDmg > 0) log += `You dealt <b>${playerDmg}</b> damage to the ${state.currentEnemy}. `;
+
+            // 2. CHECK VICTORY
+            if (state.enemyHP <= 0) {
+                state.enemyHP = 0;
+                state.isBossCombat = false;
+                audioManager.playClash();
+                addToHistory(log + ` The ${state.currentEnemy} crumble to ash!`, 'combat');
+                
+                // Route to Victory
+                renderScene('spire_victory');
+                return;
+            }
+
+            // 3. ENEMY RETALIATION
+            let enemySkipped = (attackType === 'item_flash'); // Flash powder skips enemy turn
+
+            if (!enemySkipped) {
+                let enemyDmg = Math.floor(Math.random() * (state.enemyDamageRange[1] - state.enemyDamageRange[0] + 1)) + state.enemyDamageRange[0];
+
+                // SILAS TANK MODIFIER (Shield)
+                if (state.negateNextDamage) {
+                    enemyDmg = 0;
+                    state.negateNextDamage = false; 
+                    log += ` <span class='text-emerald-400 font-bold'>Silas blocked the draining strike!</span>`;
+                } else {
+                    // BLINK EVASION MODIFIER (Passive Dodge Chance logic could go here, 
+                    // but we used Blink for Crits. Let's stick to standard damage logic)
+                    
+                    const oldHP = state.currentHP;
+                    state.currentHP = applyDamage(state.currentHP, enemyDmg);
+                    const actualTaken = oldHP - state.currentHP;
+                    
+                    if (actualTaken > 0) {
+                        log += ` The Elders drain you for <b>${actualTaken}</b> damage!`;
+                        fxManager.flashRed();
+                    } else {
+                        log += ` Your armor absorbed the blow.`;
+                    }
+                }
+            }
+
+            // 4. COOLDOWN TICK
+            if (state.allyCooldowns.silas > 0) state.allyCooldowns.silas--;
+            if (state.allyCooldowns.blink > 0) state.allyCooldowns.blink--;
+
+            addToHistory(log, 'combat');
+            updateUI(); 
+            
+            // Re-render to update Health Bar
+            renderScene(state.currentSceneId); 
+        };
+		
 
         // 1. PLANE WALK LOGIC
         window.gameFunctions.togglePlaneWalk = function() {
@@ -4678,13 +4786,58 @@
                 onEnter: (state) => {
                     document.getElementById('vignette-overlay').classList.remove('fx-heartbeat-slow', 'fx-heartbeat-fast');
                     
+                    // NEW: Dynamic check for Softlock
+                    // If we have less than 2 supplies, we cannot sail to the nearest port (Cost 2).
+                    // We must force the player to drift/fish.
+                    if (state.supplies < 2) {
+                        scenes['sea_map_hub'].text = "The hold is empty. The crew looks at you with hollow eyes. You do not have enough supplies to reach the nearest port. You must drift and fish to survive, or starve.";
+                        scenes['sea_map_hub'].choices = [
+                            { 
+                                text: "Desperate Fishing (Drift)", 
+                                nextScene: 'sea_starve_logic', 
+                                type: 'skill', 
+                                dc: 12, 
+                                skill: 'Survival',
+                                doomCost: 1 // Costs time/turns
+                            }
+                        ];
+                        return "Warning: Supplies Depleted. Stranded.";
+                    }
+
+                    // Reset to normal choices if we have supplies
+                    scenes['sea_map_hub'].choices = [
+                        { text: "Sail to Port of Shadows", nextScene: 'travel_to_port', type: 'travel', suppliesCost: 2, customClass: 'btn-anchor' },
+                        { text: "Sail to Bleak Dogtooth", nextScene: 'travel_to_dogtooth', type: 'travel', suppliesCost: 5, reqFlag: 'unlocked_dogtooth', customClass: 'btn-anchor' },
+                        { text: "Sail to Sanguine Spire", nextScene: 'travel_to_spire', type: 'travel', suppliesCost: 8, reqFlag: 'unlocked_spire', customClass: 'btn-anchor' }
+                    ];
+
                     return `Current Location: ${state.currentLocation}. Supplies: ${state.supplies}/20.`;
                 },
-                choices: [
-                    { text: "Sail to Port of Shadows", nextScene: 'travel_to_port', type: 'travel', suppliesCost: 2, customClass: 'btn-anchor' },
-                    { text: "Sail to Bleak Dogtooth", nextScene: 'travel_to_dogtooth', type: 'travel', suppliesCost: 5, reqFlag: 'unlocked_dogtooth', customClass: 'btn-anchor' },
-                    { text: "Sail to Sanguine Spire", nextScene: 'travel_to_spire', type: 'travel', suppliesCost: 8, reqFlag: 'unlocked_spire', customClass: 'btn-anchor' }
-                ]
+                choices: [] // Choices are handled dynamically in onEnter now
+            },
+			'sea_starve_logic': {
+                isLogic: true,
+                resolve: (roll) => roll >= 12 ? 'sea_fish_success' : 'sea_fish_fail'
+            },
+            'sea_fish_success': {
+                title: "The Catch",
+                text: "Talon helps you rig nets from scrap rope. You haul in a catch of strange, pale fish. It's barely enough to keep the crew moving.",
+                onEnter: (state) => {
+                    state.supplies += 3;
+                    return "Caught fish. +3 Supplies.";
+                },
+                choices: [{ text: "Return to Wheel", nextScene: 'sea_map_hub', type: 'travel', doomCost: 0 }]
+            },
+            'sea_fish_fail': {
+                title: "Starvation",
+                text: "The nets come up empty. The crew grows weak. You are forced to ration the last of the grog, weakening everyone.",
+                onEnter: (state) => {
+                    state.supplies += 2; // Pity supplies so they aren't stuck forever
+                    state.currentHP = applyDamage(state.currentHP, 4);
+                    fxManager.flashRed();
+                    return "Starvation set in. Took 4 Damage. Scraped together +2 Supplies.";
+                },
+                choices: [{ text: "Return to Wheel", nextScene: 'sea_map_hub', type: 'travel', doomCost: 0 }]
             },
             'travel_to_port': {
                 isLogic: true,
@@ -4984,25 +5137,101 @@
                 ]
             },
 			// ENDGAME: SANGUINE SPIRE
+            // --- FINALE: SANGUINE SPIRE COMBAT ---
+            
+            // 1. INITIALIZE COMBAT
             'sanguine_spire_combat': {
                 title: "The Sanguine Court",
-                text: "You enter the cathedral. Three <span class='text-danger'>Vampire Elders</span> descend from the vaulted ceiling. 'The Mariner,' one hisses, seeing the <span class='text-item'>Ring of Brass</span>. 'You carry the Wolf's trinkets. You think they will save you? We broke his kingdom, and we will break you.'",
+                text: "You enter the cathedral. Three <span class='text-danger'>Vampire Elders</span> descend from the vaulted ceiling. They move with blurring speed, their claws dripping with ancient rot.<br><br>The <span class='text-item'>Sword of Valor</span> hums violently in your hand—it knows this blood. Silas steps forward, shield raised. Blink growls, phasing in and out. This is the end.",
+                journal: "Confronted the Vampire Elders. The final battle.",
+                isBoss: true,
+                onEnter: (state) => {
+                    // Boss Name, HP, Damage Range
+                    initCombat("Vampire Elders", 100, [8, 14]); 
+                    return "Combat Started! The Elders attack.";
+                },
+                choices: [
+                    { text: "Draw Weapons", nextScene: 'spire_combat_loop', type: 'travel', doomCost: 0 }
+                ]
+            },
+
+            // 2. THE COMBAT LOOP
+            'spire_combat_loop': {
+                title: "Battle: Vampire Elders",
+                text: "The Elders circle you. They are fast, dealing heavy damage every round. Use your artifacts and allies to survive.",
                 isBoss: true,
                 choices: [
+                    // A. ATTACKS
                     { 
-                        text: "Duel the Elders (Sword of Valor)", 
-                        nextScene: 'spire_victory', 
-                        type: 'combat', 
-                        onSelect: (state) => {
-                            audioManager.playClash();
-                            return "The Sword of Valor strikes with the fury of the Wolf King (+5 DMG vs Vampires).";
-                        }
+                        text: "Strike with Sword of Valor", 
+                        action: () => window.resolveCombatRound('valor_strike'),
+                        type: 'action', 
+                        reqItem: 'Sword of Valor',
+                        customClass: 'btn-hero' // Visual flair
+                    },
+                    { 
+                        text: "Desperate Strike (Cutlass)", 
+                        action: () => window.resolveCombatRound('heavy_strike'),
+                        type: 'action', 
+                        reqNotItem: 'Sword of Valor' // Fallback
+                    },
+
+                    // B. CONSUMABLES (Strategic Nuke Buttons)
+                    { 
+                        text: "Throw Holy Water (Massive Dmg)", 
+                        action: () => window.resolveCombatRound('item_holy_water'),
+                        type: 'action', 
+                        reqItem: 'Holy Water',
+                        consume: true,
+                        customClass: 'btn-success-glow'
+                    },
+                    { 
+                        text: "Throw Alchemical Fire (High Dmg)", 
+                        action: () => window.resolveCombatRound('item_fire'),
+                        type: 'action', 
+                        reqItem: 'Alchemical Fire',
+                        consume: true,
+                        customClass: 'btn-fire-glow'
+                    },
+                    { 
+                        text: "Throw Flash Powder (Skip Enemy Turn)", 
+                        action: () => window.resolveCombatRound('item_flash'),
+                        type: 'action', 
+                        reqItem: 'Flash Powder',
+                        consume: true
+                    },
+
+                    // C. HEALING
+                    { 
+                        text: "Drink Healing Potion", 
+                        type: 'action',
+                        reqItem: 'Healing Potion',
+                        consume: true,
+                        action: (state) => {
+                            state.currentHP = Math.min(state.maxHP, state.currentHP + 15); // Better heal for finale
+                            addToHistory("Drank potion. Healed 15 HP.", 'combat');
+                            window.resolveCombatRound('none'); // Trigger enemy turn
+                        } 
+                    },
+                    { 
+                        text: "Drink Vitality Tincture", 
+                        type: 'action',
+                        reqItem: 'Vitality Tincture',
+                        consume: true,
+                        action: (state) => {
+                            state.currentHP = Math.min(state.maxHP, state.currentHP + 20); 
+                            addToHistory("Drank Tincture. Healed 20 HP.", 'combat');
+                            window.resolveCombatRound('none'); // Trigger enemy turn
+                        } 
                     }
                 ]
             },
+
+            // 3. VICTORY
             'spire_victory': {
                 title: "The Sun Rises",
-                text: "The Elders turn to ash under the bite of the Wolf King's blade. As the last one falls, the unnatural fog lifts from the ocean. The Curse is broken. <br><br>The Trident's Kiss crew appears one last time, saluting you before fading into the morning light. You are the Mariner, and the sea is finally yours.",
+                text: "The last Elder shrieks as the **Sword of Valor** pierces its heart. It crumbles into dust, followed by the others. Silence falls over the cathedral.<br><br>Through the broken stained glass, the first ray of dawn touches the ocean. The Curse is broken. The fog lifts.",
+                journal: "Defeated the Vampire Elders. The curse is broken.",
                 choices: [
                     { text: "The End (Return to Menu)", type: 'reset', customClass: 'btn-hero' }
                 ]
@@ -5440,6 +5669,9 @@
             } else if (type === 'danger') {
 				html = `<div class="text-xs text-red-400 font-bold mb-2 fade-in font-serif">${text}</div>`;
 			}
+			if (type === 'combat') {
+                html = `<div class="text-xs text-red-100 border-l-2 border-red-600 pl-2 mb-2 font-mono bg-red-900/20 p-2 shadow-inner fade-in">${text}</div>`;
+            }
             if(html) gameState.history.push(html);
             rebuildJournal();
         }
@@ -5448,14 +5680,14 @@
 			if (gameState.isBossCombat && gameState.allyCooldowns[allyId] === 0) {
 				
 				if (allyId === 'silas') {
-					gameState.negateNextDamage = true;
-					gameState.allyCooldowns.silas = 2;
-					addToHistory(`<span class="text-blood">Silas: Intercept!</span> Silas materializes, shield raised. The next blow against you will be completely negated.`, 'system');
-				} else if (allyId === 'blink') {
-					gameState.nextAttackCrit = true;
-					gameState.allyCooldowns.blink = 3;
-					addToHistory(`<span class="text-spectral">Blink: Phase Shift!</span> The cub blurs and you feel the tether momentarily shift. Your next attack will bypass defenses for massive damage.`, 'system');
-				}
+                    gameState.negateNextDamage = true;
+                    gameState.allyCooldowns.silas = 2;
+                    addToHistory(`<span class="text-emerald-400 font-bold">Silas: Intercept!</span> Silas materializes, shield raised.`, 'system');
+                } else if (allyId === 'blink') {
+                    gameState.nextAttackCrit = true;
+                    gameState.allyCooldowns.blink = 3;
+                    addToHistory(`<span class="text-emerald-400 font-bold">Blink: Phase Shift!</span> The cub blurs and you feel the tether momentarily shift.`, 'system');
+                }
 				
 				Object.keys(gameState.allyCooldowns).forEach(key => {
 					if (key !== allyId) {
@@ -5516,6 +5748,23 @@
 
             let displayTitle = scene.title;
             let displayText = scene.text;
+			
+			// --- BOSS HEALTH BAR INJECTION ---
+            if (gameState.isBossCombat && gameState.enemyHP > 0) {
+                const pct = (gameState.enemyHP / gameState.maxEnemyHP) * 100;
+                // Vampires get a blood-red bar
+                const color = 'bg-red-700'; 
+                
+                const healthBarHTML = `
+                <div class="w-full bg-gray-900 border border-red-900 rounded h-6 mt-2 mb-6 relative overflow-hidden shadow-lg">
+                    <div class="${color} h-full transition-all duration-300" style="width: ${pct}%"></div>
+                    <div class="absolute inset-0 flex items-center justify-center text-xs cinzel font-bold text-white shadow-black drop-shadow-md tracking-widest">
+                        ${gameState.currentEnemy}: ${gameState.enemyHP} / ${gameState.maxEnemyHP}
+                    </div>
+                </div>`;
+                
+                displayText = healthBarHTML + displayText;
+            }
 
             if (sceneId === 'act3_intro_ship' || sceneId === 'sea_map_hub') {
                 if (gameState.shipName) {
@@ -6059,6 +6308,21 @@
 				if (choice.type === 'reset') icon = '<i class="fas fa-sync-alt text-gray-400 group-hover:text-white"></i>';
                 if (isHeroButton) icon = '<i class="fas fa-star hero-icon"></i>'; 
 				if (isCombineButton) icon = '<i class="fas fa-hammer text-yellow-500"></i>';
+				
+				
+				
+				if (gameState.negateNextDamage && (isDeathScene || choice.type === 'action' || choice.costHP)) {
+                btnClass += " ring-1 ring-emerald-500 bg-emerald-900/30";
+                supplementalText += " <span class='text-emerald-400 text-[10px] uppercase font-bold animate-pulse ml-2'>[Silas Blocking]</span>";
+				}
+
+				if (gameState.nextAttackCrit && (choice.type === 'action')) {
+					btnClass += " ring-1 ring-emerald-500 bg-emerald-900/30";
+					supplementalText += " <span class='text-emerald-400 text-[10px] uppercase font-bold animate-pulse ml-2'>[Phase Strike Ready]</span>";
+				}
+				
+				
+				
 
                 // --- SKILL CHECK FORMATTING ---
 				if (isSkillCheck) {
