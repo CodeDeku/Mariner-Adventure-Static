@@ -1578,6 +1578,14 @@
 					return "The grog is surprisingly smooth, followed by a rush of clarity. Your wounds close, your Crew awakens, and your next Guiding Voice is free.";
 				}
 			},
+			"The Warding Ember": {
+				name: "The Warding Ember",
+				type: 'passive',
+				icon: 'fa-gem',
+				color: 'text-red-600',
+				desc: "The Spectral Lantern fused with Alchemical Fire. It burns with protective intensity, permanently granting +2 Defense (AC).",
+				onAcquire: (state) => { state.passiveDefenseBonus += 2; }
+			}
         };
         
         function getBonusForSkill(crewMember, skillType) {
