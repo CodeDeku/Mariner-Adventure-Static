@@ -52,15 +52,16 @@
         .btn-disabled-cost { opacity: 0.4; cursor: not-allowed; background-color: #1f2937 !important; border-color: #475569 !important; box-shadow: none !important; transform: none !important; }
 
         /* --- 1. STANDARD BUTTON (Dark Blue-Grey) --- */
-        .btn-standard {
-            background: linear-gradient(180deg, #1f2937 0%, #111827 100%);
-            border: 1px solid #475569;
+        /* NOTE: We target .bg-gray-800 here to override the Game Engine's default classes */
+        .btn-standard, .btn-game.bg-gray-800 {
+            background: linear-gradient(180deg, #1f2937 0%, #111827 100%) !important;
+            border: 1px solid #475569 !important;
             color: #cdd5e0;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
         }
-        .btn-standard:hover { 
-            border-color: #fbbf24; /* Amber Border on Hover */
-            background: linear-gradient(180deg, #334155 0%, #1f2937 100%); 
+        .btn-standard:hover, .btn-game.bg-gray-800:hover { 
+            border-color: #fbbf24 !important; /* Amber Border on Hover */
+            background: linear-gradient(180deg, #334155 0%, #1f2937 100%) !important; 
         }
 
         /* --- 2. HERO BUTTON (Blue / Order / Artifact) --- */
@@ -165,11 +166,12 @@
         .btn-anchor { 
             background: linear-gradient(180deg, #1f2937 0%, #111827 100%);
             border: 1px solid #475569; 
-            color: #22d3ee; /* Force Cyan Text */
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2); 
         }
-        .btn-anchor i { color: #22d3ee; }
-        .btn-anchor span { color: #22d3ee; } /* Ensure inner span is Cyan */
+        /* Override inner span color to Cyan, even if JS says white */
+        .btn-anchor, .btn-anchor span, .btn-anchor i { 
+            color: #22d3ee !important; 
+        }
         
         .btn-anchor:hover { 
             border-color: #fbbf24; /* Amber Hover */
