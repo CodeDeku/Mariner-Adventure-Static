@@ -4786,9 +4786,6 @@
                 onEnter: (state) => {
                     document.getElementById('vignette-overlay').classList.remove('fx-heartbeat-slow', 'fx-heartbeat-fast');
                     
-                    // NEW: Dynamic check for Softlock
-                    // If we have less than 2 supplies, we cannot sail to the nearest port (Cost 2).
-                    // We must force the player to drift/fish.
                     if (state.supplies < 2) {
                         scenes['sea_map_hub'].text = "The hold is empty. The crew looks at you with hollow eyes. You do not have enough supplies to reach the nearest port. You must drift and fish to survive, or starve.";
                         scenes['sea_map_hub'].choices = [
@@ -4798,10 +4795,14 @@
                                 type: 'skill', 
                                 dc: 12, 
                                 skill: 'Survival',
-                                doomCost: 1 // Costs time/turns
+                                doomCost: 1 
                             }
                         ];
                         return "Warning: Supplies Depleted. Stranded.";
+                    } 
+                    // CHANGED: Added ELSE block to reset text when supplies are sufficient
+                    else {
+                        scenes['sea_map_hub'].text = "You stand at the wheel of your ship, the world laid out on the chart. To sail, you must expend Supplies.";
                     }
 
                     // Reset to normal choices if we have supplies
@@ -4813,7 +4814,7 @@
 
                     return `Current Location: ${state.currentLocation}. Supplies: ${state.supplies}/20.`;
                 },
-                choices: [] // Choices are handled dynamically in onEnter now
+                choices: [] 
             },
 			'sea_starve_logic': {
                 isLogic: true,
@@ -5738,7 +5739,7 @@
         
         async function renderScene(sceneId, logText = true) {
             const scene = scenes[sceneId];
-			
+            
             if (!scene) return;
             
             if (gameState.currentHP === 0 && sceneId !== 'edward_death') {
@@ -5746,35 +5747,7 @@
                 return;
             }
 
-            let displayTitle = scene.title;
-            let displayText = scene.text;
-			
-			// --- BOSS HEALTH BAR INJECTION ---
-            if (gameState.isBossCombat && gameState.enemyHP > 0) {
-                const pct = (gameState.enemyHP / gameState.maxEnemyHP) * 100;
-                // Vampires get a blood-red bar
-                const color = 'bg-red-700'; 
-                
-                const healthBarHTML = `
-                <div class="w-full bg-gray-900 border border-red-900 rounded h-6 mt-2 mb-6 relative overflow-hidden shadow-lg">
-                    <div class="${color} h-full transition-all duration-300" style="width: ${pct}%"></div>
-                    <div class="absolute inset-0 flex items-center justify-center text-xs cinzel font-bold text-white shadow-black drop-shadow-md tracking-widest">
-                        ${gameState.currentEnemy}: ${gameState.enemyHP} / ${gameState.maxEnemyHP}
-                    </div>
-                </div>`;
-                
-                displayText = healthBarHTML + displayText;
-            }
-
-            if (sceneId === 'act3_intro_ship' || sceneId === 'sea_map_hub') {
-                if (gameState.shipName) {
-                    displayTitle = gameState.shipName;
-                    
-                    displayText = displayText.replace('[SHIP_NAME]', gameState.shipName);
-                    displayText = displayText.replace('your ship', `the ${gameState.shipName}`);
-                }
-            }
-
+            // --- 1. HANDLE RIFT COLLAPSE LOGIC ---
             if (gameState.doomTimer <= 0 && gameState.act1Started) {
                 if (!gameState.isRiftCollapse && !gameState.hasLoggedCollapse) {
                     gameState.isRiftCollapse = true;
@@ -5787,18 +5760,22 @@
                 }
             }
             
+            // --- 2. HANDLE TETHER FAILURE ---
             if (gameState.tetherTimer <= 0 && gameState.act2Started && sceneId !== 'act2_tether_fail') {
                  renderScene('act2_tether_fail');
                  return;
             }
            
+            // --- 3. HANDLE VISUAL THEMES ---
             if (gameState.isEthereal) {
                 document.body.classList.add('plane-ethereal');
             } else {
                 document.body.classList.remove('plane-ethereal');
             }
 
+            // --- 4. HANDLE LOGIC/ROLL SCENES ---
             if (scene.isLogic) {
+                // ... (Keep existing Logic/Roll code exactly as is) ...
                 let roll = Math.floor(Math.random() * 20) + 1;
                 let crewUsedName = "None";
                 let logMsg = `Check (DC ${gameState.lastDC || 10}): Rolled d20 (${roll})`;
@@ -5861,34 +5838,63 @@
             }
 
             gameState.currentSceneId = sceneId;
-            
-			fxManager.clearEffects(); 
+            fxManager.clearEffects(); 
 
+            // --- 5. HANDLE VISUAL PULSE FX ---
             const isProloguePulse = ['prologue_storm', 'prologue_abyss'].includes(sceneId);
-
             const isAct1Pulse = gameState.act1Started && !gameState.isRiftCollapse && gameState.doomTimer > 0 &&
                 ['town_square', 'lighthouse_vigil', 'smelter_stage1_start', 'chapel_stage1_reveal', 'town_docks', 'blackwater_tavern', 'alchemist_triage'].includes(sceneId);
-
             const isAct2Pulse = gameState.act2Started && sceneId !== 'act2_tether_fail';
 
             if (isProloguePulse || isAct1Pulse || isAct2Pulse) {
                 document.getElementById('fx-overlay').classList.add('fx-rift-pulse');
             }
 
+            // --- 6. EXECUTE ONENTER (Updates State & Text) ---
             if (scene.onEnter) {
                 const msg = scene.onEnter(gameState);
-                
                 if (msg && logText) {
                     addToHistory(msg, 'system');
                 }
                 saveGame();
             }
+            
+            // --- 7. DEFINE TEXT VARIABLES (After onEnter) ---
+            let displayTitle = scene.title;
+            let displayText = scene.text;
 
+            // --- 8. INJECT BOSS HEALTH BAR (Moved Here) ---
+            if (gameState.isBossCombat && gameState.enemyHP > 0) {
+                const pct = (gameState.enemyHP / gameState.maxEnemyHP) * 100;
+                const color = 'bg-red-700'; 
+                
+                const healthBarHTML = `
+                <div class="w-full bg-gray-900 border border-red-900 rounded h-6 mt-2 mb-6 relative overflow-hidden shadow-lg">
+                    <div class="${color} h-full transition-all duration-300" style="width: ${pct}%"></div>
+                    <div class="absolute inset-0 flex items-center justify-center text-xs cinzel font-bold text-white shadow-black drop-shadow-md tracking-widest">
+                        ${gameState.currentEnemy}: ${gameState.enemyHP} / ${gameState.maxEnemyHP}
+                    </div>
+                </div>`;
+                
+                displayText = healthBarHTML + displayText;
+            }
+
+            // --- 9. INJECT SHIP NAME (Moved Here) ---
+            if (sceneId === 'act3_intro_ship' || sceneId === 'sea_map_hub') {
+                if (gameState.shipName) {
+                    displayTitle = gameState.shipName;
+                    displayText = displayText.replace('[SHIP_NAME]', gameState.shipName);
+                    displayText = displayText.replace('your ship', `the ${gameState.shipName}`);
+                }
+            }
+
+            // --- 10. DEATH CHECK ---
             if (gameState.currentHP === 0 && sceneId !== 'edward_death') {
                 renderScene('edward_death');
                 return;
             }
 
+            // --- 11. VIGNETTE FX ---
             const hpPct = (gameState.currentHP / gameState.maxHP) * 100;
             if (hpPct <= 30) {
                 fxManager.setVignette(true);
@@ -5906,13 +5912,12 @@
                 }
             }
 
-
+            // --- 12. RENDER TO DOM ---
             const textEl = document.getElementById('main-scene-text');
             const isDeathScene = sceneId === 'edward_death';
             
             let titleClass = isDeathScene ? 'text-red-500' : 'text-amber-500';
             let textClass = isDeathScene ? 'text-red-300' : 'text-gray-300';
-
             
             let finalHtml = `<h2 class="2xl cinzel ${titleClass} mb-2">${displayTitle}</h2><p class="text-lg leading-relaxed ${textClass} fade-in">${displayText}</p>`;
             
@@ -5940,13 +5945,11 @@
             }
             
             textEl.innerHTML = finalHtml;
-            
-			document.getElementById('scene-title').innerText = displayTitle;
+            document.getElementById('scene-title').innerText = displayTitle;
             
             activeCrewMember = null; 
 
             generateSceneImage(sceneId);
-            
             renderChoices(scene.choices, isDeathScene);
             updateUI();
         }
@@ -6575,7 +6578,7 @@
 						tetherDisplay.classList.add('hidden');
 					}
 
-					if (gameState.skills.includes("Plane Walking") || gameState.companions.blink.joined) {
+					if (gameState.skills.includes("Plane Walking")) {
 						planarSkills.classList.remove('hidden');
 					} else {
 						planarSkills.classList.add('hidden');
@@ -6805,7 +6808,7 @@
 							} else {
 								actionButtonHTML = `
 									<button onclick="window.gameFunctions.triggerBlink()"
-											class="btn-game px-2 py-1 text-xs rounded transition-all bg-emerald-900/40 text-emerald-300 hover:bg-emerald-800/60">
+                                            class="px-2 py-1 text-xs rounded transition-all bg-emerald-900/40 text-emerald-300 hover:bg-emerald-800/60 font-bold border border-emerald-900">
 										PHASE
 									</button>
 								`;
