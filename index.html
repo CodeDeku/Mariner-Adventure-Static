@@ -1812,7 +1812,7 @@
                 choices: [
                     { text: "Confront the Guard", nextScene: 'road_encounter', type: 'dialogue' },
                     { 
-                        text: "Cheat Fate (Use Dead Man's Die)", 
+                        text: "Cheat Fate", 
                         nextScene: 'trail_success', 
                         type: 'action', 
                         reqItem: "Dead Man's Die", 
@@ -2141,7 +2141,7 @@
                 choices: [
                     { text: "Keep Climbing (Arrive at Lighthouse)", nextScene: 'lighthouse_arrival', type: 'travel' },
                     { 
-                        text: "Cheat Fate (Use Dead Man's Die)", 
+                        text: "Cheat Fate", 
                         nextScene: 'lighthouse_arrival',
                         type: 'action', 
                         reqItem: "Dead Man's Die", 
@@ -2190,7 +2190,7 @@
                 choices: [
                     { text: "Limp to the Exit", nextScene: 'lighthouse_arrival', type: 'travel' },
                     { 
-                        text: "Cheat Fate (Use Dead Man's Die)", 
+                        text: "Cheat Fate", 
                         nextScene: 'lighthouse_arrival',
                         type: 'action', 
                         reqItem: "Dead Man's Die", 
@@ -2236,7 +2236,7 @@
                 choices: [
                     { text: "Analyze the mechanism", nextScene: 'neutral_lock_logic', type: 'skill', dc: 15, skill: 'Insight' },
                     { 
-                        text: "Cheat Fate (Use Dead Man's Die)", 
+                        text: "Cheat Fate", 
                         nextScene: 'ending_neutral_success', 
                         type: 'action', 
                         reqItem: "Dead Man's Die", 
@@ -2458,7 +2458,7 @@
                 choices: [
                     { text: "Continue Descent", nextScene: 'meeting_the_stranger', type: 'travel' },
                     { 
-                        text: "Cheat Fate (Use Dead Man's Die)", 
+                        text: "Cheat Fate", 
                         nextScene: 'overlook_scan_success', 
                         type: 'action', 
                         reqItem: "Dead Man's Die", 
@@ -2483,7 +2483,7 @@
                 choices: [
                     { text: "Reach the Gates", nextScene: 'meeting_the_stranger', type: 'travel' },
                     { 
-                        text: "Cheat Fate (Use Dead Man's Die)", 
+                        text: "Cheat Fate", 
                         nextScene: 'meeting_the_stranger', 
                         type: 'action', 
                         reqItem: "Dead Man's Die", 
@@ -2965,7 +2965,7 @@
                 choices: [
                     { text: "Return to Tavern", nextScene: 'blackwater_tavern', type: 'travel', doomCost: 0 },
                     { 
-                        text: "Cheat Fate (Use Dead Man's Die)", 
+                        text: "Cheat Fate", 
                         nextScene: 'tavern_expose_success', 
                         type: 'action', 
                         reqItem: "Dead Man's Die", 
@@ -3090,7 +3090,7 @@
                 choices: [
                     { text: "Climb Out", nextScene: 'town_docks', type: 'travel' },
                     { 
-                        text: "Cheat Fate (Use Dead Man's Die)", 
+                        text: "Cheat Fate", 
                         nextScene: 'docks_dive_success', 
                         type: 'action', 
                         reqItem: "Dead Man's Die", 
@@ -3139,7 +3139,7 @@
                 choices: [
                     { text: "Return to Docks", nextScene: 'town_docks', type: 'travel', doomCost: 0 },
                     { 
-                        text: "Cheat Fate (Use Dead Man's Die)", 
+                        text: "Cheat Fate", 
                         nextScene: 'docks_smuggler_success', 
                         type: 'action', 
                         reqItem: "Dead Man's Die", 
@@ -3240,7 +3240,7 @@
                 choices: [
                     { text: "Continue to Smelter Antechamber", nextScene: 'smelter_workers', type: 'travel' },
                     { 
-                        text: "Cheat Fate (Use Dead Man's Die)", 
+                        text: "Cheat Fate", 
                         nextScene: 'smelter_safe', 
                         type: 'action', 
                         reqItem: "Dead Man's Die", 
@@ -3317,7 +3317,7 @@
                 choices: [
                     { text: "Proceed to Foundry (Boss Fight)", nextScene: 'smelter_stage1_start', type: 'travel' },
                     { 
-                        text: "Cheat Fate (Use Dead Man's Die)", 
+                        text: "Cheat Fate", 
                         nextScene: 'smelter_save_workers_success', 
                         type: 'action', 
                         reqItem: "Dead Man's Die", 
@@ -3647,7 +3647,7 @@
                 choices: [
                     { text: "Continue to Vestry Antechamber", nextScene: 'chapel_vestry', type: 'travel' },
                     { 
-                        text: "Cheat Fate (Use Dead Man's Die)", 
+                        text: "Cheat Fate", 
                         nextScene: 'chapel_safe', 
                         type: 'action', 
                         reqItem: "Dead Man's Die", 
@@ -3711,7 +3711,7 @@
                 choices: [
                     { text: "Proceed to Crypt (Boss Fight)", nextScene: 'chapel_stage1_reveal', type: 'travel' },
                     { 
-                        text: "Cheat Fate (Use Dead Man's Die)", 
+                        text: "Cheat Fate", 
                         nextScene: 'chapel_rescue_success', 
                         type: 'action', 
                         reqItem: "Dead Man's Die", 
@@ -4872,21 +4872,20 @@
 				},
 				choices: [
 					{
-						text: "Submit to Search (Clean)",
+						text: "Submit to Search",
 						nextScene: 'sea_navy_clean',
 						type: 'action',
 						// Disable if user HAS contraband
 						isDisabled: (gameState) => window.gameFunctions.checkForContraband() 
 					},
 					{
-						text: "Submit to Search (Caught!)",
+						text: "Submit to Search",
 						nextScene: 'sea_navy_caught',
 						type: 'action',
-						// Disable if user does NOT have contraband
 						isDisabled: (gameState) => !window.gameFunctions.checkForContraband()
 					},
 					{
-						text: "Jettison Contraband (Avoid Fine)",
+						text: "Jettison Contraband",
 						nextScene: 'sea_navy_jettison',
 						type: 'action',
 						// Only show option if you actually have something to hide
@@ -5173,27 +5172,27 @@
 			// 1. ORDER HUB: THE IRON CITADEL
 			'hub_order': {
 				title: "The Iron Citadel",
-				text: "You dock at the Iron Citadel. It is a fortress of grey stone reinforced with iron plating, but patches of white, throbbing <span class='text-danger'>Hyper-Coral</span> are consuming the walls. Flamethrower crews work tirelessly to burn back the growth. The air smells of sulfur and burnt meat.",
-				journal: "Arrived at the Iron Citadel. The Order is fighting a losing war against living coral.",
+				text: "You dock at the Citadel. It was once a pristine fortress of grey stone, but now it looks... diseased. Patches of stark white, jagged reef are growing directly out of the masonry, choking the statues and sealing arrow slits.<br><br>The air is thick with soot. You see squads of soldiers with flamethrowers burning the walls, their faces wrapped in wet cloth. They aren't fighting an army; they are fighting the architecture itself.",
+				journal: "Docked at the Citadel. The fortress is being eaten alive. The stone is growing white tumors. The soldiers look exhausted.",
 				onEnter: (state) => {
 					state.currentLocation = 'hub_order';
 					return "Docked at Iron Citadel (Order HQ).";
 				},
 				choices: [
 					{ 
-						text: "Speak to Commander (Start Quest)", 
+						text: "Speak to Commander", 
 						nextScene: 'order_quest_fence_start', // Link to Bio-Reactor Quest
 						type: 'dialogue',
 						reqNotFlag: 'fenceQuestActive'
 					},
 					{ 
-						text: "Visit The Calcification Ward", 
+						text: "Visit Calcification Ward", 
 						nextScene: 'order_petrified_ward', // Link to New Body Horror Scene
 						type: 'travel', 
 						doomCost: 0 
 					},
 					{ 
-						text: "Request Supplies (Quartermaster)", 
+						text: "Request Supplies", 
 						type: 'action', 
 						cost: 10,
 						action: (state) => { state.supplies += 5; return "Bought 5 Supplies."; }
@@ -5205,18 +5204,25 @@
 			// 2. CHAOS HUB: THE TITAN'S MOLT
 			'hub_chaos': {
 				title: "The Titan's Molt",
-				text: "A floating city built upon a massive, shed Leviathan scale. Ships are lashed directly to the chitin. It smells of ozone and processed marrow. Scavengers strip the coral for profit, ignoring the danger.",
-				journal: "Arrived at The Titan's Molt. Chaos thrives on the rot here.",
+				text: "Your boots sink slightly as you step off the gangplank. This isn't rock. The floating island has a texture like cured leather, vast and pockmarked. The shantytown built upon it is carved from materials that look suspiciously like ribcages and teeth.<br><br>The air smells copper-sharp—like blood and ozone. Scavengers are everywhere, hacking into the ground beneath their feet with pickaxes, harvesting glowing, gelatinous chunks of the island itself.",
+				journal: "Docked at the 'Molt'. I'm walking on something's skin. The people here are mining the ground for meat and fuel. It's gruesome. It's survival.",
 				onEnter: (state) => {
 					state.currentLocation = 'hub_chaos';
 					return "Docked at Titan's Molt (Chaos HQ).";
 				},
 				choices: [
 					{ 
-						text: "Follow Compass Signal (Rook)", 
-						nextScene: 'chaos_fence_confrontation', // Link to Bio-Reactor Confrontation
+						text: "Follow Compass Signal", 
+						nextScene: 'chaos_fence_confrontation',
 						type: 'dialogue', 
 						reqFlag: 'fenceQuestActive',
+						customClass: 'btn-pulse'
+					},
+					{
+						text: "Seek out Rook",
+						nextScene: 'chaos_fence_confrontation',
+						type: 'dialogue',
+						reqNotFlag: 'fenceQuestActive',
 						customClass: 'btn-pulse'
 					},
 					{ 
@@ -5232,7 +5238,8 @@
 			// --- NEW SCENE: THE CALCIFICATION WARD (Body Horror) ---
 			'order_petrified_ward': {
 				title: "The Calcification Ward",
-				text: "The infirmary smells of brine and bleach. Rows of soldiers lie in cots, their bodies half-consumed by white, jagged **Hyper-Coral**. It grows from their pores, fusing limbs and blinding eyes. They aren't turning to stone; they are becoming a reef.<br><br>The Surgeon wipes green slime from a saw blade. 'We cut out what we can, but it grows back faster. We're just prolonging the inevitable.'",
+				text: "The infirmary is silent, save for the wet, tearing sound of rapid growth. Rows of soldiers lie in iron cots. They aren't wounded; they are *blooming*. White, jagged coral bursts from their shoulders and chests, fusing them to the bedframes.<br><br>The Surgeon wipes green slime from a bone-saw. 'We don't cure them,' he whispers, looking at you with dead eyes. 'We just prune the growth so they can hold a rifle for one more day.'",
+				journal: "The Citadel's hospital. They are farming soldiers here. I can hear the coral growing inside them.",
 				choices: [
 					{ 
 						text: "Donate Rum (Anesthetic)", 
@@ -5262,16 +5269,17 @@
 			},
 			'ward_bloom_event': {
 				title: "The Rapid Bloom",
-				text: "You approach a soldier whose chest is heaving. Suddenly, he arches his back. With a wet tearing sound, a massive spike of white coral bursts through his ribcage. His eyes roll back, entirely white.<br><br>The Surgeon screams. 'He's blooming! Hold him down!' The soldier—now a **Coral-Husk**—thrashes violently, razor-sharp barnacles growing instantly on his fists.",
+				text: "You approach a young soldier. He looks at you, trying to speak, but a massive spike of white coral bursts through his jaw. His back arches, ribs snapping as the reef takes him completely. <br><br>The Surgeon screams, 'He's blooming! Hold him down!' The soldier—no longer a man, but a **Coral-Husk**—thrashes violently, razor-sharp barnacles erupting from his skin.",
+				journal: "I watched a man turn into a reef in seconds. The sound of his bones breaking will stay with me.",
 				choices: [
 					{ 
-						text: "Put him down (Combat)", 
+						text: "End His Suffering)", 
 						nextScene: 'ward_bloom_combat', 
 						type: 'combat',
 						doomCost: 0
 					},
 					{ 
-						text: "Hold him down (Athletics)", 
+						text: "Hold him down", 
 						nextScene: 'ward_bloom_hold', 
 						type: 'skill', 
 						dc: 15, 
@@ -5316,7 +5324,8 @@
 
 			'order_quest_fence_start': {
 				title: "Contract: The Cold Furnace",
-				text: "The Commander walks you to the edge of the Great Foundry. It is silent. The massive pistons are still.<br><br>'The **Ember-Heart** is gone,' he says grimly. 'Without that core, the Foundry is useless. We cannot repair the walls, and the Hyper-Coral will breach the inner Citadel before the week is out. Rook stole it. Track him, Mariner. The fate of the war machine depends on that heat.'",
+				text: "The Commander leads you deep into the bowels of the fortress. You expect heat, but the Great Foundry is dark and freezing. The massive pistons hang silent.<br><br>'It's the cold that kills us first,' the Commander admits, his breath misting. 'The **Ember-Heart**. It was our sun. Rook stole it. Without that heat, we can't forge the plating to stop the white growth. We are three days from being sealed inside our own tomb. Find him.'",
+				journal: "The Foundry is dead. Rook stole their power source. Without it, the Citadel freezes and the reef takes them.",
 				onEnter: (state) => {
 					state.fenceQuestActive = true;
 					return "Quest Started: Retrieve the Ember-Heart.";
@@ -5328,26 +5337,27 @@
 
 			'chaos_fence_confrontation': {
 				title: "Rook's Crucible",
-				text: "You follow the Compass to a fortified cavern beneath the Titan's Molt. Rook has built a makeshift **Alchemical Crucible**—a high-pressure rendering unit. The **Ember-Heart** pulses at its base, radiating infinite, sterile heat. Rook is shoveling white Hyper-Coral into the device, which spits out a thick, nutrient-rich slurry.<br><br>'Feast your eyes, Mariner!' Rook shouts, stirring the slurry. 'The plague is now the sustenance! With this, the Molt can live indefinitely! We never have to rely on their rotten supplies again!'",
+				text: "You follow the Compass to a hollowed-out chamber deep beneath the surface of the Molt. The heat here is suffocating. In the center, Rook stands before a jury-rigged machine of brass pipes and organic valves. The **Ember-Heart** pulses at its base, beating like a living thing.<br><br>Rook shovels chunks of the white reef-growth into the hopper. The machine groans and spits out a thick, glowing slurry. He offers you a spoonful. 'Don't look at me like that. It's ugly, but it's pure energy. The Citadel burns the Heart to make walls. I'm using it to turn the plague into food.'",
+				journal: "Found Rook. He's built a reactor. He's turning the infection into sustenance. It's disgusting, but... nobody here is starving.",
 				banter: {
 					'quinn': "He's right. The caloric value is immense. But... he controls the only furnace. He controls the price. This isn't freedom; it's a monopoly.",
 					'gareth': "He’s trading one set of chains for another! The Citadel makes weapons for survival; he's making food for tyranny."
 				},
 				choices: [
 					{ 
-						text: "Take Heart (Restore the Forge)", 
+						text: "Take Heart", 
 						nextScene: 'fence_resolution_order', 
 						type: 'action',
 						orderGain: 15
 					},
 					{ 
-						text: "Leave Heart (Sanction the Monopoly)", 
+						text: "Leave Heart", 
 						nextScene: 'fence_resolution_chaos', 
 						type: 'action',
 						chaosGain: 15
 					},
 					{ 
-						text: "Neutral: Demand 'Royalties'", 
+						text: "Demand 'Royalties'", 
 						nextScene: 'fence_resolution_neutral', 
 						type: 'action',
 						shillingGain: 50
@@ -5356,7 +5366,8 @@
 			},
 			'fence_resolution_order': {
 				title: "The Furnace Roars",
-				text: "You smash the alchemical pipework and rip the **Ember-Heart** free. Rook screams in fury as the Crucible falls cold. The new food source is gone. You return the Heart to the Citadel, restoring the industrial complex and the chance to defeat the Leviathan.",
+				text: "You kick the machine over. The slurry spills, hissing on the bone floor. You rip the **Ember-Heart** free, searing your gloves. Rook screams, 'You just starved us all! You chose stone over flesh!'<br><br>You leave him in the dark. Back at the Citadel, the Foundry roars to life. The pistons thunder, a rhythmic heartbeat of industry that shakes the very ocean. The walls will hold.",
+				journal: "I took the Heart back. The Citadel stands. Rook's people will hunger, but the defense holds.",
 				onEnter: (state) => {
 					if (!state.inventory.includes("Ember-Heart")) state.inventory.push("Ember-Heart");
 					state.fenceQuestActive = false;
@@ -5367,7 +5378,8 @@
 			},
 			'fence_resolution_chaos': {
 				title: "The New Tyrant",
-				text: "You step back. Rook nods, relieved. 'Good choice, Mariner. Go tell your commander that we've found a better way.' He hands you a massive jar of the nutrient slurry. You know he'll use this power to become the economic tyrant of the Molt, but he's secured the city's future.",
+				text: "You step back. Rook nods, wiping slurry from his chin. 'The old world is dead, Mariner. We have to eat the new one.'<br><br>He hands you a jar of the glowing paste. You know what will happen. He will become the King of the Molt, a tyrant of sustenance. But the refugees will live. Evolution is ugly.",
+				journal: "I let him keep it. The Order will fall, but the Molt will adapt. I tasted the slurry. It tastes like ash and life.",
 				onEnter: (state) => {
 					state.fenceQuestActive = false;
 					state.shillings += 25;
