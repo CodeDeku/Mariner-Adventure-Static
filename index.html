@@ -737,7 +737,7 @@
                 </div>
 
                 <!-- PLANAR SKILLS -->
-                <div id="planar-skills-container" class="hidden mb-2 pb-2 fade-in clean-spectral-title">
+                <div id="planar-skills-container" class="hidden pb-2 fade-in clean-spectral-title">
                     <div class="flex justify-between items-end mb-1 clean-spectral-title">
                         <span class="text-xs cinzel text-cyan-400"><i class="fas fa-bolt mr-1"></i> Horizon Walker</span>
                     </div>
@@ -1117,6 +1117,12 @@
                         desc: "Wolf King's Seneschal (Passive: Pack Tactics)",
                         active: false 
                     }
+					blink: {
+                        joined: false,
+                        name: "Blink",
+                        desc: "Displacer Cub (Active: Phase Shift)",
+                        active: false
+                    }
                 },
             };
         }
@@ -1152,7 +1158,7 @@
 
         // 2. BLINK LOGIC (Companion Interaction)
 			window.gameFunctions.triggerBlink = function() {
-				if (!gameState.skills.includes("Blink")) return;
+				if (!gameState.companions.blink.joined) return;
 
 				// SCENARIO A: In a Boss Fight / Danger Scene
 				// If the player clicks the button during a fight, give a hint or minor assist
@@ -1495,6 +1501,17 @@
                 btnText: "PASSIVE",
                 desc: "Key: Grants the ability to Planar Walk, stabilizing the tether's exit."
             }
+			"Mimic's Bile": { 
+                name: "Mimic's Bile",
+                type: 'consumable',
+                icon: 'fa-vial', 
+                color: 'text-purple-500',
+                btnText: "INSPECT", // Changed to INSPECT since we don't have a use case yet
+                desc: "Consumable: Corrosive acid harvested from a Mimic. Useful for alchemy or destruction.",
+                action: (state) => {
+                    return "Could be used to temper steel or melt locks.";
+                }
+            },
         };
         
         function getBonusForSkill(crewMember, skillType) {
@@ -2688,7 +2705,7 @@
                     }
                     
                     // Normal Act 1 State
-                    if (hasRing) {
+                    else if (hasRing) {
                         scenes['town_square'].text = "You return with the <span class='text-item'>Ring of Brass</span>. Fog from the Sunken Chapel is flooding the streets. The <span class='text-void'>Shadow threat</span> has escalated. You must pursue the Fire Path now.";
                     } 
                     else if (hasBlade) {
@@ -2832,7 +2849,7 @@
                     },
                     // KEEN SENSES (Consumes supplies, secondary option)
                     { 
-                        text: "Ring of Brass: Keen Senses Navigation (-2 Supplies)", 
+                        text: "Keen Senses Navigation", 
                         nextScene: 'sea_fog_partial', 
                         type: 'action', 
                         reqItem: 'Ring of Brass',
@@ -4828,7 +4845,7 @@
                 choices: [
                     // 1. BONES (Animal Handling) - Skill DC is adjusted in logic scene
                     { 
-                        text: "Bones: Feed & Soothe", 
+                        text: "Feed & Soothe", 
                         nextScene: 'cub_tame_check', 
                         type: 'skill', 
                         dc: 12, 
@@ -4866,10 +4883,10 @@
                 text: "You offer food and a steady hand. The cub eats effectively, stabilizing its phasing. It looks at you with deep, violet eyes, then headbutts your hand. <br><br>For a moment, your soul syncs with its frequency. You understand the geometry of the <span class='text-spectral'>Blink</span>—a reflexive, planar hop.",
                 journal: "Saved the cub. Learned the Blink skill. The cub blinked away into the ether.",
                 onEnter: (state) => {
-                    if (!state.skills.includes("Blink")) {
-                        state.skills.push("Blink");
-                        state.hasBlinkSkill = true; // Flag to hide event later
-                        return "Learned Skill: Blink (Planar Displacement).";
+                    if (!state.companions.blink.joined) {
+                        state.companions.blink.joined = true;
+                        state.hasBlinkSkill = true; // Keep this mainly for hiding the event
+                        return "Companion Gained: Blink.";
                     }
                     return null;
                 },
@@ -5507,9 +5524,6 @@
             window.confirmReset = confirmReset;
             window.resetGame = resetGame; 
             
-            // --- UI Update for Blink (Restored) ---
-            const blinkBtn = document.getElementById('btn-blink'); 
-            if(blinkBtn) blinkBtn.onclick = () => window.gameFunctions.triggerBlink(); 
 
             onAuthStateChanged(auth, async (u) => {
                 if (u) {
@@ -6517,11 +6531,12 @@
                         suppliesDisplay.classList.add('hidden');
                     }
 
-                    // 2. Allies Panel (Shows if Silas OR Blink is present)
-                    const hasSilas = Object.values(gameState.companions).some(c => c.joined);
-                    const hasBlink = gameState.skills.includes("Blink");
+                    // BLOCK 1: Allies Panel Visibility (Checks for Silas OR Blink)
+                    const hasSilas = gameState.companions.silas.joined;
+                    // CHANGED: Check the companion object, not skills
+                    const hasBlink = gameState.companions.blink.joined;
                     
-                    if (hasSilas || hasBlink) { // CHECK BOTH
+                    if (hasSilas || hasBlink) { 
                         companionPanel.classList.remove('hidden');
                         renderCompanions();
                     } else {
@@ -6769,7 +6784,7 @@
 						companionList.className = "grid grid-cols-2 gap-2";
 
                         // 1. BLINK (The Displacer Cub) - RESTORED
-                        if (gameState.skills.includes("Blink")) {
+                        if (gameState.companions.blink.joined) {
                              const blinkDiv = document.createElement('div');
                              // Green Styling (Emerald) to match Silas
                              blinkDiv.className = `p-2 rounded border border-emerald-700 bg-gray-900/80 shadow flex items-center justify-between transition-colors cursor-pointer hover:bg-emerald-900/30 group`;
