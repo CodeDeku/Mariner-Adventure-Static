@@ -8,6 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=Dancing+Script:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        /* --- CORE LAYOUT & TYPOGRAPHY --- */
         body {
             font-family: 'Crimson Text', serif;
             background-color: #050a10;
@@ -30,47 +31,215 @@
         ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #475569; }
         
+        .text-shadow { text-shadow: 0 2px 4px rgba(0,0,0,0.8); }
+        .fade-in { animation: fadeIn 0.8s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* --- GLOBAL BUTTON BASE (Refined) --- */
         .btn-game {
-            transition: all 0.2s;
+            transition: all 0.2s ease-out;
             position: relative;
             overflow: hidden;
             padding: 12px;
+            width: 100%; /* Ensure full width in game panels */
+            display: flex; /* Kept for alignment */
+            align-items: center; /* Kept for alignment */
+            justify-content: space-between; /* Kept for alignment */
+            border-radius: 4px; 
+            cursor: pointer;
         }
-        .btn-game:active { transform: translateY(1px); }
-        .text-shadow { text-shadow: 0 2px 4px rgba(0,0,0,0.8); }
+        .btn-game:active { transform: translateY(1px) !important; }
+        .btn-game:hover { transform: translateY(-1px); } 
         
-		/* --- CHANNEL BUTTON (HOLD INTERACTION) --- */
-        .btn-channel {
-            position: relative;
-            background: linear-gradient(90deg, #1e1b4b 0%, #312e81 100%);
-            border: 1px solid #818cf8;
-            color: #e0e7ff;
-            overflow: hidden;
+        .btn-disabled-cost {
+            opacity: 0.4;
+            cursor: not-allowed;
+            background-color: #1f2937 !important;
+            border-color: #475569 !important;
+            box-shadow: none !important;
+            transform: none !important;
+        }
+
+        /* --- 1. STANDARD BUTTON (Dark Blue-Grey / Muted) --- */
+        .btn-standard {
+            background: linear-gradient(180deg, #1f2937 0%, #111827 100%);
+            border: 1px solid #475569;
+            color: #cdd5e0;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+        }
+        .btn-standard:hover { 
+            border-color: #fbbf24; 
+            background: linear-gradient(180deg, #334155 0%, #1f2937 100%); 
+        }
+
+        /* --- 2. HERO BUTTON (Blue / Order / Artifact) --- */
+        @keyframes hero-pulse { 
+            0%, 100% { box-shadow: 0 0 4px rgba(59, 130, 246, 0.2); border-color: #60a5fa; } 
+            50% { box-shadow: 0 0 12px rgba(59, 130, 246, 0.5); border-color: #93c5fd; } 
+        }
+        .btn-hero { 
+            background: linear-gradient(90deg, rgba(30, 58, 138, 0.4) 0%, rgba(15, 23, 42, 0.6) 100%); 
+            border: 1px solid #60a5fa; 
+            color: #dbeafe; 
+            animation: hero-pulse 3s infinite ease-in-out; 
+        }
+        .btn-hero:hover { 
+            background: linear-gradient(90deg, rgba(30, 58, 138, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%); 
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.6); 
+        }
+        .hero-icon { color: #60a5fa; filter: drop-shadow(0 0 5px rgba(59, 130, 246, 0.8)); }
+
+        /* --- 3. FIRE BUTTON (Red / Absorb) --- */
+        @keyframes fire-pulse { 
+            0%, 100% { box-shadow: 0 0 3px rgba(239, 68, 68, 0.2); border-color: #f87171; } 
+            50% { box-shadow: 0 0 10px rgba(248, 113, 113, 0.4); border-color: #fca5a5; } 
+        }
+        .btn-fire-glow { 
+            background: linear-gradient(90deg, rgba(127, 29, 29, 0.3) 0%, rgba(69, 10, 10, 0.5) 100%); 
+            border: 1px solid #f87171; 
+            color: #fecaca; 
+            animation: fire-pulse 3s infinite ease-in-out; 
+        }
+        .btn-fire-glow:hover { 
+            background: linear-gradient(90deg, rgba(127, 29, 29, 0.5) 0%, rgba(69, 10, 10, 0.7) 100%);
+            border-color: #fca5a5; 
+            box-shadow: 0 0 15px rgba(248, 113, 113, 0.6); 
+        }
+
+        /* --- 4. SHADOW BUTTON (Primeval Awareness) --- */
+        @keyframes shadow-pulse { 
+            0%, 100% { box-shadow: 0 0 4px rgba(139, 92, 246, 0.2); border-color: #a78bfa; } 
+            50% { box-shadow: 0 0 12px rgba(167, 139, 250, 0.5); border-color: #d8b4fe; } 
+        }
+        .btn-shadow-glow { 
+            background: linear-gradient(90deg, rgba(88, 28, 135, 0.3) 0%, rgba(59, 7, 100, 0.5) 100%); 
+            border: 1px solid #a78bfa; 
+            color: #e9d5ff; 
+            animation: shadow-pulse 3s infinite ease-in-out; 
+        }
+        .btn-shadow-glow:hover { 
+            background: linear-gradient(90deg, rgba(88, 28, 135, 0.5) 0%, rgba(59, 7, 100, 0.7) 100%); 
+            border-color: #d8b4fe; 
+            box-shadow: 0 0 15px rgba(167, 139, 250, 0.6); 
+        }
+
+        /* --- 5. SUCCESS/SECRET BUTTON (Muted / No Glow) --- */
+        .btn-success-glow { 
+            background: linear-gradient(180deg, #374151 0%, #1f2937 100%);
+            border: 1px solid #9ca3af; 
+            color: #f3f4f6; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .btn-success-glow:hover { 
+            background: linear-gradient(180deg, #4b5563 0%, #374151 100%);
+            border-color: #d1d5db;
+            color: white;
+        }
+
+        /* --- 6. KEEN SENSES (Indigo + Brass) --- */
+        @keyframes keen-pulse { 
+            0%, 100% { border-color: #d97706; box-shadow: 0 0 2px rgba(217, 119, 6, 0.2); } 
+            50% { border-color: #fbbf24; box-shadow: 0 0 8px rgba(251, 191, 36, 0.4); } 
+        }
+        .btn-keen-senses { 
+            background: linear-gradient(90deg, rgba(49, 46, 129, 0.4) 0%, rgba(30, 27, 75, 0.6) 100%); 
+            border: 1px solid #d97706; 
+            color: #e0e7ff; 
+            animation: keen-pulse 3s infinite ease-in-out;
+        }
+        .btn-keen-senses:hover { 
+            background: linear-gradient(90deg, rgba(49, 46, 129, 0.6) 0%, rgba(30, 27, 75, 0.8) 100%); 
+            border-color: #fcd34d; 
+            box-shadow: 0 0 12px rgba(251, 191, 36, 0.5); 
+        }
+
+        /* --- 7. SPECTRAL LANTERN (Violet + Amber Hybrid) --- */
+        @keyframes lantern-pulse { 
+            0%, 100% { border-color: #f59e0b; box-shadow: inset 0 0 5px rgba(139, 92, 246, 0.1); } 
+            50% { border-color: #fcd34d; box-shadow: inset 0 0 15px rgba(139, 92, 246, 0.3); } 
+        }
+        .btn-lantern-glow { 
+            background: linear-gradient(90deg, rgba(88, 28, 135, 0.4) 0%, rgba(66, 32, 6, 0.4) 100%); 
+            border: 1px solid #f59e0b; 
+            color: #fef3c7; 
+            animation: lantern-pulse 3s infinite ease-in-out; 
+        }
+        .btn-lantern-glow:hover { 
+            background: linear-gradient(90deg, rgba(88, 28, 135, 0.6) 0%, rgba(66, 32, 6, 0.6) 100%);
+            border-color: #fde047; 
+            box-shadow: 0 0 12px rgba(253, 224, 71, 0.4); 
+        }
+
+        /* --- 8. ANCHOR BUTTON (Muted / Navigation) --- */
+        .btn-anchor { 
+            background: linear-gradient(180deg, #1f2937 0%, #111827 100%);
+            border: 1px solid #475569; 
+            color: #22d3ee; 
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2); 
+        }
+        .btn-anchor i { color: #22d3ee; }
+        .btn-anchor:hover { 
+            border-color: #fbbf24; 
+            background: linear-gradient(180deg, #334155 0%, #1f2937 100%);
+        }
+
+        /* --- 9. PULSE BUTTON (Amber / Search) --- */
+        @keyframes pulse-amber { 
+            0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.3); border-color: #f59e0b; } 
+            70% { box-shadow: 0 0 0 6px rgba(245, 158, 11, 0); border-color: #fbbf24; } 
+            100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); border-color: #f59e0b; } 
+        }
+        .btn-pulse { 
+            background: linear-gradient(90deg, rgba(120, 53, 15, 0.3) 0%, rgba(69, 26, 3, 0.5) 100%); 
+            border: 1px solid #f59e0b; 
+            color: #fef3c7; 
+            animation: pulse-amber 2s infinite; 
+        }
+        .btn-pulse:hover { 
+            background: linear-gradient(90deg, rgba(120, 53, 15, 0.5) 0%, rgba(69, 26, 3, 0.7) 100%);
+            border-color: #fbbf24; 
+            box-shadow: 0 0 10px rgba(245, 158, 11, 0.4); 
+        }
+
+        /* --- 10. PLANEWALK / ETHEREAL REVEAL --- */
+        @keyframes spectral-pulse { 
+            0%, 100% { box-shadow: 0 0 4px rgba(59, 130, 246, 0.3); border-color: #3b82f6; } 
+            50% { box-shadow: 0 0 12px rgba(59, 130, 246, 0.6); border-color: #60a5fa; } 
+        }
+        .btn-planewalk-reveal { 
+            background-color: rgba(30, 58, 138, 0.3); 
+            border-color: #60a5fa !important; 
+            color: #cffafe !important;
+            animation: spectral-pulse 2s infinite ease-in-out !important; 
+        }
+        .btn-planewalk-reveal:hover { 
+            background-color: rgba(30, 58, 138, 0.5);
+            border-color: #22d3ee !important; 
+            box-shadow: 0 0 15px rgba(34, 211, 238, 0.5); 
+        }
+        .spectral-active { 
+            animation: spectral-pulse 2s infinite ease-in-out !important; 
+            background-color: rgba(30, 58, 138, 0.3); 
+            border-color: #60a5fa !important; 
+        }
+
+        /* --- 11. CHANNEL BUTTON (HOLD) --- */
+        .btn-channel { 
+            background: linear-gradient(90deg, #1e1b4b 0%, #312e81 100%); 
+            border: 1px solid #818cf8; 
+            color: #e0e7ff; 
+            overflow: hidden; 
             user-select: none;
             -webkit-user-select: none;
             touch-action: none;
         }
-        
-        /* The Progress Bar Overlay */
-        .btn-channel::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            height: 100%;
-            width: 0%;
-            background: rgba(139, 92, 246, 0.6);
-            z-index: 0;
-            transition: width 0s;
+        .btn-channel::before { 
+            content: ''; position: absolute; top: 0; left: 0; height: 100%; width: 0%; 
+            background: rgba(139, 92, 246, 0.6); z-index: 0; transition: width 0s; 
         }
-        
-        /* The Animation State */
-        .btn-channel.channeling::before {
-            width: 100%;
-            transition: width var(--channel-duration) linear;
+        .btn-channel.channeling::before { 
+            width: 100%; transition: width var(--channel-duration, 3000ms) linear; 
         }
-        
-        /* Ensure text stays on top of the progress bar */
         .btn-content-wrapper {
             position: relative;
             z-index: 10;
@@ -78,65 +247,13 @@
             width: 100%;
             align-items: center;
         }
-		
-        /* SPECTRAL BLUE/GLOW DEFINITIONS (Centralized Theme) */
+
+        /* --- GAME-SPECIFIC UTILITIES --- */
+        .prologue-blur { filter: blur(4px); opacity: 0.5; pointer-events: none; transition: all 1s; }
+        .prologue-active { opacity: 1; filter: none; }
         
-        /* Crew Selection Active Glow (Border/Shadow) */
-        @keyframes spectral-pulse {
-            0%, 100% { box-shadow: 0 0 5px rgba(59, 130, 246, 0.5); border-color: #3b82f6; }
-            50% { box-shadow: 0 0 15px rgba(59, 130, 246, 0.8); border-color: #60a5fa; }
-        }
-        .spectral-active { 
-            animation: spectral-pulse 2s infinite; 
-            background-color: rgba(30, 58, 138, 0.3);
-            border-color: #60a5fa !important;
-        }
-
-        /* Text Color for all spectral elements */
-        .spectral-text-glow {
-            color: #93c5fd;
-            text-shadow: 0 0 5px rgba(59, 130, 246, 0.6);
-            font-weight: 700;
-        }
-		
-		/* --- TEXT HIGHLIGHTING SYSTEM --- */
-
-		.text-fire {
-			color: #fb923c;
-			text-shadow: 0 0 8px rgba(249, 115, 22, 0.6);
-			font-weight: 700;
-		}
-
-		.text-void {
-			color: #c084fc;
-			text-shadow: 0 0 8px rgba(147, 51, 234, 0.5);
-			font-weight: 700;
-		}
-
-		.text-spectral {
-			color: #67e8f9;
-			text-shadow: 0 0 8px rgba(34, 211, 238, 0.6);
-			font-weight: 700;
-		}
-
-		.text-item {
-			color: #fcd34d;
-			text-shadow: 0 0 5px rgba(245, 158, 11, 0.4);
-			font-weight: 700;
-		}
-
-		.text-danger {
-			color: #f87171;
-			text-shadow: 0 0 5px rgba(220, 38, 38, 0.6);
-			font-weight: 700;
-		}
-		.text-blood {
-            color: #ef4444;
-            text-shadow: 0 0 8px rgba(220, 38, 38, 0.8);
-            font-weight: 700;
-            font-family: 'Cinzel', serif;
-        }
-
+        .log-hidden { opacity: 0; pointer-events: none; transform: translateY(20px); }
+        .log-visible { opacity: 1; pointer-events: auto; transform: translateY(0); transition: all 1s ease-out; }
 
         /* Custom glow for FREE USE / Mushroom */
         @keyframes pulse-purple {
@@ -150,20 +267,19 @@
             color: #f3e8ff !important;
         }
 
-
-        /* --- TUTORIAL PULSE (AMBER) --- */
-        @keyframes pulse-amber {
+        /* Tutorial Pulse */
+        @keyframes pulse-amber-border {
             0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); border-color: #f59e0b; }
             70% { box-shadow: 0 0 0 10px rgba(245, 158, 11, 0); border-color: #fbbf24; }
             100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); border-color: #f59e0b; }
         }
         .tutorial-pulse { 
-            animation: pulse-amber 2s infinite; 
+            animation: pulse-amber-border 2s infinite; 
             border: 2px solid #f59e0b !important; 
             background-color: rgba(180, 83, 9, 0.4);
             z-index: 10;
         }
-
+        
         @keyframes item-pulse {
             0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.4); }
             50% { box-shadow: 0 0 10px 0 rgba(16, 185, 129, 0.2); border-color: rgba(16, 185, 129, 0.8); }
@@ -173,380 +289,69 @@
 
         #inf-marker { transition: left 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
 
-        /* --- HERO / ABILITY BUTTON STYLING (UNIFIED SIZE) --- */
-        
-        /* Base styles for all glowing/custom buttons */
-        .btn-hero, .btn-fire-glow, .btn-shadow-glow, .btn-success-glow, .btn-keen-senses, .btn-lantern-glow {
-            padding: 12px;
-            text-align: left;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            font-size: 1rem;
-            font-weight: 700;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
-            transition: all 0.2s;
-            position: relative;
-            overflow: hidden;
-        }
+        /* --- TEXT COLORS --- */
+        .text-fire { color: #fb923c; text-shadow: 0 0 8px rgba(249, 115, 22, 0.6); font-weight: 700; }
+        .text-void { color: #c084fc; text-shadow: 0 0 8px rgba(147, 51, 234, 0.5); font-weight: 700; }
+        .text-spectral { color: #67e8f9; text-shadow: 0 0 8px rgba(34, 211, 238, 0.6); font-weight: 700; }
+        .text-item { color: #fcd34d; text-shadow: 0 0 5px rgba(245, 158, 11, 0.4); font-weight: 700; }
+        .text-danger { color: #f87171; text-shadow: 0 0 5px rgba(220, 38, 38, 0.6); font-weight: 700; }
+        .text-blood { color: #ef4444; text-shadow: 0 0 8px rgba(220, 38, 38, 0.8); font-weight: 700; font-family: 'Cinzel', serif; }
+        .spectral-text-glow { color: #93c5fd; text-shadow: 0 0 5px rgba(59, 130, 246, 0.6); font-weight: 700; }
 
-        @keyframes hero-pulse {
-            0% { box-shadow: 0 0 5px rgba(59, 130, 246, 0.3); border-color: #60a5fa; }
-            50% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.6); border-color: #93c5fd; }
-            100% { box-shadow: 0 0 5px rgba(59, 130, 246, 0.3); border-color: #60a5fa; }
-        }
-
-        .btn-hero {
-            background: linear-gradient(90deg, rgba(30, 58, 138, 0.4) 0%, rgba(15, 23, 42, 0.6) 100%);
-            border: 1px solid #60a5fa;
-            color: #dbeafe;
-            animation: hero-pulse 2s infinite;
-        }
-        
-        .btn-hero:hover {
-            background: linear-gradient(90deg, rgba(30, 58, 138, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%);
-            box-shadow: 0 0 25px rgba(59, 130, 246, 0.8);
-            transform: translateY(-1px);
-        }
-        
-        /* Icon styling for hero buttons */
-        .hero-icon {
-            color: #60a5fa;
-            filter: drop-shadow(0 0 5px rgba(59, 130, 246, 0.8));
-        }
-
-        /* --- FIRE ELEMENTAL GLOW (Absorb Elements) --- */
-        @keyframes fire-pulse {
-            0%, 100% { box-shadow: 0 0 3px rgba(239, 68, 68, 0.3); border-color: #f87171; }
-            50% { box-shadow: 0 0 10px rgba(248, 113, 113, 0.5); border-color: #fca5a5; }
-        }
-        .btn-fire-glow {
-            background: linear-gradient(90deg, rgba(185, 28, 28, 0.3) 0%, rgba(15, 23, 42, 0.5) 100%);
-            border: 1px solid #f87171;
-            color: #fecaca;
-            animation: fire-pulse 2s infinite;
-        }
-
-        /* --- SHADOW/VOID GLOW (Primeval Awareness) --- */
-        @keyframes shadow-pulse {
-            0%, 100% { box-shadow: 0 0 3px rgba(139, 92, 246, 0.3); border-color: #a78bfa; }
-            50% { box-shadow: 0 0 10px rgba(167, 139, 250, 0.5); border-color: #d8b4fe; }
-        }
-        .btn-shadow-glow {
-            background: linear-gradient(90deg, rgba(88, 28, 135, 0.3) 0%, rgba(15, 23, 42, 0.5) 100%);
-            border: 1px solid #a78bfa;
-            color: #e9d5ff;
-            animation: shadow-pulse 2s infinite;
-        }
-
-        /* --- SUCCESS GLOW (Info Bypass) --- */
-		.btn-success-glow {
-			background-color: rgba(243, 244, 246, 0.1);
-			border: 1px solid #9ca3af;
-			box-shadow: 0 0 8px rgba(156, 163, 175, 0.3);
-			color: #f9fafb;
-			transition: all 0.2s;
-		}
-		.btn-success-glow:hover {
-			background-color: rgba(243, 244, 246, 0.2);
-			box-shadow: 0 0 12px rgba(255, 255, 255, 0.4);
-			transform: translateY(-1px);
-		}
-        
-        /* --- KEEN SENSES GLOW --- */
-        @keyframes keen-senses-pulse {
-            0%, 100% { 
-                box-shadow: 0 0 5px rgba(168, 85, 247, 0.4); 
-                border-color: #a855f7; 
-            }
-            50% { 
-                box-shadow: 0 0 12px rgba(192, 132, 252, 0.7); 
-                border-color: #c084fc; 
-            }
-        }
-        .btn-keen-senses {
-            background-color: #1f2937;
-            border: 1px solid #475569;
-            color: #e9d5ff;
-            animation: keen-senses-pulse 2s infinite;
-        }
-        .btn-keen-senses:hover {
-            border-color: #c084fc;
-            background-color: #334155;
-            transform: translateY(-1px);
-        }
-
-        /* --- SPECTRAL LANTERN GLOW --- */
-        @keyframes lantern-pulse {
-            0%, 100% { box-shadow: 0 0 5px rgba(253, 224, 71, 0.4); border-color: #fde047; }
-            50% { box-shadow: 0 0 15px rgba(253, 224, 71, 0.7); border-color: #fef08a; }
-        }
-        .btn-lantern-glow {
-            background: linear-gradient(90deg, rgba(88, 28, 135, 0.3) 0%, rgba(15, 23, 42, 0.5) 100%);
-            border: 1px solid #fde047;
-            color: #fefce8;
-            animation: lantern-pulse 3s infinite;
-        }
-        .btn-lantern-glow:hover {
-            border-color: #fef08a; 
-            box-shadow: 0 0 20px rgba(253, 224, 71, 0.8);
-            transform: translateY(-1px);
-        }
-
-        /* --- UNAFFORDABLE STYLING --- */
-        .btn-disabled-cost {
-            opacity: 0.4;
-            cursor: not-allowed;
-            background-color: #1f2937 !important;
-            border-color: #475569 !important;
-        }
-        .btn-disabled-cost:hover {
-             transform: none;
-             box-shadow: none;
-        }
-		
-		/* --- ANCHOR / NAVIGATION BUTTON --- */
-        .btn-anchor {
-            background-color: #1f2937; 
-            border: 1px solid #06b6d4;
-            color: #e5e7eb;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        }
-        .btn-anchor:hover {
-            background-color: #374151;
-            border-color: #67e8f9; 
-            transform: translateY(-1px);
-        }
-		
-		/* --- PLANESWALK BUTTON --- */
-		.btn-planewalk-reveal {
-            animation: spectral-pulse 2s infinite; 
-            background-color: rgba(30, 58, 138, 0.3);
-            border-color: #60a5fa !important;
-            color: #cffafe !important;
-        }
-		
-		/* --- PULSE BUTTON (AMBER) --- */
-        .btn-pulse {
-            background: linear-gradient(90deg, rgba(120, 53, 15, 0.6) 0%, rgba(69, 26, 3, 0.8) 100%);
-            border: 1px solid #f59e0b;
-            color: #fef3c7;
-            box-shadow: 0 0 10px rgba(245, 158, 11, 0.2);
-            animation: pulse-amber 2s infinite;
-        }
-        .btn-pulse:hover {
-            border-color: #fbbf24;
-            box-shadow: 0 0 15px rgba(245, 158, 11, 0.5);
-            transform: translateY(-1px);
-        }
-
-
-        /* --- LORE TOOLTIPS --- */
-        .memory-keyword {
-            color: #93c5fd;
-            text-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
-            cursor: help;
-            position: relative;
-            transition: all 0.3s ease;
-            font-weight: 600;
-            border-bottom: 1px solid transparent; 
-        }
-        .memory-keyword:hover {
-            text-shadow: 0 0 12px rgba(59, 130, 246, 0.9), 0 0 2px #fff;
-            color: #bfdbfe;
-        }
-        /* Tooltip Box */
-        .memory-keyword:hover::after {
-            content: attr(data-lore);
-            position: absolute;
-            bottom: 100%;
-            left: 50%;
-            transform: translateX(-50%) translateY(-8px);
-            background: #0f172a;
-            border: 1px solid #3b82f6;
-            color: #e2e8f0;
-            padding: 10px;
-            border-radius: 4px;
-            width: 240px;
-            font-size: 0.85rem;
-            line-height: 1.4;
-            z-index: 100;
-            pointer-events: none;
-            font-family: 'Crimson Text', serif;
-            box-shadow: 0 0 20px rgba(59, 130, 246, 0.2);
-            text-align: center;
-            white-space: normal;
-            opacity: 0;
-            animation: fadeInTooltip 0.2s forwards;
-        }
+        /* --- TOOLTIPS --- */
+        .memory-keyword { color: #93c5fd; text-shadow: 0 0 8px rgba(59, 130, 246, 0.5); cursor: help; position: relative; font-weight: 600; border-bottom: 1px solid transparent; transition: all 0.3s ease; }
+        .memory-keyword:hover { text-shadow: 0 0 12px rgba(59, 130, 246, 0.9), 0 0 2px #fff; color: #bfdbfe; }
+        .memory-keyword:hover::after { content: attr(data-lore); position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%) translateY(-8px); background: #0f172a; border: 1px solid #3b82f6; color: #e2e8f0; padding: 10px; border-radius: 4px; width: 240px; font-size: 0.85rem; line-height: 1.4; z-index: 100; pointer-events: none; font-family: 'Crimson Text', serif; box-shadow: 0 0 20px rgba(59, 130, 246, 0.2); text-align: center; white-space: normal; animation: fadeInTooltip 0.2s forwards; }
+        .memory-keyword:hover::before { content: ''; position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%) translateY(0px); border-width: 6px; border-style: solid; border-color: #3b82f6 transparent transparent transparent; z-index: 100; animation: fadeInTooltip 0.2s forwards; }
         @keyframes fadeInTooltip { to { opacity: 1; } }
 
-        /* Tooltip Arrow */
-        .memory-keyword:hover::before {
-            content: '';
-            position: absolute;
-            bottom: 100%;
-            left: 50%;
-            transform: translateX(-50%) translateY(0px);
-            border-width: 6px;
-            border-style: solid;
-            border-color: #3b82f6 transparent transparent transparent;
-            z-index: 100;
-            opacity: 0;
-            animation: fadeInTooltip 0.2s forwards;
-        }
+        /* --- FX & ATMOSPHERE --- */
+        #fx-overlay { position: absolute; inset: 0; pointer-events: none; z-index: 20; transition: box-shadow 0.5s ease; }
+        
+        @keyframes rift-pulse-anim { 0%, 100% { box-shadow: inset 0 0 20px 0px rgba(139, 92, 246, 0.1); background-color: rgba(139, 92, 246, 0.05); } 50% { box-shadow: inset 0 0 80px 20px rgba(139, 92, 246, 0.4); background-color: rgba(139, 92, 246, 0.15); } }
+        .fx-rift-pulse { animation: rift-pulse-anim 4s infinite ease-in-out; mix-blend-mode: overlay; }
 
-        /* --- ATMOSPHERIC FX --- */
-        #fx-overlay {
-            position: absolute;
-            inset: 0;
-            pointer-events: none;
-            z-index: 20;
-            transition: box-shadow 0.5s ease;
-        }
+        @keyframes rift-collapse-anim { 0% { box-shadow: inset 0 0 30px 10px rgba(109, 40, 217, 0.4); background-color: rgba(88, 28, 135, 0.05); } 50% { box-shadow: inset 0 0 90px 30px rgba(139, 92, 246, 0.5); background-color: rgba(124, 58, 237, 0.10); } 100% { box-shadow: inset 0 0 30px 10px rgba(109, 40, 217, 0.4); background-color: rgba(88, 28, 135, 0.05); } }
+        .fx-rift-collapsed { animation: rift-collapse-anim 4s infinite ease-in-out !important; mix-blend-mode: normal !important; z-index: 25; border: 1px solid rgba(139, 92, 246, 0.4); }
 
-		/* --- UNIFIED RIFT FX SYSTEM --- */
+        @keyframes flash-red-anim { 0% { background-color: rgba(220, 38, 38, 0.6); } 100% { background-color: transparent; } }
+        .fx-flash-red { animation: flash-red-anim 0.4s ease-out forwards; }
 
-		/* State 1: Rift Pulse (The Threat) */
-		@keyframes rift-pulse-anim {
-			0%, 100% { box-shadow: inset 0 0 20px 0px rgba(139, 92, 246, 0.1); background-color: rgba(139, 92, 246, 0.05); }
-			50% { box-shadow: inset 0 0 80px 20px rgba(139, 92, 246, 0.4); background-color: rgba(139, 92, 246, 0.15); }
-		}
-		.fx-rift-pulse {
-			animation: rift-pulse-anim 4s infinite ease-in-out;
-			mix-blend-mode: overlay;
-		}
-		/* State 2: Rift Collapsed (The Failure) */
-		@keyframes rift-collapse-anim {
-			0% { 
-				box-shadow: inset 0 0 30px 10px rgba(109, 40, 217, 0.4);
-				background-color: rgba(88, 28, 135, 0.05); 
-			}
-			50% { 
-				box-shadow: inset 0 0 90px 30px rgba(139, 92, 246, 0.5);
-				background-color: rgba(124, 58, 237, 0.10);
-			}
-			100% { 
-				box-shadow: inset 0 0 30px 10px rgba(109, 40, 217, 0.4); 
-				background-color: rgba(88, 28, 135, 0.05); 
-			}
-		}
+        #vignette-overlay { box-shadow: inset 0 0 80px 30px rgba(127, 29, 29, 0.5); }
+        .vignette-active { opacity: 1 !important; }
+        
+        @keyframes heartbeat-anim { 0% { box-shadow: inset 0 0 20px 5px rgba(234, 88, 12, 0.1); } 50% { box-shadow: inset 0 0 60px 20px rgba(245, 158, 11, 0.3); } 100% { box-shadow: inset 0 0 20px 5px rgba(234, 88, 12, 0.1); } }
+        .fx-heartbeat-slow { animation: heartbeat-anim 3s infinite ease-in-out; opacity: 1 !important; }
+        .fx-heartbeat-fast { animation: heartbeat-anim 0.8s infinite ease-in-out; opacity: 1 !important; }
 
-		.fx-rift-collapsed {
-			animation: rift-collapse-anim 4s infinite ease-in-out !important; 
-			mix-blend-mode: normal !important; 
-			z-index: 25;
-			border: 1px solid rgba(139, 92, 246, 0.4); 
-		}
+        .water-stained { background-color: #1e293b; background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23334155' fill-opacity='0.1' fill-rule='evenodd'/%3E%3C/svg%3E"); }
 
-        @keyframes flash-red-anim {
-            0% { background-color: rgba(220, 38, 38, 0.6); }
-            100% { background-color: transparent; }
+        /* --- ETHEREAL PLANE THEME --- */
+        body.plane-ethereal { background-color: #020617; transition: background-color 1s ease; }
+        
+        body.plane-ethereal .text-amber-500, body.plane-ethereal .text-amber-600, body.plane-ethereal .text-amber-700 { color: #22d3ee !important; text-shadow: 0 0 10px rgba(34, 211, 238, 0.6); }
+        body.plane-ethereal .text-gray-300, body.plane-ethereal .text-gray-400 { color: #e2e8f0 !important; }
+        body.plane-ethereal h1, body.plane-ethereal h2, body.plane-ethereal h3, body.plane-ethereal .cinzel { color: #67e8f9 !important; text-shadow: 0 0 15px rgba(103, 232, 249, 0.4); }
+        
+        /* Panels */
+        body.plane-ethereal #stats-panel, body.plane-ethereal #main-scene-text, body.plane-ethereal #journal-container { 
+            background-color: rgba(15, 23, 42, 0.8) !important; 
+            backdrop-filter: blur(5px); 
+            box-shadow: 0 0 30px rgba(34, 211, 238, 0.05);
         }
-        .fx-flash-red {
-            animation: flash-red-anim 0.4s ease-out forwards;
-        }
-
-		#vignette-overlay {
-			box-shadow: inset 0 0 80px 30px rgba(127, 29, 29, 0.5);
-		}
-		.vignette-active {
-			opacity: 1 !important;
-		}
-		
-		/* --- HEARTBEAT VIGNETTE FX --- */
-        @keyframes heartbeat-anim {
-            0% { box-shadow: inset 0 0 20px 5px rgba(234, 88, 12, 0.1); }
-            50% { box-shadow: inset 0 0 60px 20px rgba(245, 158, 11, 0.3); } 
-            100% { box-shadow: inset 0 0 20px 5px rgba(234, 88, 12, 0.1); }
-        }
-        .fx-heartbeat-slow {
-            animation: heartbeat-anim 3s infinite ease-in-out;
-            opacity: 1 !important; 
-        }
-        .fx-heartbeat-fast {
-            animation: heartbeat-anim 0.8s infinite ease-in-out; 
-            opacity: 1 !important;
-        }
-
-        .water-stained {
-            background-color: #1e293b;
-            background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23334155' fill-opacity='0.1' fill-rule='evenodd'/%3E%3C/svg%3E");
+        body.plane-ethereal .bg-gray-800:not(#stats-panel):not(#journal-container), body.plane-ethereal .bg-gray-900 {
+            background-color: rgba(15, 23, 42, 0.6) !important;
+            box-shadow: none !important; 
         }
         
-        .fade-in { animation: fadeIn 0.8s ease-in; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-        /* Blur UI when in prologue */
-        .prologue-blur { filter: blur(4px); opacity: 0.5; pointer-events: none; transition: all 1s; }
-        .prologue-active { opacity: 1; filter: none; }
-        
-        /* Hidden Log State */
-        .log-hidden { opacity: 0; pointer-events: none; transform: translateY(20px); }
-        .log-visible { opacity: 1; pointer-events: auto; transform: translateY(0); transition: all 1s ease-out; }
-
-        /* --- ETHEREAL PLANE THEME (SYSTEM OVERRIDE) --- */
-        
-        /* 1. Global Background & Transition */
-        body.plane-ethereal {
-            background-color: #020617;
-            transition: background-color 1s ease;
-        }
-
-        /* 2. TEXT SHIFTS */
-        body.plane-ethereal .text-amber-500,
-        body.plane-ethereal .text-amber-600,
-        body.plane-ethereal .text-amber-700 {
-            color: #22d3ee !important;
-            text-shadow: 0 0 10px rgba(34, 211, 238, 0.6);
-        }
-        body.plane-ethereal .text-gray-300,
-        body.plane-ethereal .text-gray-400 {
-            color: #e2e8f0 !important;
-        }
-        body.plane-ethereal h1, 
-        body.plane-ethereal h2, 
-        body.plane-ethereal h3 {
-            color: #67e8f9 !important;
-            text-shadow: 0 0 15px rgba(103, 232, 249, 0.4);
-        }
-
-        /* 3. PANEL TRANSFORMATIONS */
-		body.plane-ethereal #stats-panel,
-		body.plane-ethereal #main-scene-text,
-		body.plane-ethereal #journal-container { 
-			background-color: rgba(15, 23, 42, 0.8) !important; 
-			backdrop-filter: blur(5px); 
-			box-shadow: 0 0 30px rgba(34, 211, 238, 0.05);
-		}
-
-		body.plane-ethereal .bg-gray-800:not(#stats-panel):not(#journal-container),
-		body.plane-ethereal .bg-gray-900 {
-			background-color: rgba(15, 23, 42, 0.6) !important;
-			box-shadow: none !important; 
-		}
-
-        /* 4. BORDER GLOW */
-        body.plane-ethereal .border-gray-700,
-        body.plane-ethereal .border-gray-600 {
+        /* Borders */
+        body.plane-ethereal .border-gray-700, body.plane-ethereal .border-gray-600 {
             border-color: #1e3a8a !important;
             box-shadow: 0 0 8px rgba(59, 130, 246, 0.3);
         }
-
-        /* 5. JOURNAL OVERRIDE */
-        body.plane-ethereal .water-stained {
-            background-image: none !important;
-            background: linear-gradient(180deg, #0f172a 0%, #172554 100%) !important;
-        }
-        body.plane-ethereal #journal-container {
-            border-color: #60a5fa !important;
-        }
-        body.plane-ethereal .journal-font {
-            color: #bae6fd !important;
-            font-family: 'Dancing Script', cursive !important;
-        }
-
-        /* 6. STANDARD BUTTON OVERRIDE */
-        body.plane-ethereal .btn-game:not(.btn-hero):not(.btn-fire-glow):not(.btn-shadow-glow):not(.btn-success-glow):not(.btn-keen-senses):not(.btn-lantern-glow) {
+        
+        /* Buttons Override */
+        body.plane-ethereal .btn-game:not(.btn-hero):not(.btn-fire-glow):not(.btn-shadow-glow):not(.btn-success-glow):not(.btn-keen-senses):not(.btn-lantern-glow):not(.btn-planewalk-reveal) {
             background: linear-gradient(90deg, rgba(30, 27, 75, 0.9) 0%, rgba(15, 23, 42, 0.9) 100%) !important;
             border-color: #4f46e5 !important;
             color: #e0e7ff !important;
@@ -557,37 +362,20 @@
             box-shadow: 0 0 15px rgba(34, 211, 238, 0.4);
             transform: translateX(5px);
         }
+
+        /* Journal Override */
+        body.plane-ethereal .water-stained { background-image: none !important; background: linear-gradient(180deg, #0f172a 0%, #172554 100%) !important; }
+        body.plane-ethereal #journal-container { border-color: #60a5fa !important; }
+        body.plane-ethereal .journal-font { color: #bae6fd !important; font-family: 'Dancing Script', cursive !important; }
         
-        /* 7. SCENE IMAGE FILTER */
-		body.plane-ethereal #scene-image {
-			filter: brightness(1.1) contrast(1.05); 
-			mix-blend-mode: normal; 
-		}
+        /* Image Filter */
+        body.plane-ethereal #scene-image { filter: brightness(1.1) contrast(1.05); mix-blend-mode: normal; }
+        body.plane-ethereal .clean-spectral-title { box-shadow: none !important; background: transparent !important; border-color: #1e3a8a !important; }
 
-        /* ACT 2: Tether Bar Glow */
-        .bg-tether {
-            background: linear-gradient(90deg, #06b6d4 0%, #cffafe 100%);
-            box-shadow: 0 0 10px rgba(34, 211, 238, 0.6);
-        }
-
-        /* ACT 2: Map Overlay Mode */
-		.map-active #scene-image {
-			filter: brightness(1.1) !important; 
-			border: 2px solid #22d3ee;
-		}
-
-        /* ACT 2: Text for Ethereal Dice */
-        .text-spectral-d8 {
-            color: #67e8f9;
-            text-shadow: 0 0 10px #67e8f9;
-        }
-		
-		/* Remove box-shadow glow from internal headers in Ethereal Mode */
-		body.plane-ethereal .clean-spectral-title {
-			box-shadow: none !important;
-			background: transparent !important;
-			border-color: #1e3a8a !important;
-		}
+        /* --- ACT 2 & 3 SPECIFICS --- */
+        .bg-tether { background: linear-gradient(90deg, #06b6d4 0%, #cffafe 100%); box-shadow: 0 0 10px rgba(34, 211, 238, 0.6); }
+        .map-active #scene-image { filter: brightness(1.1) !important; border: 2px solid #22d3ee; }
+        .text-spectral-d8 { color: #67e8f9; text-shadow: 0 0 10px #67e8f9; }
     </style>
 </head>
 <body>
