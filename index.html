@@ -7122,9 +7122,9 @@
 							silasDiv.innerHTML = `
 								<div class="flex items-center gap-2">
 									<i class="fas fa-moon text-lg text-emerald-400"></i>
-									<div class="text-left leading-none">
+									<div class="text-left">
 										<span class="font-bold text-xs cinzel text-emerald-300 block">Silas</span>
-										<span class="text-[10px] text-gray-500 italic block leading-none">Seneschal (Pack Tactics)</span>
+										<span class="text-[10px] text-gray-500 italic block">Seneschal (Pack Tactics)</span>
 									</div>
 								</div>
 								${gameState.isBossCombat ? `
@@ -7164,7 +7164,6 @@
 								`;
 							} else {
 								// Passive Role (Rest/Utility) (PHASE OUT)
-								// FIX 1: Removed the custom glow class from the button tag itself
 								actionButtonHTML = `
 									<button onclick="window.gameFunctions.triggerBlink()"
 											class="btn-game px-2 py-1 text-xs rounded transition-all bg-emerald-900/40 text-emerald-300 hover:bg-emerald-800/60">
@@ -7176,9 +7175,9 @@
 							blinkDiv.innerHTML = `
 								<div class="flex items-center gap-2">
 									<i class="fas fa-paw text-lg text-emerald-400"></i>
-									<div class="text-left leading-none">
+									<div class="text-left">
 										<span class="font-bold text-xs cinzel text-emerald-300 block">Blink</span>
-										<span class="text-[10px] text-gray-500 italic block leading-none">Phase-Cub</span>
+										<span class="text-[10px] text-gray-500 italic block">Phase-Cub</span>
 									</div>
 								</div>
 								${actionButtonHTML}
