@@ -812,6 +812,10 @@
             'sanguine_spire_entry': 'images/gothic_sea_spire.jpg',
             'sea_event_fog': 'images/fog_at_sea.jpg',
 			'silas_sanctuary': 'images/dogtooth_cliff_wall.jpg',
+			'iron_citadel': 'images/iron_citadel.jpg',
+			'titans_molt': 'images/titans_molt.jpg',
+			'coral_hulk': 'images/coral_hulk.jpg',
+			'hyper_coral_breach': 'images/hyper_coral_breach.jpg',
 
 			'default': 'https://placehold.co/600x400/0f172a/1e293b?text=The+Void' 
 		};
@@ -847,6 +851,7 @@
                 hasBlinkSkill: false,
 
                 act3Started: false,
+				factionAligned: null,
                 shipName: "The Iron Lung",
                 supplies: 10, 
                 knownIslands: ['port_hub'],
@@ -897,7 +902,15 @@
         let activeCrewMember = null;
         
         // --- WINDOW FUNCTIONS FOR HTML BUTTONS ---
-        window.gameFunctions = {};
+		window.gameFunctions = {}; // Initialize empty object
+
+		// 1. CONTRABAND CHECKER
+		window.gameFunctions.checkForContraband = function() {
+			return gameState.inventory.some(itemName => {
+				const item = itemRegistry[itemName];
+				return item && item.isContraband;
+			});
+		};
 		
 		// --- COMBAT ENGINE (BOSS BATTLES) ---
 
@@ -914,97 +927,125 @@
         }
 
         window.resolveCombatRound = function(attackType) {
-            const state = gameState;
-            let playerDmg = 0;
-            let log = "";
-            
-            // 1. CALCULATE PLAYER DAMAGE
-            if (attackType === 'valor_strike') {
-                // Base: 1d8+1 -> Avg 5. + Bonus vs Vampires.
-                playerDmg = Math.floor(Math.random() * 8) + 6; 
-                // Theme: The Sword is designed for this fight.
-                log += "The Sword of Valor flares with white fire! ";
-            } 
-            else if (attackType === 'heavy_strike') {
-                // Generic heavy weapon (if they somehow lost the sword)
-                playerDmg = Math.floor(Math.random() * 6) + 2; 
-            }
-            else if (attackType === 'item_holy_water') {
-                playerDmg = 25; // Massive damage vs Vampires
-                log += "The Holy Water burns their flesh like acid! ";
-            }
-            else if (attackType === 'item_fire') {
-                playerDmg = 20; 
-                log += "The Alchemical Fire engulfs them! ";
-            }
-            else if (attackType === 'item_flash') {
-                // Utility: Doesn't damage, but prevents enemy attack this turn
-                playerDmg = 0;
-                log += "Flash Powder blinds them! They cannot strike back this turn. ";
-            }
+			const state = gameState;
+			let playerDmg = 0;
+			let log = "";
+			
+			// --- 1. CALCULATE PLAYER DAMAGE ---
+			// Level Up Bonus: +1 Base Damage 
+			const levelBonus = state.levelUpDamage ? 1 : 0;
 
-            // BLINK CRIT MODIFIER (Phase Shift)
-           if (state.nextAttackCrit && playerDmg > 0) {
-                playerDmg = Math.floor(playerDmg * 2.5); // Massive Crit
-                state.nextAttackCrit = false;
-                // CHANGED: text-purple-400 to text-emerald-400
-                log += "<span class='text-emerald-400 font-bold'>PHASE STRIKE! (Crit)</span> ";
-            }
+			if (attackType === 'valor_strike') {
+				playerDmg = Math.floor(Math.random() * 8) + 6 + levelBonus; 
+				log += "The Sword of Valor flares with white fire! ";
+			} 
+			else if (attackType === 'heavy_strike') {
+				playerDmg = Math.floor(Math.random() * 6) + 2 + levelBonus; 
+			}
+			else if (attackType === 'item_holy_water') {
+				playerDmg = 25; 
+				log += "The Holy Water burns their flesh like acid! ";
+			}
+			else if (attackType === 'item_fire') {
+				playerDmg = 20; 
+				log += "The Alchemical Fire engulfs them! ";
+			}
+			else if (attackType === 'item_flash') {
+				playerDmg = 0;
+				log += "Flash Powder blinds them! They cannot strike back this turn. ";
+			}
+			// NEW: CHAOS WEAPON (STAKE DRIVER) 
+			else if (attackType === 'item_stake_driver') {
+				playerDmg = Math.floor(Math.random() * 8) + 4 + levelBonus;
+				log += "<b>THWACK!</b> The bone bolt pins the enemy! (Stunned). ";
+			}
 
-            // APPLY DAMAGE TO BOSS
-            state.enemyHP -= playerDmg;
-            if (playerDmg > 0) log += `You dealt <b>${playerDmg}</b> damage to the ${state.currentEnemy}. `;
+			// BLINK CRIT MODIFIER
+			if (state.nextAttackCrit && playerDmg > 0) {
+				playerDmg = Math.floor(playerDmg * 2.5); 
+				state.nextAttackCrit = false;
+				log += "<span class='text-emerald-400 font-bold'>PHASE STRIKE! (Crit)</span> ";
+			}
 
-            // 2. CHECK VICTORY
-            if (state.enemyHP <= 0) {
-                state.enemyHP = 0;
-                state.isBossCombat = false;
-                audioManager.playClash();
-                addToHistory(log + ` The ${state.currentEnemy} crumble to ash!`, 'combat');
-                
-                // Route to Victory
-                renderScene('spire_victory');
-                return;
-            }
+			// APPLY DAMAGE TO BOSS
+			state.enemyHP -= playerDmg;
+			if (playerDmg > 0) log += `You dealt <b>${playerDmg}</b> damage to the ${state.currentEnemy}. `;
 
-            // 3. ENEMY RETALIATION
-            let enemySkipped = (attackType === 'item_flash'); // Flash powder skips enemy turn
+			// --- 2. CHECK VICTORY ---
+			if (state.enemyHP <= 0) {
+				state.enemyHP = 0;
+				state.isBossCombat = false;
+				audioManager.playClash();
+				addToHistory(log + ` The ${state.currentEnemy} falls!`, 'combat');
+				
+				// Routing for specific bosses
+				if (state.currentEnemy === 'Coral-Hulk') renderScene('coral_hulk_victory');
+				else renderScene('spire_victory');
+				return;
+			}
 
-            if (!enemySkipped) {
-                let enemyDmg = Math.floor(Math.random() * (state.enemyDamageRange[1] - state.enemyDamageRange[0] + 1)) + state.enemyDamageRange[0];
+			// --- 3. ENEMY LOGIC (RETALIATION & REGEN) ---
+			
+			// Check Stun (Flash Powder or Stake Driver)
+			let enemySkipped = (attackType === 'item_flash' || attackType === 'item_stake_driver'); 
 
-                // SILAS TANK MODIFIER (Shield)
-                if (state.negateNextDamage) {
-                    enemyDmg = 0;
-                    state.negateNextDamage = false; 
-                    log += ` <span class='text-emerald-400 font-bold'>Silas blocked the draining strike!</span>`;
-                } else {
-                    // BLINK EVASION MODIFIER (Passive Dodge Chance logic could go here, 
-                    // but we used Blink for Crits. Let's stick to standard damage logic)
-                    
-                    const oldHP = state.currentHP;
-                    state.currentHP = applyDamage(state.currentHP, enemyDmg);
-                    const actualTaken = oldHP - state.currentHP;
-                    
-                    if (actualTaken > 0) {
-                        log += ` The Elders drain you for <b>${actualTaken}</b> damage!`;
-                        fxManager.flashRed();
-                    } else {
-                        log += ` Your armor absorbed the blow.`;
-                    }
-                }
-            }
+			if (!enemySkipped) {
+				let enemyDmg = Math.floor(Math.random() * (state.enemyDamageRange[1] - state.enemyDamageRange[0] + 1)) + state.enemyDamageRange[0];
 
-            // 4. COOLDOWN TICK
-            if (state.allyCooldowns.silas > 0) state.allyCooldowns.silas--;
-            if (state.allyCooldowns.blink > 0) state.allyCooldowns.blink--;
+				// NEW: MIRROR SHIELD REFLECTION 
+				if (attackType === 'reflect_stance') {
+					log += ` <span class='text-blue-300 font-bold'>Mirror Shield reflects the attack!</span> You take 0 damage. The enemy takes ${enemyDmg}.`;
+					state.enemyHP -= enemyDmg; // Deal damage back
+					enemyDmg = 0; // Take no damage
+					 // Re-check victory in case reflection killed it
+					 if (state.enemyHP <= 0) {
+						state.enemyHP = 0;
+						state.isBossCombat = false;
+						audioManager.playClash();
+						renderScene('coral_hulk_victory');
+						return;
+					}
+				}
+				// PASSIVE MITIGATION (Mirror Shield & Spyglass)
+				else {
+					if (state.inventory.includes("Mirror Shield")) enemyDmg = Math.max(0, enemyDmg - 1);
+					if (state.inventory.includes("Salt-Warped Spyglass") && state.influence <= -15) enemyDmg = Math.max(0, enemyDmg - 1);
 
-            addToHistory(log, 'combat');
-            updateUI(); 
-            
-            // Re-render to update Health Bar
-            renderScene(state.currentSceneId); 
-        };
+					// SILAS TANK MODIFIER
+					if (state.negateNextDamage) {
+						enemyDmg = 0;
+						state.negateNextDamage = false; 
+						log += ` <span class='text-emerald-400 font-bold'>Silas blocked the strike!</span>`;
+					} else {
+						const oldHP = state.currentHP;
+						state.currentHP = applyDamage(state.currentHP, enemyDmg);
+						const actualTaken = oldHP - state.currentHP;
+						
+						if (actualTaken > 0) {
+							log += ` The ${state.currentEnemy} hits for <b>${actualTaken}</b> damage!`;
+							fxManager.flashRed();
+						} else {
+							log += ` Your armor absorbed the blow.`;
+						}
+					}
+				}
+			}
+
+			// --- 4. REGENERATION (CORAL-HULK SPECIFIC) [cite: 41, 42] ---
+			if (state.currentEnemy === 'Coral-Hulk' && state.enemyHP > 0) {
+				const regenAmount = 5;
+				state.enemyHP = Math.min(state.maxEnemyHP, state.enemyHP + regenAmount);
+				log += ` <span class='text-red-400 font-bold animate-pulse'>The Hyper-Coral knits flesh together (+${regenAmount} HP Regen).</span>`;
+			}
+
+			// 5. COOLDOWN TICK
+			if (state.allyCooldowns.silas > 0) state.allyCooldowns.silas--;
+			if (state.allyCooldowns.blink > 0) state.allyCooldowns.blink--;
+
+			addToHistory(log, 'combat');
+			updateUI(); 
+			renderScene(state.currentSceneId); 
+		};
 		
 
         // 1. PLANE WALK LOGIC
@@ -1053,46 +1094,7 @@
 				}
 			};
 			
-					const isSilasJoined = gameState.companions.silas.joined;
-                    const isBlinkJoined = gameState.companions.blink.joined;
-                    
-                    if (isSilasJoined || isBlinkJoined) { 
-                        companionPanel.classList.remove('hidden');
-                        renderCompanions(isSilasJoined, isBlinkJoined);
-                    } else {
-                        companionPanel.classList.add('hidden');
-                    }
-                    
-                    // --- NEW LAYOUT LOGIC (50/50 Split Check) ---
-                    const abilitiesWrapper = document.getElementById('abilities-wrapper');
-                    const hasPlaneWalk = gameState.skills.includes("Plane Walking");
-                    
-                    // Calculate total allies
-                    let allyCount = 0;
-                    if (isSilasJoined) allyCount++;
-                    if (isBlinkJoined) allyCount++;
-
-                    // Logic: If we have Horizon Walker AND exactly 1 Ally, use 50/50 Grid.
-                    // Otherwise (0 allies, or 2+ allies), use Vertical Stack (Flex Col).
-                    if (hasPlaneWalk && allyCount === 1) {
-                        abilitiesWrapper.classList.remove('flex', 'flex-col');
-                        abilitiesWrapper.classList.add('grid', 'grid-cols-2', 'items-start');
-                        
-                        // Optional: Ensure inner lists are compact
-                        document.getElementById('companions-list').className = "flex flex-col gap-2"; 
-                    } else {
-                        // Revert to Stack
-                        abilitiesWrapper.classList.remove('grid', 'grid-cols-2', 'items-start');
-                        abilitiesWrapper.classList.add('flex', 'flex-col');
-                        
-                        // Restore Companion List to Grid if stacked (for 2 allies)
-                        if (allyCount > 1) {
-                             document.getElementById('companions-list').className = "grid grid-cols-2 gap-2";
-                        } else {
-                             document.getElementById('companions-list').className = "flex flex-col gap-2";
-                        }
-                    }
-			
+				
         // --- END WINDOW FUNCTIONS ---
 
         // --- DAMAGE CALCULATION LOGIC ---
@@ -1136,6 +1138,7 @@
                 icon: 'fa-box-open', 
                 color: 'text-yellow-600',
                 desc: "Passive: A heavy crate of mysterious goods.",
+				isContraband: true,
                 btnText: "SELL",
                 action: (state) => {
                     return "Must be sold at the Market or traded at the Cove.";
@@ -1399,6 +1402,7 @@
 				icon: 'fa-vial', 
 				color: 'text-green-500', 
 				desc: "Highly corrosive digestive acid, harvested from a Mimic's core. Deals Acid Damage.",
+				isContraband: true,
 				isCombinable: true,
                 action: (state) => {
                     return "A corrosive ingredient for the Spectral Forge. Do not drink.";
@@ -1449,6 +1453,48 @@
 				desc: "The blade hums with purified light. Deals 1d8+1 Magic Damage, and an extra 1d4 Radiant Damage against Undead.",
 				damage: '1d8+1 + 1d4 (Radiant vs Undead)',
 				isCombined: true,
+			},
+			"Ember-Heart": {
+				name: "Ember-Heart",
+				type: 'key',
+				icon: 'fa-fire-burner', 
+				color: 'text-orange-500',
+				desc: "Quest Item: A molten core. The Order needs it for the Foundry; Rook needs it for the Bio-Reactor.",
+				isContraband: true 
+			},
+			"Nutrient Slurry": {
+				name: "Nutrient Slurry",
+				type: 'consumable',
+				icon: 'fa-jar',
+				color: 'text-green-500',
+				btnText: "EAT",
+				desc: "Consumable: Rendered Hyper-Coral paste. Tastes like ash and ambition. Restores 8 HP.",
+				action: (state) => {
+					if (state.currentHP >= state.maxHP) return "You are full.";
+
+					const healAmount = 8;
+					const oldHP = state.currentHP;
+					
+					state.currentHP = Math.min(state.maxHP, state.currentHP + healAmount);
+					
+					const idx = state.inventory.indexOf("Nutrient Slurry");
+					if (idx > -1) state.inventory.splice(idx, 1);
+					return `Ate Slurry. Healed ${state.currentHP - oldHP} HP.`;
+				}
+			},
+			"Mirror Shield": {
+				name: "Mirror Shield",
+				type: 'gear',
+				icon: 'fa-shield-alt',
+				color: 'text-gray-200',
+				desc: "Order Reward: A polished silver tower shield. Passive: -1 Damage taken. Active: Reflects the first attack of a round[cite: 46, 47, 48]."
+			},
+			"Scale-Stake Driver": {
+				name: "Scale-Stake Driver",
+				type: 'weapon',
+				icon: 'fa-crosshairs',
+				color: 'text-orange-600',
+				desc: "Chaos Reward: A heavy crossbow carved from Leviathan scale. Active: Deals damage and Stuns the enemy[cite: 49, 50, 51]."
 			},
         };
         
@@ -2484,6 +2530,7 @@
                 choices: [],
                 onEnter: (state) => {
                     // --- ACT 3 STATE (HIGHEST PRIORITY) ---
+                    // --- ACT 3 STATE (HIGHEST PRIORITY) ---
                     if (state.act3Started) {
                         state.currentLocation = 'port_hub';
 
@@ -2492,9 +2539,15 @@
                         if (state.isEthereal) {
                             desc += "<br><br><span class='text-spectral'>The Veil thins</span>. The iron gates of the Wolf King's Estate shimmer into existence where a brick wall stood moments ago.";
                         }
+                        
+                        // HINT FOR EXPANSION:
+                        if (!state.factionAligned) {
+                            desc += "<br><br><span class='text-amber-500'>Objective:</span> The Harbor Provisioner has information on the new factions holding the coast.";
+                        }
+
                         scenes['town_square'].text = desc;
 
-                        scenes['town_square'].choices = [
+                        let act3Choices = [
                             { 
                                 text: "Enter the Vanishing Manor", 
                                 nextScene: 'wolf_estate_safe', 
@@ -2510,11 +2563,20 @@
                                 customClass: 'btn-anchor',
                                 doomCost: 0 
                             },
+                            // HIGHLIGHT PROVISIONER IF NOT ALIGNED
+                            { 
+                                text: "Go to The Harbor Provisioner (Quest)", 
+                                nextScene: 'port_provisioner', 
+                                type: 'travel', 
+                                doomCost: 0,
+                                customClass: !state.factionAligned ? 'btn-pulse' : '' 
+                            },
 							{ text: "Visit The Triage Alchemist", nextScene: 'alchemist_triage', type: 'travel', doomCost: 0 },
                             { text: "Rest at The Blackwater Tavern", nextScene: 'blackwater_tavern', type: 'travel', doomCost: 0 },
-							{ text: "Explore the Docks", nextScene: 'town_docks', type: 'travel', doomCost: 0 }, 
-							{ text: "Go to The Harbor Provisioner", nextScene: 'port_provisioner', type: 'travel', doomCost: 0 }
+							{ text: "Explore the Docks", nextScene: 'town_docks', type: 'travel', doomCost: 0 }
                         ];
+                        
+                        scenes['town_square'].choices = act3Choices;
                         
                         return null;
                     }
@@ -4552,19 +4614,26 @@
                         text: "Christen the Ship",
                         type: 'action',
                         action: (state) => {
-                            const input = document.getElementById('ship-name-input');
-                            let name = "";
-                            
-                            if (input && input.value) {
-                                name = input.value.trim();
-                            }
-                            
-                            if (!name) name = "The Iron Lung"; 
-                            
-                            state.shipName = name; 
-                            renderScene('act3_intro_ship'); 
-                            return `Christened the ship: <span class="text-item">${name}</span>.`;
-                        }
+						const input = document.getElementById('ship-name-input');
+						let name = "";
+						
+						if (input && input.value) {
+							name = input.value.trim();
+						}
+						
+						if (!name) name = "The Iron Lung"; 
+						
+						state.shipName = name; 
+						
+						// --- LEVEL UP APPLIED HERE  ---
+						state.maxHP = 25; 
+						state.currentHP = 25; // Full heal on level up
+						state.levelUpDamage = true; // +1 Base Damage flag
+						// ----------------------------------------
+
+						renderScene('act3_intro_ship'); 
+						return `Christened the ship: <span class="text-item">${name}</span>. Level Up! Max HP increased to 25. Base Damage increased.`;
+					}
                     }
                 ]
             },
@@ -4587,9 +4656,47 @@
             },
             'port_provisioner': {
                 title: "The Harbor Provisioner",
-                text: "A gruff quartermaster stands behind a reinforced counter near the docks. He doesn't deal in potions or trinkets; he deals in fuel for the long voyage. 'Ship needs meat and fresh water if you want to clear the horizon,' he grunts.",
+                text: "The Quartermaster unrolls a map of the new coastline. 'The Leviathan's wake changed everything. The Sanguine Court is moving openly.'<br><br>He looks at you closely. 'You need allies, Captain. But the Bastion and the Drift don't mix. Once you fly a flag, you fly it for good.'",
+                onEnter: (state) => {
+                    // 1. IF ALREADY ALIGNED, SHOW ONLY THAT HUB
+                    if (state.factionAligned === 'order') {
+                        if (!state.knownIslands.includes('hub_order')) state.knownIslands.push('hub_order');
+                        return "Map Updated: Route to The Argent Bastion (Order HQ) available.";
+                    }
+                    if (state.factionAligned === 'chaos') {
+                        if (!state.knownIslands.includes('hub_chaos')) state.knownIslands.push('hub_chaos');
+                        return "Map Updated: Route to The Dead-Water Drift (Chaos HQ) available.";
+                    }
+
+                    // 2. IF NOT ALIGNED, CHECK THRESHOLDS & LOCK IN
+                    // Threshold is +/- 10. Once met, it sets factionAligned permanently.
+                    if (state.influence <= -10) {
+                        state.factionAligned = 'order';
+                        state.knownIslands.push('hub_order');
+                        return "Influence Check (Order): The Quartermaster hands you a silver seal. 'The Argent Bastion will take you. But there's no going back to the gutters after this.' (Order Faction Locked)";
+                    } 
+                    else if (state.influence >= 10) {
+                        state.factionAligned = 'chaos';
+                        state.knownIslands.push('hub_chaos');
+                        return "Influence Check (Chaos): He slips you a ragged flag. 'The Dead-Water Drift is looking for captains. Don't expect the Royal Guard to look you in the eye again.' (Chaos Faction Locked)";
+                    }
+                    
+                    // 3. LEGENDARY HUNT (Neutral/Global)
+                    if (!state.knownIslands.includes('void_behemoth_intro') && !state.unlockedBladeEnhance) {
+                        state.knownIslands.push('void_behemoth_intro');
+                        return "Rumor Added: The Void-Maw Behemoth.";
+                    }
+                    
+                    return "You are currently Neutral. You must gain more Influence (Order or Chaos) to secure an alliance.";
+                },
                 choices: [
-                    { text: "Sell Wares", nextScene: 'port_provisioner_sell', type: 'travel', doomCost: 0 },
+                    { 
+                        text: "Buy 5 Supplies (-10s)", 
+                        action: (state) => { state.supplies += 5; state.shillings -= 10; return "Bought 5 Supplies."; },
+                        type: 'action', 
+                        cost: 10,
+                        nextScene: 'port_provisioner'
+                    },
                     { text: "Return to Port Square", nextScene: 'town_square', type: 'travel', doomCost: 0 }
                 ]
             },
@@ -4604,42 +4711,104 @@
             
             // ACT 3: NAVIGATIONAL HUB
             'sea_map_hub': {
-                title: "The Open Sea: Navigation Hub",
-                text: "You stand at the wheel of your ship, the world laid out on the chart. To sail, you must expend Supplies.",
-                journal: "Navigating the coast. Must manage Supplies.",
-                onEnter: (state) => {
-                    document.getElementById('vignette-overlay').classList.remove('fx-heartbeat-slow', 'fx-heartbeat-fast');
-                    
-                    if (state.supplies < 2) {
-                        scenes['sea_map_hub'].text = "The hold is empty. The crew looks at you with hollow eyes. You do not have enough supplies to reach the nearest port. You must drift and fish to survive, or starve.";
-                        scenes['sea_map_hub'].choices = [
-                            { 
-                                text: "Desperate Fishing (Drift)", 
-                                nextScene: 'sea_starve_logic', 
-                                type: 'skill', 
-                                dc: 12, 
-                                skill: 'Survival',
-                                doomCost: 1 
-                            }
-                        ];
-                        return "Warning: Supplies Depleted. Stranded.";
-                    } 
-                    // CHANGED: Added ELSE block to reset text when supplies are sufficient
-                    else {
-                        scenes['sea_map_hub'].text = "You stand at the wheel of your ship, the world laid out on the chart. To sail, you must expend Supplies.";
-                    }
+				title: "The Open Sea: Navigation Hub",
+				text: "You stand at the wheel. The world is laid out on the chart. To sail, you must expend Supplies.",
+				journal: "Navigating the coast.",
+				onEnter: (state) => {
+					document.getElementById('vignette-overlay').classList.remove('fx-heartbeat-slow', 'fx-heartbeat-fast');
+					
+					// 1. STARVATION CHECK
+					if (state.supplies < 2) {
+						scenes['sea_map_hub'].text = "The hold is empty. You must drift and fish to survive.";
+						scenes['sea_map_hub'].choices = [
+							{ text: "Desperate Fishing (Drift)", nextScene: 'sea_starve_logic', type: 'skill', dc: 12, skill: 'Survival', doomCost: 1 }
+						];
+						return "Warning: Supplies Depleted.";
+					} 
+					
+					scenes['sea_map_hub'].text = "You stand at the wheel. Where to, Captain?";
 
-                    // Reset to normal choices if we have supplies
-                    scenes['sea_map_hub'].choices = [
-                        { text: "Sail to Port of Shadows", nextScene: 'travel_to_port', type: 'travel', suppliesCost: 2, customClass: 'btn-anchor' },
-                        { text: "Sail to Bleak Dogtooth", nextScene: 'travel_to_dogtooth', type: 'travel', suppliesCost: 5, reqFlag: 'unlocked_dogtooth', customClass: 'btn-anchor' },
-                        { text: "Sail to Sanguine Spire", nextScene: 'travel_to_spire', type: 'travel', suppliesCost: 8, reqFlag: 'unlocked_spire', customClass: 'btn-anchor' }
-                    ];
+					// 2. DYNAMIC CHOICE GENERATION (Fixes syntax error)
+					let navChoices = [
+						{ text: "Sail to Port of Shadows", nextScene: 'travel_to_port', type: 'travel', suppliesCost: 2, customClass: 'btn-anchor' },
+						{ text: "Sail to Bleak Dogtooth", nextScene: 'travel_to_dogtooth', type: 'travel', suppliesCost: 5, reqFlag: 'unlocked_dogtooth', customClass: 'btn-anchor' },
+						{ text: "Sail to Sanguine Spire", nextScene: 'travel_to_spire', type: 'travel', suppliesCost: 8, reqFlag: 'unlocked_spire', customClass: 'btn-anchor' }
+					];
 
-                    return `Current Location: ${state.currentLocation}. Supplies: ${state.supplies}/20.`;
-                },
-                choices: [] 
-            },
+					// Add Hubs if Discovered
+					if (state.knownIslands.includes('hub_order')) {
+						navChoices.push({ 
+							text: "Sail to Iron Citadel (Order)", 
+							nextScene: 'hub_order', 
+							type: 'travel', 
+							suppliesCost: 3, 
+							customClass: 'btn-anchor' 
+						});
+					}
+					if (state.knownIslands.includes('hub_chaos')) {
+						navChoices.push({ 
+							text: "Sail to Titan's Molt (Chaos)", 
+							nextScene: 'hub_chaos', 
+							type: 'travel', 
+							suppliesCost: 3, 
+							customClass: 'btn-anchor' 
+						});
+					}
+
+					scenes['sea_map_hub'].choices = navChoices;
+					return `Current Location: ${state.currentLocation}. Supplies: ${state.supplies}/20.`;
+				},
+				choices: [] // Populated by onEnter
+			},
+
+			// --- UPDATED TRAVEL LOGIC (Includes Navy Chance) ---
+			'travel_to_port': {
+				isLogic: true,
+				resolve: (roll, state) => {
+					state.supplies -= 2;
+					state.currentLocation = 'port_hub';
+					
+					// RNG Event Logic
+					const rng = Math.random();
+					const hasContraband = window.gameFunctions.checkForContraband();
+					
+					// High chance of Navy if carrying contraband (40%), otherwise Fog (30%)
+					if (hasContraband && rng < 0.4) return 'sea_navy_encounter'; 
+					if (rng < 0.3) return 'sea_event_fog';
+					
+					return 'town_square';
+				}
+			},
+			'travel_to_dogtooth': {
+				 isLogic: true,
+				resolve: (roll, state) => {
+					state.supplies -= 5;
+					state.currentLocation = 'dogtooth';
+					
+					const rng = Math.random();
+					const hasContraband = window.gameFunctions.checkForContraband();
+					
+					if (hasContraband && rng < 0.4) return 'sea_navy_encounter'; 
+					if (rng < 0.3) return 'sea_event_fog';
+					
+					return 'bleak_dogtooth'; 
+				}
+			},
+			'travel_to_spire': {
+				 isLogic: true,
+				resolve: (roll, state) => {
+					state.supplies -= 8;
+					state.currentLocation = 'spire';
+					
+					const rng = Math.random();
+					const hasContraband = window.gameFunctions.checkForContraband();
+					
+					if (hasContraband && rng < 0.4) return 'sea_navy_encounter'; 
+					if (rng < 0.3) return 'sea_event_fog';
+					
+					return 'sanguine_spire_entry'; 
+				}
+			},
 			'sea_starve_logic': {
                 isLogic: true,
                 resolve: (roll) => roll >= 12 ? 'sea_fish_success' : 'sea_fish_fail'
@@ -4663,33 +4832,6 @@
                     return "Starvation set in. Took 4 Damage. Scraped together +2 Supplies.";
                 },
                 choices: [{ text: "Return to Wheel", nextScene: 'sea_map_hub', type: 'travel', doomCost: 0 }]
-            },
-            'travel_to_port': {
-                isLogic: true,
-                resolve: (roll, state) => {
-                    state.supplies -= 2;
-                    state.currentLocation = 'port_hub';
-                    if (Math.random() < 0.3) return 'sea_event_fog';
-                    return 'town_square';
-                }
-            },
-            'travel_to_dogtooth': {
-                 isLogic: true,
-                resolve: (roll, state) => {
-                    state.supplies -= 5;
-                    state.currentLocation = 'dogtooth';
-                    if (Math.random() < 0.3) return 'sea_event_fog'; 
-                    return 'bleak_dogtooth'; 
-                }
-            },
-            'travel_to_spire': {
-                 isLogic: true,
-                resolve: (roll, state) => {
-                    state.supplies -= 8;
-                    state.currentLocation = 'spire';
-                    if (Math.random() < 0.3) return 'sea_event_fog'; 
-                    return 'sanguine_spire_entry'; 
-                }
             },
 
             // ACT 3: RANDOM ENCOUNTERS
@@ -4719,6 +4861,88 @@
 					{ text: "Brute Force Through", nextScene: 'sea_fog_athletics_logic', type: 'skill', dc: 15, skill: 'Athletics' }
                 ]
             },
+			// --- ROYAL NAVY INTERCEPT (Contraband Check) ---
+			'sea_navy_encounter': {
+				title: "Royal Navy Blockade",
+				text: "An iron-hulled Interceptor looms out of the fog, its cannons run out. A magewright amplifies the captain's voice: 'Heave to! We are scanning for illicit magical artifacts and biological hazards!'<br><br>They are looking for **Contraband**.",
+				onEnter: (state) => {
+					const hasContraband = window.gameFunctions.checkForContraband();
+					if (hasContraband) return "WARNING: Contraband detected in hold.";
+					return "Inventory clean.";
+				},
+				choices: [
+					{
+						text: "Submit to Search (Clean)",
+						nextScene: 'sea_navy_clean',
+						type: 'action',
+						// Disable if user HAS contraband
+						isDisabled: (gameState) => window.gameFunctions.checkForContraband() 
+					},
+					{
+						text: "Submit to Search (Caught!)",
+						nextScene: 'sea_navy_caught',
+						type: 'action',
+						// Disable if user does NOT have contraband
+						isDisabled: (gameState) => !window.gameFunctions.checkForContraband()
+					},
+					{
+						text: "Jettison Contraband (Avoid Fine)",
+						nextScene: 'sea_navy_jettison',
+						type: 'action',
+						// Only show option if you actually have something to hide
+						isDisabled: (gameState) => !window.gameFunctions.checkForContraband()
+					},
+					{
+						text: "Attack the Blockade",
+						nextScene: 'sea_navy_combat', 
+						type: 'combat'
+					}
+				]
+			},
+			'sea_navy_clean': {
+				title: "Inspection Passed",
+				text: "The officers board, scan your hold with divining rods, and find nothing. 'Clear. Proceed, Captain.'",
+				choices: [{ text: "Sail On", nextScene: 'sea_map_hub', type: 'travel' }]
+			},
+			'sea_navy_caught': {
+				title: "Impounded",
+				text: "The rods scream as they pass your hold. 'Titan Marrow? Mimic Bile? This is treason, Captain.'<br><br>They confiscate the illegal goods and levy a heavy fine against your ship.",
+				onEnter: (state) => {
+					// Remove all items flagged as contraband
+					state.inventory = state.inventory.filter(name => {
+						const item = itemRegistry[name];
+						return !item || !item.isContraband;
+					});
+					// Levy Fine
+					state.shillings = Math.max(0, state.shillings - 15);
+					
+					return "Contraband seized. Fined 15s.";
+				},
+				choices: [{ text: "Sail On (Empty Handed)", nextScene: 'sea_map_hub', type: 'travel' }]
+			},
+			'sea_navy_jettison': {
+				title: "Overboard",
+				text: "You order the crew to toss the crates into the dark water before the Navy can board. The officers find nothing, but you feel the sting of lost profit.",
+				onEnter: (state) => {
+					state.inventory = state.inventory.filter(name => {
+						const item = itemRegistry[name];
+						return !item || !item.isContraband;
+					});
+					return "Dumped Contraband to avoid arrest.";
+				},
+				choices: [{ text: "Sail On", nextScene: 'sea_map_hub', type: 'travel' }]
+			},
+			'sea_navy_combat': {
+				title: "Naval Skirmish",
+				text: "You trade broadsides with the Interceptor. You escape into the fog, but your ship takes heavy damage.",
+				onEnter: (state) => {
+					state.currentHP = applyDamage(state.currentHP, 10);
+					state.influence = Math.min(50, state.influence + 5); // Fighting Navy = Chaos
+					fxManager.flashRed();
+					return "Escaped Combat. Took 10 Damage. Chaos +5.";
+				},
+				choices: [{ text: "Limp Away", nextScene: 'sea_map_hub', type: 'travel' }]
+			},
 			'sea_fog_athletics_logic': {
                 isLogic: true,
                 resolve: (roll) => roll >= 15 ? 'sea_fog_success' : 'sea_fog_fail'
@@ -4943,6 +5167,330 @@
                 },
                 choices: [{ text: "Return to Bleak Dogtooth", nextScene: 'bleak_dogtooth', type: 'travel', doomCost: 0 }]
             },
+			
+			// --- ACT 3 FACTION HUBS ---
+
+			// 1. ORDER HUB: THE IRON CITADEL
+			'hub_order': {
+				title: "The Iron Citadel",
+				text: "You dock at the Iron Citadel. It is a fortress of grey stone reinforced with iron plating, but patches of white, throbbing <span class='text-danger'>Hyper-Coral</span> are consuming the walls. Flamethrower crews work tirelessly to burn back the growth. The air smells of sulfur and burnt meat.",
+				journal: "Arrived at the Iron Citadel. The Order is fighting a losing war against living coral.",
+				onEnter: (state) => {
+					state.currentLocation = 'hub_order';
+					return "Docked at Iron Citadel (Order HQ).";
+				},
+				choices: [
+					{ 
+						text: "Speak to Commander (Start Quest)", 
+						nextScene: 'order_quest_fence_start', // Link to Bio-Reactor Quest
+						type: 'dialogue',
+						reqNotFlag: 'fenceQuestActive'
+					},
+					{ 
+						text: "Visit The Calcification Ward", 
+						nextScene: 'order_petrified_ward', // Link to New Body Horror Scene
+						type: 'travel', 
+						doomCost: 0 
+					},
+					{ 
+						text: "Request Supplies (Quartermaster)", 
+						type: 'action', 
+						cost: 10,
+						action: (state) => { state.supplies += 5; return "Bought 5 Supplies."; }
+					},
+					{ text: "Return to Sea Map", nextScene: 'sea_map_hub', type: 'travel' }
+				]
+			},
+
+			// 2. CHAOS HUB: THE TITAN'S MOLT
+			'hub_chaos': {
+				title: "The Titan's Molt",
+				text: "A floating city built upon a massive, shed Leviathan scale. Ships are lashed directly to the chitin. It smells of ozone and processed marrow. Scavengers strip the coral for profit, ignoring the danger.",
+				journal: "Arrived at The Titan's Molt. Chaos thrives on the rot here.",
+				onEnter: (state) => {
+					state.currentLocation = 'hub_chaos';
+					return "Docked at Titan's Molt (Chaos HQ).";
+				},
+				choices: [
+					{ 
+						text: "Follow Compass Signal (Rook)", 
+						nextScene: 'chaos_fence_confrontation', // Link to Bio-Reactor Confrontation
+						type: 'dialogue', 
+						reqFlag: 'fenceQuestActive',
+						customClass: 'btn-pulse'
+					},
+					{ 
+						text: "Barter for Supplies", 
+						type: 'action', 
+						cost: 8, 
+						action: (state) => { state.supplies += 5; return "Bought 5 Supplies."; }
+					},
+					{ text: "Return to Sea Map", nextScene: 'sea_map_hub', type: 'travel' }
+				]
+			},
+			
+			// --- NEW SCENE: THE CALCIFICATION WARD (Body Horror) ---
+			'order_petrified_ward': {
+				title: "The Calcification Ward",
+				text: "The infirmary smells of brine and bleach. Rows of soldiers lie in cots, their bodies half-consumed by white, jagged **Hyper-Coral**. It grows from their pores, fusing limbs and blinding eyes. They aren't turning to stone; they are becoming a reef.<br><br>The Surgeon wipes green slime from a saw blade. 'We cut out what we can, but it grows back faster. We're just prolonging the inevitable.'",
+				choices: [
+					{ 
+						text: "Donate Rum (Anesthetic)", 
+						nextScene: 'ward_donate_rum', 
+						type: 'action', 
+						reqItem: 'Rum', 
+						consume: true,
+						orderGain: 4 
+					},
+					{ 
+						text: "Inspect a Critical Patient", 
+						nextScene: 'ward_bloom_event', 
+						type: 'travel',
+						doomCost: 0
+					},
+					{ text: "Leave the Ward", nextScene: 'hub_order', type: 'travel' }
+				]
+			},
+			'ward_donate_rum': {
+				title: "A Small Mercy",
+				text: "The surgeon nods gratefully, administering the spirits to a young guard whose legs have fused together. The soldier's breathing slows, the panic fading from his eyes.",
+				onEnter: (state) => {
+					state.influence = Math.max(-50, state.influence - 4);
+					return "Donated Rum. Order Influence Gained.";
+				},
+				choices: [{ text: "Return to Hub", nextScene: 'hub_order', type: 'travel' }]
+			},
+			'ward_bloom_event': {
+				title: "The Rapid Bloom",
+				text: "You approach a soldier whose chest is heaving. Suddenly, he arches his back. With a wet tearing sound, a massive spike of white coral bursts through his ribcage. His eyes roll back, entirely white.<br><br>The Surgeon screams. 'He's blooming! Hold him down!' The soldier—now a **Coral-Husk**—thrashes violently, razor-sharp barnacles growing instantly on his fists.",
+				choices: [
+					{ 
+						text: "Put him down (Combat)", 
+						nextScene: 'ward_bloom_combat', 
+						type: 'combat',
+						doomCost: 0
+					},
+					{ 
+						text: "Hold him down (Athletics)", 
+						nextScene: 'ward_bloom_hold', 
+						type: 'skill', 
+						dc: 15, 
+						skill: 'Athletics' 
+					}
+				]
+			},
+			'ward_bloom_combat': {
+				title: "A Mercy Kill",
+				text: "You draw your weapon. One clean strike severs the brain stem before the coral fully takes hold. The body goes limp, the rapid growth stopping instantly. The Surgeon stares at you, shaking, covered in spores.",
+				onEnter: (state) => {
+					state.influence = Math.max(-50, state.influence - 5); // Order likes decisive action
+					return "Mercy Kill performed. Order +5.";
+				},
+				choices: [{ text: "Leave the Ward", nextScene: 'hub_order', type: 'travel' }]
+			},
+			'ward_bloom_hold': {
+				isLogic: true,
+				resolve: (roll) => roll >= 15 ? 'ward_bloom_success' : 'ward_bloom_fail'
+			},
+			'ward_bloom_success': {
+				title: "Stabilized",
+				text: "You pin the thrashing husk to the bed, ignoring the coral cutting your hands. The Surgeon manages to inject a concentrated saline solution directly into the heart. The growth arrests. The man is still alive... for now.",
+				onEnter: (state) => {
+					state.currentHP = applyDamage(state.currentHP, 2);
+					return "Stabilized the Bloom. Took 2 Damage.";
+				},
+				choices: [{ text: "Leave the Ward", nextScene: 'hub_order', type: 'travel' }]
+			},
+			'ward_bloom_fail': {
+				title: "Too Late",
+				text: "The coral growth is explosive. A spike catches you in the shoulder, throwing you back. By the time you recover, the soldier is gone—fully consumed. The guards rush in with flamethrowers to incinerate the corpse.",
+				onEnter: (state) => {
+					state.currentHP = applyDamage(state.currentHP, 5);
+					fxManager.flashRed();
+					return "Failed to hold him. Took 5 Damage.";
+				},
+				choices: [{ text: "Retreat", nextScene: 'hub_order', type: 'travel' }]
+			},
+
+			// --- NEW QUEST: THE EMBER-HEART ---
+
+			'order_quest_fence_start': {
+				title: "Contract: The Cold Furnace",
+				text: "The Commander walks you to the edge of the Great Foundry. It is silent. The massive pistons are still.<br><br>'The **Ember-Heart** is gone,' he says grimly. 'Without that core, the Foundry is useless. We cannot repair the walls, and the Hyper-Coral will breach the inner Citadel before the week is out. Rook stole it. Track him, Mariner. The fate of the war machine depends on that heat.'",
+				onEnter: (state) => {
+					state.fenceQuestActive = true;
+					return "Quest Started: Retrieve the Ember-Heart.";
+				},
+				choices: [
+					{ text: "Track the Heat (Accept)", nextScene: 'hub_order', type: 'travel' }
+				]
+			},
+
+			'chaos_fence_confrontation': {
+				title: "Rook's Crucible",
+				text: "You follow the Compass to a fortified cavern beneath the Titan's Molt. Rook has built a makeshift **Alchemical Crucible**—a high-pressure rendering unit. The **Ember-Heart** pulses at its base, radiating infinite, sterile heat. Rook is shoveling white Hyper-Coral into the device, which spits out a thick, nutrient-rich slurry.<br><br>'Feast your eyes, Mariner!' Rook shouts, stirring the slurry. 'The plague is now the sustenance! With this, the Molt can live indefinitely! We never have to rely on their rotten supplies again!'",
+				banter: {
+					'quinn': "He's right. The caloric value is immense. But... he controls the only furnace. He controls the price. This isn't freedom; it's a monopoly.",
+					'gareth': "He’s trading one set of chains for another! The Citadel makes weapons for survival; he's making food for tyranny."
+				},
+				choices: [
+					{ 
+						text: "Take Heart (Restore the Forge)", 
+						nextScene: 'fence_resolution_order', 
+						type: 'action',
+						orderGain: 15
+					},
+					{ 
+						text: "Leave Heart (Sanction the Monopoly)", 
+						nextScene: 'fence_resolution_chaos', 
+						type: 'action',
+						chaosGain: 15
+					},
+					{ 
+						text: "Neutral: Demand 'Royalties'", 
+						nextScene: 'fence_resolution_neutral', 
+						type: 'action',
+						shillingGain: 50
+					}
+				]
+			},
+			'fence_resolution_order': {
+				title: "The Furnace Roars",
+				text: "You smash the alchemical pipework and rip the **Ember-Heart** free. Rook screams in fury as the Crucible falls cold. The new food source is gone. You return the Heart to the Citadel, restoring the industrial complex and the chance to defeat the Leviathan.",
+				onEnter: (state) => {
+					if (!state.inventory.includes("Ember-Heart")) state.inventory.push("Ember-Heart");
+					state.fenceQuestActive = false;
+					state.influence = Math.max(-50, state.influence - 15);
+					return "Quest Complete. Order +15. Acquired Ember-Heart.";
+				},
+				choices: [{ text: "Return to Iron Citadel", nextScene: 'hub_order', type: 'travel' }]
+			},
+			'fence_resolution_chaos': {
+				title: "The New Tyrant",
+				text: "You step back. Rook nods, relieved. 'Good choice, Mariner. Go tell your commander that we've found a better way.' He hands you a massive jar of the nutrient slurry. You know he'll use this power to become the economic tyrant of the Molt, but he's secured the city's future.",
+				onEnter: (state) => {
+					state.fenceQuestActive = false;
+					state.shillings += 25;
+					state.influence = Math.min(50, state.influence + 15);
+					// Add a permanent food item as a reward/symbol of the choice
+					if (!state.inventory.includes("Nutrient Slurry")) state.inventory.push("Nutrient Slurry");
+					return "Quest Complete. Chaos +15. Gained 25s.";
+				},
+				choices: [{ text: "Return to Hub", nextScene: 'hub_chaos', type: 'travel' }]
+			},
+			'fence_resolution_neutral': {
+				title: "The Price of Ambition",
+				text: "'Ambition is expensive,' you say, ignoring the boiling crucible. 'Pay me to leave your business alone.' Rook glares but empties his till. You walk away, indifferent to who starves or who rules.",
+				onEnter: (state) => {
+					state.fenceQuestActive = false;
+					state.shillings += 50;
+					return "Quest Complete. Neutral. Gained 50s.";
+				},
+				choices: [{ text: "Return to Hub", nextScene: 'hub_chaos', type: 'travel' }]
+			},
+			
+			// --- QUEST LOGIC ---
+
+			'order_quest_start': {
+				title: "Quest: Defense of the Citadel",
+				text: "The Commander points to a breached sector. 'The Hyper-Coral has birthed a monstrosity inside our armory. A <span class='text-danger'>Coral-Hulk</span>. It heals faster than we can kill it. Hold the line, Mariner, and the Mirror Shield is yours.' [cite: 23, 24, 46]",
+				choices: [
+					{ text: "Enter the Breach (Boss Fight)", nextScene: 'coral_hulk_intro', type: 'travel' }
+				]
+			},
+
+			'chaos_quest_start': {
+				title: "Quest: The Citadel Heist",
+				text: "Your contact grins. 'The Order is busy burning coral. Perfect time to slip into their armory. There's a <span class='text-item'>Scale-Stake Driver</span> prototype in there. Only problem? A massive <span class='text-danger'>Coral-Hulk</span> has claimed the room. Kill it, grab the loot, get out.' [cite: 30, 31, 32]",
+				choices: [
+					{ text: "Breach the Armory (Boss Fight)", nextScene: 'coral_hulk_intro', type: 'travel' }
+				]
+			},
+
+			// --- BOSS: THE CORAL HULK [cite: 36, 37] ---
+
+			'coral_hulk_intro': {
+				title: "The Coral-Hulk",
+				text: "You step into the corrupted chamber. A Royal Guard Dreadnought—massive steam armor—stands there, but it is fused with white coral. The organic matter pulses, knitting metal back together. It roars, a wet, grinding sound.",
+				isBoss: true,
+				onEnter: (state) => {
+					// [cite: 40, 41]
+					initCombat("Coral-Hulk", 80, [6, 12]); 
+					return "Combat Started! The enemy regenerates 5 HP per round.";
+				},
+				choices: [
+					{ text: "Engage the Monstrosity", nextScene: 'coral_hulk_combat', type: 'travel', doomCost: 0 }
+				]
+			},
+
+			'coral_hulk_combat': {
+				title: "Battle: Coral-Hulk",
+				text: "The Hulk swings a massive, coral-encrusted fist. At the end of every moment, you see its wounds closing. You must out-damage its regeneration! [cite: 43]",
+				isBoss: true,
+				choices: [
+					// Standard Attacks
+					{ 
+						text: "Strike with Sword of Valor", 
+						action: () => window.resolveCombatRound('valor_strike'),
+						type: 'action', 
+						reqItem: 'Sword of Valor',
+						customClass: 'btn-hero'
+					},
+					{ 
+						text: "Desperate Strike (Cutlass)", 
+						action: () => window.resolveCombatRound('heavy_strike'),
+						type: 'action', 
+						reqNotItem: 'Sword of Valor'
+					},
+					// NEW: Mirror Shield Mechanic (Only if Order aligned/owned, mostly for testing, but let's assume unlocking)
+					// Note: You don't have the item yet, so we use standard items.
+					
+					{ 
+						text: "Throw Alchemical Fire (Stop Regen?)", 
+						// Fire deals high damage, effectively countering regen
+						action: () => window.resolveCombatRound('item_fire'),
+						type: 'action', 
+						reqItem: 'Alchemical Fire',
+						consume: true,
+						customClass: 'btn-fire-glow'
+					},
+					 { 
+						text: "Throw Holy Water", 
+						action: () => window.resolveCombatRound('item_holy_water'),
+						type: 'action', 
+						reqItem: 'Holy Water',
+						consume: true,
+						customClass: 'btn-success-glow'
+					}
+				]
+			},
+
+			'coral_hulk_victory': {
+				title: "Victory: The Hulk Crumbles",
+				text: "The Coral-Hulk collapses, the regenerative biology finally overwhelmed by your assault. The room is silent.",
+				journal: "Defeated the Coral-Hulk. The corruption is halted in this sector.",
+				onEnter: (state) => {
+					state.coralHulkDefeated = true;
+					// Determine Reward based on Faction
+					if (state.factionAligned === 'order') {
+						if (!state.inventory.includes("Mirror Shield")) state.inventory.push("Mirror Shield");
+						return "Victory! Reward: Mirror Shield.";
+					} else {
+						if (!state.inventory.includes("Scale-Stake Driver")) state.inventory.push("Scale-Stake Driver");
+						return "Victory! Reward: Scale-Stake Driver.";
+					}
+				},
+				choices: [
+					{ 
+						text: "Claim Reward & Return to Hub", 
+						type: 'action',
+						action: (state) => {
+							const target = state.factionAligned === 'order' ? 'hub_order' : 'hub_chaos';
+							renderScene(target);
+						}
+					}
+				]
+			},
 
             // ACT 3: SANGUINE SPIRE (FINALE)
             'sanguine_spire_entry': {
@@ -5076,10 +5624,17 @@
                         customClass: 'btn-planewalk-reveal',
                         doomCost: 0 
                     },
-                    { text: "Exit to Port Square (Material)", nextScene: 'town_square', type: 'action', action: (state) => {
-                        state.isEthereal = false;
-                        renderScene('town_square');
-                    }, doomCost: 0}
+                    { 
+						text: "Exit to Port Square (Material)", 
+						nextScene: 'town_square', 
+						type: 'action', 
+						action: (state) => {
+							state.isEthereal = false;
+							state.act2Started = false; // Ensure Act 2 logic (Tether) is definitely off
+							return "Returning to the Material Plane.";
+						}, 
+						doomCost: 0
+					}
                 ]
             },
 			
@@ -6391,6 +6946,43 @@
                         renderCompanions(isSilasJoined, isBlinkJoined);
                     } else {
                         companionPanel.classList.add('hidden');
+                    }
+					
+					const abilitiesWrapper = document.getElementById('abilities-wrapper');
+                    const hasPlaneWalk = gameState.skills.includes("Plane Walking");
+                    
+                    // --- FIX: DEFINITIONS ADDED HERE ---
+                    const planarContainer = document.getElementById('planar-skills-container');
+                    const companionContainer = document.getElementById('companion-panel');
+                    // -----------------------------------
+                    
+                    let allyCount = 0;
+                    if (isSilasJoined) allyCount++;
+                    if (isBlinkJoined) allyCount++;
+
+                    // Now these variables exist, so this won't crash:
+                    planarContainer.classList.remove('h-full');
+                    companionContainer.classList.remove('h-full');
+
+                    if (hasPlaneWalk && allyCount === 1) {
+                        abilitiesWrapper.classList.remove('flex', 'flex-col');
+                        // CHANGED: items-start -> items-stretch to make heights equal
+                        abilitiesWrapper.classList.add('grid', 'grid-cols-2', 'items-stretch', 'gap-2');
+                        
+                        // Force children to fill height so backgrounds match
+                        planarContainer.classList.add('h-full');
+                        companionContainer.classList.add('h-full');
+                        
+                        document.getElementById('companions-list').className = "flex flex-col gap-2 h-full justify-center"; 
+                    } else {
+                        abilitiesWrapper.classList.remove('grid', 'grid-cols-2', 'items-stretch', 'gap-2');
+                        abilitiesWrapper.classList.add('flex', 'flex-col');
+                        
+                        if (allyCount > 1) {
+                             document.getElementById('companions-list').className = "grid grid-cols-2 gap-2";
+                        } else {
+                             document.getElementById('companions-list').className = "flex flex-col gap-2";
+                        }
                     }
                     
 					const tetherDisplay = document.getElementById('tether-display');
