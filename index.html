@@ -3240,87 +3240,88 @@
             },
 
             'manor_library_safe': {
-                title: "The Warden's Library",
-                text: "The books have settled on their shelves. The knowledge here is ancient, but the room is dormant.",
-                choices: [
-                    // LOOT RECOVERY: Blueprint
-                    { 
-                        text: "Recover Blueprint", 
-                        type: 'action', 
-                        reqNotItem: 'Manor Blueprint',
-                        action: (state) => {
-                            state.inventory.push("Manor Blueprint");
-                            return "Found the Manor Blueprint on a dusty table.";
-                        }
-                    },
-                    { text: "Check Crawlspace (Vents)", nextScene: 'manor_crawlspace_safe', type: 'travel', doomCost: 0 },
-                    { text: "Return to Foyer", nextScene: 'manor_foyer_safe', type: 'travel', doomCost: 0 }
-                ]
-            },
+				title: "The Warden's Library",
+				text: "The books have settled on their shelves. The knowledge here is ancient, but the room is dormant.",
+				choices: [
+					// LOOT RECOVERY: Blueprint
+					{ 
+						text: "Recover Blueprint", 
+						type: 'action', 
+						reqNotItem: 'Manor Blueprint',
+						action: (state) => {
+							state.inventory.push("Manor Blueprint");
+							return "Found the Manor Blueprint on a dusty table.";
+						}
+					},
+					{ text: "Check Crawlspace (Vents)", nextScene: 'manor_crawlspace_safe', type: 'travel', doomCost: 0 },
+					{ text: "Return to Foyer", nextScene: 'manor_foyer_safe', type: 'travel', doomCost: 0 }
+				]
+			},
 
-            'manor_crawlspace_safe': {
-                title: "The Service Crawlspace",
-                text: "The tight tunnels are empty of rats.",
-                onEnter: (state) => {
-                    // LOOT RECOVERY: Blink
-                    if (!state.hasBlinkSkill) {
-                        return "You hear a weak mewling. The Displacer Cub is still here, hiding in the dark.";
-                    }
-                    return null;
-                },
-                choices: [
-                    // RECRUIT BLINK (Recovery)
-                    { 
-                        text: "Rescue the Displacer Cub", 
-                        type: 'action', 
-                        reqNotFlag: 'hasBlinkSkill',
-                        action: (state) => {
-                            state.companions.blink.joined = true; // Use the companions object flag
-                            state.hasBlinkSkill = true;
-                            setTimeout(updateUI, 100); 
-                            return "You feed the starving cub. It bonds with you immediately. Companion Gained: Blink.";
-                        },
-                        customClass: 'spectral-active'
-                    },
-                    { text: "Crawl to Library", nextScene: 'manor_library_safe', type: 'travel', doomCost: 0 },
-                    { text: "Crawl to Kitchens", nextScene: 'manor_kitchens_safe', type: 'travel', doomCost: 0 }
-                ]
-            },
+			'manor_crawlspace_safe': {
+				title: "The Service Crawlspace",
+				text: "The tight tunnels are empty of rats.",
+				onEnter: (state) => {
+					// LOOT RECOVERY: Blink
+					if (!state.companions.blink.joined) {
+						return "You hear a weak mewling. The Displacer Cub is still here, hiding in the dark.";
+					}
+					return null;
+				},
+				choices: [
+					// RECRUIT BLINK (Recovery)
+					{ 
+						text: "Rescue the Displacer Cub", 
+						type: 'action', 
+						reqNotFlag: 'hasBlinkSkill',
+						action: (state) => {
+							state.companions.blink.joined = true; // Set companion state
+							state.hasBlinkSkill = true; // Use this to hide the button
+							setTimeout(updateUI, 100); 
+							return "You feed the starving cub. It bonds with you immediately. Companion Gained: Blink.";
+						},
+						customClass: 'spectral-active'
+					},
+					{ text: "Crawl to Library", nextScene: 'manor_library_safe', type: 'travel', doomCost: 0 },
+					{ text: "Crawl to Kitchens", nextScene: 'manor_kitchens_safe', type: 'travel', doomCost: 0 }
+				]
+			},
 
             'manor_hall_safe': {
-                title: "The Grand Hall",
-                text: "The wreckage of the Brass Sentinel lies in a heap. The Penrose Staircase spins slowly in the distance, but the door at the top is sealed shut. The Rift is closed.",
-                choices: [
-                    // LOOT RECOVERY: Mimic's Bile
-                    { 
-                        text: "Scavenge the Mimic Carcass", 
-                        type: 'action', 
-                        reqNotItem: "Mimic's Bile",
-                        reqNotFlag: 'hallLooted',
-                        action: (state) => {
-                            state.inventory.push("Mimic's Bile");
-                            state.hallLooted = true;
-                            return "You find the dead Mimic. You extract the Bile from its gland.";
-                        }
-                    },
-                    { text: "Return to Foyer", nextScene: 'manor_foyer_safe', type: 'travel', doomCost: 0 }
-                ]
-            },
+				title: "The Grand Hall",
+				text: "The wreckage of the Brass Sentinel lies in a heap. The Penrose Staircase spins slowly in the distance, but the door at the top is sealed shut. The Rift is closed.",
+				choices: [
+					// LOOT RECOVERY: Mimic's Bile
+					{ 
+						text: "Scavenge the Mimic Carcass (Mimic's Bile)", 
+						type: 'action', 
+						reqNotItem: "Mimic's Bile",
+						reqNotFlag: 'hallLooted',
+						action: (state) => {
+							state.inventory.push("Mimic's Bile");
+							state.hallLooted = true;
+							return "You find the dead Mimic. You extract the Bile from its gland.";
+						}
+					},
+					{ text: "Return to Foyer", nextScene: 'manor_foyer_safe', type: 'travel', doomCost: 0 }
+				]
+			},
 
             'manor_kitchens_safe': {
-                title: "The Ghost Kitchens",
-                text: "The spectral fires still burn in the hearth, fueled by memory. This fire is cold, but it has the power to change things. The spectral light is perfect for fusing artifacts.",
-                choices: [
-                    // THE UPGRADE STATION (Jumps to the Combiner scene)
-                    { 
-                        text: "Approach Spectral Forge", 
-                        nextScene: 'manor_forge', // Direct to the Forge scene
-                        type: 'travel', 
-                        customClass: 'btn-lantern-glow'
-                    },
-                    { text: "Return to Foyer", nextScene: 'manor_foyer_safe', type: 'travel', doomCost: 0 }
-                ]
-            },
+				title: "The Ghost Kitchens",
+				text: "The spectral fires still burn in the hearth, fueled by memory. This fire is cold, but it has the power to change things. The spectral light is perfect for fusing artifacts.",
+				choices: [
+					// THE UPGRADE STATION (Jumps to the Combiner scene)
+					{ 
+						text: "Approach Spectral Forge", 
+						nextScene: 'manor_forge', // Direct to the Forge scene
+						type: 'travel', 
+						customClass: 'btn-lantern-glow'
+					},
+					{ text: "Enter Crawlspace (To Library)", nextScene: 'manor_crawlspace_safe', type: 'travel', doomCost: 0 }, // Link to safe crawlspace
+					{ text: "Return to Foyer", nextScene: 'manor_foyer_safe', type: 'travel', doomCost: 0 }
+				]
+			},
 			
             'act3_long_rest': {
                 title: "A Deep Respite",
