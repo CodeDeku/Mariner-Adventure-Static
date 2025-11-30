@@ -617,6 +617,15 @@
                 <div id="fx-overlay"></div>
 				<div id="vignette-overlay" class="absolute inset-0 pointer-events-none z-20 transition-opacity duration-500 opacity-0"></div>
 
+                <!-- NEW IMAGE LOADER STRUCTURE -->
+                <div id="image-loader" class="absolute inset-0 flex items-center justify-center bg-gray-800 text-gray-500 z-10" style="display: none;">
+                    <div class="flex flex-col items-center">
+                        <i class="fas fa-circle-notch fa-spin text-2xl mb-2 text-amber-600"></i>
+                        <span class="text-xs cinzel tracking-widest text-amber-600">Manifesting Vision...</span>
+                    </div>
+                </div>
+                <!-- END NEW IMAGE LOADER STRUCTURE -->
+                
                 <img id="scene-image" src="" alt="Scene Visualization" class="w-full h-full object-cover opacity-0 transition-opacity duration-1000">
                 
                 <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/80 to-transparent p-4">
@@ -909,7 +918,7 @@
         
         const fxManager = new FXManager();
 
-        // --- STATIC IMAGE MAPPING (Reordered by Act/Scene Flow) ---
+        // --- STATIC IMAGE MAPPING ---
 		const sceneImages = {
 			// PROLOGUE
 			'prologue_storm': 'images/storm.jpg',
@@ -1953,9 +1962,9 @@
                 title: "Business",
                 text: "They take the coin. 'Don't let the Guard see you.'",
                 journal: "Paid the toll. I played the game and walked away unscathed.",
-                onEnter: (state) => {
+                onEnter: (state) => { 
                     audioManager.playCoins();
-                    return "Paid Smugglers.";
+                    return "Paid Smugglers."; 
                 },
                 choices: [{ text: "Head to The Crossroads", nextScene: 'market_crossroads', type: 'travel' }]
             },
@@ -4797,13 +4806,14 @@
                         customClass: 'btn-pulse'
                     },
                     { text: "Bones: Examine the Dead (Medicine DC 14)", nextScene: 'dogtooth_lore_check', type: 'skill', dc: 14, skill: 'Medicine' },
-                    { text: "Gareth: Cow the Pack (Intimidation DC 15)", nextScene: 'dogtooth_intimidate_logic', type: 'skill', dc: 15, skill: 'Intimidation' },
+                    { text: "Gareth: Cow the Pack (Intimidation DC
 					{ text: "Return to Sea Map", nextScene: 'sea_map_hub', type: 'travel', doomCost: 0 }
-                ]
+					]
             },
             'dogtooth_intimidate_logic': {
                 isLogic: true,
                 resolve: (roll, state) => {
+                     // Check Tricorn Bonus
                      if (state.inventory.includes("Captain's Tricorn")) {
                         roll += 1;
                         addToHistory(`Passive Bonus (Tricorn): +1`, 'roll');
@@ -5126,33 +5136,23 @@
 
         // --- CORE FUNCTIONS ---
         
-        /**
-         * Applies damage, factoring in passive defense and the Phoenix Draft item.
-         * @param {number} currentHP 
-         * @param {number} damageAmount 
-         * @returns {number} The resulting HP (clamped at 0).
-         */
         function applyDamage(currentHP, damageAmount) {
             let finalDamage = damageAmount;
 
-            // --- SPYGLASS PASSIVE: ORDER (VIGILANCE) ---
             if (gameState.inventory.includes("Salt-Warped Spyglass") && gameState.influence <= -15) {
                 if (finalDamage > 0) {
                     finalDamage = Math.max(0, finalDamage - 1);
                     addToHistory("Passive (Watchman's Lens): Damage reduced by 1.", 'system');
                 }
             }
-            // --- ALLY DEFENSE: SILAS (INTERCEPT) ---
 			if (gameState.negateNextDamage) {
 				finalDamage = 0;
 				gameState.negateNextDamage = false; 
 				addToHistory("Silas intercepted the attack! Damage negated.", 'system');
 			}
-            // -------------------------------------------
 
             let finalHP = Math.max(0, currentHP - finalDamage);
             
-            // PHOENIX DRAFT CHECK
             if (finalHP === 0) {
                 const phoenixIndex = gameState.inventory.indexOf("Phoenix Draft");
                 if (phoenixIndex > -1) {
@@ -5192,6 +5192,7 @@
             const imgEl = document.getElementById('scene-image');
             const loader = document.getElementById('image-loader');
             
+            // Show loader and hide image immediately
             imgEl.style.opacity = 0;
             loader.style.display = 'flex';
             imgEl.src = '';
@@ -5200,6 +5201,7 @@
             tempImg.src = url;
 
             tempImg.onload = () => {
+                // Once loaded, apply source, hide loader, and fade in
                 imgEl.src = url;
                 loader.style.display = 'none';
                 imgEl.style.opacity = 1;
@@ -5420,10 +5422,6 @@
             rebuildJournal();
         }
 		
-		/**
-		 * Handles the Ally Command action in combat.
-		 * @param {string} allyId - 'silas' or 'blink'
-		 */
 		function allyCommand(allyId) {
 			if (gameState.isBossCombat && gameState.allyCooldowns[allyId] === 0) {
 				
@@ -5453,13 +5451,6 @@
 			updateUI();
 		}
 
-		/**
-		 * Performs the item combination and updates inventory, calling onAcquire/onRemove logic.
-		 * @param {string} baseItem - The item being upgraded.
-		 * @param {string} ingredient - The item being consumed.
-		 * @param {string} resultItem - The new item name.
-		 * @returns {string} Success message.
-		 */
 		function combineItems(baseItem, ingredient, resultItem) {
 			if (!gameState.inventory.includes(baseItem) || !gameState.inventory.includes(ingredient)) {
 				return "Error: Missing ingredients for combination.";
@@ -5679,18 +5670,12 @@
             
             textEl.innerHTML = finalHtml;
             
-			const sceneImage = document.getElementById('scene-image');
-			if (currentScene.image) {
-				sceneImage.src = currentScene.image;
-				sceneImage.classList.remove('hidden');
-			} else {
-				sceneImage.classList.add('hidden');
-			}
 			document.getElementById('scene-title').innerText = displayTitle;
             
             activeCrewMember = null; 
-            
+
             generateSceneImage(sceneId);
+            
             renderChoices(scene.choices, isDeathScene);
             updateUI();
         }
@@ -5958,6 +5943,7 @@
                 if (buyNav) processedChoices.push(buyNav);
                 if (returnNav) processedChoices.push(returnNav);
             }	
+			
 			
 			
 
@@ -6266,7 +6252,6 @@
                     const suppliesDisplay = document.getElementById('supplies-display');
                     const companionPanel = document.getElementById('companion-panel');
                     
-                    // --- ACT 3 UI TOGGLE ---
                     if (gameState.act3Started) {
                         suppliesDisplay.classList.remove('hidden');
                         document.getElementById('supplies-count').innerText = gameState.supplies;
@@ -6283,9 +6268,7 @@
                     } else {
                         companionPanel.classList.add('hidden');
                     }
-					// --- END ACT 3 UI TOGGLE ---
                     
-					// --- ACT 2 UI TOGGLE ---
 					const tetherDisplay = document.getElementById('tether-display');
 					const planarSkills = document.getElementById('planar-skills-container');
 
@@ -6300,8 +6283,6 @@
 					} else {
 						planarSkills.classList.add('hidden');
 					}
-					// --- END ACT 2 UI TOGGLE ---
-
 					
 					if (sceneId && sceneId.startsWith('prologue')) {
 						statsPanel.classList.add('prologue-blur');
@@ -6333,7 +6314,6 @@
 
 					audioManager.checkVulnerable(gameState.currentHP, gameState.maxHP);
 					
-					// --- DOOM COUNTER UI ---
 					const doomDisplay = document.getElementById('doom-counter-display');
 					const doomText = document.getElementById('doom-timer-text');
 					const doomBar = document.getElementById('doom-bar');
@@ -6371,7 +6351,6 @@
 						document.getElementById('fx-overlay').classList.remove('fx-rift-collapsed');
 					}
 					
-					// --- TETHER COUNTER UI (ACT 2) ---
 					const tetherText = document.getElementById('tether-text');
 					const tetherBar = document.getElementById('tether-bar');
 					const maxTether = 20; 
@@ -6389,8 +6368,6 @@
 							tetherText.classList.remove('text-red-400');
 						}
 					}
-					// --- END TETHER COUNTER UI ---
-
 
 					document.getElementById('shillings-display').innerText = gameState.shillings;
 					
