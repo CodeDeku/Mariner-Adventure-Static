@@ -5678,7 +5678,15 @@
             }
             
             textEl.innerHTML = finalHtml;
-            document.getElementById('scene-title').innerText = displayTitle;
+            
+			const sceneImage = document.getElementById('scene-image');
+			if (currentScene.image) {
+				sceneImage.src = currentScene.image;
+				sceneImage.classList.remove('hidden');
+			} else {
+				sceneImage.classList.add('hidden');
+			}
+			document.getElementById('scene-title').innerText = displayTitle;
             
             activeCrewMember = null; 
             
