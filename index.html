@@ -1124,6 +1124,23 @@
                         active: false
                     }
                 },
+				// --- NEW COMBAT STATE ---
+				isBossCombat: false,        // Flag to lock the UI and show HP bars
+				enemyHP: 0,                 // Current enemy health
+				maxEnemyHP: 0,              // Max enemy health
+				currentEnemy: '',           // Name of current enemy
+				nextAttackCrit: false,      // Set by Blink: Phase Shift
+				negateNextDamage: false,    // Set by Silas: Intercept
+				
+				// --- ALLY COOLDOWNS (2-Round/3-Round cycle) ---
+				allyCooldowns: {
+					silas: 0,               // Cooldown for Silas: Intercept
+					blink: 0,               // Cooldown for Blink: Phase Shift
+				},
+				
+				// --- PASSIVE STATS ---
+				playerAC: 10,               // Base AC for the new combat system
+				passiveDefenseBonus: 0,     // Bonus derived from items (e.g., The Warding Ember)
             };
         }
 
@@ -1307,13 +1324,14 @@
                     return `A powerful reserve, best saved for when death calls.`;
                 }
             },
-            "Pearlescent Mushroom": { 
-                type: 'consumable',
-                icon: 'fa-cloud-meatball', 
-                color: 'text-purple-300',
-                btnText: "EAT",
-                desc: "Consumable: A medicinal mushroom used for mental clarity. (Free Guiding Voice)",
-                action: (state) => {
+            "Pearlescent Mushroom": {
+				name: "Pearlescent Mushroom",
+				type: 'consumable',
+				icon: 'fa-mushroom',
+				color: 'text-purple-400',
+				btnText: "EAT",
+				desc: "Consumable: Grants a free use of a Crew member's skill on the next check, but makes you drowsy. This effect can be enhanced.",
+				action: (state) => {
                     if (state.crewUseFree) {
                         return "The residual clarity remains. You can only benefit from one mushroom at a time.";
                     }
@@ -1325,7 +1343,10 @@
                         if (idx > -1) state.inventory.splice(idx, 1);
                         return `Consumed Pearlescent Mushroom. Clarity gained! (Free Guiding Voice available)`;
                     }
-                    return null;
+                    state.inventory.splice(state.inventory.indexOf("Pearlescent Mushroom"), 1);
+					state.crewUseFree = true;
+					return "A soft purple light suffuses your mind. Your next Crew use will be free of charge (but only one).";
+				}
                 }
             },
             "Curious Cargo": { // NEW ITEM: Influence driver
@@ -1388,10 +1409,14 @@
                 desc: "Legendary (Wolves of Valor): Doubles Primeval Awareness range. Grants Keen Senses (Perception advantage on hidden objects)." 
             },
             "Sword of Valor": { 
-                type: 'key', 
-                icon: 'fa-cross', 
-                color: 'text-blue-500', 
-                desc: "Legendary (Wolves of Valor): +1 to attack/damage. Deals extra Force damage to Undead, scaling with their age." 
+				name: "Sword of Valor", 
+				type: 'weapon', 
+				icon: 'fa-sword', 
+				color: 'text-yellow-400', 
+				desc: "A gleaming cutlass, sharp enough to cut the veil. Deals 1d8+1 Magic Damage.",
+				damage: '1d8+1',
+				isCombinable: true
+				
             },
 			"Compass": { type: 'key', icon: 'fa-compass', color: 'text-indigo-400', desc: "Passive: Violently hums near planar energy." },
             
@@ -1469,20 +1494,21 @@
                 color: 'text-orange-600',
                 btnText: "IGNITE",
                 desc: "Counter: Volatile mixture. Critical for Drowned Spectre (Shadow Path).",
+				isCombinable: true,
                 action: (state) => {
                     return `Save for the Drowned Spectre encounter.`;
                 }
             },
             "Holy Water": { 
-                name: "Holy Water",
-                type: 'consumable',
-                icon: 'fa-cross', 
-                color: 'text-blue-200',
-                btnText: "SPLASH",
-                desc: "Counter: Consecrated water. Critical for Slag Horror (Fire Path).",
+				name: "Holy Water", 
+				type: 'consumable', 
+				icon: 'fa-flask-vial', 
+				color: 'text-blue-200', 
+				btnText: "COMBINE",
+				desc: "A sealed flask of consecrated water. Too precious to drink, but potent against the wicked.",
                 action: (state) => {
-                    return `Save for the Slag Horror encounter.`;
-                }
+					return "This is a sacred ingredient. Use it wisely.";
+				}
             },
             // --- ACT 2 ITEMS (NEW) ---
             "Manor Blueprint": {
@@ -1494,24 +1520,64 @@
                 desc: "Passive: Schematics of the Vanishing Manor. Reveals the current room location via the 'Check Blueprint' action."
             },
             "Spectral Lantern": {
-                name: "Spectral Lantern",
-                type: 'key',
-                icon: 'fa-meteor', 
-                color: 'text-yellow-300',
-                btnText: "PASSIVE",
-                desc: "Key: Grants the ability to Planar Walk, stabilizing the tether's exit."
-            },
+				name: "Spectral Lantern",
+				type: 'gear',
+				icon: 'fa-lantern',
+				color: 'text-amber-400',
+				desc: "A lantern whose light burns cold and does not cast shadows. Grants +1 Defense (AC). Can be used at the Spectral Forge.",
+				isCombinable: true,
+				onAcquire: (state) => { state.passiveDefenseBonus += 1; }, 
+				onRemove: (state) => { state.passiveDefenseBonus -= 1; }  
+			},
 			"Mimic's Bile": { 
-                name: "Mimic's Bile",
-                type: 'consumable',
-                icon: 'fa-vial', 
-                color: 'text-purple-500',
-                btnText: "INSPECT", // Changed to INSPECT since we don't have a use case yet
-                desc: "Consumable: Corrosive acid harvested from a Mimic. Useful for alchemy or destruction.",
-                action: (state) => {
-                    return "Could be used to temper steel or melt locks.";
-                }
-            },
+				name: "Mimic's Bile", 
+				type: 'ingredient', 
+				icon: 'fa-vial-virus', 
+				color: 'text-green-500', 
+				desc: "Highly corrosive digestive acid, harvested from a Mimic's core. Deals Acid Damage.",
+				isCombinable: true,
+			},
+			"Radiant-Washed Sword of Valor": {
+				name: "Radiant-Washed Sword of Valor",
+				type: 'weapon',
+				icon: 'fa-sun',
+				color: 'text-blue-200',
+				desc: "The blade hums with purified light. Deals 1d8+1 Magic Damage, and an extra 1d4 Radiant Damage against Undead.",
+				damage: '1d8+1 + 1d4 (Radiant vs Undead)',
+				isCombined: true,
+			},
+			// NEW COMBINED WEAPON 2 (Acid)
+			"Acid-Etched Sword of Valor": {
+				name: "Acid-Etched Sword of Valor",
+				type: 'weapon',
+				icon: 'fa-acid-base',
+				color: 'text-green-500',
+				desc: "The blade is etched with glowing acid, effective against armor. Deals 1d8+1 Magic Damage, and an extra 1d4 Acid Damage (Ignores 1 AC).",
+				damage: '1d8+1 + 1d4 (Acid vs Armor)',
+				isCombined: true,
+			},
+			// NEW COMBINED CONSUMABLE
+			"Mind-Expanding Grog": {
+				name: "Mind-Expanding Grog",
+				type: 'consumable',
+				icon: 'fa-glass-water',
+				color: 'text-purple-300',
+				btnText: "DRINK",
+				desc: "Consumable: A potent mix of spirits and mushroom extract. Acts as a Long Rest and grants one free Crew use.",
+				action: (state) => {
+					// Effect 1: Long Rest (Heal to Max HP, Reset Crew)
+					state.currentHP = state.maxHP;
+					Object.values(state.crew).forEach(c => c.used = false);
+					// Effect 2: Free Crew Use (Mushroom effect)
+					state.crewUseFree = true; 
+					
+					// Remove item
+					const idx = state.inventory.indexOf("Mind-Expanding Grog");
+					if (idx > -1) state.inventory.splice(idx, 1);
+					
+					return "The grog is surprisingly smooth, followed by a rush of clarity. Your wounds close, your Crew awakens, and your next Guiding Voice is free.";
+				}
+			},
         };
         
         function getBonusForSkill(crewMember, skillType) {
@@ -5349,6 +5415,70 @@
                     { text: "Perform Binding Ritual", nextScene: 'act2_finale_resolution', type: 'hold', customClass: 'btn-channel', tetherCost: 0 }
                 ]
             },
+			
+			'manor_forge': {
+				title: "The Spectral Forge",
+				text: "The Manor Kitchen hearth burns with a ghostly violet flame, powered by residual planar energy. This cold fire fuses matter with memory—the perfect place to customize your gear. You examine the cold stone table.",
+				image: 'images/manor_kitchen.jpg', // Placeholder image
+				choices: [
+					{ text: "View Combination Recipes", nextScene: 'manor_forge_combine', type: 'dialogue', customClass: 'btn-pulse' },
+					{ text: "Exit Kitchen", nextScene: 'manor_hall', type: 'travel' }
+				]
+			};
+
+			'manor_forge_combine': {
+				title: "Item Combiner: Recipes",
+				text: "Select an available recipe to fuse two items into one powerful artifact. Note: Combining items consumes the original components.",
+				image: 'images/manor_kitchen.jpg', 
+				choices: [
+					// Recipe 1: UTILITY (Mind-Expanding Grog)
+					{
+						text: "Mind-Expanding Grog (Rum + Pearlescent Mushroom)",
+						nextScene: 'manor_forge',
+						type: 'combine',
+						reqItems: ["Rum", "Pearlescent Mushroom"],
+						customClass: 'btn-success-glow',
+						onSelect: (state) => {
+							return combineItems("Rum", "Pearlescent Mushroom", "Mind-Expanding Grog");
+						}
+					},
+					// Recipe 2: SWORD PATH 1 (Acid)
+					{
+						text: "Acid-Etched Sword (Sword of Valor + Mimic's Bile)",
+						nextScene: 'manor_forge',
+						type: 'combine',
+						reqItems: ["Sword of Valor", "Mimic's Bile"],
+						customClass: 'btn-fire-glow',
+						onSelect: (state) => {
+							return combineItems("Sword of Valor", "Mimic's Bile", "Acid-Etched Sword of Valor");
+						}
+					},
+					// Recipe 3: SWORD PATH 2 (Radiant)
+					{
+						text: "Radiant-Washed Sword (Sword of Valor + Holy Water)",
+						nextScene: 'manor_forge',
+						type: 'combine',
+						reqItems: ["Sword of Valor", "Holy Water"],
+						customClass: 'btn-hero',
+						onSelect: (state) => {
+							return combineItems("Sword of Valor", "Holy Water", "Radiant-Washed Sword of Valor");
+						}
+					},
+					// Recipe 4: PASSIVE DEFENSE (Lantern Upgrade)
+					{
+						text: "The Warding Ember (Spectral Lantern + Alchemical Fire)",
+						nextScene: 'manor_forge',
+						type: 'combine',
+						reqItems: ["Spectral Lantern", "Alchemical Fire"],
+						customClass: 'btn-lantern-glow',
+						onSelect: (state) => {
+							return combineItems("Spectral Lantern", "Alchemical Fire", "The Warding Ember");
+						}
+					},
+					{ text: "Back to the Forge", nextScene: 'manor_forge', type: 'travel', doomCost: 0 }
+				],
+				// No onEnter necessary as long as your button-rendering logic filters choices by reqItems
+			};
 
             // NEW SCENE: Bridges Act 2 to Act 3
             'act2_finale_resolution': {
@@ -5788,9 +5918,137 @@
             if(html) gameState.history.push(html);
             rebuildJournal();
         }
+		
+		// --- START: NEW CORE COMBAT AND COMBINATION FUNCTIONS ---
+
+		/**
+		 * Helper function to parse damage string and calculate damage.
+		 * @param {string} damageString - e.g., '1d8+1'
+		 * @returns {number} The calculated damage value.
+		 */
+		function calculateDamage(damageString) {
+			let totalDamage = 0;
+			const parts = damageString.match(/(\d+d\d+)|(\+\d+)/g);
+			
+			if (!parts) return 0;
+
+			for (const part of parts) {
+				if (part.includes('d')) {
+					const [numDice, dieSize] = part.split('d').map(Number);
+					for (let i = 0; i < numDice; i++) {
+						totalDamage += Math.floor(Math.random() * dieSize) + 1;
+					}
+				} else if (part.startsWith('+')) {
+					totalDamage += parseInt(part.substring(1));
+				}
+			}
+			return totalDamage;
+		}
+
+		/**
+		 * Initiates the new Boss Combat state.
+		 * @param {string} enemyName - The name of the enemy.
+		 * @param {number} health - The enemy's starting HP.
+		 */
+		function startBossCombat(enemyName, health) {
+			gameState.isBossCombat = true;
+			gameState.enemyHP = health;
+			gameState.maxEnemyHP = health;
+			gameState.currentEnemy = enemyName; 
+			gameState.allyCooldowns.silas = 0;
+			gameState.allyCooldowns.blink = 0;
+			
+			// 1. Apply visual effect 
+			document.getElementById('fx-overlay').classList.add('fx-boss-combat');
+			document.getElementById('fx-overlay').classList.add('vignette-active');
+			
+			// 2. Log entry
+			addToHistory(`A massive <span class="text-danger">${enemyName}</span> blocks your path! Combat Initiated.`, 'danger');
+			saveGame();
+			updateUI();
+		}
+
+		/**
+		 * Handles the Ally Command action in combat.
+		 * @param {string} allyId - 'silas' or 'blink'
+		 */
+		function allyCommand(allyId) {
+			if (gameState.isBossCombat && gameState.allyCooldowns[allyId] === 0) {
+				
+				if (allyId === 'silas') {
+					gameState.negateNextDamage = true;
+					gameState.allyCooldowns.silas = 2; // 2-round cooldown
+					addToHistory(`<span class="text-blood">Silas: Intercept!</span> Silas materializes, shield raised. The next blow against you will be completely negated.`, 'system');
+				} else if (allyId === 'blink') {
+					gameState.nextAttackCrit = true;
+					gameState.allyCooldowns.blink = 3; // 3-round cooldown
+					addToHistory(`<span class="text-spectral">Blink: Phase Shift!</span> The cub blurs and you feel the tether momentarily shift. Your next attack will bypass defenses for massive damage.`, 'system');
+				}
+				
+				addToHistory("The turn passes as you command your companion.", 'system');
+				
+			} else {
+				addToHistory(`Ally ${allyId.charAt(0).toUpperCase() + allyId.slice(1)} is on cooldown!`, 'system');
+			}
+			
+			saveGame();
+			updateUI();
+		}
+
+		/**
+		 * Performs the item combination and updates inventory, calling onAcquire/onRemove logic.
+		 * @param {string} baseItem - The item being upgraded.
+		 * @param {string} ingredient - The item being consumed.
+		 * @param {string} resultItem - The new item name.
+		 * @returns {string} Success message.
+		 */
+		function combineItems(baseItem, ingredient, resultItem) {
+			// 1. Check if both items exist
+			if (!gameState.inventory.includes(baseItem) || !gameState.inventory.includes(ingredient)) {
+				return "Error: Missing ingredients for combination.";
+			}
+
+			// 2. Remove items
+			const baseIndex = gameState.inventory.indexOf(baseItem);
+			const ingredientIndex = gameState.inventory.indexOf(ingredient);
+			
+			// Check if the base item has a removal effect
+			// NOTE: This relies on your itemDefs having onRemove functions for items like 'Spectral Lantern'
+			if (itemDefs[baseItem].onRemove) {
+				itemDefs[baseItem].onRemove(gameState);
+			}
+			
+			// Remove both items (important to remove the higher index first)
+			gameState.inventory.splice(Math.max(baseIndex, ingredientIndex), 1); 
+			gameState.inventory.splice(Math.min(baseIndex, ingredientIndex), 1); 
+
+			// 3. Add new item
+			gameState.inventory.push(resultItem);
+
+			// 4. Apply acquisition effect for the new item
+			if (itemDefs[resultItem].onAcquire) {
+				itemDefs[resultItem].onAcquire(gameState);
+			}
+			
+			saveGame();
+			updateUI();
+			return `${baseItem} and ${ingredient} were fused at the Spectral Forge, yielding the <span class="text-item">${itemDefs[resultItem].name}</span>!`;
+		}
+
+		// --- END: NEW CORE COMBAT AND COMBINATION FUNCTIONS ---
         
         async function renderScene(sceneId, logText = true) {
             const scene = scenes[sceneId];
+			
+			// --- COMBAT STATE EXIT LOGIC ---
+			// Clears the combat flag and visual effect if the new scene is not a combat scene.
+			// NOTE: This assumes your boss scenes have a property like: isCombat: true
+			if (gameState.isBossCombat && !scene.isCombat) { 
+				gameState.isBossCombat = false;
+				// Remove the visual pulse effect
+				document.getElementById('fx-overlay').classList.remove('fx-boss-combat');
+				addToHistory(`Combat ended. The <span class="text-danger">${gameState.currentEnemy}</span> was defeated or escaped.`, 'system');
+			}
             if (!scene) return;
             
             // --- DEATH CHECK 0 ---
@@ -6819,47 +7077,59 @@
 					});
                     
 					// --- COMPANIONS LIST (ACT 3 & ACT 2) ---
-                    function renderCompanions() {
-                        const companionList = document.getElementById('companions-list');
-                        companionList.innerHTML = '';
+                    function renderCompanions() { 
+						const companionList = document.getElementById('companions-list');
+						companionList.innerHTML = ''; 
 						companionList.className = "grid grid-cols-2 gap-2";
 
-                        // 1. BLINK (The Displacer Cub) - RESTORED
-                        if (gameState.companions.blink.joined) {
-                             const blinkDiv = document.createElement('div');
-                             // Green Styling (Emerald) to match Silas
-                             blinkDiv.className = `p-2 rounded border border-emerald-700 bg-gray-900/80 shadow flex items-center justify-between transition-colors cursor-pointer hover:bg-emerald-900/30 group`;
-                             blinkDiv.innerHTML = `
-                                <div class="flex items-center gap-2">
-                                    <i class="fas fa-paw text-xl text-emerald-400 group-hover:text-white transition-colors"></i>
-                                    <div class="flex flex-col text-left leading-tight">
-                                        <span class="font-bold text-xs cinzel text-emerald-300">Blink</span>
-                                        <span class="text-[10px] text-gray-500 italic">Phase Shift</span>
-                                    </div>
-                                </div>
-                             `;
-                             // Click to trigger skill
-                             blinkDiv.onclick = () => window.gameFunctions.triggerBlink();
-                             companionList.appendChild(blinkDiv);
-                        }
-
-                        // 2. SILAS (The Seneschal)
-                        if (gameState.companions.silas.joined) {
-                            const silas = gameState.companions.silas;
-                             const silasDiv = document.createElement('div');
-                             silasDiv.className = `p-2 rounded border border-emerald-700 bg-gray-900/80 shadow flex items-center justify-between transition-colors`;
-                             silasDiv.innerHTML = `
-                                <div class="flex items-center gap-2">
-                                    <i class="fas fa-moon text-xl text-emerald-400"></i>
-                                    <div class="flex flex-col text-left leading-tight">
-                                        <span class="font-bold text-xs cinzel text-emerald-300">${silas.name}</span>
-                                        <span class="text-[10px] text-gray-500 italic">Seneschal</span>
-                                    </div>
-                                </div>
-                             `;
-                             companionList.appendChild(silasDiv);
-                        }
-                    }
+						// Silas (Wolf Kin / Seneschal)
+						if (gameState.hasSilas) {
+							const silasDiv = document.createElement('div');
+							silasDiv.className = "p-2 bg-gray-800 border border-gray-600 rounded flex items-center justify-between";
+							silasDiv.innerHTML = `
+								<div class="flex items-center gap-2">
+									<i class="fas fa-ghost text-lg text-emerald-400"></i>
+									<div class="text-left leading-tight">
+										<span class="font-bold text-xs cinzel text-emerald-300">Silas</span>
+										<span class="text-[10px] text-gray-500 italic">Seneschal (Pack Tactics)</span>
+									</div>
+								</div>
+								${gameState.isBossCombat ? `
+									<button onclick="allyCommand('silas')" 
+											class="btn-game px-2 py-1 text-xs rounded transition-all 
+											${gameState.allyCooldowns.silas > 0 ? 'btn-disabled-cost' : 'bg-red-900/40 text-red-300 hover:bg-red-800/60'}"
+											${gameState.allyCooldowns.silas > 0 ? 'disabled' : ''}>
+										INTERCEPT! (${gameState.allyCooldowns.silas > 0 ? gameState.allyCooldowns.silas : 'Ready'})
+									</button>
+								` : ''}
+							`;
+							companionList.appendChild(silasDiv);
+						}
+						
+						// Blink (Phase-Cub / Evasion)
+						if (gameState.hasBlink) {
+							const blinkDiv = document.createElement('div');
+							blinkDiv.className = "p-2 bg-gray-800 border border-gray-600 rounded flex items-center justify-between";
+							blinkDiv.innerHTML = `
+								<div class="flex items-center gap-2">
+									<i class="fas fa-cubes text-lg text-purple-400"></i>
+									<div class="text-left leading-tight">
+										<span class="font-bold text-xs cinzel text-purple-300">Blink</span>
+										<span class="text-[10px] text-gray-500 italic">Phase-Cub (Blur)</span>
+									</div>
+								</div>
+								${gameState.isBossCombat ? `
+									<button onclick="allyCommand('blink')" 
+											class="btn-game px-2 py-1 text-xs rounded transition-all 
+											${gameState.allyCooldowns.blink > 0 ? 'btn-disabled-cost' : 'bg-purple-900/40 text-purple-300 hover:bg-purple-800/60'}"
+											${gameState.allyCooldowns.blink > 0 ? 'disabled' : ''}>
+										PHASE SHIFT (${gameState.allyCooldowns.blink > 0 ? gameState.allyCooldowns.blink : 'Ready'})
+									</button>
+								` : ''}
+							`;
+							companionList.appendChild(blinkDiv);
+						}
+					}
                     // This function is called earlier in updateUI if act3Started is true.
 					
 					// Inventory List View
