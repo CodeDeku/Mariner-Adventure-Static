@@ -1153,7 +1153,7 @@
             }
             
             // Reload Current Scene (To refresh options/text based on plane)
-            renderScene(gameState.currentSceneId);
+            renderScene(gameState.currentSceneId, false);
         };
 
         // 2. BLINK LOGIC (Companion Interaction)
@@ -1500,7 +1500,7 @@
                 color: 'text-yellow-300',
                 btnText: "PASSIVE",
                 desc: "Key: Grants the ability to Planar Walk, stabilizing the tether's exit."
-            }
+            },
 			"Mimic's Bile": { 
                 name: "Mimic's Bile",
                 type: 'consumable',
@@ -5909,10 +5909,13 @@
                 document.getElementById('fx-overlay').classList.add('fx-rift-pulse');
             }
 
-            if (scene.onEnter && logText) {
+            if (scene.onEnter) {
                 const msg = scene.onEnter(gameState);
-                // Apply damage and then check death immediately
-                if (msg) addToHistory(msg, 'system');
+                
+                // Only print to the journal if logText is true
+                if (msg && logText) {
+                    addToHistory(msg, 'system');
+                }
                 saveGame();
             }
 
