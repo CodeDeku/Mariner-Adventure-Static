@@ -1237,8 +1237,8 @@
 
         // Interactive Items Definition
         const itemRegistry = {
-            "Ship's Log": { type: 'key', icon: 'fa-book-skull', color: 'text-amber-700', desc: "Key Item: Records of the damned. Unlocks your history." },
-            "Captain's Tricorn": { type: 'key', icon: 'fa-hat-cowboy', color: 'text-blue-500', desc: "Passive: A symbol of authority. +1 to Intimidation checks." },
+            "Ship's Log": { name: "Ship's Log", type: 'key', icon: 'fa-book-skull', color: 'text-amber-700', desc: "Key Item: Records of the damned. Unlocks your history." },
+            "Captain's Tricorn": { name: "Captain's Tricorn", type: 'key', icon: 'fa-hat-cowboy', color: 'text-blue-500', desc: "Passive: A symbol of authority. +1 to Intimidation checks." },
             "Rum": {
                 name: "Rum",
                 type: 'consumable',
@@ -1347,7 +1347,6 @@
 					state.crewUseFree = true;
 					return "A soft purple light suffuses your mind. Your next Crew use will be free of charge (but only one).";
 				}
-                }
             },
             "Curious Cargo": { // NEW ITEM: Influence driver
                 name: "Curious Cargo",
@@ -1379,10 +1378,10 @@
                 btnText: "SELL",
                 desc: "Passive: A sentimental item. Might be worth something."
             },
-            "Rusted Cutlass": { type: 'key', icon: 'fa-khanda', color: 'text-gray-400', desc: "Passive: Reduces damage taken in combat events." },
-            "Rope": { type: 'key', icon: 'fa-om', color: 'text-yellow-700', desc: "Passive: Essential for climbing cliffs." },
-            "Torch": { type: 'key', icon: 'fa-fire', color: 'text-orange-500', desc: "Passive: Illuminates dark caves." },
-            "Strange Coin": { type: 'key', icon: 'fa-circle-notch', color: 'text-yellow-600', desc: "Passive: Ancient currency. May open doors not made of wood." },
+            "Rusted Cutlass": { name: "Rusted Cutlass", type: 'key', icon: 'fa-khanda', color: 'text-gray-400', desc: "Passive: Reduces damage taken in combat events." },
+            "Rope": { name: "Rope", type: 'key', icon: 'fa-om', color: 'text-yellow-700', desc: "Passive: Essential for climbing cliffs." },
+            "Torch": { name: "Torch", type: 'key', icon: 'fa-fire', color: 'text-orange-500', desc: "Passive: Illuminates dark caves." },
+            "Strange Coin": { name: "Strange Coin", type: 'key', icon: 'fa-circle-notch', color: 'text-yellow-600', desc: "Passive: Ancient currency. May open doors not made of wood." },
             "Dead Man's Die": { // NEW ITEM: Reroll Token
                 name: "Dead Man's Die",
                 type: 'consumable',
@@ -1395,6 +1394,7 @@
                 }
             },
 			"Salt-Warped Spyglass": { 
+                name: "Salt-Warped Spyglass",
                 type: 'key', 
                 icon: 'fa-eye', // or fa-eye
                 color: 'text-cyan-400', 
@@ -1403,6 +1403,7 @@
             
             // --- LEGENDARY ARTIFACTS (WOLVES OF VALOR) ---
             "Ring of Brass": { 
+                name: "Ring of Brass",
                 type: 'key', 
                 icon: 'fa-ring', 
                 color: 'text-amber-500', 
@@ -1418,7 +1419,7 @@
 				isCombinable: true
 				
             },
-			"Compass": { type: 'key', icon: 'fa-compass', color: 'text-indigo-400', desc: "Passive: Violently hums near planar energy." },
+			"Compass": { name: "Compass", type: 'key', icon: 'fa-compass', color: 'text-indigo-400', desc: "Passive: Violently hums near planar energy." },
             
             // --- ALCHEMIST ITEMS ---
             "Vitality Tincture": { 
@@ -1536,7 +1537,11 @@
 				color: 'text-green-500', 
 				desc: "Highly corrosive digestive acid, harvested from a Mimic's core. Deals Acid Damage.",
 				isCombinable: true,
+                action: (state) => {
+                    return "A corrosive ingredient for the Spectral Forge. Do not drink.";
+                }
 			},
+			// FIX: Added definitions for combined items
 			"Radiant-Washed Sword of Valor": {
 				name: "Radiant-Washed Sword of Valor",
 				type: 'weapon',
@@ -1546,7 +1551,6 @@
 				damage: '1d8+1 + 1d4 (Radiant vs Undead)',
 				isCombined: true,
 			},
-			// NEW COMBINED WEAPON 2 (Acid)
 			"Acid-Etched Sword of Valor": {
 				name: "Acid-Etched Sword of Valor",
 				type: 'weapon',
@@ -1556,7 +1560,7 @@
 				damage: '1d8+1 + 1d4 (Acid vs Armor)',
 				isCombined: true,
 			},
-			// NEW COMBINED CONSUMABLE
+			// FIX: Added Mind-Expanding Grog action logic
 			"Mind-Expanding Grog": {
 				name: "Mind-Expanding Grog",
 				type: 'consumable',
@@ -1578,6 +1582,7 @@
 					return "The grog is surprisingly smooth, followed by a rush of clarity. Your wounds close, your Crew awakens, and your next Guiding Voice is free.";
 				}
 			},
+			// FIX: Added Warding Ember item definition
 			"The Warding Ember": {
 				name: "The Warding Ember",
 				type: 'passive',
@@ -2226,7 +2231,7 @@
                     audioManager.playCoins();
                     return "Acquired 5 Supplies."; 
                 },
-                choices: [{ text: "Return to Merchant", nextScene: 'market_stall', type: 'travel', doomCost: 0 }]
+                choices: [{ text: "Return to Provisioner", nextScene: 'port_provisioner', type: 'travel', doomCost: 0 }]
             },
             'buy_supplies_10': {
                 title: "Purchase Supplies",
@@ -2237,7 +2242,7 @@
                     audioManager.playCoins();
                     return "Acquired 10 Supplies."; 
                 },
-                choices: [{ text: "Return to Merchant", nextScene: 'market_stall', type: 'travel', doomCost: 0 }]
+                choices: [{ text: "Return to Provisioner", nextScene: 'port_provisioner', type: 'travel', doomCost: 0 }]
             },
 
             'lighthouse_split': {
@@ -2722,7 +2727,7 @@
                             },
                             // Return to Sea (The "Leave" button)
                             { 
-                                text: `Navigate the Open Sea (${state.shipName})`, 
+                                text: `Maps the Open Sea (${state.shipName})`, 
                                 nextScene: 'sea_map_hub', 
                                 type: 'travel', 
                                 customClass: 'btn-anchor', // ADDED: Matches nautical theme
@@ -3258,7 +3263,7 @@
                 text: "The tight tunnels are empty of rats.",
                 onEnter: (state) => {
                     // LOOT RECOVERY: Blink
-                    if (!state.skills.includes("Blink")) {
+                    if (!state.hasBlinkSkill) {
                         return "You hear a weak mewling. The Displacer Cub is still here, hiding in the dark.";
                     }
                     return null;
@@ -3270,10 +3275,10 @@
                         type: 'action', 
                         reqNotFlag: 'hasBlinkSkill',
                         action: (state) => {
-                            state.skills.push("Blink");
+                            state.companions.blink.joined = true; // Use the companions object flag
                             state.hasBlinkSkill = true;
                             setTimeout(updateUI, 100); 
-                            return "You feed the starving cub. It bonds with you immediately. Learned: Blink.";
+                            return "You feed the starving cub. It bonds with you immediately. Companion Gained: Blink.";
                         },
                         customClass: 'spectral-active'
                     },
@@ -3304,35 +3309,18 @@
 
             'manor_kitchens_safe': {
                 title: "The Ghost Kitchens",
-                text: "The spectral fires still burn in the hearth, fueled by memory. This fire is cold, but it has the power to change things.",
+                text: "The spectral fires still burn in the hearth, fueled by memory. This fire is cold, but it has the power to change things. The spectral light is perfect for fusing artifacts.",
                 choices: [
-                    // THE UPGRADE STATION
+                    // THE UPGRADE STATION (Jumps to the Combiner scene)
                     { 
-                        text: "Temper Sword in Bile & Ghost Fire", 
-                        nextScene: 'kitchen_temper_sword', // Reuses the upgrade scene
-                        type: 'action', 
-                        reqItem: "Mimic's Bile",
-                        reqItemTwo: "Sword of Valor", 
-                        consume: true,
-                        customClass: 'btn-hero'
+                        text: "Approach Spectral Forge", 
+                        nextScene: 'manor_forge', // Direct to the Forge scene
+                        type: 'travel', 
+                        customClass: 'btn-lantern-glow'
                     },
                     { text: "Return to Foyer", nextScene: 'manor_foyer_safe', type: 'travel', doomCost: 0 }
                 ]
             },
-			'kitchen_temper_sword': {
-                title: "Acid-Etched Steel",
-                text: "You pour the Mimic's Bile over the Sword of Valor and thrust it into the spectral blue flames...<br><br>The blade emerges changed—the steel is now dark, rippled with green veins. It is no longer just a holy weapon; it is a predator's fang.",
-                journal: "Tempered the Sword of Valor with Mimic Bile. It is stronger now.",
-                choices: [
-                    // CHANGED: Return to the SAFE kitchen
-                    { text: "Sheathe the Blade", nextScene: 'manor_kitchens_safe', type: 'travel', tetherCost: 0 }
-                ],
-                onEnter: (state) => {
-                    state.hasAcidBlade = true; 
-                    return "Upgrade Complete: Sword of Valor is now Acid-Etched (+1 Damage).";
-                }
-            },
-            // --- END MANOR SAFE LAYER ---
 			
             'act3_long_rest': {
                 title: "A Deep Respite",
@@ -3731,6 +3719,7 @@
                     { text: "Return to Triage", nextScene: 'alchemist_triage', type: 'travel', doomCost: 0 }
                 ],
                 onEnter: (state) => {
+                    // FIX: Strange Coin removal is handled by the choice logic itself (choice.consume: true)
                     if (!state.inventory.includes("Phoenix Draft")) {
                         state.inventory.push("Phoenix Draft");
                         return "Acquired Phoenix Draft.";
@@ -3808,7 +3797,7 @@
                     state.inventory.push("Smelling Salts"); 
                     scenes['alchemist_triage'].stock["Smelling Salts"] -= 1;
                     audioManager.playCoins();
-                    return "Bought Smelling Salts."; 
+                    return "Bought Salts."; 
                 },
             },
             'buy_powder': {
@@ -3820,7 +3809,7 @@
                     state.inventory.push("Flash Powder"); 
                     scenes['alchemist_triage'].stock["Flash Powder"] -= 1;
                     audioManager.playCoins();
-                    return "Bought Flash Powder."; 
+                    return "Bought Powder."; 
                 },
             },
             'sell_potion_alch': {
@@ -3856,7 +3845,7 @@
                 choices: [{ text: "Continue Selling", nextScene: 'alchemist_sell', type: 'travel', doomCost: 0 }],
                 onEnter: (state) => {
                     const idx = state.inventory.indexOf("Alchemical Fire");
-                    if (idx > -1) state.inventory.splice(idx, 1);
+                    if (idx > -1) state.inventory.splice(idx, 1); // FIX: Remove item BEFORE adding shillings
                     state.shillings += 20; 
                     audioManager.playCoins();
                     return "Sold Alchemical Fire (+20s).";
@@ -3869,7 +3858,7 @@
                 choices: [{ text: "Continue Selling", nextScene: 'alchemist_sell', type: 'travel', doomCost: 0 }],
                 onEnter: (state) => {
                     const idx = state.inventory.indexOf("Holy Water");
-                    if (idx > -1) state.inventory.splice(idx, 1);
+                    if (idx > -1) state.inventory.splice(idx, 1); // FIX: Remove item BEFORE adding shillings
                     state.shillings += 20; 
                     audioManager.playCoins();
                     return "Sold Holy Water (+20s).";
@@ -4495,7 +4484,8 @@
                         consume: true,
                         customClass: 'btn-hero'
                     }
-                ],
+                ]
+                ,
                 onEnter: (s) => { 
                     s.currentHP = applyDamage(s.currentHP, 6); 
                     fxManager.flashRed();
@@ -4737,9 +4727,8 @@
                 onEnter: (state) => {
                     state.isSurpriseRound = false; // Clear flag
                     if (!state.inventory.includes("Ring of Brass")) state.inventory.push("Ring of Brass");
-                    const idx = state.inventory.indexOf("Holy Water");
-                    if (idx > -1) state.inventory.splice(idx, 1);
-                    return "Used Holy Water. Acquired Ring of Brass.";
+                    // Note: Holy Water removal is handled by the initial choice's 'consume: true'
+                    return "Acquired Ring of Brass.";
                 },
             },
             'chapel_victory_sword': {
@@ -4761,9 +4750,8 @@
                 onEnter: (state) => {
                     state.isSurpriseRound = false; // Clear flag
                     if (!state.inventory.includes("Ring of Brass")) state.inventory.push("Ring of Brass");
-                    const idx = state.inventory.indexOf("Alchemical Fire");
-                    if (idx > -1) state.inventory.splice(idx, 1);
-                    return "Used Alchemical Fire. Acquired Ring of Brass.";
+                    // Note: Alchemical Fire removal is handled by the initial choice's 'consume: true'
+                    return "Acquired Ring of Brass.";
                 },
             },
             'chapel_victory_skill': {
@@ -4829,6 +4817,12 @@
                     // GRANT ITEM: SPECTRAL LANTERN (Mechanic item for Plane Walking/Sea Event)
                     if (!state.inventory.includes("Spectral Lantern")) {
                         state.inventory.push("Spectral Lantern");
+                    }
+                    
+                    // Call the onAcquire function manually for immediate passive effect
+                    const lanternDef = itemRegistry["Spectral Lantern"];
+                    if (lanternDef && lanternDef.onAcquire) {
+                        lanternDef.onAcquire(state);
                     }
 
                     // Reset all crew members now that they are buffed
@@ -4995,12 +4989,10 @@
                 text: "You offer food and a steady hand. The cub eats effectively, stabilizing its phasing. It looks at you with deep, violet eyes, then headbutts your hand. <br><br>For a moment, your soul syncs with its frequency. You understand the geometry of the <span class='text-spectral'>Blink</span>—a reflexive, planar hop.",
                 journal: "Saved the cub. Learned the Blink skill. The cub blinked away into the ether.",
                 onEnter: (state) => {
-                    if (!state.companions.blink.joined) {
-                        state.companions.blink.joined = true;
-                        state.hasBlinkSkill = true; // Keep this mainly for hiding the event
-                        return "Companion Gained: Blink.";
-                    }
-                    return null;
+                    // This flag is what makes the companion panel show up
+                    state.companions.blink.joined = true;
+                    state.hasBlinkSkill = true; // Keep this mainly for hiding the event
+                    return "Companion Gained: Blink.";
                 },
                 choices: [
                     { text: "Return to Crawlspace", nextScene: 'manor_crawlspace', type: 'travel', tetherCost: 0 }
@@ -5053,16 +5045,17 @@
 						text: "Command Blink: Distract the Beast", 
 						nextScene: 'beast_blink_distract', // New Scene below
 						type: 'action', 
-						reqSkill: 'Blink', 
+						reqFlag: 'hasBlinkSkill', // CHECK IF CUB IS ACQUIRED
 						customClass: 'spectral-active', // Blue Glow
 						tetherCost: 1
 					},
-					// 2. ITEM COUNTER 
+					// 2. ITEM COUNTER (Ring/Spyglass)
 					{ 
 						text: "See True Form (Ring/Spyglass)", 
 						nextScene: 'beast_true_sight', 
 						type: 'action', 
-						reqItem: 'Ring of Brass', 
+						// Requires EITHER Ring OR Spyglass (We check for both for flexibility)
+						reqItems: ['Ring of Brass', 'Salt-Warped Spyglass'],
 						customClass: 'btn-keen-senses' 
 					},
 					// 3. TALON (Harder DC)
@@ -5070,7 +5063,7 @@
 						text: "Talon: Track Planar Distortion", 
 						nextScene: 'beast_track_logic', 
 						type: 'skill', 
-						dc: 17, // Increased DC from 16 to 17
+						dc: 17, // Increased from 16 to 17
 						skill: 'Perception',
 						tetherCost: 1 
 					},
@@ -5092,17 +5085,15 @@
                 journal: "Used magical sight to defeat the Displacer Beast.",
                 onEnter: (state) => {
                     // Check for Spyglass to see if it was the item used
-                    if(state.inventory.includes('Salt-Warped Spyglass') && !state.inventory.includes('Ring of Brass')) {
-                        return "Used Spyglass to locate the true form. Beast Banished.";
-                    }
-                    return "Used Ring of Brass to locate the true form. Beast Banished.";
+                    const usedItem = state.inventory.includes('Ring of Brass') ? 'Ring of Brass' : 'Salt-Warped Spyglass';
+                    return `Used ${usedItem} to locate the true form. Beast Banished.`;
                 },
                 choices: [{ text: "Enter Grand Hall", nextScene: 'manor_hall', type: 'travel', tetherCost: 0 }]
             },
 
             'beast_track_logic': {
                 isLogic: true,
-                resolve: (roll) => roll >= 16 ? 'beast_true_sight' : 'beast_fail'
+                resolve: (roll) => roll >= 17 ? 'beast_true_sight' : 'beast_fail'
             },
 
             'beast_fail': {
@@ -5115,61 +5106,12 @@
                 },
                 choices: [
                     { text: "Stumble into Grand Hall", nextScene: 'manor_hall', type: 'travel', tetherCost: 1 },
-                    { text: "Retreat to Kitchens", nextScene: 'manor_kitchens', type: 'travel', tetherCost: 1 }
+                    { text: "Retreat to Kitchens", nextScene: 'manor_kitchens', type: 'travel', tetherCost: 2 } // Increased Retreat cost
                 ]
             },
             
             // --- END DISPLACER BEAST SCENES ---
 
-            'manor_ballroom': {
-                title: "The Ballroom of the Damned",
-                text: "The Kitchens open into a massive Ballroom. Hundreds of ghosts dance in a swirling vortex. You can see the Grand Hall on the other side, but the dance floor is a hazard.",
-                journal: "Had to cross the Ballroom. The dancers are deadly.",
-                choices: [
-                    { text: "Predict the Pattern (Insight DC 14)", nextScene: 'ballroom_insight_logic', type: 'skill', dc: 14, skill: 'Insight', tetherCost: 1 },
-                    { text: "Gareth: Command the Crowd", nextScene: 'ballroom_intimidate_logic', type: 'skill', dc: 15, skill: 'Intimidation', tetherCost: 1 },
-                    { text: "Weave through the Dancers", nextScene: 'ballroom_dodge_logic', type: 'skill', dc: 14, skill: 'Athletics', tetherCost: 1 },
-                    { text: "Retreat to Kitchens", nextScene: 'manor_kitchens', type: 'travel', tetherCost: 1 }
-                ]
-            },
-            'ballroom_intimidate_logic': {
-                isLogic: true,
-                resolve: (roll, state) => {
-                    // Apply Passive Bonus for Tricorn (Since they likely have it, this makes Gareth very strong here)
-                    if (state.inventory.includes("Captain's Tricorn")) {
-                        roll += 1;
-                        addToHistory(`Passive Bonus (Captain's Tricorn): +1`, 'roll');
-                    }
-                    return roll >= 15 ? 'ballroom_intimidate_success' : 'ballroom_fail';
-                }
-            },
-            'ballroom_intimidate_success': {
-                title: "The Dead Obey",
-                text: "You channel the authority of the Captain. 'MAKE WAY!' you roar. The command strikes the spectral dancers with physical force. They halt mid-step and part like a dead sea, creating a clear, frozen path to the Grand Hall.",
-                journal: "Gareth commanded the ghosts to part. We walked through untouched.",
-                onEnter: (state) => {
-                    // Optional: Reward Influence for a cool moment
-                    state.influence += 2; 
-                    return "Command Successful. Chaos +2.";
-                },
-                choices: [{ text: "Enter Grand Hall", nextScene: 'manor_hall', type: 'travel', tetherCost: 0 }]
-            },
-            'ballroom_dodge_logic': {
-                isLogic: true,
-                resolve: (roll) => roll >= 14 ? 'manor_hall' : 'ballroom_fail'
-            },
-            'ballroom_fail': {
-                title: "Stepped on",
-                text: "You mistime your step and collide with a spinning couple. Their freezing touch saps your vitality. You stumble out the other side.",
-                onEnter: (state) => {
-                    state.currentHP = applyDamage(state.currentHP, 4);
-                    fxManager.flashRed();
-                    return "Took 4 Necrotic Damage.";
-                },
-                choices: [{ text: "Stumble into Grand Hall", nextScene: 'manor_hall', type: 'travel', tetherCost: 1 }]
-            },
-
-            // --- THE CONVERGENCE (Grand Hall) ---
             'manor_hall': {
                 title: "The Grand Hall",
                 text: "All paths converge here. The Hall is massive and cold. Patrols of <span class='text-danger'>Brass Automatons</span> phase through the walls. At the far end, a dizzying, spiraling <span class='text-spectral'>Penrose Staircase</span> ascends into the dark.",
@@ -5253,16 +5195,6 @@
 				},
 				choices: [{ text: "Return to Hall", nextScene: 'manor_hall', type: 'travel', tetherCost: 1 }]
 			},
-            'manor_hall_fail': {
-                title: "Automaton Patrol",
-                text: "You focus too intently on the wall and miss the patrol. A brass blade grazes your arm.",
-                onEnter: (state) => {
-                    state.currentHP = applyDamage(state.currentHP, 6);
-                    fxManager.flashRed();
-                    return "Took 6 Damage.";
-                },
-                choices: [{ text: "Retreat to Hall", nextScene: 'manor_hall', type: 'travel', tetherCost: 1 }]
-            },
             
             // --- BRASS AUTOMATON SCENES (NEW) ---
             'manor_automaton_encounter': {
@@ -5283,7 +5215,7 @@
 						text: "Command Blink: Phase Shift", 
 						nextScene: 'automaton_blink_bypass', // New scene
 						type: 'action', 
-						reqSkill: 'Blink', 
+						reqFlag: 'hasBlinkSkill', 
 						customClass: 'spectral-active',
 						tetherCost: 1
 					},
@@ -5427,17 +5359,15 @@
 			'manor_forge': {
 				title: "The Spectral Forge",
 				text: "The Manor Kitchen hearth burns with a ghostly violet flame, powered by residual planar energy. This cold fire fuses matter with memory—the perfect place to customize your gear. You examine the cold stone table.",
-				image: 'images/manor_kitchen.jpg', // Placeholder image
 				choices: [
 					{ text: "View Combination Recipes", nextScene: 'manor_forge_combine', type: 'dialogue', customClass: 'btn-pulse' },
-					{ text: "Exit Kitchen", nextScene: 'manor_hall', type: 'travel' }
+					{ text: "Exit Kitchen", nextScene: 'manor_kitchens', type: 'travel' }
 				]
-			};
+			},
 
 			'manor_forge_combine': {
 				title: "Item Combiner: Recipes",
 				text: "Select an available recipe to fuse two items into one powerful artifact. Note: Combining items consumes the original components.",
-				image: 'images/manor_kitchen.jpg', 
 				choices: [
 					// Recipe 1: UTILITY (Mind-Expanding Grog)
 					{
@@ -5458,6 +5388,7 @@
 						reqItems: ["Sword of Valor", "Mimic's Bile"],
 						customClass: 'btn-fire-glow',
 						onSelect: (state) => {
+							// FIX: Use new sword name in itemRegistry
 							return combineItems("Sword of Valor", "Mimic's Bile", "Acid-Etched Sword of Valor");
 						}
 					},
@@ -5469,6 +5400,7 @@
 						reqItems: ["Sword of Valor", "Holy Water"],
 						customClass: 'btn-hero',
 						onSelect: (state) => {
+							// FIX: Use new sword name in itemRegistry
 							return combineItems("Sword of Valor", "Holy Water", "Radiant-Washed Sword of Valor");
 						}
 					},
@@ -5480,13 +5412,13 @@
 						reqItems: ["Spectral Lantern", "Alchemical Fire"],
 						customClass: 'btn-lantern-glow',
 						onSelect: (state) => {
+							// FIX: This needs to call the onRemove hook for the Lantern BEFORE the acquire hook for the Ember
 							return combineItems("Spectral Lantern", "Alchemical Fire", "The Warding Ember");
 						}
 					},
 					{ text: "Back to the Forge", nextScene: 'manor_forge', type: 'travel', doomCost: 0 }
 				],
-				// No onEnter necessary as long as your button-rendering logic filters choices by reqItems
-			};
+			},
 
             // NEW SCENE: Bridges Act 2 to Act 3
             'act2_finale_resolution': {
@@ -5699,7 +5631,7 @@
 			async function init() {
             window.confirmReset = confirmReset;
             window.resetGame = resetGame; 
-            
+            window.allyCommand = allyCommand; // Expose allyCommand globally
 
             onAuthStateChanged(auth, async (u) => {
                 if (u) {
@@ -5915,14 +5847,17 @@
             let html = '';
             if (type === 'entry') {
                 // Apply spectral-text-glow to crew names in the journal
-                const processedText = text.replace(/(Captain Gareth|Gareth|Quinn|Talon|Bones|Silas|Wolf King|Ring of Brass|Sword of Valor|Smelter|Chapel|Sanguine Spire|Bleak Dogtooth|Vampire|Iron Lung|Absorb Elements|Primeval Awareness|Phoenix Draft|Manor Blueprint|Spectral Lantern)/g, '<span class="spectral-text-glow">$1</span>');
+                const processedText = text.replace(/(Captain Gareth|Gareth|Quinn|Talon|Bones|Silas|Wolf King|Ring of Brass|Sword of Valor|Smelter|Chapel|Sanguine Spire|Bleak Dogtooth|Vampire|Iron Lung|Absorb Elements|Primeval Awareness|Phoenix Draft|Manor Blueprint|Spectral Lantern|The Warding Ember|Mimic's Bile|Mind-Expanding Grog|Radiant-Washed Sword of Valor|Acid-Etched Sword of Valor)/g, '<span class="spectral-text-glow">$1</span>');
                 html = `<div class="journal-font pb-4 border-b border-gray-700/30 text-gray-400 fade-in">${processedText}</div>`;
             } else if (type === 'system') {
                 html = `<div class="text-xs text-amber-500 font-mono mb-2 fade-in">> ${text}</div>`;
             } else if (type === 'roll') {
                 // Apply spectral-text-glow to roll results
                 html = `<div class="text-xs spectral-text-glow font-bold mb-2 fade-in font-serif">${text}</div>`;
-            }
+            } else if (type === 'danger') {
+				// Apply red text to danger/combat log entries
+				html = `<div class="text-xs text-red-400 font-bold mb-2 fade-in font-serif">${text}</div>`;
+			}
             if(html) gameState.history.push(html);
             rebuildJournal();
         }
@@ -5931,6 +5866,7 @@
 
 		/**
 		 * Helper function to parse damage string and calculate damage.
+		 * NOTE: This is not currently used for Act 3 combat resolution, but kept for future proofing.
 		 * @param {string} damageString - e.g., '1d8+1'
 		 * @returns {number} The calculated damage value.
 		 */
@@ -5954,29 +5890,6 @@
 		}
 
 		/**
-		 * Initiates the new Boss Combat state.
-		 * @param {string} enemyName - The name of the enemy.
-		 * @param {number} health - The enemy's starting HP.
-		 */
-		function startBossCombat(enemyName, health) {
-			gameState.isBossCombat = true;
-			gameState.enemyHP = health;
-			gameState.maxEnemyHP = health;
-			gameState.currentEnemy = enemyName; 
-			gameState.allyCooldowns.silas = 0;
-			gameState.allyCooldowns.blink = 0;
-			
-			// 1. Apply visual effect 
-			document.getElementById('fx-overlay').classList.add('fx-boss-combat');
-			document.getElementById('fx-overlay').classList.add('vignette-active');
-			
-			// 2. Log entry
-			addToHistory(`A massive <span class="text-danger">${enemyName}</span> blocks your path! Combat Initiated.`, 'danger');
-			saveGame();
-			updateUI();
-		}
-
-		/**
 		 * Handles the Ally Command action in combat.
 		 * @param {string} allyId - 'silas' or 'blink'
 		 */
@@ -5993,10 +5906,17 @@
 					addToHistory(`<span class="text-spectral">Blink: Phase Shift!</span> The cub blurs and you feel the tether momentarily shift. Your next attack will bypass defenses for massive damage.`, 'system');
 				}
 				
+				// Decrement ally cooldowns on use
+				Object.keys(gameState.allyCooldowns).forEach(key => {
+					if (key !== allyId) {
+						gameState.allyCooldowns[key] = Math.max(0, gameState.allyCooldowns[key] - 1);
+					}
+				});
+				
 				addToHistory("The turn passes as you command your companion.", 'system');
 				
 			} else {
-				addToHistory(`Ally ${allyId.charAt(0).toUpperCase() + allyId.slice(1)} is on cooldown!`, 'system');
+				addToHistory(`Ally ${allyId.charAt(0).toUpperCase() + allyId.slice(1)} is on cooldown or you are not in combat!`, 'system');
 			}
 			
 			saveGame();
@@ -6021,12 +5941,14 @@
 			const ingredientIndex = gameState.inventory.indexOf(ingredient);
 			
 			// Check if the base item has a removal effect
-			// NOTE: This relies on your itemDefs having onRemove functions for items like 'Spectral Lantern'
-			if (itemDefs[baseItem].onRemove) {
-				itemDefs[baseItem].onRemove(gameState);
+			// NOTE: This relies on your itemRegistry having onRemove functions for items like 'Spectral Lantern'
+			const baseDef = itemRegistry[baseItem];
+			if (baseDef && baseDef.onRemove) {
+				baseDef.onRemove(gameState);
+				addToHistory(`Passive benefit of ${baseItem} removed.`, 'system');
 			}
 			
-			// Remove both items (important to remove the higher index first)
+			// Remove both items (important to remove the higher index first to maintain index integrity)
 			gameState.inventory.splice(Math.max(baseIndex, ingredientIndex), 1); 
 			gameState.inventory.splice(Math.min(baseIndex, ingredientIndex), 1); 
 
@@ -6034,13 +5956,15 @@
 			gameState.inventory.push(resultItem);
 
 			// 4. Apply acquisition effect for the new item
-			if (itemDefs[resultItem].onAcquire) {
-				itemDefs[resultItem].onAcquire(gameState);
+			const resultDef = itemRegistry[resultItem];
+			if (resultDef && resultDef.onAcquire) {
+				resultDef.onAcquire(gameState);
+				addToHistory(`Passive benefit of ${resultItem} applied.`, 'system');
 			}
 			
 			saveGame();
 			updateUI();
-			return `${baseItem} and ${ingredient} were fused at the Spectral Forge, yielding the <span class="text-item">${itemDefs[resultItem].name}</span>!`;
+			return `${baseItem} and ${ingredient} were fused at the Spectral Forge, yielding the <span class="text-item">${resultDef.name}</span>!`;
 		}
 
 		// --- END: NEW CORE COMBAT AND COMBINATION FUNCTIONS ---
@@ -6048,15 +5972,6 @@
         async function renderScene(sceneId, logText = true) {
             const scene = scenes[sceneId];
 			
-			// --- COMBAT STATE EXIT LOGIC ---
-			// Clears the combat flag and visual effect if the new scene is not a combat scene.
-			// NOTE: This assumes your boss scenes have a property like: isCombat: true
-			if (gameState.isBossCombat && !scene.isCombat) { 
-				gameState.isBossCombat = false;
-				// Remove the visual pulse effect
-				document.getElementById('fx-overlay').classList.remove('fx-boss-combat');
-				addToHistory(`Combat ended. The <span class="text-danger">${gameState.currentEnemy}</span> was defeated or escaped.`, 'system');
-			}
             if (!scene) return;
             
             // --- DEATH CHECK 0 ---
@@ -6076,7 +5991,6 @@
                     displayTitle = gameState.shipName;
                     
                     // Inject Text (Swap the placeholder for the real name)
-                    // We check if the text contains the placeholder or generic term
                     displayText = displayText.replace('[SHIP_NAME]', gameState.shipName);
                     displayText = displayText.replace('your ship', `the ${gameState.shipName}`);
                 }
@@ -6193,7 +6107,6 @@
             fxManager.clearEffects(); 
 
             // PRIORITY 1: Has the Rift Collapsed? (Permanent Game State)
-            // CHECK: If collapsed, the class is already handled in updateUI for persistence. 
             // This section simply prevents the atmospheric pulse from overriding it.
 			// PRIORITY 2: Is the Rift Pulse active? (Atmospheric State)
             
@@ -6237,6 +6150,20 @@
             } else {
                 fxManager.setVignette(false);
             }
+            
+            // Re-apply low health vignette class if Silas has joined and is active, but only if not on death scene
+            if (gameState.companions.silas.joined) {
+                // If Silas has joined, we can check for his active state, but here we just check for the heartbeat from the dogtooth scene
+                if (sceneId === 'bleak_dogtooth' || sceneId === 'dogtooth_cliff_wall') {
+                     // Check if the fast heartbeat visual is needed
+                     if (!gameState.silasJoined && gameState.inventory.includes("Ring of Brass")) {
+                         document.getElementById('vignette-overlay').classList.add('fx-heartbeat-fast');
+                     } else {
+                         document.getElementById('vignette-overlay').classList.remove('fx-heartbeat-fast', 'fx-heartbeat-slow');
+                     }
+                }
+            }
+
 
             const textEl = document.getElementById('main-scene-text');
             // Check if we are in the Death scene to apply unique styling
@@ -6254,10 +6181,12 @@
             // 1. Scripted Banter (always prioritized if available)
             if (scene.banter) {
                 Object.keys(scene.banter).forEach(crewId => {
-                    if (gameState.crew[crewId] && !gameState.crew[crewId].used) {
+                    const crewMember = gameState.crew[crewId];
+                    // Only show if not used, or if the mushroom is active (to still show the hint)
+                    if (crewMember && (!crewMember.used || gameState.crewUseFree)) {
                         // Apply spectral glow to banter text (MODIFIED)
                          finalHtml += `<div class="mt-4 spectral-text-glow italic border-l-2 border-blue-500 pl-3 fade-in">
-                                <span class="font-bold text-xs uppercase block mb-1">${gameState.crew[crewId].name}:</span>
+                                <span class="font-bold text-xs uppercase block mb-1">${crewMember.name}:</span>
                                 "${scene.banter[crewId]}"
                               </div>`;
                     }
@@ -6303,7 +6232,7 @@
             if (currentSceneId === 'alchemist_triage' && gameState.inventory.includes('Strange Coin') && !gameState.inventory.includes('Phoenix Draft')) {
                 const sellIndex = processedChoices.findIndex(c => c.nextScene === 'alchemist_sell');
                 const newChoice = {
-                    text: "Offer Strange Coin",
+                    text: "Offer Strange Coin (Trade for Phoenix Draft)",
                     nextScene: 'alchemist_secret_stock',
                     type: 'action',
                     reqItem: 'Strange Coin',
@@ -6334,7 +6263,7 @@
                     MARKET_BUY_OPTIONS.forEach(sale => {
                         const actualStock = currentSceneStock[sale.item] || 0;
                         const itemDef = itemRegistry[sale.item];
-                        const isHealing = itemDef && (itemDef.name || '').includes('Heal');
+                        const isHealing = itemDef && (itemDef.name || '').includes('Heal') || (itemDef.name || '').includes('Rum');
                         const isFull = gameState.currentHP >= gameState.maxHP;
                         const canAfford = gameState.shillings >= sale.cost;
                         
@@ -6369,7 +6298,9 @@
 
 				MARKET_SELL_OPTIONS.forEach(sell => {
 					if (gameState.inventory.includes(sell.item)) {
-						if (sell.item === 'Curious Cargo' && marketStock['Curious Cargo'] === 0) return; 
+						// Only limit selling Curious Cargo at the Market Merchant if not in Act 3
+						if (sell.item === 'Curious Cargo' && marketStock['Curious Cargo'] === 0 && !gameState.act3Started) return; 
+						
 						processedChoices.push({
 							text: `Sell ${sell.item.split('(')[0].trim()} (+${sell.value}s)`, 
 							nextScene: sell.nextScene,
@@ -6388,7 +6319,7 @@
 				
                 // FIX: Define dynamic return path (Act 3 Hub vs Act 1 Hub)
 				const returnTarget = 'town_square'; 
-				const returnNav = { text: "Return to Town", nextScene: returnTarget, type: 'travel', doomCost: 0 };
+				const returnNav = { text: "Return to Port Square", nextScene: returnTarget, type: 'travel', doomCost: 0 };
 
 				processedChoices = []; 
 
@@ -6430,17 +6361,24 @@
 				
                 // FIX: Remove 'town_square_act3_hub'. The Alchemist is ONLY in the Town Square.
                 // We hardcode this because the Alchemist does not exist in the Tutorial.
-				const returnNav = { text: "Return to Town", nextScene: 'town_square', type: 'travel', doomCost: 0 };
+				const returnNav = { text: "Return to Port Square", nextScene: 'town_square', type: 'travel', doomCost: 0 };
 				
                 processedChoices = []; 
 				
 				ALCHEMIST_SELL_OPTIONS.forEach(sell => {
 					if (gameState.inventory.includes(sell.item)) {
 						let isDisabled = false;
+						// Limit selling Tinctures back to stock capacity
 						if (sell.nextScene === 'sell_tincture' && currentSceneStock["Vitality Tincture"] >= 2) isDisabled = true; 
+                        
+                        // Limit selling Boss Artifacts back if we already have one of the other artifact paths to prevent easy gold farming
+						const isArtifactSell = sell.nextScene === 'sell_fire' || sell.nextScene === 'sell_water';
+						const hasRing = gameState.inventory.includes("Ring of Brass");
+						const hasSword = gameState.inventory.includes("Sword of Valor");
+						if (isArtifactSell && (hasRing || hasSword)) isDisabled = true; // Only allowed if the path is truly blocked
 
 						processedChoices.push({
-							text: `Sell ${sell.item.split('(')[0].trim()}`, 
+							text: `Sell ${sell.item.split('(')[0].trim()} (+${sell.value}s)`, 
 							nextScene: sell.nextScene,
 							type: 'action',
 							reqItem: sell.item,
@@ -6481,16 +6419,23 @@
 					});
 				}
 				if (restOption) processedChoices.push(restOption);
-				if (infoSmelter && !gameState.knowsSmelterSecret) processedChoices.push(infoSmelter);
-				if (infoChapel && !gameState.knowsChapelSecret) processedChoices.push(infoChapel);
-				if (gamblerOption) processedChoices.push(gamblerOption);
+				if (infoSmelter && !gameState.knowsSmelterSecret && !gameState.inventory.includes('Sword of Valor')) processedChoices.push(infoSmelter);
+				if (infoChapel && !gameState.knowsChapelSecret && !gameState.inventory.includes('Ring of Brass')) processedChoices.push(infoChapel);
+				if (gamblerOption && gameState.inventory.includes('Ring of Brass') && !gameState.hasObservedGambler) processedChoices.push(gamblerOption);
 				if (returnOption) processedChoices.push(returnOption);
 
 			} else if (currentSceneId === 'town_docks') {
 				 const workBtn = choices.find(c => c.nextScene === 'docks_work');
 				 const currentCost = workBtn.costHP !== undefined ? workBtn.costHP : 2;
 				 const processedWorkBtn = { ...workBtn, isDisabled: gameState.currentHP <= currentCost };
-				 processedChoices = processedChoices.map(c => c.nextScene === 'docks_work' ? processedWorkBtn : c);
+				 
+				 const cargoBtn = choices.find(c => c.nextScene === 'docks_sell_cargo');
+                 // Only show cargo button if the player has cargo AND is not in Act 3 (where provisioner replaces it)
+				 const processedCargoBtn = (cargoBtn && gameState.inventory.includes('Curious Cargo') && !gameState.act3Started) ? cargoBtn : null;
+
+				 processedChoices = choices.map(c => c.nextScene === 'docks_work' ? processedWorkBtn : c);
+                 
+                 if (processedCargoBtn) processedChoices.unshift(processedCargoBtn);
 			}
 			
 			
@@ -6526,27 +6471,34 @@
                 
                 processedChoices = [];
 
-                // Reuse standard sell options, but point them to the new scene loop if needed
-                // Or simply let them process. For simplicity, we can reuse MARKET_SELL_OPTIONS
-                // but we need to ensure the "nextScene" doesn't loop us back to the Intro.
-                
                 // We will manually build the sell list for Act 3 to ensure safety
-                MARKET_SELL_OPTIONS.forEach(sell => {
-                    if (gameState.inventory.includes(sell.item)) {
-                        // In Act 3, we don't need to check stock for Curious Cargo, the provisioner always buys it
+                // We let the provisioner buy EVERYTHING at market price
+                const SELLABLE_ITEMS_ACT3 = [
+                    "Curious Cargo", "Rope", "Torch", "Healing Potion", "Rum", 
+                    "Silver Locket", "Vitality Tincture", "Smelling Salts", "Flash Powder", 
+                    "Pearlescent Mushroom", "Dead Man's Die"
+                ];
+
+                SELLABLE_ITEMS_ACT3.forEach(itemName => {
+                    const itemDef = itemRegistry[itemName];
+                    if (gameState.inventory.includes(itemName) && itemDef && itemDef.btnText === 'SELL') {
+                        // Determine sale value (using existing rules/values)
+                        const saleOption = [...MARKET_SELL_OPTIONS, ...ALCHEMIST_SELL_OPTIONS].find(opt => opt.item === itemName) || { value: 3, doomCost: 0 }; 
+                        
                         processedChoices.push({
-                            text: `Sell ${sell.item.split('(')[0].trim()} (+${sell.value}s)`, 
-                            // We use 'port_provisioner_sell' as the target to stay in this menu
-                            nextScene: 'port_provisioner_sell', 
+                            text: `Sell ${itemName.split('(')[0].trim()} (+${saleOption.value}s)`, 
+                            nextScene: 'port_provisioner_sell', // Loop back to self
                             type: 'action',
-                            reqItem: sell.item,
-                            value: sell.value,
+                            reqItem: itemName,
+                            value: saleOption.value,
                             doomCost: 0,
                             action: (state) => {
                                 // Inline action to handle the sale and stay in the scene
-                                const idx = state.inventory.indexOf(sell.item);
+                                const idx = state.inventory.indexOf(itemName);
                                 if (idx > -1) state.inventory.splice(idx, 1);
-                                return `Sold ${sell.item}.`;
+                                state.shillings += saleOption.value; // Add value here
+                                audioManager.playCoins();
+                                return `Sold ${itemName} for ${saleOption.value}s.`;
                             }
                         });
                     }
@@ -6564,6 +6516,12 @@
 				
 				// OMIT CHECKS (Visibility)
 				if (choice.reqItem && !gameState.inventory.includes(choice.reqItem)) return;
+				// NEW: Check for an array of items (OR logic)
+				if (choice.reqItems && Array.isArray(choice.reqItems)) {
+					const hasAnyItem = choice.reqItems.some(item => gameState.inventory.includes(item));
+					if (!hasAnyItem) return;
+				}
+				
 				if (choice.reqSmuggler && gameState.influence < choice.reqSmuggler) return;
 				if (choice.reqGuard && gameState.influence > -choice.reqGuard) return;
 				if (choice.reqNotItem && gameState.inventory.includes(choice.reqNotItem)) return; 
@@ -6591,6 +6549,17 @@
 				// CHECK 4: Scene-specific flag disable (e.g., healing when full)
 				if (choice.isDisabled) { isDisabled = true; disabledClass = 'btn-disabled-cost'; }
 				
+				// CHECK 5: Combination recipe check (Requires ALL items)
+				if (choice.type === 'combine' && choice.reqItems) {
+					const missingItem = choice.reqItems.some(item => !gameState.inventory.includes(item));
+					if (missingItem) {
+						isDisabled = true;
+						disabledClass = 'btn-disabled-cost';
+						rawText = `${rawText} (Missing Item)`;
+					}
+				}
+
+
 				const btn = document.createElement('button');
 				
                 // STYLING LOGIC
@@ -6598,8 +6567,10 @@
 				let isCustomClassButton = choice.customClass ? true : false;
 				let isTradeButton = choice.cost || choice.value || choice.shillingGain || (choice.nextScene && choice.nextScene.includes('sell') && currentSceneId.includes('alchemist'));
 				let isSkillCheck = choice.type === 'skill';
+				// Combination button is a special action
+				const isCombineButton = choice.type === 'combine'; 
 
-				const alignmentClass = (isSkillCheck || isTradeButton || choice.chaosGain || choice.orderGain || choice.costHP !== undefined || choice.shillingGain || choice.doomCost !== undefined || choice.tetherCost !== undefined || choice.suppliesCost !== undefined || choice.reqFlag) ? 'justify-start' : 'justify-between';
+				const alignmentClass = (isSkillCheck || isTradeButton || choice.chaosGain || choice.orderGain || choice.costHP !== undefined || choice.shillingGain || choice.doomCost !== undefined || choice.tetherCost !== undefined || choice.suppliesCost !== undefined || choice.reqFlag || isCombineButton) ? 'justify-start' : 'justify-between';
 				let btnClass = "";
 				
 				if (isDeathScene) {
@@ -6631,10 +6602,14 @@
                 if (isTradeButton) icon = '<i class="fas fa-coins text-amber-500"></i>';
 				if (choice.type === 'reset') icon = '<i class="fas fa-sync-alt text-gray-400 group-hover:text-white"></i>';
                 if (isHeroButton) icon = '<i class="fas fa-star hero-icon"></i>'; 
+				if (isCombineButton) icon = '<i class="fas fa-hammer text-yellow-500"></i>';
 
                 // --- SKILL CHECK FORMATTING ---
 				if (isSkillCheck) {
-					supplementalText += ` <span class="spectral-text-glow text-sm uppercase tracking-wider ml-2 mr-4">[${choice.skill} DC ${choice.dc}]</span>`;
+					// Check for Rift Penalty when displaying the required DC
+					const displayDC = gameState.isRiftCollapse ? choice.dc + 2 : choice.dc;
+
+					supplementalText += ` <span class="spectral-text-glow text-sm uppercase tracking-wider ml-2 mr-4">[${choice.skill} DC ${displayDC}]</span>`;
 					icon = '<i class="fas fa-dice-d20 spectral-text-glow"></i>';
 				} 
 
@@ -6656,9 +6631,15 @@
 							audioManager.playClash(); 
 							fxManager.setVignette(false); 
 							fxManager.clearEffects();     
-							gameState.isEthereal = true; 
-							document.body.classList.add('plane-ethereal'); 
-							await saveGame(); 
+							// This logic runs for Act 1 finale OR Act 2 finale
+							if (choice.nextScene === 'act2_arrival') {
+								// Act 1 Finale: Sets up Act 2 (isEthereal=true, tether=20)
+								gameState.isEthereal = true; 
+								document.body.classList.add('plane-ethereal'); 
+								await saveGame(); 
+							} else if (choice.nextScene === 'act2_finale_resolution') {
+								// Act 2 Finale: Clears ethereal state in the resolution scene's onEnter
+							}
 							renderScene(choice.nextScene);
 						}, duration);
 					};
@@ -6684,11 +6665,33 @@
 						}
 
 						audioManager.playClick();
+						
+						// --- COMBINE ACTION ---
+						if (choice.type === 'combine') {
+							const result = choice.onSelect(gameState);
+							if (result) addToHistory(result, 'system');
+							renderScene(choice.nextScene); // Loop back to the combine menu
+							return;
+						}
+						
+						// --- GENERIC ACTION ---
 						if (choice.action && typeof choice.action === 'function') {
 							const result = choice.action(gameState);
 							if (result) addToHistory(result, 'system');
+							
+							// If the action successfully changed scene, proceed
+							if (choice.nextScene) {
+								if (choice.nextScene === 'lighthouse_morning' && currentSceneId === 'captain_orders' && choice.onSelect) {
+									choice.onSelect(gameState);
+								}
+								renderScene(choice.nextScene);
+							} else {
+								// If no nextScene, just update UI (e.g., toggling plane walk)
+								updateUI(); 
+							}
 							return; 
 						}
+						
 						if (choice.type === 'reset') { resetGame(); return; }
 						
 						if (gameState.crewUseFree && choice.type !== 'skill' && choice.type !== 'dialogue' && !choice.nextScene.includes('captain_orders')) {
@@ -6703,8 +6706,11 @@
 								renderScene(currentSceneId); 
 								return;
 							}
+                             // Decrement stock immediately on action type
+                             scenes[currentSceneId].stock[choice.stockItem] = Math.max(0, scenes[currentSceneId].stock[choice.stockItem] - 1);
 						}
                         
+                        // Cargo sell limitation check
                         if (choice.type === 'action' && choice.reqItem === 'Curious Cargo' && currentSceneId === 'market_sell') {
                              if (marketStock['Curious Cargo'] <= 0) {
                                 addToHistory(`The Market Merchant has no need for another Curious Cargo.`, 'system');
@@ -6713,24 +6719,43 @@
                             }
                         }
 
+						// Consume item from inventory
 						if (choice.consume && choice.reqItem) {
 							const idx = gameState.inventory.indexOf(choice.reqItem);
 							if (idx > -1) {
 								gameState.inventory.splice(idx, 1);
-								addToHistory(`${choice.reqItem} used and discarded.`, 'system');
+								addToHistory(`${choice.reqItem} consumed and discarded.`, 'system');
 							}
 						}
+                        
+                        // Consume multiple items if defined in choices (e.g., item trade)
+						if (choice.consumeItems && Array.isArray(choice.consumeItems)) {
+							choice.consumeItems.forEach(itemToConsume => {
+								const idx = gameState.inventory.indexOf(itemToConsume);
+								if (idx > -1) {
+									gameState.inventory.splice(idx, 1);
+									addToHistory(`${itemToConsume} consumed.`, 'system');
+								}
+							});
+						}
+
 
 						const currentScene = scenes[gameState.currentSceneId];
 						if (currentScene.journal !== null && currentScene.journal !== undefined) {
-							addToHistory(currentScene.journal, 'entry');
+							// Check if journal entry is dynamic or just static
+							let journalText = currentScene.journal;
+							if (currentSceneId === 'act3_name_ship') {
+								journalText = journalText.replace('[SHIP_NAME]', gameState.shipName);
+							}
+							addToHistory(journalText, 'entry');
 						}
 
 						if (choice.cost) gameState.shillings -= choice.cost;
 						if (choice.costHP !== undefined) gameState.currentHP = applyDamage(gameState.currentHP, choice.costHP);
 
 						let extraGold = 0;
-						if ((choice.shillingGain || choice.value) && gameState.inventory.includes("Salt-Warped Spyglass") && gameState.influence >= 15) {
+						// SPYGLASS CHAOS PASSIVE
+						if (gameState.inventory.includes("Salt-Warped Spyglass") && gameState.influence >= 15) {
 							 extraGold = 1;
 							 addToHistory("Passive (Privateer's Lens): Found +1 extra Shilling.", 'system');
 						}
@@ -6794,7 +6819,7 @@
 				if (gameState.act1Started && gameState.quinnLogistics && isStandardAct1Scene) {
 					const hasExplicitCost = choice.doomCost !== undefined;
 					const cost = hasExplicitCost ? choice.doomCost : (isStandardAct1Scene ? 1 : 0);
-					if (cost >= 0 && choice.type !== 'reset') {
+					if (cost >= 0 && choice.type !== 'reset' && choice.nextScene !== 'lighthouse_vigil') {
 						if (cost > 0) indicators.push({ text: `-${cost} Time`, color: 'text-purple-400' }); 
 						else if (cost === 0 && (hasExplicitCost || choice.type === 'travel')) indicators.push({ text: `0 Time`, color: 'text-purple-400' });
 					}
@@ -6802,7 +6827,7 @@
 					const hasExplicitCost = choice.tetherCost !== undefined;
 					const cost = hasExplicitCost ? choice.tetherCost : (scenes[currentSceneId].isBoss || scenes[currentSceneId].isRest ? 0 : 1);
 					
-					if (cost >= 0 && choice.type !== 'reset' && choice.type !== 'skill') {
+					if (cost >= 0 && choice.type !== 'reset') {
 						if (cost > 0) indicators.push({ text: `-${cost} Turns`, color: 'text-cyan-400' }); 
 						else if (cost === 0 && hasExplicitCost) indicators.push({ text: `0 Turns`, color: 'text-cyan-400' });
 					}
@@ -6839,13 +6864,12 @@
                     }
 
                     // BLOCK 1: Allies Panel Visibility (Checks for Silas OR Blink)
-                    const hasSilas = gameState.companions.silas.joined;
-                    // CHANGED: Check the companion object, not skills
-                    const hasBlink = gameState.companions.blink.joined;
+                    const isSilasJoined = gameState.companions.silas.joined;
+                    const isBlinkJoined = gameState.companions.blink.joined;
                     
-                    if (hasSilas || hasBlink) { 
+                    if (isSilasJoined || isBlinkJoined) { 
                         companionPanel.classList.remove('hidden');
-                        renderCompanions();
+                        renderCompanions(isSilasJoined, isBlinkJoined); // Pass flags to the renderer
                     } else {
                         companionPanel.classList.add('hidden');
                     }
@@ -6863,7 +6887,7 @@
 					}
 
 					// 2. Planar Skills Menu Visibility
-					if (gameState.skills.includes("Plane Walking") || gameState.skills.includes("Blink")) {
+					if (gameState.skills.includes("Plane Walking") || gameState.companions.blink.joined) { // Use blink joined state
 						planarSkills.classList.remove('hidden');
 					} else {
 						planarSkills.classList.add('hidden');
@@ -6889,10 +6913,6 @@
 					}
 
 					// HP
-					const baseMaxHP = 20; // Define base max HP for display purposes
-					
-					// FIX 3: HP Display Logic (Handles Overheal)
-					// If current HP is 25 (overheal), the displayed max HP should still be 20.
 					const displayMaxHP = gameState.maxHP; // Should be 20 unless reduced by rift collapse
 					const hpToDisplay = gameState.currentHP;
 
@@ -6907,8 +6927,6 @@
 
 					// Check for low health audio
 					audioManager.checkVulnerable(gameState.currentHP, gameState.maxHP);
-					
-					// Note: Vignette check moved to renderScene()
 					
 					// --- DOOM COUNTER UI ---
 					const doomDisplay = document.getElementById('doom-counter-display');
@@ -7085,16 +7103,22 @@
 					});
                     
 					// --- COMPANIONS LIST (ACT 3 & ACT 2) ---
-                    function renderCompanions() { 
+                    function renderCompanions(isSilasJoined, isBlinkJoined) { 
 						const companionList = document.getElementById('companions-list');
 						companionList.innerHTML = ''; 
 						companionList.className = "grid grid-cols-2 gap-2";
 
 						// Silas (Wolf Kin / Seneschal)
-						if (gameState.hasSilas) {
+						if (isSilasJoined) {
 							const silasDiv = document.createElement('div');
-							silasDiv.className = "p-2 bg-gray-800 border border-gray-600 rounded flex items-center justify-between";
-							silasDiv.innerHTML = `
+							const isCooldown = gameState.allyCooldowns.silas > 0;
+							
+							// If Silas is joined, the persistent flag is gameState.companions.silas.joined
+							silasDiv.className = `p-2 bg-gray-800 border rounded flex items-center justify-between ${
+                                isCooldown ? 'border-gray-900 opacity-60' : 'border-emerald-600/50'
+                            }`;
+							
+                            silasDiv.innerHTML = `
 								<div class="flex items-center gap-2">
 									<i class="fas fa-ghost text-lg text-emerald-400"></i>
 									<div class="text-left leading-tight">
@@ -7105,9 +7129,9 @@
 								${gameState.isBossCombat ? `
 									<button onclick="allyCommand('silas')" 
 											class="btn-game px-2 py-1 text-xs rounded transition-all 
-											${gameState.allyCooldowns.silas > 0 ? 'btn-disabled-cost' : 'bg-red-900/40 text-red-300 hover:bg-red-800/60'}"
-											${gameState.allyCooldowns.silas > 0 ? 'disabled' : ''}>
-										INTERCEPT! (${gameState.allyCooldowns.silas > 0 ? gameState.allyCooldowns.silas : 'Ready'})
+											${isCooldown ? 'btn-disabled-cost' : 'bg-red-900/40 text-red-300 hover:bg-red-800/60'}"
+											${isCooldown ? 'disabled' : ''}>
+										INTERCEPT! (${isCooldown ? gameState.allyCooldowns.silas : 'Ready'})
 									</button>
 								` : ''}
 							`;
@@ -7115,30 +7139,52 @@
 						};
 						
 						// Blink (Phase-Cub / Evasion)
-						if (gameState.hasBlink) {
+						if (isBlinkJoined) {
 							const blinkDiv = document.createElement('div');
-							blinkDiv.className = "p-2 bg-gray-800 border border-gray-600 rounded flex items-center justify-between";
+                            const isCooldown = gameState.allyCooldowns.blink > 0;
+                            
+							blinkDiv.className = `p-2 bg-gray-800 border rounded flex items-center justify-between ${
+                                isCooldown ? 'border-gray-900 opacity-60' : 'border-purple-600/50'
+                            }`;
+                            
+                            // BUTTON LOGIC: Blink has TWO roles (Passive Click & Combat Command)
+                            let actionButtonHTML = '';
+                            if (gameState.isBossCombat) {
+                                // Combat Role
+                                actionButtonHTML = `
+                                    <button onclick="allyCommand('blink')" 
+                                            class="btn-game px-2 py-1 text-xs rounded transition-all 
+                                            ${isCooldown ? 'btn-disabled-cost' : 'bg-purple-900/40 text-purple-300 hover:bg-purple-800/60'}"
+                                            ${isCooldown ? 'disabled' : ''}>
+                                        PHASE SHIFT (${isCooldown ? gameState.allyCooldowns.blink : 'Ready'})
+                                    </button>
+                                `;
+                            } else {
+                                // Passive Role (Rest/Utility)
+                                actionButtonHTML = `
+                                    <button onclick="window.gameFunctions.triggerBlink()"
+                                            class="btn-game px-2 py-1 text-xs rounded transition-all bg-indigo-900/40 text-indigo-300 hover:bg-indigo-800/60">
+                                        PHASE OUT
+                                    </button>
+                                `;
+                            }
+                            
 							blinkDiv.innerHTML = `
 								<div class="flex items-center gap-2">
 									<i class="fas fa-cubes text-lg text-purple-400"></i>
 									<div class="text-left leading-tight">
 										<span class="font-bold text-xs cinzel text-purple-300">Blink</span>
-										<span class="text-[10px] text-gray-500 italic">Phase-Cub (Blur)</span>
+										<span class="text-[10px] text-gray-500 italic">Phase-Cub</span>
 									</div>
 								</div>
-								${gameState.isBossCombat ? `
-									<button onclick="allyCommand('blink')" 
-											class="btn-game px-2 py-1 text-xs rounded transition-all 
-											${gameState.allyCooldowns.blink > 0 ? 'btn-disabled-cost' : 'bg-purple-900/40 text-purple-300 hover:bg-purple-800/60'}"
-											${gameState.allyCooldowns.blink > 0 ? 'disabled' : ''}>
-										PHASE SHIFT (${gameState.allyCooldowns.blink > 0 ? gameState.allyCooldowns.blink : 'Ready'})
-									</button>
-								` : ''}
+								${actionButtonHTML}
 							`;
 							companionList.appendChild(blinkDiv);
 						}
 					}
                     // This function is called earlier in updateUI if act3Started is true.
+                    renderCompanions(isSilasJoined, isBlinkJoined); // Rerender companions here to show cooldowns
+
 					
 					// Inventory List View
 					const invContainer = document.getElementById('inventory-panel');
@@ -7176,8 +7222,15 @@
 
 							if (isAConsumable && !isBConsumable) return -1; // A (consumable) comes before B
 							if (!isAConsumable && isBConsumable) return 1;  // B (consumable) comes before A
+                            
+                            // --- Priority 2: Sort by Weapon before Key before Gear
+                            const typeOrder = { 'weapon': 1, 'gear': 2, 'passive': 3, 'key': 4, 'ingredient': 5, 'misc': 6 };
+                            const orderA = typeOrder[itemA.type] || 99;
+                            const orderB = typeOrder[itemB.type] || 99;
+                            
+                            if (orderA !== orderB) return orderA - orderB;
 
-							// --- Priority 2: Sort by Newest First (Index comparison for stability) ---
+							// --- Priority 3: Sort by Newest First (Index comparison for stability) ---
 							// Invert the index comparison: Higher index (newer item) comes first.
 							return indexB - indexA;
 						});
@@ -7188,11 +7241,11 @@
 							// --- DYNAMIC SPYGLASS DESCRIPTION ---
 							if (itemName === "Salt-Warped Spyglass") {
 								itemDef = { ...itemDef }; // Clone to avoid mutation
-								if (gameState.influence <= -5) {
+								if (gameState.influence <= -15) {
 									itemDef.name = "Watchman's Spyglass (Order)";
 									itemDef.color = "text-blue-400";
 									itemDef.desc = "Passive: The lens aligns with Order. Damage taken reduced by 1.";
-								} else if (gameState.influence >= 5) {
+								} else if (gameState.influence >= 15) {
 									itemDef.name = "Privateer's Spyglass (Chaos)";
 									itemDef.color = "text-emerald-400";
 									itemDef.desc = "Passive: The lens aligns with Chaos. Gain +1 coin on all earnings.";
@@ -7224,7 +7277,7 @@
 
 							// Right Side: Action Button or Tag
 							const rightSide = document.createElement('div');
-							if (isConsumable && itemDef.btnText !== 'USE' && itemDef.btnText !== 'INSPECT' && itemDef.btnText !== 'THROW') { 
+							if (isConsumable && itemDef.btnText && itemDef.btnText !== 'PASSIVE' && itemDef.btnText !== 'SELL' && itemDef.btnText !== 'INSPECT' && itemDef.btnText !== 'THROW') { 
 								const actionBtn = document.createElement('button');
 								actionBtn.className = "px-2 py-1 bg-emerald-900/40 border border-emerald-600/30 text-emerald-500 text-[9px] font-bold rounded hover:bg-emerald-600 hover:text-white transition-all tracking-wider";
 								actionBtn.innerText = itemDef.btnText || "USE";
