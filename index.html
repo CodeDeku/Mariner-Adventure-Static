@@ -7122,9 +7122,9 @@
 							silasDiv.innerHTML = `
 								<div class="flex items-center gap-2">
 									<i class="fas fa-moon text-lg text-emerald-400"></i>
-									<div class="text-left leading-tight">
+									<div class="text-left leading-none">
 										<span class="font-bold text-xs cinzel text-emerald-300 block">Silas</span>
-										<span class="text-[10px] text-gray-500 italic">Seneschal (Pack Tactics)</span>
+										<span class="text-[10px] text-gray-500 italic block leading-none">Seneschal (Pack Tactics)</span>
 									</div>
 								</div>
 								${gameState.isBossCombat ? `
@@ -7153,18 +7153,18 @@
 							let actionButtonHTML = '';
 							if (gameState.isBossCombat) {
 								// Combat Role (PHASE SHIFT)
-								// STYLING CHANGE: Use Emerald colors for the combat button
+								// STYLING CHANGE: Unified Combat Button Color (Red/Defense)
 								actionButtonHTML = `
 									<button onclick="allyCommand('blink')" 
 											class="btn-game px-2 py-1 text-xs rounded transition-all 
-											${isCooldown ? 'btn-disabled-cost' : 'bg-emerald-900/40 text-emerald-300 hover:bg-emerald-800/60'}"
+											${isCooldown ? 'btn-disabled-cost' : 'bg-red-900/40 text-red-300 hover:bg-red-800/60'}"
 											${isCooldown ? 'disabled' : ''}>
 										PHASE SHIFT (${isCooldown ? gameState.allyCooldowns.blink : 'Ready'})
 									</button>
 								`;
 							} else {
 								// Passive Role (Rest/Utility) (PHASE OUT)
-								// STYLING CHANGE: Use Emerald colors for the passive button
+								// FIX 1: Removed the custom glow class from the button tag itself
 								actionButtonHTML = `
 									<button onclick="window.gameFunctions.triggerBlink()"
 											class="btn-game px-2 py-1 text-xs rounded transition-all bg-emerald-900/40 text-emerald-300 hover:bg-emerald-800/60">
@@ -7176,9 +7176,9 @@
 							blinkDiv.innerHTML = `
 								<div class="flex items-center gap-2">
 									<i class="fas fa-paw text-lg text-emerald-400"></i>
-									<div class="text-left leading-tight">
+									<div class="text-left leading-none">
 										<span class="font-bold text-xs cinzel text-emerald-300 block">Blink</span>
-										<span class="text-[10px] text-gray-500 italic">Phase-Cub</span>
+										<span class="text-[10px] text-gray-500 italic block leading-none">Phase-Cub</span>
 									</div>
 								</div>
 								${actionButtonHTML}
