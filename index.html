@@ -7104,7 +7104,7 @@
 					});
                     
 					// --- COMPANIONS LIST (ACT 3 & ACT 2) ---
-                    function renderCompanions(isSilasJoined, isBlinkJoined) { 
+					function renderCompanions(isSilasJoined, isBlinkJoined) { 
 						const companionList = document.getElementById('companions-list');
 						companionList.innerHTML = ''; 
 						companionList.className = "grid grid-cols-2 gap-2";
@@ -7114,16 +7114,16 @@
 							const silasDiv = document.createElement('div');
 							const isCooldown = gameState.allyCooldowns.silas > 0;
 							
-							// If Silas is joined, the persistent flag is gameState.companions.silas.joined
+							// Use Silas's existing emerald styling
 							silasDiv.className = `p-2 bg-gray-800 border rounded flex items-center justify-between ${
-                                isCooldown ? 'border-gray-900 opacity-60' : 'border-emerald-600/50'
-                            }`;
+								isCooldown ? 'border-gray-900 opacity-60' : 'border-emerald-600/50'
+							}`;
 							
-                            silasDiv.innerHTML = `
+							silasDiv.innerHTML = `
 								<div class="flex items-center gap-2">
 									<i class="fas fa-ghost text-lg text-emerald-400"></i>
 									<div class="text-left leading-tight">
-										<span class="font-bold text-xs cinzel text-emerald-300">Silas</span>
+										<span class="font-bold text-xs cinzel text-emerald-300 block">Silas</span>
 										<span class="text-[10px] text-gray-500 italic">Seneschal (Pack Tactics)</span>
 									</div>
 								</div>
@@ -7142,39 +7142,42 @@
 						// Blink (Phase-Cub / Evasion)
 						if (isBlinkJoined) {
 							const blinkDiv = document.createElement('div');
-                            const isCooldown = gameState.allyCooldowns.blink > 0;
-                            
+							const isCooldown = gameState.allyCooldowns.blink > 0;
+							
+							// STYLING CHANGE: Use Emerald colors for Blink's container
 							blinkDiv.className = `p-2 bg-gray-800 border rounded flex items-center justify-between ${
-                                isCooldown ? 'border-gray-900 opacity-60' : 'border-purple-600/50'
-                            }`;
-                            
-                            // BUTTON LOGIC: Blink has TWO roles (Passive Click & Combat Command)
-                            let actionButtonHTML = '';
-                            if (gameState.isBossCombat) {
-                                // Combat Role
-                                actionButtonHTML = `
-                                    <button onclick="allyCommand('blink')" 
-                                            class="btn-game px-2 py-1 text-xs rounded transition-all 
-                                            ${isCooldown ? 'btn-disabled-cost' : 'bg-purple-900/40 text-purple-300 hover:bg-purple-800/60'}"
-                                            ${isCooldown ? 'disabled' : ''}>
-                                        PHASE SHIFT (${isCooldown ? gameState.allyCooldowns.blink : 'Ready'})
-                                    </button>
-                                `;
-                            } else {
-                                // Passive Role (Rest/Utility)
-                                actionButtonHTML = `
-                                    <button onclick="window.gameFunctions.triggerBlink()"
-                                            class="btn-game px-2 py-1 text-xs rounded transition-all bg-indigo-900/40 text-indigo-300 hover:bg-indigo-800/60">
-                                        PHASE OUT
-                                    </button>
-                                `;
-                            }
-                            
+								isCooldown ? 'border-gray-900 opacity-60' : 'border-emerald-600/50'
+							}`;
+							
+							// BUTTON LOGIC: Blink has TWO roles (Passive Click & Combat Command)
+							let actionButtonHTML = '';
+							if (gameState.isBossCombat) {
+								// Combat Role (PHASE SHIFT)
+								// STYLING CHANGE: Use Emerald colors for the combat button
+								actionButtonHTML = `
+									<button onclick="allyCommand('blink')" 
+											class="btn-game px-2 py-1 text-xs rounded transition-all 
+											${isCooldown ? 'btn-disabled-cost' : 'bg-emerald-900/40 text-emerald-300 hover:bg-emerald-800/60'}"
+											${isCooldown ? 'disabled' : ''}>
+										PHASE SHIFT (${isCooldown ? gameState.allyCooldowns.blink : 'Ready'})
+									</button>
+								`;
+							} else {
+								// Passive Role (Rest/Utility) (PHASE OUT)
+								// STYLING CHANGE: Use Emerald colors for the passive button
+								actionButtonHTML = `
+									<button onclick="window.gameFunctions.triggerBlink()"
+											class="btn-game px-2 py-1 text-xs rounded transition-all bg-emerald-900/40 text-emerald-300 hover:bg-emerald-800/60">
+										PHASE OUT
+									</button>
+								`;
+							}
+							
 							blinkDiv.innerHTML = `
 								<div class="flex items-center gap-2">
-									<i class="fas fa-cubes text-lg text-purple-400"></i>
+									<i class="fas fa-cubes text-lg text-emerald-400"></i>
 									<div class="text-left leading-tight">
-										<span class="font-bold text-xs cinzel text-purple-300">Blink</span>
+										<span class="font-bold text-xs cinzel text-emerald-300 block">Blink</span>
 										<span class="text-[10px] text-gray-500 italic">Phase-Cub</span>
 									</div>
 								</div>
