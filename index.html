@@ -3011,12 +3011,50 @@
                         scenes['dogtooth_cliff_wall'].choices = [
                             { 
                                 text: "Enter the Sanctuary", 
-                                nextScene: 'silas_recruit_success', 
+                                nextScene: 'silas_sanctuary',
                                 type: 'travel',
                                 customClass: 'btn-planewalk-reveal' 
                             }
                         ];
                         return "The Ethereal Plane reveals the truth. Path found.";
+                    }
+                }
+            },
+			
+			// --- NEW SCENE: SILAS SANCTUARY (PLANE WALK PUZZLE) ---
+            'silas_sanctuary': {
+                title: "The Seneschal's Sanctuary",
+                text: "", // Dynamically set by onEnter
+                onEnter: (state) => {
+                    const isEthereal = state.isEthereal;
+
+                    if (isEthereal) {
+                        // ETHEREAL STATE: Silas is a ghost, waiting for you to return to reality.
+                        scenes['silas_sanctuary'].text = "Silas stands before you, his armor shining with spectral light. He is waiting, but he is a ghost to you right now. 'You must return, Mariner. You cannot swear an oath to me from the void.'";
+                        scenes['silas_sanctuary'].choices = [
+                            // Button to toggle back to Material Plane (uses the global toggle function)
+                            { 
+                                text: "Return to Material Plane", 
+                                type: 'action', 
+                                action: window.gameFunctions.togglePlaneWalk,
+                                customClass: 'spectral-active',
+                                tetherCost: 0
+                            }
+                        ];
+                        return "Silas is waiting in the spectral realm.";
+                    } else {
+                        // MATERIAL STATE: Ready for the oath.
+                        scenes['silas_sanctuary'].text = "The cliff is solid behind you. Silas stands in the real world now, holding out the hilt of his sword. 'Welcome back, Mariner. Now, the oath.'";
+                        scenes['silas_sanctuary'].choices = [
+                            // Button to finalize the recruitment
+                            { 
+                                text: "Swear Loyalty (Recruit Silas)", 
+                                nextScene: 'silas_recruit_success', 
+                                type: 'travel',
+                                customClass: 'btn-keen-senses'
+                            }
+                        ];
+                        return "Silas is ready for the oath.";
                     }
                 }
             },
