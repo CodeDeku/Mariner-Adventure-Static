@@ -1195,7 +1195,7 @@
             "Captain's Tricorn": { name: "Captain's Tricorn", type: 'key', icon: 'fa-hat-cowboy', color: 'text-blue-500', desc: "Passive: A symbol of authority. +1 to Intimidation checks." },
 			"Compass": { name: "Compass", type: 'key', icon: 'fa-compass', color: 'text-indigo-400', desc: "Passive: Violently hums near planar energy." },
             "Rusted Cutlass": { name: "Rusted Cutlass", type: 'key', icon: 'fa-khanda', color: 'text-gray-400', desc: "Passive: Reduces damage taken in combat events." },
-            "Ship's Log": { name: "Ship's Log", type: 'key', icon: 'fa-book-skull', color: 'text-amber-700', desc: "Key Item: Records of the damned. Unlocks your history." },
+            "Ship's Log": { name: "Ship's Log", type: 'key', icon: 'fa-book-open', color: 'text-amber-700', desc: "Key Item: Records of the damned. Unlocks your history." },
             
             // ACT 1: ROADSIDE / SMUGGLERS / MARKET
             "Curious Cargo": {
@@ -1253,14 +1253,14 @@
 					return `Drank Potion. Healed ${state.currentHP - oldHP} HP.`;
 				}
 			},
-            "Rope": { name: "Rope", type: 'key', icon: 'fa-om', color: 'text-yellow-700', desc: "Passive: Essential for climbing cliffs." },
+            "Rope": { name: "Rope", type: 'key', icon: 'fa-chain', color: 'text-yellow-700', desc: "Passive: Essential for climbing cliffs." },
             "Torch": { name: "Torch", type: 'key', icon: 'fa-fire', color: 'text-orange-500', desc: "Passive: Illuminates dark caves." },
             
             // ACT 1: LIGHTHOUSE FINAL PATH
             "Pearlescent Mushroom": {
 				name: "Pearlescent Mushroom",
 				type: 'consumable',
-				icon: 'fa-mushroom',
+				icon: 'fa-cloud-meatball',
 				color: 'text-purple-400',
 				btnText: "EAT",
 				desc: "Consumable: Grants a free use of a Crew member's skill on the next check, but makes you drowsy. This effect can be enhanced.",
@@ -1334,7 +1334,7 @@
             "Vitality Tincture": { 
 				name: "Vitality Tincture",
 				type: 'consumable',
-				icon: 'fa-heart-circle-plus', 
+				icon: 'fa-syringe', 
 				color: 'text-red-300',
 				btnText: "DRINK",
 				desc: "Consumable: High-grade restorative. Restores 15 HP. Cannot repair Spectral HP.",
@@ -1384,7 +1384,7 @@
             "Flash Powder": { 
                 name: "Flash Powder",
                 type: 'consumable',
-                icon: 'fa-sparkles', 
+                icon: 'fa-bomb', 
                 color: 'text-yellow-300',
                 btnText: "THROW",
                 desc: "Consumable: Guarantees escape from current combat (if in combat)."
@@ -1402,7 +1402,7 @@
             "Holy Water": { 
 				name: "Holy Water", 
 				type: 'consumable', 
-				icon: 'fa-flask-vial', 
+				icon: 'fa-cross', 
 				color: 'text-blue-200', 
 				btnText: "COMBINE",
 				desc: "A sealed flask of consecrated water. Too precious to drink, but potent against the wicked."
@@ -1410,7 +1410,7 @@
             "Alchemical Fire": { 
                 name: "Alchemical Fire",
                 type: 'consumable',
-                icon: 'fa-fire-alt', 
+                icon: 'fa-fire', 
                 color: 'text-orange-600',
                 btnText: "IGNITE",
                 desc: "Counter: Volatile mixture. Critical for Drowned Spectre (Shadow Path).",
@@ -1427,7 +1427,7 @@
             "Sword of Valor": { 
 				name: "Sword of Valor", 
 				type: 'weapon', 
-				icon: 'fa-sword', 
+				icon: 'fa-star', 
 				color: 'text-yellow-400', 
 				desc: "A gleaming cutlass, sharp enough to cut the veil. Deals 1d8+1 Magic Damage.",
 				damage: '1d8+1',
@@ -1446,7 +1446,7 @@
             "Spectral Lantern": {
 				name: "Spectral Lantern",
 				type: 'gear',
-				icon: 'fa-lantern',
+				icon: 'fa-lightbulb',
 				color: 'text-amber-400',
 				desc: "A lantern whose light burns cold and does not cast shadows. Grants +1 Defense (AC). Can be used at the Spectral Forge.",
 				isCombinable: true,
@@ -1464,7 +1464,7 @@
 			"Mimic's Bile": { 
 				name: "Mimic's Bile", 
 				type: 'ingredient', 
-				icon: 'fa-vial-virus', 
+				icon: 'fa-vial', 
 				color: 'text-green-500', 
 				desc: "Highly corrosive digestive acid, harvested from a Mimic's core. Deals Acid Damage.",
 				isCombinable: true,
@@ -1503,7 +1503,7 @@
 			"Acid-Etched Sword of Valor": {
 				name: "Acid-Etched Sword of Valor",
 				type: 'weapon',
-				icon: 'fa-acid-base',
+				icon: 'fa-biohazard',
 				color: 'text-green-500',
 				desc: "The blade is etched with glowing acid, effective against armor. Deals 1d8+1 Magic Damage, and an extra 1d4 Acid Damage (Ignores 1 AC).",
 				damage: '1d8+1 + 1d4 (Acid vs Armor)',
@@ -1601,8 +1601,8 @@
         ];
 
         const SHIP_SUPPLIES_OPTIONS = [
-             { item: "Supplies", nextScene: 'buy_supplies_5', cost: 10, amount: 5 },
-             { item: "Supplies", nextScene: 'buy_supplies_10', cost: 18, amount: 10 }
+             { item: "Supplies", cost: 10, amount: 5 },
+             { item: "Supplies", cost: 18, amount: 10 }
         ];
 
         const MARKET_SELL_OPTIONS = [
@@ -4223,9 +4223,9 @@
                 text: "Spectral fires roar in cold hearths. Ghostly chefs prepare feasts that rot the instant they are plated. A heavy oak door leads further East to the Ballroom. A rusted grate sits low on the West wall.",
                 journal: "Found the Kitchens. They connect to the Library via a grate.",
                 onEnter: (state) => {
-                    if (!state.inventory.includes("Gruel")) {
-                         state.inventory.push("Gruel");
-                         return "Found a pouch of spectral sustenance (Gruel).";
+                    if (!state.inventory.includes("Pearlescent Mushroom")) {
+                         state.inventory.push("Pearlescent Mushroom");
+                         return "Found a dried Pearlescent Mushroom near the hearth.";
                     }
                     return null;
                 },
@@ -4798,15 +4798,29 @@
                 },
                 choices: [
                     { 
-                        text: "Follow the Ring's Pulse (Search Cliffs)", 
+                        text: "Follow the Ring's Pulse", 
                         nextScene: 'dogtooth_cliff_wall', 
                         type: 'travel', 
                         reqItem: 'Ring of Brass',
                         reqNotFlag: 'silasJoined',
                         customClass: 'btn-pulse'
                     },
-                    { text: "Bones: Examine the Dead (Medicine DC 14)", nextScene: 'dogtooth_lore_check', type: 'skill', dc: 14, skill: 'Medicine' },
-                    { text: "Gareth: Cow the Pack (Intimidation DC 15)", nextScene: 'dogtooth_intimidate_logic', type: 'skill', dc: 15, skill: 'Intimidation' },
+                    { 
+                        text: "Examine the Dead", 
+                        nextScene: 'dogtooth_lore_check', 
+                        type: 'skill', 
+                        dc: 14, 
+                        skill: 'Medicine',
+                        reqNotFlag: 'dogtoothExamined' // CHANGED: Added Flag Requirement
+                    },
+                    { 
+                        text: "Cow the Pack", 
+                        nextScene: 'dogtooth_intimidate_logic', 
+                        type: 'skill', 
+                        dc: 15, 
+                        skill: 'Intimidation',
+                        reqNotFlag: 'dogtoothIntimidated' // CHANGED: Added Flag Requirement
+                    },
 					{ text: "Return to Sea Map", nextScene: 'sea_map_hub', type: 'travel', doomCost: 0 }
 				]
             },
@@ -4825,6 +4839,7 @@
                 title: "Alpha Status",
                 text: "You channel Gareth's roaring voice. The feral wolves whine and retreat, leaving a path to the shoreline clear. You find a washed-up crate they were guarding.",
                 onEnter: (state) => {
+                    state.dogtoothIntimidated = true; // CHANGED: Set Flag
                     state.supplies = Math.min(20, state.supplies + 3);
                     return "Scared off the pack. Found 3 Supplies.";
                 },
@@ -4834,6 +4849,7 @@
                 title: "The Pack Snaps",
                 text: "Your voice cracks. The wolves smell weakness and lunge.",
                 onEnter: (state) => {
+                    state.dogtoothIntimidated = true; // CHANGED: Set Flag (can't try again)
                     state.currentHP = applyDamage(state.currentHP, 4);
                     fxManager.flashRed();
                     return "Intimidation failed. Took 4 Damage.";
@@ -4849,6 +4865,7 @@
 				text: "Bones examines a fallen werewolf with grim precision. 'This isn't just a curse,' he mutters, wiping <span class='text-void'>black ichor</span> from his knife. 'It's an engineered plague. The veins are clogged with alchemical residue.'",
 				journal: "Bones identified the Lycanthropy as an engineered plague. It seems the Vampires poisoned the wolves.",
 				onEnter: (state) => {
+                    state.dogtoothExamined = true; // CHANGED: Set Flag
 					state.influence += 2; 
 					return "Lore Gained. Chaos +2.";
 				},
@@ -4857,6 +4874,10 @@
 			'dogtooth_lore_fail': {
 				title: "Unknown Affliction",
 				text: "The physiology is too alien. You cannot determine the cause of their feral state.",
+                onEnter: (state) => {
+                    state.dogtoothExamined = true; // CHANGED: Set Flag (can't try again)
+                    return null;
+                },
 				choices: [{ text: "Return to Bleak Dogtooth", nextScene: 'bleak_dogtooth', type: 'travel', doomCost: 0 }]
 			},
             'dogtooth_cliff_wall': {
@@ -4870,15 +4891,8 @@
                         document.getElementById('vignette-overlay').classList.remove('fx-heartbeat-slow', 'fx-heartbeat-fast');
                     }
 
-                    if (!state.isEthereal) {
-                        scenes['dogtooth_cliff_wall'].text = "You follow the pulse to a sheer granite cliff face. The path ends here. There are no caves, no tracks, nothing.<br><br>Yet, the <span class='text-item'>Ring of Brass</span> is screaming now, burning your finger. The heartbeat is deafening. It insists that the path continues <i>forward</i>, straight into the solid rock. The geometry of this place is wrong.";
-                        
-                        scenes['dogtooth_cliff_wall'].choices = [
-                            { text: "Touch the Rock Wall", action: () => "Solid stone. Cold and unyielding.", type: 'action' },
-                            { text: "Return to Shore", nextScene: 'bleak_dogtooth', type: 'travel', doomCost: 0 }
-                        ];
-                        return "The signal is strongest here, but the way is blocked. Think like a Horizon Walker.";
-                    } else {
+                    // CHANGED: Swapped logic to Ensure Normal = Wall, Ethereal = Sanctuary
+                    if (state.isEthereal) {
                         scenes['dogtooth_cliff_wall'].text = "As you step into the Ethereal Plane, the granite cliff dissolves into a curtain of grey mist. The heartbeat syncs with the thrum of the spectral world.<br><br>Beyond the veil, a hidden sanctuary is revealed—a cave that exists only in the echo of the world. Standing at the entrance is a lone, disciplined figure in tattered armor, watching you with eyes of gold.";
                         
                         scenes['dogtooth_cliff_wall'].choices = [
@@ -4890,13 +4904,21 @@
                             }
                         ];
                         return "The Ethereal Plane reveals the truth. Path found.";
+                    } else {
+                        scenes['dogtooth_cliff_wall'].text = "You follow the pulse to a sheer granite cliff face. The path ends here. There are no caves, no tracks, nothing.<br><br>Yet, the <span class='text-item'>Ring of Brass</span> is screaming now, burning your finger. The heartbeat is deafening. It insists that the path continues <i>forward</i>, straight into the solid rock. The geometry of this place is wrong.";
+                        
+                        scenes['dogtooth_cliff_wall'].choices = [
+                            { text: "Touch the Rock Wall", action: () => "Solid stone. Cold and unyielding.", type: 'action' },
+                            { text: "Return to Shore", nextScene: 'bleak_dogtooth', type: 'travel', doomCost: 0 }
+                        ];
+                        return "The signal is strongest here, but the way is blocked. Think like a Horizon Walker.";
                     }
                 }
             },
 			
 			'silas_sanctuary': {
                 title: "The Seneschal's Sanctuary",
-                text: "",
+                text: "The interior of the cave is sparse, illuminated by candles that burn with motionless flames. A shrine to the Wolf King sits in the corner.",
                 onEnter: (state) => {
                     const isEthereal = state.isEthereal;
 
@@ -5680,7 +5702,7 @@
             updateUI();
         }
 
-        function renderChoices(choices, isDeathScene = false) {
+			function renderChoices(choices, isDeathScene = false) {
             const container = document.getElementById('choices-area');
             container.innerHTML = '';
 
@@ -5690,6 +5712,9 @@
             
             let processedChoices = [...choices]; 
             
+            // --- DYNAMIC INJECTIONS ---
+
+            // 1. Alchemist Secret Trade Injection
             if (currentSceneId === 'alchemist_triage' && gameState.inventory.includes('Strange Coin') && !gameState.inventory.includes('Phoenix Draft')) {
                 const sellIndex = processedChoices.findIndex(c => c.nextScene === 'alchemist_sell');
                 const newChoice = {
@@ -5704,48 +5729,45 @@
                 else processedChoices.push(newChoice); 
             }
             
+            // 2. Market Stall: Buying
             if (currentSceneId === 'market_stall') {
                 const sellWaresNav = choices.find(c => c.nextScene === 'market_sell');
-                
                 const isMainGame = gameState.act1Started || gameState.act2Started || gameState.act3Started;
                 const returnTarget = isMainGame ? 'town_square' : 'market_crossroads';
-                
                 const leaveNav = { text: "Leave", nextScene: returnTarget, type: 'travel', doomCost: 0 };
                 
                 processedChoices = []; 
 
-                {
-                    MARKET_BUY_OPTIONS.forEach(sale => {
-                        const actualStock = currentSceneStock[sale.item] || 0;
-                        const itemDef = itemRegistry[sale.item];
-                        const isHealing = itemDef && (itemDef.name || '').includes('Heal') || (itemDef.name || '').includes('Rum');
-                        const isFull = gameState.currentHP >= gameState.maxHP;
-                        const canAfford = gameState.shillings >= sale.cost;
-                        
-                        if (actualStock > 0) {
-                            processedChoices.push({
-                                text: `Buy ${sale.item.split('(')[0].trim()} (Stock: ${actualStock})`,
-                                nextScene: sale.nextScene,
-                                type: 'action',
-                                cost: sale.cost,
-                                stockItem: sale.item,
-                                doomCost: 0,
-                                isDisabled: !canAfford || (isHealing && isFull)
-                            });
-                        }
-                    });
-                }
+                MARKET_BUY_OPTIONS.forEach(sale => {
+                    const actualStock = currentSceneStock[sale.item] || 0;
+                    const itemDef = itemRegistry[sale.item];
+                    const isHealing = itemDef && (itemDef.name || '').includes('Heal') || (itemDef.name || '').includes('Rum');
+                    const isFull = gameState.currentHP >= gameState.maxHP;
+                    const canAfford = gameState.shillings >= sale.cost;
+                    
+                    if (actualStock > 0) {
+                        processedChoices.push({
+                            // FIX: Only the Item Name. The cost indicator is added automatically at the end.
+                            text: `Buy ${sale.item.split('(')[0].trim()}`, 
+                            nextScene: sale.nextScene,
+                            type: 'action',
+                            cost: sale.cost,
+                            stockItem: sale.item,
+                            doomCost: 0,
+                            isDisabled: !canAfford || (isHealing && isFull)
+                        });
+                    }
+                });
 
                 if (sellWaresNav) processedChoices.push(sellWaresNav);
                 processedChoices.push(leaveNav);
             }
 			
+            // 3. Market Stall: Selling
 			else if (currentSceneId === 'market_sell') {
                 const backToBuyNav = choices.find(c => c.nextScene === 'market_stall');
-                
                 const isMainGame = gameState.act1Started || gameState.act2Started || gameState.act3Started;
                 const returnTarget = isMainGame ? 'town_square' : 'market_crossroads';
-                
                 const leaveNav = { text: "Stop Selling", nextScene: returnTarget, type: 'travel', doomCost: 0 };
                 
                 processedChoices = []; 
@@ -5755,7 +5777,8 @@
 						if (sell.item === 'Curious Cargo' && marketStock['Curious Cargo'] === 0 && !gameState.act3Started) return; 
 						
 						processedChoices.push({
-							text: `Sell ${sell.item.split('(')[0].trim()} (+${sell.value}s)`, 
+                            // FIX: Only the Item Name. The value indicator is added automatically.
+							text: `Sell ${sell.item.split('(')[0].trim()}`, 
 							nextScene: sell.nextScene,
 							type: 'action',
 							reqItem: sell.item,
@@ -5766,11 +5789,12 @@
 				});
 				if (backToBuyNav) processedChoices.push(backToBuyNav);
 				processedChoices.push(leaveNav);
-            } else if (currentSceneId === 'alchemist_triage') {
+            } 
+
+            // 4. Alchemist: Buying
+            else if (currentSceneId === 'alchemist_triage') {
 				const sellWaresNav = choices.find(c => c.nextScene === 'alchemist_sell');
-                
-				const returnTarget = 'town_square'; 
-				const returnNav = { text: "Return to Port Square", nextScene: returnTarget, type: 'travel', doomCost: 0 };
+				const returnNav = { text: "Return to Port Square", nextScene: 'town_square', type: 'travel', doomCost: 0 };
 
 				processedChoices = []; 
                 const secretTrade = choices.find(c => c.nextScene === 'alchemist_secret_stock');
@@ -5786,7 +5810,8 @@
 
 					if (actualStock > 0) {
 						processedChoices.push({
-							text: `Buy ${itemText} (${sale.cost}s)`,
+                            // FIX: Only the Item Name.
+							text: `Buy ${itemText}`, 
 							nextScene: sale.nextScene,
 							type: 'action',
 							cost: sale.cost,
@@ -5804,13 +5829,11 @@
 				processedChoices.push(returnNav);
 			} 
 			
-			
+            // 5. Alchemist: Selling
 			else if (currentSceneId === 'alchemist_sell') {
 				const backToBuyNav = choices.find(c => c.nextScene === 'alchemist_triage');
-				
 				const returnNav = { text: "Return to Port Square", nextScene: 'town_square', type: 'travel', doomCost: 0 };
-				
-                processedChoices = []; 
+				processedChoices = []; 
 				
 				ALCHEMIST_SELL_OPTIONS.forEach(sell => {
 					if (gameState.inventory.includes(sell.item)) {
@@ -5823,7 +5846,8 @@
 						if (isArtifactSell && (hasRing || hasSword)) isDisabled = true;
 
 						processedChoices.push({
-							text: `Sell ${sell.item.split('(')[0].trim()} (+${sell.value}s)`, 
+                            // FIX: Only the Item Name.
+							text: `Sell ${sell.item.split('(')[0].trim()}`, 
 							nextScene: sell.nextScene,
 							type: 'action',
 							reqItem: sell.item,
@@ -5835,7 +5859,81 @@
 				});
 				if (backToBuyNav) processedChoices.push(backToBuyNav);
 				processedChoices.push(returnNav);
-            } else if (currentSceneId === 'blackwater_tavern') {
+
+            } 
+            
+            // 6. Act 3: Harbor Provisioner (BUYING) -- NEW FIX
+            else if (currentSceneId === 'port_provisioner') {
+                const sellNav = choices.find(c => c.nextScene === 'port_provisioner_sell');
+                const returnNav = choices.find(c => c.nextScene === 'town_square');
+                
+                processedChoices = [];
+
+                SHIP_SUPPLIES_OPTIONS.forEach(sale => {
+                    const canAfford = gameState.shillings >= sale.cost;
+                    const isMax = gameState.supplies >= 20;
+                    processedChoices.push({
+                        // FIX: Clean text. The cost (-10s) comes from 'indicators' later.
+                        text: `Buy ${sale.amount} Supplies`,
+                        type: 'action',
+                        cost: sale.cost,
+                        doomCost: 0,
+                        isDisabled: !canAfford || isMax,
+                        action: (state) => {
+                            state.supplies = Math.min(20, state.supplies + sale.amount);
+                            return `Purchased ${sale.amount} Supplies.`;
+                        },
+                        nextScene: 'port_provisioner' // Reloads scene
+                    });
+                });
+
+                if (sellNav) processedChoices.push(sellNav);
+                if (returnNav) processedChoices.push(returnNav);
+            }
+
+            // 7. Act 3: Harbor Provisioner (SELLING)
+            else if (currentSceneId === 'port_provisioner_sell') {
+                const buyNav = choices.find(c => c.nextScene === 'port_provisioner');
+                const returnNav = choices.find(c => c.nextScene === 'town_square');
+                
+                processedChoices = [];
+
+                const SELLABLE_ITEMS_ACT3 = [
+                    "Curious Cargo", "Rope", "Torch", "Healing Potion", "Rum", 
+                    "Silver Locket", "Vitality Tincture", "Smelling Salts", "Flash Powder", 
+                    "Pearlescent Mushroom", "Dead Man's Die"
+                ];
+
+                SELLABLE_ITEMS_ACT3.forEach(itemName => {
+                    const itemDef = itemRegistry[itemName];
+                    if (gameState.inventory.includes(itemName) && itemDef && itemDef.btnText && (itemDef.btnText === 'SELL' || itemDef.btnText === 'PASSIVE' || itemDef.btnText === 'DRINK' || itemDef.btnText === 'USE' || itemDef.btnText === 'INSPECT' || itemDef.btnText === 'THROW')) {
+                        const saleOption = [...MARKET_SELL_OPTIONS, ...ALCHEMIST_SELL_OPTIONS].find(opt => opt.item === itemName) || { value: 3, doomCost: 0 }; 
+                        
+                        processedChoices.push({
+                            // FIX: Only the Item Name.
+                            text: `Sell ${itemName.split('(')[0].trim()}`, 
+                            nextScene: 'port_provisioner_sell',
+                            type: 'action',
+                            reqItem: itemName,
+                            value: saleOption.value,
+                            doomCost: 0,
+                            action: (state) => {
+                                const idx = state.inventory.indexOf(itemName);
+                                if (idx > -1) state.inventory.splice(idx, 1);
+                                state.shillings += saleOption.value;
+                                audioManager.playCoins();
+                                return `Sold ${itemName} for ${saleOption.value}s.`;
+                            }
+                        });
+                    }
+                });
+
+                if (buyNav) processedChoices.push(buyNav);
+                if (returnNav) processedChoices.push(returnNav);
+            }
+
+            // 8. Tavern Logic
+            else if (currentSceneId === 'blackwater_tavern') {
 				const restOption = choices.find(c => c.nextScene === 'tavern_rest_success');
 				const returnOption = choices.find(c => c.nextScene === 'town_square');
 				const gamblerOption = choices.find(c => c.nextScene === 'tavern_gambler');
@@ -5869,85 +5967,21 @@
 				if (gamblerOption && gameState.inventory.includes('Ring of Brass') && !gameState.hasObservedGambler) processedChoices.push(gamblerOption);
 				if (returnOption) processedChoices.push(returnOption);
 
-			} else if (currentSceneId === 'town_docks') {
+			} 
+            
+            // 9. Docks Logic
+            else if (currentSceneId === 'town_docks') {
 				 const workBtn = choices.find(c => c.nextScene === 'docks_work');
 				 const currentCost = workBtn.costHP !== undefined ? workBtn.costHP : 2;
 				 const processedWorkBtn = { ...workBtn, isDisabled: gameState.currentHP <= currentCost };
-				 
 				 const cargoBtn = choices.find(c => c.nextScene === 'docks_sell_cargo');
 				 const processedCargoBtn = (cargoBtn && gameState.inventory.includes('Curious Cargo') && !gameState.act3Started) ? cargoBtn : null;
 
 				 processedChoices = choices.map(c => c.nextScene === 'docks_work' ? processedWorkBtn : c);
-                 
                  if (processedCargoBtn) processedChoices.unshift(processedCargoBtn);
 			}
-			
-            else if (currentSceneId === 'port_provisioner') {
-                const sellNav = choices.find(c => c.nextScene === 'port_provisioner_sell');
-                const returnNav = choices.find(c => c.nextScene === 'town_square');
-                
-                processedChoices = [];
 
-                SHIP_SUPPLIES_OPTIONS.forEach(sale => {
-                    const canAfford = gameState.shillings >= sale.cost;
-                    const isMax = gameState.supplies >= 20;
-                    processedChoices.push({
-                        text: `Buy ${sale.amount} Supplies (${sale.cost}s)`,
-                        nextScene: sale.nextScene,
-                        type: 'action',
-                        cost: sale.cost,
-                        doomCost: 0,
-                        isDisabled: !canAfford || isMax
-                    });
-                });
-
-                if (sellNav) processedChoices.push(sellNav);
-                if (returnNav) processedChoices.push(returnNav);
-            }
-            
-            else if (currentSceneId === 'port_provisioner_sell') {
-                const buyNav = choices.find(c => c.nextScene === 'port_provisioner');
-                const returnNav = choices.find(c => c.nextScene === 'town_square');
-                
-                processedChoices = [];
-
-                const SELLABLE_ITEMS_ACT3 = [
-                    "Curious Cargo", "Rope", "Torch", "Healing Potion", "Rum", 
-                    "Silver Locket", "Vitality Tincture", "Smelling Salts", "Flash Powder", 
-                    "Pearlescent Mushroom", "Dead Man's Die"
-                ];
-
-                SELLABLE_ITEMS_ACT3.forEach(itemName => {
-                    const itemDef = itemRegistry[itemName];
-                    if (gameState.inventory.includes(itemName) && itemDef && itemDef.btnText && (itemDef.btnText === 'SELL' || itemDef.btnText === 'PASSIVE' || itemDef.btnText === 'DRINK' || itemDef.btnText === 'USE' || itemDef.btnText === 'INSPECT' || itemDef.btnText === 'THROW')) {
-                        const saleOption = [...MARKET_SELL_OPTIONS, ...ALCHEMIST_SELL_OPTIONS].find(opt => opt.item === itemName) || { value: 3, doomCost: 0 }; 
-                        
-                        processedChoices.push({
-                            text: `Sell ${itemName.split('(')[0].trim()} (+${saleOption.value}s)`, 
-                            nextScene: 'port_provisioner_sell',
-                            type: 'action',
-                            reqItem: itemName,
-                            value: saleOption.value,
-                            doomCost: 0,
-                            action: (state) => {
-                                const idx = state.inventory.indexOf(itemName);
-                                if (idx > -1) state.inventory.splice(idx, 1);
-                                state.shillings += saleOption.value;
-                                audioManager.playCoins();
-                                return `Sold ${itemName} for ${saleOption.value}s.`;
-                            }
-                        });
-                    }
-                });
-
-                if (buyNav) processedChoices.push(buyNav);
-                if (returnNav) processedChoices.push(returnNav);
-            }	
-			
-			
-			
-
-			// --- BUTTON GENERATION LOOP ---
+			// --- BUTTON GENERATION LOOP (Shared) ---
 			processedChoices.forEach(choice => {
 				
 				if (choice.reqItem && !gameState.inventory.includes(choice.reqItem)) return;
@@ -5984,7 +6018,6 @@
 						rawText = `${rawText} (Missing Item)`;
 					}
 				}
-
 
 				const btn = document.createElement('button');
 				
@@ -6030,7 +6063,6 @@
                 // --- SKILL CHECK FORMATTING ---
 				if (isSkillCheck) {
 					const displayDC = gameState.isRiftCollapse ? choice.dc + 2 : choice.dc;
-
 					supplementalText += ` <span class="spectral-text-glow text-sm uppercase tracking-wider ml-2 mr-4">[${choice.skill} DC ${displayDC}]</span>`;
 					icon = '<i class="fas fa-dice-d20 spectral-text-glow"></i>';
 				} 
@@ -6148,7 +6180,6 @@
 							});
 						}
 
-
 						const currentScene = scenes[gameState.currentSceneId];
 						if (currentScene.journal !== null && currentScene.journal !== undefined) {
 							let journalText = currentScene.journal;
@@ -6202,6 +6233,8 @@
 					};
 				}
 
+                // --- THIS IS THE SECTION YOU WANT TO RETAIN ---
+                // Kept existing indicator logic to ensure colored styled text appears at end of buttons
 				let indicators = [];
 				if (choice.cost) indicators.push({ text: `-${choice.cost}s`, color: 'text-amber-500' });
 				else if (choice.value) indicators.push({ text: `+${choice.value}s`, color: 'text-amber-500' });
@@ -6509,7 +6542,7 @@
 								actionButtonHTML = `
 									<button onclick="window.gameFunctions.triggerBlink()"
 											class="btn-game px-2 py-1 text-xs rounded transition-all bg-emerald-900/40 text-emerald-300 hover:bg-emerald-800/60">
-										PHASE OUT
+										PHASE
 									</button>
 								`;
 							}
