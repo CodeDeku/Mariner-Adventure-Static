@@ -7143,7 +7143,7 @@
 					// Inventory List View
 					const invContainer = document.getElementById('inventory-panel');
 					invContainer.innerHTML = '';
-					
+
 					// SCALABILITY FIX: Add scrolling for large inventories
 					invContainer.className = "flex flex-col gap-1 max-h-[220px] overflow-y-auto pr-1"; // Added max-height & scroll
 
@@ -7154,24 +7154,33 @@
 					descArea.innerText = defaultText;
 					descArea.classList.remove('text-amber-400');
 					descArea.classList.add('text-gray-400'); 
-					
+
 					if (gameState.inventory.length === 0) {
 						invContainer.innerHTML = '<div class="text-center text-[10px] text-gray-600 italic py-2">Inventory Empty</div>';
 					} else {
-					// SORTING LOGIC: Consumables First, then Newest at Top
-					// 1. Reverse the array first so newest items (end of array) come first.
-					// 2. Sort by type, returning 0 if types match to preserve the reversed (newest) order.
-					const sortedInventory = [...gameState.inventory].reverse().sort((a, b) => {
-						const itemA = itemRegistry[a] || { type: 'misc' };
-						const itemB = itemRegistry[b] || { type: 'misc' };
+						// FIX: Stable Sorting Logic (Consumables first, then Newest at Top)
+						// Create a temporary reference array to get the original index for stable sorting.
+						const tempInventory = Array.from(gameState.inventory);
 
-						// Priority 1: Consumables float to the top
-						if (itemA.type === 'consumable' && itemB.type !== 'consumable') return -1;
-						if (itemA.type !== 'consumable' && itemB.type === 'consumable') return 1;
+						const sortedInventory = tempInventory.sort((aName, bName) => {
+							const itemA = itemRegistry[aName] || { type: 'misc' };
+							const itemB = itemRegistry[bName] || { type: 'misc' };
+							
+							// Get the original index for a stable "newest first" sort
+							const indexA = gameState.inventory.indexOf(aName);
+							const indexB = gameState.inventory.indexOf(bName);
+							
+							// --- Priority 1: Sort by Type (Consumable before everything else) ---
+							const isAConsumable = itemA.type === 'consumable';
+							const isBConsumable = itemB.type === 'consumable';
 
-						// Priority 2: Maintain relative order (which is now Newest-First due to .reverse())
-						return 0;
-					});
+							if (isAConsumable && !isBConsumable) return -1; // A (consumable) comes before B
+							if (!isAConsumable && isBConsumable) return 1;  // B (consumable) comes before A
+
+							// --- Priority 2: Sort by Newest First (Index comparison for stability) ---
+							// Invert the index comparison: Higher index (newer item) comes first.
+							return indexB - indexA;
+						});
 
 						sortedInventory.forEach(itemName => {
 							let itemDef = itemRegistry[itemName] || { type: 'misc', icon: 'fa-box', color: 'text-gray-500', desc: "A strange item." };
@@ -7188,10 +7197,10 @@
 									itemDef.color = "text-emerald-400";
 									itemDef.desc = "Passive: The lens aligns with Chaos. Gain +1 coin on all earnings.";
 								} else {
-                                    itemDef.name = "Salt-Warped Spyglass";
-                                    itemDef.color = "text-cyan-400";
-                                    itemDef.desc = "Key: The lens seems to shift focus on its own. (Awaiting Alignment)";
-                                }
+									itemDef.name = "Salt-Warped Spyglass";
+									itemDef.color = "text-cyan-400";
+									itemDef.desc = "Key: The lens seems to shift focus on its own. (Awaiting Alignment)";
+								}
 							}
 							// -----------------------------------
 							
