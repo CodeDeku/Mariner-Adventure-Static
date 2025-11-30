@@ -735,16 +735,6 @@
                     <div class="grid grid-cols-2 gap-2" id="crew-panel">
                         </div>
                 </div>
-				
-				<!-- COMPANION PANEL -->
-                <div id="companion-panel" class="hidden pb-2 fade-in clean-spectral-title">
-                    <div class="flex justify-between items-end mb-1 clean-spectral-title">
-                        <span class="text-xs cinzel text-emerald-400"><i class="fas fa-users mr-1"></i> Allies</span>
-                    </div>
-                    <div id="companions-list" class="flex flex-col gap-2">
-                        <!-- Silas will be dynamically added here -->
-                    </div>
-                </div>
 
                 <!-- PLANAR SKILLS -->
                 <div id="planar-skills-container" class="hidden mb-2 pb-2 fade-in clean-spectral-title">
@@ -759,6 +749,17 @@
                         </button>
                     </div>
                 </div>
+				
+				<!-- COMPANION PANEL -->
+                <div id="companion-panel" class="hidden pb-2 fade-in clean-spectral-title">
+                    <div class="flex justify-between items-end mb-1 clean-spectral-title">
+                        <span class="text-xs cinzel text-emerald-400"><i class="fas fa-users mr-1"></i> Allies</span>
+                    </div>
+                    <div id="companions-list" class="flex flex-col gap-2">
+                        <!-- Silas will be dynamically added here -->
+                    </div>
+                </div>
+				
                 <!-- END ACT 2 PLANAR SKILLS -->
 
                 <div class="flex-1 flex flex-col">
@@ -1067,20 +1068,17 @@
         
         // --- GAME DATA FACTORY ---
         function createInitialState() {
-            // Note: Initial stock is defined on the scene objects (e.g., scenes['market_stall'].stock)
             return {
                 currentSceneId: 'prologue_storm', 
                 currentHP: 20,
                 maxHP: 20,
                 shillings: 0, 
-                // NEW ACT 2 STATE
                 act2Started: false, 
                 isEthereal: false,
                 tetherTimer: 20,
-                returnSceneId: null, // For map logic
-                // END ACT 2 STATE
+                returnSceneId: null,
                 inventory: [], 
-                skills: [], // NEW: Hidden tracking for Absorb Elements / Primeval Awareness
+                skills: [],
                 influence: 0, 
                 crewUseFree: false, 
                 lastCrewUsedId: null, 
@@ -1091,34 +1089,27 @@
                     bones: { id: 'bones', name: 'Bones', skill: 'Nature & Medicine', used: false, desc: 'Add +1d4 to Nature & Medicine' }
                 },
                 history: [],
-                // NEW: Information Flags for Act 1 Shortcuts
                 knowsSmelterSecret: false,
                 knowsChapelSecret: false,
-                // NEW: Doom Counter (Starts at 20 - INCREASED MAX STABILITY)
                 doomTimer: 20,
                 act1Started: false,
-                // NEW: Status Flags for Boss Fights
-                isAbsorbCharged: false, // For Absorb Elements
-                isSurpriseRound: false, // For Primeval Awareness/Ambush
-                isRiftCollapse: false, // For Doom Counter Failure State
-                hasLoggedCollapse: false, // FIX 2A: Flag to prevent repeated logging of Rift Collapse penalty
-                // NEW FLAGS FOR ONE-TIME ACTIONS (Task 3 Fix)
+                isAbsorbCharged: false,
+                isSurpriseRound: false,
+                isRiftCollapse: false,
+                hasLoggedCollapse: false,
                 hasObservedGambler: false, 
                 hasSearchedSmugglerDrop: false,
-                // NEW: Docks work exhaustion counter
                 docksWorkCount: 0,
-                // NEW FLAG: Quinn's Logistics (Doom Cost UI Reveal)
                 quinnLogistics: false,
 				hasDivedTreasure: false,
-                // NEW ACT 2 FLAGS
                 hallLooted: false,
-                hasBlinkSkill: false, // Tracks the Displacer Cub companion event success
-                // NEW ACT 3 FLAGS (CORE STATE)
+                hasBlinkSkill: false,
                 act3Started: false,
+				silasJoined: false,
                 shipName: "The Iron Lung",
-                supplies: 10,       // New Resource (Max 20)
-                knownIslands: ['port_hub'], // Initial Hub Unlocked
-                currentLocation: 'port_hub', // Current position in the world
+                supplies: 10, 
+                knownIslands: ['port_hub'],
+                currentLocation: 'port_hub',
                 companions: {
                     silas: { 
                         joined: false, 
@@ -1127,7 +1118,6 @@
                         active: false 
                     }
                 },
-                // END ACT 3 FLAGS
             };
         }
 
@@ -2916,7 +2906,7 @@
                         nextScene: 'dogtooth_cliff_wall', 
                         type: 'travel', 
                         reqItem: 'Ring of Brass',
-                        reqNotFlag: 'companions.silas.joined',
+                        reqNotFlag: 'silasJoined',
                         customClass: 'btn-pulse'
                     },
                     { text: "Bones: Examine the Dead (Medicine DC 14)", nextScene: 'dogtooth_lore_check', type: 'skill', dc: 14, skill: 'Medicine' },
@@ -3020,10 +3010,10 @@
                 journal: "Recruited Silas, the Wolf King's Seneschal. (Companion Gained).",
                 onEnter: (state) => {
                     state.companions.silas.joined = true;
+                    state.silasJoined = true;
                     state.unlocked_spire = true;
                     state.knownIslands.push('sanguine_spire_entry');
                     
-                    // KILL SWITCH: Remove the heartbeat immediately
                     document.getElementById('vignette-overlay').classList.remove('fx-heartbeat-slow', 'fx-heartbeat-fast');
                     
                     return "Silas joined the crew. Sanguine Spire coordinates unlocked.";
@@ -5581,6 +5571,7 @@
             gameState.currentLocation = 'port_hub';
             gameState.supplies = 10;
             gameState.companions.silas.joined = false;
+            gameState.silasJoined = false;
 
 
             document.getElementById('journal-content').innerHTML = '';
@@ -6661,6 +6652,7 @@
                     function renderCompanions() {
                         const companionList = document.getElementById('companions-list');
                         companionList.innerHTML = '';
+						companionList.className = "grid grid-cols-2 gap-2";
 
                         // 1. BLINK (The Displacer Cub)
                         if (gameState.skills.includes("Blink")) {
