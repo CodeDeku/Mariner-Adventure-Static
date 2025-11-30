@@ -3069,17 +3069,142 @@
             // WOLF KING'S ESTATE (SAFE HOUSE)
             'wolf_estate_safe': {
                 title: "Wolf King's Estate (Safe House)",
-                text: "The Manor is sealed in the spectral echo. Here, the planar barriers are reinforced, and the Sanguine Court cannot reach you. This is the only place to truly rest.",
+                text: "The Manor is sealed in the spectral echo. Here, the planar barriers are reinforced. You are safe. The old halls of the estate stretch out behind you, silent and frozen in memory.",
                 isRest: true,
                 choices: [
                     { text: "Take a Long Rest", nextScene: 'act3_long_rest', type: 'action', doomCost: 0 },
-                    // CHANGED nextScene below to 'town_square'
+                    // CHANGED: Points to "safe" foyer, text implies seamless exploration
+                    { 
+                        text: "Wander the Halls", 
+                        nextScene: 'manor_foyer_safe', 
+                        type: 'travel', 
+                        customClass: 'btn-planewalk-reveal',
+                        doomCost: 0 
+                    },
                     { text: "Exit to Port Square (Material)", nextScene: 'town_square', type: 'action', action: (state) => {
                         state.isEthereal = false;
                         renderScene('town_square');
                     }, doomCost: 0}
                 ]
             },
+			
+			// --- MANOR SAFE LAYER (ACT 3 EXPLORATION) ---
+            
+            'manor_foyer_safe': {
+                title: "The Grand Foyer", // Same title as Act 2 for immersion
+                text: "The Grand Foyer is silent. The floating staircase hangs motionless in the void, and dust motes dance in the light of your Spectral Lantern. The threats of the past are gone, leaving only the architecture.",
+                onEnter: (state) => {
+                    state.tetherTimer = 0; // Ensure Act 2 mechanics are off
+                    return "Exploring the Manor.";
+                },
+                choices: [
+                    { text: "Enter Library (West)", nextScene: 'manor_library_safe', type: 'travel', doomCost: 0 },
+                    { text: "Enter Kitchens (East)", nextScene: 'manor_kitchens_safe', type: 'travel', doomCost: 0 },
+                    { text: "Enter Grand Hall (North)", nextScene: 'manor_hall_safe', type: 'travel', doomCost: 0 },
+                    { text: "Return to Safe House", nextScene: 'wolf_estate_safe', type: 'travel', doomCost: 0 }
+                ]
+            },
+
+            'manor_library_safe': {
+                title: "The Warden's Library",
+                text: "The books have settled on their shelves. The knowledge here is ancient, but the room is dormant.",
+                choices: [
+                    // LOOT RECOVERY: Blueprint
+                    { 
+                        text: "Recover Blueprint", 
+                        type: 'action', 
+                        reqNotItem: 'Manor Blueprint',
+                        action: (state) => {
+                            state.inventory.push("Manor Blueprint");
+                            return "Found the Manor Blueprint on a dusty table.";
+                        }
+                    },
+                    { text: "Check Crawlspace (Vents)", nextScene: 'manor_crawlspace_safe', type: 'travel', doomCost: 0 },
+                    { text: "Return to Foyer", nextScene: 'manor_foyer_safe', type: 'travel', doomCost: 0 }
+                ]
+            },
+
+            'manor_crawlspace_safe': {
+                title: "The Service Crawlspace",
+                text: "The tight tunnels are empty of rats.",
+                onEnter: (state) => {
+                    // LOOT RECOVERY: Blink
+                    if (!state.skills.includes("Blink")) {
+                        return "You hear a weak mewling. The Displacer Cub is still here, hiding in the dark.";
+                    }
+                    return null;
+                },
+                choices: [
+                    // RECRUIT BLINK (Recovery)
+                    { 
+                        text: "Rescue the Displacer Cub", 
+                        type: 'action', 
+                        reqNotFlag: 'hasBlinkSkill',
+                        action: (state) => {
+                            state.skills.push("Blink");
+                            state.hasBlinkSkill = true;
+                            setTimeout(updateUI, 100); 
+                            return "You feed the starving cub. It bonds with you immediately. Learned: Blink.";
+                        },
+                        customClass: 'spectral-active'
+                    },
+                    { text: "Crawl to Library", nextScene: 'manor_library_safe', type: 'travel', doomCost: 0 },
+                    { text: "Crawl to Kitchens", nextScene: 'manor_kitchens_safe', type: 'travel', doomCost: 0 }
+                ]
+            },
+
+            'manor_hall_safe': {
+                title: "The Grand Hall",
+                text: "The wreckage of the Brass Sentinel lies in a heap. The Penrose Staircase spins slowly in the distance, but the door at the top is sealed shut. The Rift is closed.",
+                choices: [
+                    // LOOT RECOVERY: Mimic's Bile
+                    { 
+                        text: "Scavenge the Mimic Carcass", 
+                        type: 'action', 
+                        reqNotItem: "Mimic's Bile",
+                        reqNotFlag: 'hallLooted',
+                        action: (state) => {
+                            state.inventory.push("Mimic's Bile");
+                            state.hallLooted = true;
+                            return "You find the dead Mimic. You extract the Bile from its gland.";
+                        }
+                    },
+                    { text: "Return to Foyer", nextScene: 'manor_foyer_safe', type: 'travel', doomCost: 0 }
+                ]
+            },
+
+            'manor_kitchens_safe': {
+                title: "The Ghost Kitchens",
+                text: "The spectral fires still burn in the hearth, fueled by memory. This fire is cold, but it has the power to change things.",
+                choices: [
+                    // THE UPGRADE STATION
+                    { 
+                        text: "Temper Sword in Bile & Ghost Fire", 
+                        nextScene: 'kitchen_temper_sword', // Reuses the upgrade scene
+                        type: 'action', 
+                        reqItem: "Mimic's Bile",
+                        reqItemTwo: "Sword of Valor", 
+                        consume: true,
+                        customClass: 'btn-hero'
+                    },
+                    { text: "Return to Foyer", nextScene: 'manor_foyer_safe', type: 'travel', doomCost: 0 }
+                ]
+            },
+			'kitchen_temper_sword': {
+                title: "Acid-Etched Steel",
+                text: "You pour the Mimic's Bile over the Sword of Valor and thrust it into the spectral blue flames...<br><br>The blade emerges changed—the steel is now dark, rippled with green veins. It is no longer just a holy weapon; it is a predator's fang.",
+                journal: "Tempered the Sword of Valor with Mimic Bile. It is stronger now.",
+                choices: [
+                    // CHANGED: Return to the SAFE kitchen
+                    { text: "Sheathe the Blade", nextScene: 'manor_kitchens_safe', type: 'travel', tetherCost: 0 }
+                ],
+                onEnter: (state) => {
+                    state.hasAcidBlade = true; 
+                    return "Upgrade Complete: Sword of Valor is now Acid-Etched (+1 Damage).";
+                }
+            },
+            // --- END MANOR SAFE LAYER ---
+			
             'act3_long_rest': {
                 title: "A Deep Respite",
                 text: "You collapse into a spectral hammock. The crew murmurs softly. Your strength is restored.",
@@ -6394,9 +6519,9 @@
 
                     // 2. Allies Panel (Shows if Silas OR Blink is present)
                     const hasSilas = Object.values(gameState.companions).some(c => c.joined);
-                    // REMOVED hasBlink CHECK
+                    const hasBlink = gameState.skills.includes("Blink");
                     
-                    if (hasSilas) {
+                    if (hasSilas || hasBlink) { // CHECK BOTH
                         companionPanel.classList.remove('hidden');
                         renderCompanions();
                     } else {
@@ -6420,16 +6545,6 @@
 						planarSkills.classList.remove('hidden');
 					} else {
 						planarSkills.classList.add('hidden');
-					}
-
-					// 3. Blink Button Specific Visibility
-					const blinkBtn = document.getElementById('btn-blink');
-					if (gameState.skills.includes("Blink")) {
-						blinkBtn.classList.remove('hidden');
-                        // Add glow if active/usable context exists (optional styling)
-                        blinkBtn.classList.add('spectral-text-glow');
-					} else {
-						blinkBtn.classList.add('hidden');
 					}
 					// --- END ACT 2 UI TOGGLE ---
 
@@ -6647,11 +6762,30 @@
 						crewContainer.appendChild(btn);
 					});
                     
-                    // --- COMPANIONS LIST (ACT 3 & ACT 2) ---
+					// --- COMPANIONS LIST (ACT 3 & ACT 2) ---
                     function renderCompanions() {
                         const companionList = document.getElementById('companions-list');
                         companionList.innerHTML = '';
 						companionList.className = "grid grid-cols-2 gap-2";
+
+                        // 1. BLINK (The Displacer Cub) - RESTORED
+                        if (gameState.skills.includes("Blink")) {
+                             const blinkDiv = document.createElement('div');
+                             // Green Styling (Emerald) to match Silas
+                             blinkDiv.className = `p-2 rounded border border-emerald-700 bg-gray-900/80 shadow flex items-center justify-between transition-colors cursor-pointer hover:bg-emerald-900/30 group`;
+                             blinkDiv.innerHTML = `
+                                <div class="flex items-center gap-2">
+                                    <i class="fas fa-paw text-xl text-emerald-400 group-hover:text-white transition-colors"></i>
+                                    <div class="flex flex-col text-left leading-tight">
+                                        <span class="font-bold text-xs cinzel text-emerald-300">Blink</span>
+                                        <span class="text-[10px] text-gray-500 italic">Phase Shift</span>
+                                    </div>
+                                </div>
+                             `;
+                             // Click to trigger skill
+                             blinkDiv.onclick = () => window.gameFunctions.triggerBlink();
+                             companionList.appendChild(blinkDiv);
+                        }
 
                         // 2. SILAS (The Seneschal)
                         if (gameState.companions.silas.joined) {
@@ -6663,7 +6797,7 @@
                                     <i class="fas fa-moon text-xl text-emerald-400"></i>
                                     <div class="flex flex-col text-left leading-tight">
                                         <span class="font-bold text-xs cinzel text-emerald-300">${silas.name}</span>
-                                        <span class="text-[10px] text-gray-500 italic">Seneschal (Pack Tactics)</span>
+                                        <span class="text-[10px] text-gray-500 italic">Seneschal</span>
                                     </div>
                                 </div>
                              `;
