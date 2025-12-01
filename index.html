@@ -320,6 +320,79 @@
         .fx-heartbeat-fast { animation: heartbeat-anim 0.8s infinite ease-in-out; opacity: 1 !important; }
 
         .water-stained { background-color: #1e293b; background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23334155' fill-opacity='0.1' fill-rule='evenodd'/%3E%3C/svg%3E"); }
+		
+		/* --- 1. SHIP THEME (Act 3 Background) --- */
+		body.theme-ship {
+			background-color: #38312e; /* Cooler brown base */
+			background-image: url("data:image/svg+xml,%3Csvg width='30' height='30' viewBox='0 0 30 30' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M15 0v30M0 15h30' stroke='%236b808d' stroke-width='1' fill='none'/%3E%3C/svg%3E");
+			background-size: 10px 30px;
+			transition: background-color 0.5s;
+		}
+
+		/* --- 2. BANTER TYPEWRITER ANIMATION --- */
+		.slow-type::after {
+			content: '|';
+			animation: blink 0.7s infinite;
+			font-weight: 700;
+			color: #93c5fd;
+		}
+		@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+		/* --- 3. PUZZLE MODAL (Overlay) --- */
+		#puzzle-modal {
+			position: fixed; inset: 0; z-index: 100;
+			background-color: rgba(0, 0, 0, 0.9);
+			backdrop-filter: blur(5px);
+			display: flex; align-items: center; justify-content: center;
+			opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+		}
+		#puzzle-modal.active { opacity: 1; pointer-events: auto; }
+
+		/* --- COMPASS STYLES --- */
+		@keyframes planar-pulse { 
+			0%, 100% { box-shadow: 0 0 10px rgba(167, 139, 250, 0.4), inset 0 0 8px rgba(103, 232, 249, 0.5); } 
+			50% { box-shadow: 0 0 20px rgba(167, 139, 250, 0.8), inset 0 0 15px rgba(103, 232, 249, 0.9); } 
+		}
+		#compass-container {
+			width: 240px; height: 240px; position: relative; border-radius: 50%;
+			background: radial-gradient(#1e1b4b, #0c081e); border: 3px solid #60a5fa;
+			animation: planar-pulse 4s infinite ease-in-out; margin: 0 auto;
+		}
+		#compass-needle {
+			position: absolute; width: 6px; height: 110px; top: 50%; left: 50%;
+			margin-left: -3px; margin-top: -110px; transform-origin: center bottom;
+			cursor: grab; transition: box-shadow 0.1s, transform 0.05s; touch-action: none;
+		}
+		#compass-needle:active { cursor: grabbing; }
+		#needle-head {
+			position: absolute; top: 0; left: -7px; width: 20px; height: 20px;
+			transform: rotate(45deg); background-color: #67e8f9; border-radius: 2px;
+			box-shadow: 0 0 8px #67e8f9;
+		}
+		#needle-body {
+			 width: 6px; height: 100%; background: linear-gradient(to top, #a78bfa 50%, #67e8f9 50%); border-radius: 3px;
+		}
+		#compass-target {
+			position: absolute; width: 90px; height: 90px; border-radius: 50%;
+			background: rgba(16, 185, 129, 0.3); border: 2px solid #10b981;
+			top: 75px; left: 75px; transform-origin: center center; opacity: 0.8;
+		}
+
+		/* --- CIRCUIT STYLES --- */
+		.circuit-panel {
+			background-color: #1f2937; border: 2px solid #475569; padding: 20px;
+			border-radius: 8px; display: flex; gap: 20px; justify-content: center;
+		}
+		.circuit-node {
+			width: 50px; height: 50px; border-radius: 8px; background-color: #0f172a;
+			border: 2px solid #475569; display: flex; align-items: center; justify-content: center;
+			font-size: 1.5rem; cursor: pointer; color: #d1d5db; transition: all 0.2s;
+		}
+		.circuit-node.active { border-color: #fcd34d; background-color: #44403c; transform: scale(1.1); }
+		.circuit-node.success { border-color: #10b981; color: #10b981; }
+		.circuit-node.error { border-color: #ef4444; color: #fecaca; }
+
+
 
         /* --- ETHEREAL PLANE THEME --- */
         body.plane-ethereal { background-color: #020617; transition: background-color 1s ease; }
@@ -546,6 +619,15 @@
                 <div class="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-black/20 to-transparent pointer-events-none"></div>
             </div>
 
+        </div>
+    </div>
+	
+	<div id="puzzle-modal">
+        <div id="puzzle-content" class="bg-gray-900 border border-gray-600 rounded-xl p-6 max-w-md w-full shadow-2xl relative">
+            <button onclick="puzzleManager.close()" class="absolute top-2 right-3 text-gray-500 hover:text-white">
+                <i class="fas fa-times"></i>
+            </button>
+            <div id="puzzle-inner-area"></div>
         </div>
     </div>
 
@@ -1181,9 +1263,205 @@
 			updateUI();
 		}
 		
-		
-		
-		
+		class PuzzleManager {
+			constructor() {
+				this.modal = document.getElementById('puzzle-modal');
+				this.contentArea = document.getElementById('puzzle-inner-area');
+				this.timerRef = null;
+				
+				// Compass State
+				this.visualRotation = 0;
+				this.lastRawAngle = 0;
+				this.isAligned = false;
+				
+				// Circuit State
+				this.circuitSequence = [1, 3, 2];
+				this.userSequence = [];
+			}
+
+			close() {
+				this.modal.classList.remove('active');
+				if (this.timerRef) cancelAnimationFrame(this.timerRef);
+				// Remove listeners
+				document.removeEventListener('mousemove', this.dragCompass);
+				document.removeEventListener('mouseup', this.endDragCompass);
+				document.removeEventListener('touchmove', this.dragCompass);
+				document.removeEventListener('touchend', this.endDragCompass);
+			}
+
+			// --- COMPASS PUZZLE ---
+			startCompass() {
+				this.modal.classList.add('active');
+				this.visualRotation = 0;
+				this.isAligned = false;
+				
+				this.contentArea.innerHTML = `
+					<div class="text-center">
+						<h3 class="text-xl cinzel text-cyan-300 font-bold mb-2">Stabilize the Veil</h3>
+						<p id="compass-timer" class="text-red-400 font-mono mb-4">Time: 10.0</p>
+						<div id="compass-container">
+							<div id="compass-target"></div>
+							<div id="compass-needle" style="transform: rotateZ(0deg);">
+								<div id="needle-body"></div>
+								<div id="needle-head"></div>
+							</div>
+						</div>
+						<p class="text-gray-400 text-sm mt-4">Drag the needle to the green signal!</p>
+					</div>
+				`;
+
+				const targetEl = document.getElementById('compass-target');
+				const needleEl = document.getElementById('compass-needle');
+				
+				// Random Target (Top half)
+				this.currentTargetAngle = Math.floor(Math.random() * 140) + 20;
+				targetEl.style.transform = `rotateZ(${this.currentTargetAngle}deg)`;
+				
+				// Bind Listeners
+				this.dragCompass = this.dragCompass.bind(this);
+				this.endDragCompass = this.endDragCompass.bind(this);
+				
+				const startDrag = (e) => {
+					e.preventDefault();
+					this.isDragging = true;
+					const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+					const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+					this.lastRawAngle = this.getRawAngle(clientX, clientY);
+				};
+
+				needleEl.addEventListener('mousedown', startDrag);
+				needleEl.addEventListener('touchstart', startDrag, {passive: false});
+				
+				document.addEventListener('mousemove', this.dragCompass);
+				document.addEventListener('touchmove', this.dragCompass, {passive: false});
+				
+				document.addEventListener('mouseup', this.endDragCompass);
+				document.addEventListener('touchend', this.endDragCompass);
+
+				// Timer Loop
+				let startTime = Date.now();
+				const duration = 10.0;
+				
+				const loop = () => {
+					if (!this.modal.classList.contains('active')) return;
+					
+					const elapsed = (Date.now() - startTime) / 1000;
+					const timeLeft = Math.max(0, duration - elapsed);
+					document.getElementById('compass-timer').textContent = `Time: ${timeLeft.toFixed(1)}`;
+
+					if (timeLeft <= 0) {
+						this.close();
+						renderScene('sea_fog_fail');
+					} else if (this.isAligned) {
+						// Success visual delay
+						document.getElementById('compass-timer').textContent = "LOCKED!";
+						document.getElementById('compass-timer').className = "text-green-400 font-bold mb-4";
+						setTimeout(() => {
+							this.close();
+							renderScene('sea_fog_success');
+						}, 800);
+					} else {
+						this.timerRef = requestAnimationFrame(loop);
+					}
+				};
+				loop();
+			}
+
+			getRawAngle(x, y) {
+				const rect = document.getElementById('compass-container').getBoundingClientRect();
+				const centerX = rect.left + rect.width / 2;
+				const centerY = rect.top + rect.height / 2;
+				let angle = Math.atan2(y - centerY, x - centerX) * (180 / Math.PI) + 90;
+				return angle < 0 ? angle + 360 : angle;
+			}
+
+			dragCompass(e) {
+				if (!this.isDragging) return;
+				const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+				const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+				
+				const currentRawAngle = this.getRawAngle(clientX, clientY);
+				let delta = currentRawAngle - this.lastRawAngle;
+				
+				// 360 boundary crossing logic
+				if (delta > 180) delta -= 360;
+				else if (delta < -180) delta += 360;
+
+				this.visualRotation += delta;
+				document.getElementById('compass-needle').style.transform = `rotateZ(${this.visualRotation}deg)`;
+				this.lastRawAngle = currentRawAngle;
+				
+				// Check Alignment
+				let normalized = this.visualRotation % 360;
+				if (normalized < 0) normalized += 360;
+				
+				if (Math.abs(normalized - this.currentTargetAngle) < 12) {
+					this.isAligned = true;
+					document.getElementById('compass-needle').classList.add('aligned');
+				} else {
+					this.isAligned = false;
+					document.getElementById('compass-needle').classList.remove('aligned');
+				}
+			}
+
+			endDragCompass() { this.isDragging = false; }
+
+			// --- CIRCUIT PUZZLE ---
+			startCircuit() {
+				this.modal.classList.add('active');
+				this.userSequence = [];
+				
+				this.contentArea.innerHTML = `
+					<div class="text-center">
+						<h3 class="text-xl text-amber-400 font-bold mb-2 cinzel">Bypass Security</h3>
+						<p class="text-gray-400 mb-6 text-sm">Use the blueprint sequence: <b>Primary &rarr; Tertiary &rarr; Secondary</b></p>
+						<div class="circuit-panel">
+							<div class="circuit-node" data-value="1">1</div>
+							<div class="circuit-node" data-value="2">2</div>
+							<div class="circuit-node" data-value="3">3</div>
+						</div>
+						<p id="circuit-msg" class="text-xs text-red-400 mt-4 h-4"></p>
+					</div>
+				`;
+
+				document.querySelectorAll('.circuit-node').forEach(n => {
+					n.addEventListener('click', (e) => this.handleNodeClick(e));
+				});
+			}
+
+			handleNodeClick(e) {
+				const node = e.target;
+				const val = parseInt(node.dataset.value);
+				if (node.classList.contains('active')) return;
+
+				if (val === this.circuitSequence[this.userSequence.length]) {
+					this.userSequence.push(val);
+					node.classList.add('active');
+					audioManager.playClick();
+					
+					if (this.userSequence.length === 3) {
+						document.querySelectorAll('.circuit-node').forEach(n => n.classList.add('success'));
+						document.getElementById('circuit-msg').textContent = "ACCESS GRANTED";
+						document.getElementById('circuit-msg').classList.replace('text-red-400', 'text-green-400');
+						setTimeout(() => {
+							this.close();
+							renderScene('manor_cellar_success');
+						}, 1000);
+					}
+				} else {
+					node.classList.add('error');
+					audioManager.playClash();
+					document.getElementById('circuit-msg').textContent = "SEQUENCE ERROR. RESETTING...";
+					this.userSequence = [];
+					setTimeout(() => {
+						this.startCircuit(); // Reset
+					}, 800);
+				}
+			}
+		}
+
+		// Instantiate globally
+		window.puzzleManager = new PuzzleManager();
 
         // Standard Combat (Kept for Coral Hulk)
         window.resolveCombatRound = function(attackType) {
@@ -1618,7 +1896,7 @@
 			icon: 'fa-cross', 
 			color: 'text-blue-200', 
 			btnText: "COMBINE",
-			desc: "A sealed flask of consecrated water. Too precious to drink, but potent against the wicked.",
+			desc: "A sealed flask of consecrated water. Its radiant purity cuts through planar corruption.",
 			isCombinable: true
 		},
 		"Alchemical Fire": { 
@@ -1938,14 +2216,21 @@
 			type: 'passive', 
 			icon: 'fa-paw', 
 			color: 'text-emerald-400', 
-			desc: "Chaos Upgrade: Keen Senses. Passive: Heals 1 HP every time you land a combat attack. (Lifesteal)" 
+			desc: "Keen Senses. Passive: Heals 1 HP every time you land a combat attack. (Lifesteal)" 
 		},
 		"Ring of the Sentinel": { 
 			name: "Ring of the Sentinel", 
 			type: 'passive', 
 			icon: 'fa-shield', 
 			color: 'text-blue-400', 
-			desc: "Order Upgrade: Keen Senses. Passive: Permanent +1 Damage Mitigation against all sources."
+			desc: "Keen Senses. Passive: Permanent +1 Damage Mitigation against all sources."
+		},
+		"Flesh-Knit Spore": {
+			name: "Flesh-Knit Spore",
+			type: 'ingredient',
+			icon: 'fa-virus-covid',
+			color: 'text-red-500',
+			desc: "The active biological spore of the Hyper-Coral. Its regeneration can be channeled for lifesteal."
 		},
         };
         
@@ -2065,18 +2350,18 @@
                 ]
             },
             'prologue_abyss': {
-                title: "The God of the Deep",
-				text: "A wave of pure magical force shatters the hull. The freezing dark claims you instantly. You sink, drifting into the abyss, and see IT rising—a colossal shadow, vast as a mountain. The screams of Gareth, Quinn, Talon, and Bones are silenced by the water... only to re-ignite inside your skull, burning hotter than the freezing deep.",
-				journal: "I died. I know I died. But the Shadow beneath the waves spat me back out. Now, I am not alone in my own skin.",
+				title: "The God of the Deep",
+				text: "A wave of pure magical force shatters the hull. The freezing dark claims you instantly. You sink, drifting into the abyss, and see IT rising—a colossal shadow, vast as a mountain. The **Leviathan**. Its presence screams in your mind, and in that vacuum, the last fragments of your crew’s essence rush into the void, binding themselves to your own desperate, broken soul. You are cast back to the surface, alive, but tethered to the abyss.",
+				journal: "I died. I know I died. The Leviathan pulled me back, but left me fragmented. The crew are now my anchors, their screams constant in my mind. I am only whole until I stop breathing.",
 				onEnter: (state) => {
-                    state.currentHP = applyDamage(state.currentHP, 5);
-                    fxManager.flashRed();
-                    return "The magical wave crushed you. Took 5 Damage.";
-                },
-                choices: [
-                    { text: "Gasp for air (Wake Up)", nextScene: 'start', type: 'travel' }
-                ]
-            },
+					state.currentHP = applyDamage(state.currentHP, 5);
+					fxManager.flashRed();
+					return "The magical wave crushed you. Took 5 Damage.";
+				},
+				choices: [
+					{ text: "Gasp for air (Wake Up)", nextScene: 'start', type: 'travel' }
+				]
+			},
 			
             // --- ACT 1: WRECKAGE & INITIAL JOURNEY ---
 			'start': {
@@ -2944,24 +3229,24 @@
                 ]
             },
 			'meeting_the_stranger': {
-                title: "The Stranger",
-                "A figure in stained robes stumbles up the path, clutching a satchel. He freezes, eyes wide behind cracked spectacles. 'You... you're going the wrong way,' he wheezes. 'The Anchor is broken and a rift is unraveling!' <br><br>He turns to face the Port of Shadows below. 'This is too much, it's spreading too far!'<br><br>Before you can speak, he thrusts a <span class='text-item'>Salt-Warped Spyglass</span> into your chest. 'I don't want to see the fissures anymore. Take it! Let it show you the rot.' He scrambles past you, fleeing the city.",
-                journal: "Met a frantic stranger. He mentioned a 'Broken Anchor' and forced his Spyglass on me.",
-                banter: {
-                    'quinn': "Math doesn't unravel. But... if the Anchor he speaks of is a planar binding, we are all in grave danger.",
-                    'gareth': "Let him run. We walk into the fire, not away from it."
-                },
-                onEnter: (state) => {
-                     if (!state.inventory.includes("Salt-Warped Spyglass")) {
-                        state.inventory.push("Salt-Warped Spyglass");
-                        return "Received Salt-Warped Spyglass.";
-                     }
-                     return null;
-                },
-                choices: [
-                    { text: "Descend to the Gates", nextScene: 'town_descent', type: 'travel' }
-                ]
-            },
+				title: "The Fugitive Magewright",
+				text: "A figure in stained robes stumbles up the path, clutching a satchel. He freezes, eyes wide behind cracked spectacles. 'You... you're going the wrong way,' he wheezes. 'The Anchor is broken and a rift is unraveling!' <br><br>He turns to face the Port of Shadows below. 'This is too much, it's spreading too far!'<br><br>Before you can speak, he thrusts a <span class='text-item'>Salt-Warped Spyglass</span> into your chest. 'I don't want to see the fissures anymore. Take it! Let it show you the rot.' He scrambles past you, fleeing the city.",
+				journal: "Met a frantic Stranger. He raved about a 'Broken Anchor' and forced his Spyglass on me. He knows more than he let on about the plague.",
+				banter: {
+					'quinn': "The math of the planes demands retribution. He can't run forever.",
+					'gareth': "Let him run. We walk into the fire, not away from it."
+				},
+				onEnter: (state) => {
+					 if (!state.inventory.includes("Salt-Warped Spyglass")) {
+						state.inventory.push("Salt-Warped Spyglass");
+						return "Received Salt-Warped Spyglass.";
+					 }
+					 return null;
+				},
+				choices: [
+					{ text: "Descend to the Gates", nextScene: 'town_descent', type: 'travel' }
+				]
+			},
             'town_descent': {
 				title: "The Descent",
 				text: "You arrive at the main city gate. The chaos here is raw. Your <span class='text-item'>Compass</span> vibrates violently, the needle splitting in two. One ghostly needle glows <span class='text-fire'>Orange</span> toward the Smelter. The other turns <span class='text-void'>Black</span> toward the Chapel.",
@@ -5188,6 +5473,26 @@
 							return combineItems("Rope", "Brass Gears", "Grapple Hook");
 						}
 					},
+					{
+						text: "Ring of the Alpha (Ring of Brass + Flesh-Knit Spore)", // Chaos/Lifesteal
+						nextScene: 'manor_forge',
+						type: 'combine',
+						reqItems: ["Ring of Brass", "Flesh-Knit Spore"], // Uses new Spore
+						customClass: 'btn-shadow-glow', 
+						onSelect: (state) => {
+							return combineItems("Ring of Brass", "Flesh-Knit Spore", "Ring of the Alpha");
+						}
+					},
+					{
+						text: "Ring of the Sentinel (Ring of Brass + Deep-Iron Ingot)", // Order/Defense
+						nextScene: 'manor_forge',
+						type: 'combine',
+						reqItems: ["Ring of Brass", "Deep-Iron Ingot"],
+						customClass: 'btn-hero', 
+						onSelect: (state) => {
+							return combineItems("Ring of Brass", "Deep-Iron Ingot", "Ring of the Sentinel");
+						}
+					},
 					{ text: "Back to the Forge", nextScene: 'manor_forge', type: 'travel', doomCost: 0 }
 				],
 			},
@@ -5218,48 +5523,64 @@
                     {
                         text: "Gareth's Defense (+1 Permanent Defense Bonus)",
                         type: 'action',
+                        customClass: 'spectral-active',
                         action: (state) => {
                             state.maxHP = 25; 
                             state.currentHP = 25;
                             state.levelUpDamage = true; 
-                            state.passiveDefenseBonus += 1; // Gareth's Mitigation/Defense
+                            state.passiveDefenseBonus += 1; // Gareth's Mitigation/Defense (CRITICAL FIX)
                             renderScene('act3_intro_ship'); 
                             return `Level Up! Max HP increased to 25. Base Damage increased. Permanent Damage Mitigation +1.`;
+                        },
+                        banter: {
+                            'gareth': "This fight is survival, not glory. We armor up, Mariner. Iron Discipline wins."
                         }
                     },
                     {
                         text: "Quinn's Navigation (Planar Navigation)",
                         type: 'action',
+                        customClass: 'spectral-active',
                         action: (state) => {
                             state.maxHP = 25; 
                             state.currentHP = 25;
                             state.levelUpDamage = true;
-                            state.hasPlanarNavigation = true; // Quinn's Supply Cost Reduction
+                            state.hasPlanarNavigation = true; // Quinn's Supply Cost Reduction (CRITICAL FIX)
                             renderScene('act3_intro_ship'); 
                             return `Level Up! Max HP increased to 25. Base Damage increased. Learned Planar Navigation (-1 Supply Cost).`;
+                        },
+                         banter: {
+                            'quinn': "The Abyss takes a higher toll than gold. Master the Logistics of the planes, Captain, and we'll never be stranded."
                         }
                     },
                     {
                         text: "Talon's Sea Instinct (+1 Bonus Shilling on Salvage)",
                         type: 'action',
+                        customClass: 'spectral-active',
                         action: (state) => {
                             state.maxHP = 25; 
                             state.currentHP = 25;
                             state.levelUpDamage = true;
-                            state.hasSeaInstinct = true; // Talon's Bonus Coin
+                            state.hasSeaInstinct = true; // Talon's Bonus Coin (CRITICAL FIX)
                             renderScene('act3_intro_ship'); 
                             return `Level Up! Max HP increased to 25. Base Damage increased. Gained Sea Instinct (+1s on Salvage).`;
+                        },
+                         banter: {
+                            'talon': "The sea only respects those who feed it. Use your instincts to take the easy coin. Survival means wealth."
                         }
                     },
                     {
                         text: "Bones's Resilience (+5 Max HP)",
                         type: 'action',
+                        customClass: 'spectral-active',
                         action: (state) => {
                             state.maxHP = 30; // 25 (base) + 5 (Bones)
                             state.currentHP = 30;
                             state.levelUpDamage = true;
                             renderScene('act3_intro_ship'); 
                             return `Level Up! Max HP increased to 25. Base Damage increased. Max HP permanently increased by 5.`;
+                        },
+                        banter: {
+                            'bones': "They will try to break your body and your mind. Endurance is your only weapon left. Be unbreakable."
                         }
                     },
                 ]
@@ -5594,12 +5915,17 @@
             // ACT 3: RANDOM ENCOUNTERS
             'sea_event_fog': {
 				title: "Ghost Fog",
-				text: "A bank of unnatural <span class='text-spectral'>Ghost Fog</span> rolls over the deck. The compass needle spins violently. The air turns freezing. If you press on blindly, you will strike a reef.",
+				text: "A bank of unnatural <span class='text-spectral'>Ghost Fog</span> rolls over the deck. The compass needle spins violently. You must manually stabilize the magnetic field.",
 				banter: {
-					'quinn': "The stars are gone, but I can calculate the drift based on the current speed! Hand me the sextant! (History/Charts)",
-					'gareth': "Put your back into the oars! We row through it! (Athletics)"
+					'quinn': "The field is fluctuating! Use the Lantern's frequency to lock onto the signal!",
 				},
 				choices: [
+					{ 
+						text: "Stabilize Compass (Mini-Game)", 
+						type: 'action', 
+						customClass: 'btn-lantern-glow',
+						action: () => { window.puzzleManager.startCompass(); } // Triggers Modal
+					},
 					{ 
 						text: "Use Spectral Lantern", 
 						nextScene: 'sea_fog_success', 
@@ -6655,13 +6981,16 @@
 				journal: "Defeated the Coral-Hulk. The corruption is halted in this sector.",
 				onEnter: (state) => {
 					state.coralHulkDefeated = true;
-					// Determine Reward based on Faction
+					
 					if (state.factionAligned === 'order') {
 						if (!state.inventory.includes("Mirror Shield")) state.inventory.push("Mirror Shield");
 						return "Victory! Reward: Mirror Shield. Defense +1.";
-					} else {
+					} 
+					// CHAOS PATH REWARD: Provides the new ingredient needed for the Ring of the Alpha
+					else {
 						if (!state.inventory.includes("Scale-Stake Driver")) state.inventory.push("Scale-Stake Driver");
-						return "Victory! Reward: Scale-Stake Driver.";
+						if (!state.inventory.includes("Flesh-Knit Spore")) state.inventory.push("Flesh-Knit Spore"); // New ingredient
+						return "Victory! Reward: Scale-Stake Driver and Flesh-Knit Spore (Ingredient).";
 					}
 				},
 				choices: [
@@ -6868,34 +7197,73 @@
             },
 
             'manor_library_safe': {
-				title: "The Warden's Library",
-				text: "Quinn has occupied the central desk. He is surrounded by floating tomes, cross-referencing the ship's logs with ancient star charts. 'The patterns are clearer here, Captain. The flow of history is... liquid.'",
-				banter: {
-					'quinn': "If you bring me data—Lore Fragments, old maps—I can compile a Codex for you. But I need time."
-				},
-				choices: [
-					{ 
-						text: "Research with Quinn", 
-						nextScene: 'library_research_logic',
-						type: 'skill',
-						skill: 'History',
-						dc: 14,
-						reqNotItem: 'Codex of Tides',
-						reqNotFlag: 'quinnResearched'
-					},
-					{ 
-						text: "Recover Blueprint", 
-						type: 'action', 
-						reqNotItem: 'Manor Blueprint',
-						action: (state) => {
-							state.inventory.push("Manor Blueprint");
-							return "Found the Manor Blueprint.";
-						}
-					},
-					{ text: "Check Crawlspace (Talon)", nextScene: 'manor_crawlspace_safe', type: 'travel', doomCost: 0 },
-					{ text: "Return to Foyer", nextScene: 'manor_foyer_safe', type: 'travel', doomCost: 0 }
-				]
-			},
+                title: "The Warden's Library",
+                text: "Quinn has occupied the central desk. He is surrounded by floating tomes.",
+                banter: {
+                    'quinn': "If you bring me data—Lore Fragments, old maps—I can compile a Codex for you. But I need time."
+                },
+                choices: [
+                    { 
+                        text: "Research with Quinn", 
+                        nextScene: 'library_research_logic',
+                        type: 'skill',
+                        skill: 'History',
+                        dc: 14,
+                        reqNotItem: 'Codex of Tides',
+                        reqNotFlag: 'quinnResearched'
+                    },
+                    {
+                        text: "Research Manor Schematics (Cellar Code)", 
+                        nextScene: 'cellar_clue_reveal',
+                        type: 'skill',
+                        skill: 'Investigation',
+                        dc: 13,
+                        reqNotFlag: 'knowsCellarCode'
+                    },
+                    { 
+                        text: "Recover Blueprint", 
+                        type: 'action', 
+                        reqNotItem: 'Manor Blueprint',
+                        action: (state) => {
+                            state.inventory.push("Manor Blueprint");
+                            return "Found the Manor Blueprint.";
+                        }
+                    },
+                    { text: "Check Crawlspace (Talon)", nextScene: 'manor_crawlspace_safe', type: 'travel', doomCost: 0 },
+                    { text: "Return to Foyer", nextScene: 'manor_foyer_safe', type: 'travel', doomCost: 0 }
+                ]
+            },
+			'cellar_clue_reveal': {
+                title: "Blueprints Found",
+                text: "You find the wiring diagram for the Cellar Vault. The notes emphasize a specific sequence to avoid a blowout: <b>Primary (1) &rarr; Tertiary (3) &rarr; Secondary (2)</b>.",
+                onEnter: (state) => { state.knowsCellarCode = true; return "Learned Code: 1-3-2."; },
+                choices: [{ text: "Return to Library", nextScene: 'manor_library_safe', type: 'travel' }]
+            },
+
+			'manor_cellar_entry': {
+                title: "The Sealed Cellar",
+                text: "You drop into a cold, metallic chamber. A brass panel hums on the wall, locking the heavy vault door. Three nodes pulse with dim light. You recall the schematic: **1 &rarr; 3 &rarr; 2**.",
+                choices: [
+                    {
+                        text: "Repair Circuit (Mini-Game)",
+                        type: 'action',
+                        customClass: 'btn-amber-glow',
+                        action: () => { window.puzzleManager.startCircuit(); } // Triggers Modal
+                    },
+                    { text: "Climb back to Crawlspace", nextScene: 'manor_crawlspace_safe', type: 'travel' }
+                ]
+            },
+
+            'manor_cellar_success': {
+                title: "The Vault Opens",
+                text: "The gears grind open. Inside, you find a cache of forgotten supplies.",
+                onEnter: (state) => {
+                    state.shillings += 50;
+                    if(!state.inventory.includes("Deep-Iron Ingot")) state.inventory.push("Deep-Iron Ingot");
+                    return "Found 50s and Deep-Iron Ingot.";
+                },
+                choices: [{ text: "Return to Crawlspace", nextScene: 'manor_crawlspace_safe', type: 'travel' }]
+            },
 			'library_research_logic': {
 				isLogic: true,
 				resolve: (roll, state) => {
@@ -6919,31 +7287,38 @@
 			},
 
 			'manor_crawlspace_safe': {
-				title: "The Rat's Nest",
-				text: "Talon has made a home in the ventilation network. It is dark, tight, and smells of oil. He is dismantling a clockwork mechanism. 'The walls are full of treasure, Edward. You just have to know where to pry.'",
-				choices: [
-					{ 
-						text: "Scavenge the Walls", 
-						nextScene: 'talon_scavenge_logic', 
-						type: 'action', 
-						reqNotFlag: 'talonScavenged', // Reset this on Long Rest
-						customClass: 'btn-keen-senses'
-					},
-					{ 
-						text: "Rescue/Visit Blink", 
-						type: 'action', 
-						reqNotFlag: 'hasBlinkSkill',
-						action: (state) => {
-							state.companions.blink.joined = true;
-							state.hasBlinkSkill = true;
-							return "Companion Gained: Blink.";
-						},
-						customClass: 'spectral-active'
-					},
-					{ text: "Crawl to Library", nextScene: 'manor_library_safe', type: 'travel', doomCost: 0 },
-					{ text: "Crawl to Kitchens", nextScene: 'manor_kitchens_safe', type: 'travel', doomCost: 0 }
-				]
-			},
+                title: "The Rat's Nest",
+                text: "Talon has made a home in the ventilation network. It is dark, tight, and smells of oil. He points to a rusted grate in the floor. 'The wires go down, Edward. Deeper than the foundation.'",
+                choices: [
+                    {
+                        text: "Descend to Sealed Cellar",
+                        nextScene: 'manor_cellar_entry',
+                        type: 'travel',
+                        reqFlag: 'knowsCellarCode',
+                        customClass: 'btn-keen-senses'
+                    },
+                    { 
+                        text: "Scavenge the Walls", 
+                        nextScene: 'talon_scavenge_logic', 
+                        type: 'action', 
+                        reqNotFlag: 'talonScavenged',
+                        customClass: 'btn-keen-senses'
+                    },
+                    { 
+                        text: "Rescue/Visit Blink", 
+                        type: 'action', 
+                        reqNotFlag: 'hasBlinkSkill',
+                        action: (state) => {
+                            state.companions.blink.joined = true;
+                            state.hasBlinkSkill = true;
+                            return "Companion Gained: Blink.";
+                        },
+                        customClass: 'spectral-active'
+                    },
+                    { text: "Crawl to Library", nextScene: 'manor_library_safe', type: 'travel', doomCost: 0 },
+                    { text: "Crawl to Kitchens", nextScene: 'manor_kitchens_safe', type: 'travel', doomCost: 0 }
+                ]
+            },
 			'talon_scavenge_logic': {
 				isLogic: true,
 				resolve: (roll, state) => {
@@ -7637,12 +8012,33 @@
 			return `${baseItem} and ${ingredient} were fused at the Spectral Forge, yielding the <span class="text-item">${resultDef.name}</span>!`;
 		}
 
-        
-        async function renderScene(sceneId, logText = true) {
-            const scene = scenes[sceneId];
+
+		// --- TYPEWRITER UTILITY ---
+        function typeWriter(elementId, text, speed = 30) {
+            const el = document.getElementById(elementId);
+            if (!el) return;
             
+            el.textContent = ""; // Ensure empty before starting
+            el.classList.add('slow-type'); // Add cursor effect
+            
+            let i = 0;
+            function type() {
+                if (i < text.length) {
+                    el.textContent += text.charAt(i);
+                    i++;
+                    setTimeout(type, speed);
+                } else {
+                    el.classList.remove('slow-type'); // Remove cursor when done
+                }
+            }
+            type();
+        }
+		
+		async function renderScene(sceneId, logText = true) {
+            const scene = scenes[sceneId];
             if (!scene) return;
             
+            // Death Check
             if (gameState.currentHP === 0 && sceneId !== 'edward_death') {
                 renderScene('edward_death');
                 return;
@@ -7653,11 +8049,9 @@
                 if (!gameState.isRiftCollapse && !gameState.hasLoggedCollapse) {
                     gameState.isRiftCollapse = true;
                     gameState.hasLoggedCollapse = true; 
-                    
                     gameState.maxHP = Math.max(1, gameState.maxHP - 5);
                     gameState.currentHP = Math.min(gameState.currentHP, gameState.maxHP);
-                    
-                    addToHistory(`!!! RIFT COLLAPSE !!! The veil has ruptured. All Skill Check DCs are permanently increased by 2. Max HP reduced by 5 due to toxic air.`, 'system');
+                    addToHistory(`!!! RIFT COLLAPSE !!! The veil has ruptured. All Skill Check DCs are permanently increased by 2. Max HP reduced by 5.`, 'system');
                 }
             }
             
@@ -7667,16 +8061,24 @@
                  return;
             }
            
-            // --- 3. HANDLE VISUAL THEMES ---
-            if (gameState.isEthereal) {
-                document.body.classList.add('plane-ethereal');
+            gameState.currentSceneId = sceneId;
+            fxManager.clearEffects(); 
+
+            // --- 3. HANDLE BACKGROUND THEMES (Act 3 Ship) ---
+            const bodyEl = document.body;
+            // Check if Act 3 AND (Map, Intro, or Travel scenes)
+            if (gameState.act3Started && (sceneId === 'sea_map_hub' || sceneId === 'act3_intro_ship' || sceneId.startsWith('travel_') || sceneId.startsWith('sea_'))) {
+                bodyEl.classList.add('theme-ship');
             } else {
-                document.body.classList.remove('plane-ethereal');
+                bodyEl.classList.remove('theme-ship');
             }
+            
+            // Handle Ethereal Theme
+            if (gameState.isEthereal) bodyEl.classList.add('plane-ethereal');
+            else bodyEl.classList.remove('plane-ethereal');
 
             // --- 4. HANDLE LOGIC/ROLL SCENES ---
             if (scene.isLogic) {
-                // ... (Keep existing Logic/Roll code exactly as is) ...
                 let roll = Math.floor(Math.random() * 20) + 1;
                 let crewUsedName = "None";
                 let logMsg = `Check (DC ${gameState.lastDC || 10}): Rolled d20 (${roll})`;
@@ -7692,9 +8094,7 @@
                         const bonus = Math.floor(Math.random() * dieSize) + 1;
                         roll += bonus;
                         crewUsedName = activeCrewMember.name;
-
                         const dieLabel = gameState.isEthereal ? `(Spectral D8!)` : `(${crewUsedName})`;
-
                         logMsg += ` + <span class="${gameState.isEthereal ? 'text-spectral-d8' : ''}">${bonus}</span> ${dieLabel}`; 
                         
                         if (gameState.crewUseFree) {
@@ -7707,7 +8107,6 @@
                         if (roll >= gameState.lastDC) {
                             gameState.lastCrewUsedId = crewKey;
                         }
-                        
                     } else if (gameState.crewUseFree) {
                         crewUsedName = activeCrewMember.name;
                         logMsg += ` + 0 (${crewUsedName} - Invalid Skill, Mushroom conserved)`;
@@ -7716,30 +8115,18 @@
                         crewUsedName = activeCrewMember.name;
                         logMsg += ` + 0 (${crewUsedName} - Invalid Skill)`;
                     }
-                    
-                    if (gameState.isRiftCollapse) {
-                        roll = Math.max(1, roll - 2); 
-                        logMsg += ` - 2 (Rift Penalty)`;
-                    }
-                    
+                    if (gameState.isRiftCollapse) { roll = Math.max(1, roll - 2); logMsg += ` - 2 (Rift Penalty)`; }
                     activeCrewMember = null;
                 } else {
-                    if (gameState.isRiftCollapse) {
-                        roll = Math.max(1, roll - 2); 
-                        logMsg += ` - 2 (Rift Penalty)`;
-                    }
+                    if (gameState.isRiftCollapse) { roll = Math.max(1, roll - 2); logMsg += ` - 2 (Rift Penalty)`; }
                 }
 
                 addToHistory(`${logMsg} = ${roll}`, 'roll');
-                
                 const nextId = scene.resolve(roll, gameState); 
                 saveGame();
                 renderScene(nextId); 
                 return;
             }
-
-            gameState.currentSceneId = sceneId;
-            fxManager.clearEffects(); 
 
             // --- 5. HANDLE VISUAL PULSE FX ---
             const isProloguePulse = ['prologue_storm', 'prologue_abyss'].includes(sceneId);
@@ -7751,143 +8138,106 @@
                 document.getElementById('fx-overlay').classList.add('fx-rift-pulse');
             }
 
-            // --- 6. EXECUTE ONENTER (Updates State & Text) ---
+            // --- 6. EXECUTE ONENTER ---
             if (scene.onEnter) {
                 const msg = scene.onEnter(gameState);
-                if (msg && logText) {
-                    addToHistory(msg, 'system');
-                }
+                if (msg && logText) addToHistory(msg, 'system');
                 saveGame();
             }
             
-            // --- 7. DEFINE TEXT VARIABLES (After onEnter) ---
+            // --- 7. PREPARE TEXT & TITLES ---
             let displayTitle = scene.title;
             let displayText = scene.text;
 
-            // --- 8. INJECT BOSS HEALTH BAR (Moved Here) ---
+            // Handle Boss HP Bars
             if (gameState.isBossCombat) {
-                
                 if (gameState.activeEnemies && gameState.activeEnemies.length > 0) {
-                     // HORDE COMBAT DISPLAY
                     let hordeHPBar = '';
                     let totalHP = 0;
-                    
                     gameState.activeEnemies.forEach(elderName => {
                         const elderHP = gameState.enemies[elderName];
                         const pct = (elderHP / gameState.maxElderHP) * 100;
                         totalHP += elderHP;
-
-                        hordeHPBar += `
-                        <div class="w-full bg-gray-900 border border-red-900 rounded h-4 mt-1 mb-1 relative overflow-hidden shadow-lg">
-                            <div class="bg-red-700 h-full transition-all duration-300" style="width: ${pct}%"></div>
-                            <div class="absolute inset-0 flex items-center justify-center text-[10px] cinzel font-bold text-white shadow-black drop-shadow-md tracking-widest">
-                                ${elderName}: ${elderHP} / ${gameState.maxElderHP}
-                            </div>
-                        </div>`;
+                        hordeHPBar += `<div class="w-full bg-gray-900 border border-red-900 rounded h-4 mt-1 mb-1 relative overflow-hidden shadow-lg"><div class="bg-red-700 h-full transition-all duration-300" style="width: ${pct}%"></div><div class="absolute inset-0 flex items-center justify-center text-[10px] cinzel font-bold text-white shadow-black drop-shadow-md tracking-widest">${elderName}: ${elderHP} / ${gameState.maxElderHP}</div></div>`;
                     });
-                    
                     const totalPct = (totalHP / gameState.maxEnemyHP) * 100;
-
-                    const totalHealthHTML = `
-                        <div class="w-full bg-gray-900 border border-red-500 rounded h-2 mb-3 relative overflow-hidden">
-                             <div class="bg-red-600 h-full transition-all duration-300" style="width: ${totalPct}%"></div>
-                        </div>
-                        <div class="text-xs text-red-400 cinzel mb-2">Horde Total HP: ${totalHP} / ${gameState.maxEnemyHP}</div>
-                        ${hordeHPBar}`;
-                        
-                    displayText = totalHealthHTML + displayText;
-                }
-                else if (gameState.enemyHP > 0) { // Single-target boss (Coral-Hulk)
+                    displayText = `<div class="w-full bg-gray-900 border border-red-500 rounded h-2 mb-3 relative overflow-hidden"><div class="bg-red-600 h-full transition-all duration-300" style="width: ${totalPct}%"></div></div><div class="text-xs text-red-400 cinzel mb-2">Horde Total HP: ${totalHP} / ${gameState.maxEnemyHP}</div>${hordeHPBar}` + displayText;
+                } else if (gameState.enemyHP > 0) {
                     const pct = (gameState.enemyHP / gameState.maxEnemyHP) * 100;
-                    const color = 'bg-red-700'; 
-                    
-                    const healthBarHTML = `
-                    <div class="w-full bg-gray-900 border border-red-900 rounded h-6 mt-2 mb-6 relative overflow-hidden shadow-lg">
-                        <div class="${color} h-full transition-all duration-300" style="width: ${pct}%"></div>
-                        <div class="absolute inset-0 flex items-center justify-center text-xs cinzel font-bold text-white shadow-black drop-shadow-md tracking-widest">
-                            ${gameState.currentEnemy}: ${gameState.enemyHP} / ${gameState.maxEnemyHP}
-                        </div>
-                    </div>`;
-                    
-                    displayText = healthBarHTML + displayText;
+                    displayText = `<div class="w-full bg-gray-900 border border-red-900 rounded h-6 mt-2 mb-6 relative overflow-hidden shadow-lg"><div class="bg-red-700 h-full transition-all duration-300" style="width: ${pct}%"></div><div class="absolute inset-0 flex items-center justify-center text-xs cinzel font-bold text-white shadow-black drop-shadow-md tracking-widest">${gameState.currentEnemy}: ${gameState.enemyHP} / ${gameState.maxEnemyHP}</div></div>` + displayText;
                 }
             }
 
-
-            // --- 9. INJECT SHIP NAME (Moved Here) ---
+            // Handle Ship Name
             if (sceneId === 'act3_intro_ship' || sceneId === 'sea_map_hub') {
                 if (gameState.shipName) {
                     displayTitle = gameState.shipName;
-                    displayText = displayText.replace('[SHIP_NAME]', gameState.shipName);
-                    displayText = displayText.replace('your ship', `the ${gameState.shipName}`);
+                    displayText = displayText.replace('[SHIP_NAME]', gameState.shipName).replace('your ship', `the ${gameState.shipName}`);
                 }
             }
 
-            // --- 10. DEATH CHECK ---
-            if (gameState.currentHP === 0 && sceneId !== 'edward_death') {
-                renderScene('edward_death');
-                return;
-            }
-
-            // --- 11. VIGNETTE FX ---
+            // Vignette FX
             const hpPct = (gameState.currentHP / gameState.maxHP) * 100;
-            if (hpPct <= 30) {
-                fxManager.setVignette(true);
-            } else {
-                fxManager.setVignette(false);
-            }
-            
-            if (gameState.companions.silas.joined) {
-                if (sceneId === 'bleak_dogtooth' || sceneId === 'dogtooth_cliff_wall') {
-                     if (!gameState.silasJoined && gameState.inventory.includes("Ring of Brass")) {
-                         document.getElementById('vignette-overlay').classList.add('fx-heartbeat-fast');
-                     } else {
-                         document.getElementById('vignette-overlay').classList.remove('fx-heartbeat-fast', 'fx-heartbeat-slow');
-                     }
-                }
+            fxManager.setVignette(hpPct <= 30);
+            if (gameState.companions.silas.joined && (sceneId === 'bleak_dogtooth' || sceneId === 'dogtooth_cliff_wall')) {
+                 if (!gameState.silasJoined && gameState.inventory.includes("Ring of Brass")) document.getElementById('vignette-overlay').classList.add('fx-heartbeat-fast');
+                 else document.getElementById('vignette-overlay').classList.remove('fx-heartbeat-fast', 'fx-heartbeat-slow');
             }
 
-            // --- 12. RENDER TO DOM ---
+            // --- 8. DOM INJECTION WITH ANIMATION PREP ---
             const textEl = document.getElementById('main-scene-text');
             const isDeathScene = sceneId === 'edward_death';
-            
             let titleClass = isDeathScene ? 'text-red-500' : 'text-amber-500';
             let textClass = isDeathScene ? 'text-red-300' : 'text-gray-300';
             
-            let finalHtml = `<h2 class="2xl cinzel ${titleClass} mb-2">${displayTitle}</h2><p class="text-lg leading-relaxed ${textClass} fade-in">${displayText}</p>`;
-            
+            // BASE HTML (Title + Main Text)
+            let finalHtml = `<h2 class="2xl cinzel ${titleClass} mb-2">${displayTitle}</h2>
+                             <p class="text-lg leading-relaxed ${textClass} fade-in">${displayText}</p>`;
+
+            // BANTER LOGIC: Create containers but leave text EMPTY for Typewriter
+            let banterQueue = [];
             if (scene.banter) {
-                Object.keys(scene.banter).forEach(crewId => {
+                Object.keys(scene.banter).forEach((crewId, index) => {
                     const crewMember = gameState.crew[crewId];
                     if (crewMember && (!crewMember.used || gameState.crewUseFree)) {
-                         finalHtml += `<div class="mt-4 spectral-text-glow italic border-l-2 border-blue-500 pl-3 fade-in">
+                        const uniqueId = `banter-${sceneId}-${index}`;
+                        finalHtml += `<div class="mt-4 spectral-text-glow italic border-l-2 border-blue-500 pl-3 fade-in">
                                 <span class="font-bold text-xs uppercase block mb-1">${crewMember.name}:</span>
-                                "${scene.banter[crewId]}"
+                                <span id="${uniqueId}" class="banter-text"></span>
                               </div>`;
+                        banterQueue.push({ id: uniqueId, text: `"${scene.banter[crewId]}"` });
                     }
                 });
             }
             
+            // Dynamic Banter Logic
             const isScriptedScene = scene.banter || scene.isBoss || scene.isRest || scene.choices.some(c => c.type === 'skill');
             if (!isScriptedScene && !sceneId.startsWith('prologue') && gameState.act1Started) {
                  const dynamicLine = getDynamicBanter();
                  if (dynamicLine) {
+                      const uniqueId = `dyn-banter-${sceneId}`;
                       finalHtml += `<div class="mt-4 spectral-text-glow italic border-l-2 border-blue-500 pl-3 fade-in">
                             <span class="font-bold text-xs uppercase block mb-1">${dynamicLine.name}:</span>
-                            "${dynamicLine.line}"
+                            <span id="${uniqueId}"></span>
                           </div>`;
+                      banterQueue.push({ id: uniqueId, text: `"${dynamicLine.line}"` });
                  }
             }
             
             textEl.innerHTML = finalHtml;
             document.getElementById('scene-title').innerText = displayTitle;
+
+            // --- 9. TRIGGER TYPEWRITER ANIMATIONS ---
+            banterQueue.forEach(item => {
+                typeWriter(item.id, item.text);
+            });
             
             activeCrewMember = null; 
-
             generateSceneImage(sceneId);
             renderChoices(scene.choices, isDeathScene);
             updateUI();
         }
+
 
 			function renderChoices(choices, isDeathScene = false) {
             const container = document.getElementById('choices-area');
