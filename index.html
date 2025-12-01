@@ -6719,41 +6719,65 @@
 			},
 
             // 3. VICTORY
+			// Final Spire Victory Scene (Leads to Mandatory Rest)
             'spire_victory': {
-				title: "The Sun Rises",
-				text: "The last Elder shrieks as the <span class='text-item'>Sword of Valor</span> pierces its heart. It crumbles into dust, followed by the others. Silence falls over the cathedral.<br><br>Through the broken stained glass, the first ray of dawn touches the ocean. The Curse is broken. The fog lifts.",
-				journal: "Defeated the Vampire Elders. The curse is broken.",
-				choices: [
-					{ text: "The End (Return to Menu)", type: 'reset', customClass: 'btn-hero' }
-				]
-			},
+                title: "Victory: The Core Fragment",
+                text: "The last Elder shrieks as it crumbles to dust. The **Rift Core Fragment**—a splinter of violet light, the final piece of your soul—floats free. You grasp it. The voices of your crew surge, demanding you return the fragment to the Manor's Anchor and finish the mission.",
+                journal: "Defeated the Vampire Elders. Acquired the Rift Core Fragment. I must return it to the Manor's Anchor.",
+                onEnter: (state) => {
+                    if (!state.inventory.includes("Rift Core Fragment")) {
+                         state.inventory.push("Rift Core Fragment"); 
+                    }
+                    return "Fragment Secured. The final decision awaits at the Wolf King's Estate.";
+                },
+                choices: [
+                    { 
+                        text: "Sail Back to Port of Shadows", 
+                        nextScene: 'post_spire_rest', 
+                        type: 'travel',
+                        customClass: 'btn-hero' 
+                    }
+                ]
+            },
 
-            // ACT 3: SAFE MANOR LAYER
+            // The Manor Safe House/Final Climax Trigger Scene
             'wolf_estate_safe': {
                 title: "Wolf King's Estate (Safe House)",
-                text: "The Manor is sealed in the spectral echo. Here, the planar barriers are reinforced. You are safe. The old halls of the estate stretch out behind you, silent and frozen in memory.",
+                text: "",
                 isRest: true,
-                choices: [
-                    { text: "Take a Long Rest", nextScene: 'act3_long_rest', type: 'action', doomCost: 0 },
-                    { 
-                        text: "Wander the Halls", 
-                        nextScene: 'manor_foyer_safe', 
-                        type: 'travel', 
-                        customClass: 'btn-planewalk-reveal',
-                        doomCost: 0 
-                    },
-                    { 
-						text: "Exit to Port Square (Material)", 
-						nextScene: 'town_square', 
-						type: 'action', 
-						action: (state) => {
-							state.isEthereal = false;
-							state.act2Started = false; // Ensure Act 2 logic (Tether) is definitely off
-							return "Returning to the Material Plane.";
-						}, 
-						doomCost: 0
-					}
-                ]
+                onEnter: (state) => {
+                    const baseChoices = [
+                         { text: "Take a Long Rest", nextScene: 'act3_long_rest', type: 'action', doomCost: 0 },
+                         { text: "Wander the Halls", nextScene: 'manor_foyer_safe', type: 'travel', customClass: 'btn-planewalk-reveal', doomCost: 0 },
+                         { text: "Exit to Port Square (Material)", nextScene: 'town_square', type: 'action', action: (state) => { state.isEthereal = false; state.act2Started = false; return "Returning to the Material Plane."; }, doomCost: 0 }
+                    ];
+
+                    // Check for the final objective trigger (Fragment present and Ethereal status active)
+                    if (state.inventory.includes("Rift Core Fragment") && state.isEthereal) {
+                        scenes['wolf_estate_safe'].text = "You stand in the Grand Foyer, holding the **Rift Core Fragment**. The entire Vanishing Manor is vibrating violently, urging you toward the Anchor at the top of the Penrose Staircase. The final act begins.";
+                        
+                        scenes['wolf_estate_safe'].choices = [
+                            { 
+                                text: "Approach the Anchor (Final Choice)", 
+                                nextScene: 'anchor_decision_point', 
+                                type: 'travel', 
+                                customClass: 'btn-shadow-glow',
+                            },
+                            { text: "Take a Long Rest", nextScene: 'act3_long_rest', type: 'action', doomCost: 0 }
+                        ];
+                        return "The final piece is in your hand. The Anchor calls.";
+                    }
+                    
+                    // Normal rest scene logic if fragment isn't found or Ethereal not active
+                    scenes['wolf_estate_safe'].text = "The Manor is sealed in the spectral echo. Here, the planar barriers are reinforced. You are safe. The old halls of the estate stretch out behind you, silent and frozen in memory.";
+                    scenes['wolf_estate_safe'].choices = baseChoices;
+                    
+                    if (state.currentHP < state.maxHP) {
+                        state.currentHP = state.maxHP;
+                        return "HP Restored upon entering Safe House.";
+                    }
+                    return null;
+                }
             },
 			
 			'manor_foyer_safe': {
@@ -7045,8 +7069,105 @@
 				},
 				choices: [{ text: "Slip Away", nextScene: 'sea_map_hub', type: 'travel' }]
 			},
+			
+            'post_spire_rest': {
+                title: "A Final Respite",
+                text: "The sheer exhaustion of the fight hits you. You order the ketch to drift, and collapse onto the deck. The crew's fragments hum softly, knitting your wounds together. This is the calm before the final decision.",
+                journal: "Took mandatory rest after defeating the Elders. Preparing for the final mission.",
+                isRest: true,
+                onEnter: (state) => {
+                    if (state.currentHP < state.maxHP) state.currentHP = state.maxHP;
+                    state.currentHP = Math.min(state.currentHP, state.maxHP); // Clear any overheal from Act 1
+                    Object.keys(state.crew).forEach(k => k.used = false);
+                    // Ensure Ethereal status is off for the Port
+                    state.isEthereal = false;
+                    document.body.classList.remove('plane-ethereal'); 
+                    return "Full HP and Crew Restored. Status effects cleared.";
+                },
+                choices: [
+                    { text: "Head to Port of Shadows", nextScene: 'town_square', type: 'travel', doomCost: 0 }
+                ]
+            },
+            
+            'citadel_reaction_logic': {
+                title: "The Relief and the Reckoning",
+                text: "The Commandant, tears in his eyes, thanks you for ending the Sanguine Tithe. 'They tried to contact us,' he says, 'but the Court is silent. The debt is cancelled! But, Mariner—the white growth on the walls... it's receding. It's too fast. What have you done?'",
+                journal: "The Citadel is free from the Vampire Tithe, but panicked by the sudden collapse of the Hyper-Coral plague.",
+                choices: [
+                    { text: "Return to Port", nextScene: 'town_square', type: 'travel' }
+                ]
+            },
+            
+            'silas_final_words': {
+                title: "The Seneschal's Peace",
+                text: "Silas unhooks his shield and lays it gently on the rail. His eyes are clear. 'The architects of the Blood Tithe are dust. My King is avenged.' He turns to you, his expression grim. 'But the crew... and you. That Fragment in your hand is the lock, Captain. **The crew fears it will free them, only to destroy you.** Be ready to make your peace with the Abyss.'",
+                journal: "Silas found peace and warned me about the final decision. The crew is scared of the final consequences.",
+                choices: [
+                    { text: "Return to Port", nextScene: 'town_square', type: 'travel' }
+                ]
+            },
 
-            // --- END NEW ACT 3 SCENES ---
+            'anchor_decision_point': {
+                title: "The Final Anchor",
+                text: "You stand before the Manor's Anchor, holding the **Rift Core Fragment**. The entire Vanishing Manor is vibrating violently, urging you toward the empty socket.<br><br>As the Fragment approaches, the planar chaos that has plagued the city begins to recede. The Hyper-Coral is starving. Your final choice is the fate of the world.",
+                journal: "The Rift Core is back in the Anchor. I must choose the fate of the Leviathan and my soul.",
+                choices: [
+                    { 
+                        text: "Reseal the Abyss (Maintain the Wolf King's Cage)", 
+                        nextScene: 'ending_protector', 
+                        type: 'action',
+                        customClass: 'btn-hero',
+                        consumeItems: ['Rift Core Fragment'],
+                        action: (state) => {
+                            // Order Path: Restore balance, lose planar power
+                            state.influence = -50;
+                            renderScene('ending_protector');
+                        }
+                    },
+                    { 
+                        text: "Become the Mariner of the Damned (Shatter the Cage)", 
+                        nextScene: 'ending_champion', 
+                        type: 'action',
+                        customClass: 'btn-shadow-glow',
+                        consumeItems: ['Rift Core Fragment'],
+                        action: (state) => {
+                            // Chaos Path: Embrace chaos, gain permanent power
+                            state.influence = 50;
+                            renderScene('ending_champion');
+                        }
+                    }
+                ]
+            },
+
+            'ending_champion': {
+                title: "The Mariner of the Damned",
+                text: "You grasp the Rift Core Fragment and force it not into your chest, but into the hand that holds the Compass. The Compass shatters, replaced by a crystalline heart pulsing with abyssal light. The voices of your crew surge one final time, not in agony, but in awe, before becoming one voice: **Yours**.<br><br>You feel the Leviathan's chaotic, immense energy flow into your veins. You are no longer Edward Jones; you are the **Mariner of the Damned**, ready to command the eternal shadow.",
+                journal: "I took the power of the Abyss. The Leviathan is my master, and my crew is my own, fused soul. I am the Mariner of the Damned.",
+                banter: {
+                    'gareth': "I salute the new Captain of the Abyss! We chose power, Edward. Never look back.",
+                    'quinn': "The math has fractured! The logic is chaos! But... the utility is infinite.",
+                    'talon': "The pack runs free, Captain. We are unbound. The hunt is eternal.",
+                    'bones': "The sickness of the world is now the strength of your soul. A bitter cure, but effective."
+                },
+                choices: [
+                    { text: "The Abyss Awaits (End Game)", type: 'reset', customClass: 'btn-fire-glow' }
+                ]
+            },
+            
+            'ending_protector': {
+                title: "The Wolf King's Successor",
+                text: "You take the Rift Core Fragment and smash it against the Sanguine Altar. The crystalline shard shatters, and the voices of your crew—Gareth, Quinn, Talon, and Bones—speak to you clearly, thanking you, before they **dissolve into the pale light of a true afterlife**.<br><br>Your soul snaps whole. The planar tether is broken. The sky clears instantly. The Leviathan is stripped of its chaotic influence, trapped and contained forever beneath the spire, and the curse is broken. You are Edward Jones, and you are finally free.",
+                journal: "I destroyed the Rift Core Fragment. The crew found peace, and my soul is whole. The Leviathan is caged. I am free.",
+                banter: {
+                    'gareth': "Dismissed, Mariner. You held the line. That's all that ever mattered.",
+                    'quinn': "The variables are stable. Our existence is confirmed. Thank you for the ride, Captain.",
+                    'talon': "The hunt is over. I can finally rest. Thank you, brother.",
+                    'bones': "The wounds are healed, Edward. Go live the life we couldn't."
+                },
+                choices: [
+                    { text: "Return to Shore (End Game)", type: 'reset', customClass: 'btn-hero' }
+                ]
+            },
 
             'edward_death': {
                 title: "The Mariner's End",
