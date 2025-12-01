@@ -265,8 +265,8 @@
         /* Tutorial Pulse */
         @keyframes pulse-amber-border {
             0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); border-color: #f59e0b; }
-            70% { box-shadow: 0 0 0 10px rgba(245, 158, 11, 0); border-color: #fbbf24; }
-            100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); border-color: #f59e0b; }
+            70% { box-shadow: 0 0 0 10px rgba(245, 158, 11, 0); border-color: #fbbf24; } 
+            100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); border-color: #f59e0b; } 
         }
         .tutorial-pulse { 
             animation: pulse-amber-border 2s infinite; 
@@ -380,7 +380,6 @@
         <div class="text-gray-400 cinzel text-sm">Summoning the Crew...</div>
     </div>
 
-    <!-- Audio Toggle Button -->
     <div class="fixed top-4 right-4 z-50">
         <button id="audio-toggle" class="bg-gray-800/80 border border-gray-600 text-gray-400 p-2 rounded-full hover:text-amber-500 transition-colors w-10 h-10 flex items-center justify-center shadow-lg backdrop-blur">
             <i class="fas fa-volume-mute"></i>
@@ -396,19 +395,15 @@
                     <i class="fas fa-skull mr-1"></i>New Game
                 </button>
 
-                <!-- New FX Overlay -->
                 <div id="fx-overlay"></div>
 				<div id="vignette-overlay" class="absolute inset-0 pointer-events-none z-20 transition-opacity duration-500 opacity-0"></div>
 
-                <!-- NEW IMAGE LOADER STRUCTURE -->
                 <div id="image-loader" class="absolute inset-0 flex items-center justify-center bg-gray-800 text-gray-500 z-10" style="display: none;">
                     <div class="flex flex-col items-center">
                         <i class="fas fa-circle-notch fa-spin text-2xl mb-2 text-amber-600"></i>
                         <span class="text-xs cinzel tracking-widest text-amber-600">Manifesting Vision...</span>
                     </div>
                 </div>
-                <!-- END NEW IMAGE LOADER STRUCTURE -->
-                
                 <img id="scene-image" src="" alt="Scene Visualization" class="w-full h-full object-cover opacity-0 transition-opacity duration-1000">
                 
                 <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/80 to-transparent p-4">
@@ -428,7 +423,6 @@
                     </div>
                 </div>
                 
-                <!-- ACT 1: PLANAR INSTABILITY (DOOM COUNTER) DISPLAY -->
                 <div id="doom-counter-display" class="bg-gray-900 p-2 rounded border border-gray-700 flex flex-col text-[10px] gap-2 relative hidden">
                     <div class="flex justify-between items-center cinzel text-xs uppercase tracking-wider font-bold">
                         <span class="text-purple-400"><i class="fas fa-bolt mr-1"></i>Rift Stability</span>
@@ -439,7 +433,6 @@
                     </div>
                 </div>
                 
-                <!-- ACT 2: TETHER STABILITY DISPLAY -->
                 <div id="tether-display" class="bg-gray-900 p-2 rounded border border-cyan-700 flex flex-col text-[10px] gap-2 relative hidden mb-2 transition-all duration-500">
                     <div class="flex justify-between items-center cinzel text-xs uppercase tracking-wider font-bold">
                         <span class="text-cyan-400"><i class="fas fa-link mr-1"></i>Spectral Tether</span>
@@ -489,7 +482,6 @@
                         </div>
                 </div>
 
-                <!-- PLANAR SKILLS -->
                 <div id="abilities-wrapper" class="flex flex-col gap-2 transition-all duration-300">
                     
                     <div id="planar-skills-container" class="hidden pb-2 fade-in clean-spectral-title">
@@ -821,72 +813,80 @@
 		};
         
         // --- GAME DATA FACTORY ---
-        function createInitialState() {
-            return {
-                currentSceneId: 'prologue_storm', 
-                currentHP: 20,
-                maxHP: 20,
-                shillings: 0, 
-                influence: 0, 
-                doomTimer: 20,
-                
-                act1Started: false,
-                isRiftCollapse: false,
-                hasLoggedCollapse: false,
-                isAbsorbCharged: false,
-                isSurpriseRound: false,
-                knowsSmelterSecret: false,
-                knowsChapelSecret: false,
-                hasObservedGambler: false, 
-                hasSearchedSmugglerDrop: false,
-                docksWorkCount: 0,
-                quinnLogistics: false,
+		function createInitialState() {
+			return {
+				currentSceneId: 'prologue_storm', 
+				currentHP: 20,
+				maxHP: 20,
+				shillings: 0, 
+				influence: 0, 
+				doomTimer: 20,
+				
+				act1Started: false,
+				isRiftCollapse: false,
+				hasLoggedCollapse: false,
+				isAbsorbCharged: false,
+				isSurpriseRound: false,
+				knowsSmelterSecret: false,
+				knowsChapelSecret: false,
+				hasObservedGambler: false, 
+				hasSearchedSmugglerDrop: false,
+				docksWorkCount: 0,
+				quinnLogistics: false,
 				hasDivedTreasure: false,
 
-                act2Started: false,
-                isEthereal: false,
-                tetherTimer: 20,
-                returnSceneId: null,
-                hallLooted: false,
-                hasBlinkSkill: false,
+				act2Started: false,
+				isEthereal: false,
+				tetherTimer: 20,
+				returnSceneId: null,
+				hallLooted: false,
+				hasBlinkSkill: false,
 
-                act3Started: false,
+				act3Started: false,
 				factionAligned: null,
-                shipName: "The Iron Lung",
-                supplies: 10, 
-                knownIslands: ['port_hub'],
-                currentLocation: 'port_hub',
-                silasJoined: false,
-                
-                inventory: [], 
-                skills: [],
-                crewUseFree: false, 
-                lastCrewUsedId: null, 
-                crew: {
-                    gareth: { id: 'gareth', name: 'Captain Gareth', skill: 'Insight & Intimidation', used: false, desc: 'Add +1d4 to Insight & Intimidation' },
-                    quinn: { id: 'quinn', name: 'Quinn', skill: 'Investigation & History', used: false, desc: 'Add +1d4 to Investigation & History' },
-                    talon: { id: 'talon', name: 'Talon', skill: 'Survival & Perception', used: false, desc: 'Add +1d4 to Survival & Perception' },
-                    bones: { id: 'bones', name: 'Bones', skill: 'Nature & Medicine', used: false, desc: 'Add +1d4 to Nature & Medicine' }
-                },
-                history: [],
-                companions: {
-                    silas: { 
-                        joined: false, 
-                        name: "Silas", 
-                        desc: "Wolf King's Seneschal (Passive: Pack Tactics)",
-                        active: false 
-                    },
+				shipName: "The Iron Lung",
+				supplies: 10, 
+				knownIslands: ['port_hub'],
+				currentLocation: 'port_hub',
+				silasJoined: false,
+				silasVengeanceActive: false, // CRITICAL FIX: Silas Vengeance Flag Added
+				
+				inventory: [], 
+				skills: [],
+				crewUseFree: false, 
+				lastCrewUsedId: null, 
+				crew: {
+					gareth: { id: 'gareth', name: 'Captain Gareth', skill: 'Insight & Intimidation', used: false, desc: 'Add +1d4 to Insight & Intimidation' },
+					quinn: { id: 'quinn', name: 'Quinn', skill: 'Investigation & History', used: false, desc: 'Add +1d4 to Investigation & History' },
+					talon: { id: 'talon', name: 'Talon', skill: 'Survival & Perception', used: false, desc: 'Add +1d4 to Survival & Perception' },
+					bones: { id: 'bones', name: 'Bones', skill: 'Nature & Medicine', used: false, desc: 'Add +1d4 to Nature & Medicine' }
+				},
+				history: [],
+				companions: {
+					silas: { 
+						joined: false, 
+						name: "Silas", 
+						desc: "Wolf King's Seneschal (Passive: Pack Tactics)",
+						active: false 
+					},
 					blink: {
-                        joined: false,
-                        name: "Blink",
-                        desc: "Displacer Cub (Active: Phase Shift)",
-                        active: false
-                    }
-                },
+						joined: false,
+						name: "Blink",
+						desc: "Displacer Cub (Active: Phase Shift)",
+						active: false
+					}
+				},
 				isBossCombat: false,
 				enemyHP: 0,
 				maxEnemyHP: 0,
 				currentEnemy: '',
+				
+				// MULTI-TARGET COMBAT (Elders)
+				enemies: {}, 
+				activeEnemies: [],
+				maxElderHP: 0, 
+				// END MULTI-TARGET
+
 				nextAttackCrit: false,
 				negateNextDamage: false,
 				
@@ -895,9 +895,8 @@
 					blink: 0,
 				},
 				passiveDefenseBonus: 0,
-            };
-        }
-
+			};
+		}
         let gameState = createInitialState();
         let activeCrewMember = null;
         
@@ -912,20 +911,281 @@
 			});
 		};
 		
-		// --- COMBAT ENGINE (BOSS BATTLES) ---
+		function initCombat(enemyName, hp, damageRange) {
+			gameState.isBossCombat = true;
+			gameState.currentEnemy = enemyName;
+			gameState.enemyHP = hp;
+			gameState.maxEnemyHP = hp;
+			gameState.enemyDamageRange = damageRange; // e.g., [6, 10]
+			
+			// Ensure single-target state is clean
+			gameState.enemies = {};
+			gameState.activeEnemies = [];
 
-        function initCombat(enemyName, hp, damageRange) {
-            gameState.isBossCombat = true;
-            gameState.currentEnemy = enemyName;
-            gameState.enemyHP = hp;
-            gameState.maxEnemyHP = hp;
-            gameState.enemyDamageRange = damageRange; // e.g., [6, 10]
-            
-            // Reset Ally Cooldowns
-            gameState.allyCooldowns.silas = 0;
-            gameState.allyCooldowns.blink = 0;
-        }
+			// Reset Ally Cooldowns
+			gameState.allyCooldowns.silas = 0;
+			gameState.allyCooldowns.blink = 0;
+		}
 
+		// NEW: Horde Combat Initialization for Vampire Elders
+		function initHordeCombat(baseName, hpPerEnemy, damageRange, count) {
+			gameState.isBossCombat = true;
+			gameState.currentEnemy = baseName;
+			gameState.enemies = {};
+			gameState.activeEnemies = [];
+			gameState.maxElderHP = hpPerEnemy;
+			gameState.enemyDamageRange = damageRange;
+
+			let totalHP = 0;
+			for (let i = 0; i < count; i++) {
+				const name = `${baseName} ${String.fromCharCode(65 + i)}`; // Elder A, Elder B, etc.
+				gameState.enemies[name] = hpPerEnemy;
+				gameState.activeEnemies.push(name);
+				totalHP += hpPerEnemy;
+			}
+			
+			// Set global HP trackers for UI compatibility
+			gameState.enemyHP = totalHP;
+			gameState.maxEnemyHP = totalHP;
+
+			// Reset Ally Cooldowns
+			gameState.allyCooldowns.silas = 0;
+			gameState.allyCooldowns.blink = 0;
+		}
+
+		// NEW: Horde Combat Resolution for Vampire Elders
+		window.resolveHordeRound = function(attackType, targetElder) {
+			const state = gameState;
+			let playerDmg = 0;
+			let log = "";
+			let eldersKilled = 0;
+
+			// --- 1. CALCULATE PLAYER DAMAGE ---
+			const levelBonus = state.levelUpDamage ? 1 : 0;
+			let baseDamage = 0;
+			let isAOE = false;
+			let isStun = false;
+			let isForceDamage = state.isEthereal && state.currentEnemy.includes('Vampire');
+
+			// 1.1 Determine Base Damage & Modifiers
+			if (attackType === 'valor_strike') {
+				baseDamage = Math.floor(Math.random() * 8) + 6 + levelBonus; 
+			} else if (attackType === 'heavy_strike') {
+				baseDamage = Math.floor(Math.random() * 6) + 2 + levelBonus; 
+			} else if (attackType === 'item_holy_water') {
+				baseDamage = 25; isAOE = true;
+			} else if (attackType === 'item_fire') {
+				baseDamage = 20; isAOE = true;
+			} else if (attackType === 'item_flash') {
+				baseDamage = 0; isStun = true;
+			} else if (attackType === 'item_sun_star') {
+				baseDamage = 25; isAOE = true; isStun = true;
+			} else if (attackType === 'item_stake_driver') {
+				baseDamage = Math.floor(Math.random() * 8) + 4 + levelBonus; isStun = true;
+			} else if (attackType === 'none') {
+				playerDmg = 0;
+			}
+
+			playerDmg = baseDamage;
+
+			// Apply Planar Vulnerability (Phase 3 Pivot: Last Elder standing)
+			if (isForceDamage && state.activeEnemies.length === 1 && playerDmg > 0) {
+				playerDmg += 2; // +2 Force Damage bonus
+				log += `<span class='text-spectral-d8'>Planar Focus: Force Damage +2.</span> `;
+			}
+
+			// BLINK CRIT MODIFIER
+			if (state.nextAttackCrit && playerDmg > 0) {
+				playerDmg = Math.floor(playerDmg * 2.5); 
+				state.nextAttackCrit = false;
+				log += "<span class='text-emerald-400 font-bold'>PHASE STRIKE! (Crit)</span> ";
+			}
+
+			// BATTLE RHYTHM CHECK
+			if (gameState.battleRhythm && playerDmg > 0) {
+				playerDmg = playerDmg * 2;
+				gameState.battleRhythm = false; 
+				
+				const buffIdx = gameState.inventory.indexOf("Battle Rhythm");
+				if (buffIdx > -1) gameState.inventory.splice(buffIdx, 1);
+
+				log += "<span class='text-red-500 font-bold'>BATTLE RHYTHM! (Double Damage)</span> ";
+			}
+			
+			// --- 2. APPLY DAMAGE TO BOSSES ---
+			let targetsHit = [];
+			const elderTargets = isAOE ? [...state.activeEnemies] : [targetElder];
+			
+			elderTargets.forEach(elderName => {
+				if (!state.activeEnemies.includes(elderName)) return; 
+
+				let currentDmg = playerDmg;
+				let evasionCheck = false;
+
+				// PHASE 1/2 EVASION CHECK (2+ targets remaining, single target, and not Ethereal)
+				if (!isAOE && !isStun && state.activeEnemies.length >= 2 && !state.isEthereal && attackType !== 'none') {
+					if (Math.random() < 0.3) { // 30% evasion chance
+						currentDmg = 0;
+						evasionCheck = true;
+						targetsHit.push(`${elderName}: Evaded`);
+					}
+				}
+				
+				if (currentDmg > 0) {
+					state.enemies[elderName] = Math.max(0, state.enemies[elderName] - currentDmg);
+					targetsHit.push(`${elderName}: -${currentDmg}`);
+				} else if (evasionCheck) {
+					targetsHit.push(`${elderName}: Evaded`);
+				}
+				
+				// Check if elder is defeated
+				if (state.enemies[elderName] <= 0 && state.activeEnemies.includes(elderName)) {
+					state.enemies[elderName] = 0;
+					eldersKilled++;
+					log += `<span class='text-blood'>The ${elderName} crumbles to dust!</span> `;
+				}
+			});
+
+			// Update Active Enemies List and Total HP
+			state.activeEnemies = state.activeEnemies.filter(name => state.enemies[name] > 0);
+			state.enemyHP = state.activeEnemies.reduce((total, name) => total + state.enemies[name], 0);
+
+			// Format damage log
+			if (targetsHit.length > 0 && attackType !== 'none') {
+				log += `You struck for ${targetsHit.join(', ')}. `;
+				if (isForceDamage) log = log.replace(/struck for Elder/g, 'struck for <span class="text-spectral-d8">Force Damage</span> Elder');
+			}
+
+
+			// --- 3. CHECK VICTORY ---
+			if (state.activeEnemies.length === 0) {
+				state.isBossCombat = false;
+				state.enemies = {};
+				audioManager.playClash();
+				addToHistory(log + ` The Sanguine Court is defeated!`, 'combat');
+				renderScene('spire_victory');
+				return;
+			}
+
+			// --- 4. ENEMY LOGIC (RETALIATION & PIVOTS) ---
+			
+			// Phase 1 Pivot: First Elder Defeated (The Warning)
+			if (eldersKilled === 1 && state.activeEnemies.length === 2) {
+				state.allyCooldowns.silas = Math.max(state.allyCooldowns.silas, 1);
+				state.allyCooldowns.blink = Math.max(state.allyCooldowns.blink, 1);
+				log += `<span class='text-danger'>The remaining Elders shriek, briefly stunning your allies (Cooldown +1).</span> `;
+			}
+			// Phase 2 Pivot: Second Elder Defeated (The Desperation)
+			if (eldersKilled === 2 && state.activeEnemies.length === 1) {
+				 // Heal the final Elder
+				const finalElderName = state.activeEnemies[0];
+				const healAmount = 20; 
+				state.enemies[finalElderName] = Math.min(state.maxElderHP, state.enemies[finalElderName] + healAmount);
+				state.enemyHP = state.enemies[finalElderName];
+				log += `<span class='text-blood'>Desperation! The last Elder absorbs its kin's power (+${healAmount} HP).</span> `;
+			}
+			
+			// Retaliation: Only run if not stunned
+			let enemySkipped = isStun; 
+
+			if (!enemySkipped) {
+				let totalEnemyDmg = 0;
+				let attacksLaunched = 0;
+				
+				// Each active Elder attacks
+				state.activeEnemies.forEach(elderName => {
+					const dmg = Math.floor(Math.random() * (state.enemyDamageRange[1] - state.enemyDamageRange[0] + 1)) + state.enemyDamageRange[0];
+					totalEnemyDmg += dmg;
+					attacksLaunched++;
+				});
+
+				// Apply mitigation
+				if (state.inventory.includes("Mirror Shield")) totalEnemyDmg = Math.max(0, totalEnemyDmg - attacksLaunched); // -1 per attack
+				if (state.inventory.includes("Salt-Warped Spyglass") && state.influence <= -15) totalEnemyDmg = Math.max(0, totalEnemyDmg - attacksLaunched);
+
+				// SILAS TANK MODIFIER
+				if (state.negateNextDamage) {
+					totalEnemyDmg = 0;
+					state.negateNextDamage = false; 
+					log += ` <span class='text-emerald-400 font-bold'>Silas blocked all ${attacksLaunched} strikes!</span>`;
+				} else {
+					const oldHP = state.currentHP;
+					state.currentHP = applyDamage(state.currentHP, totalEnemyDmg);
+					const actualTaken = oldHP - state.currentHP;
+					
+					if (actualTaken > 0) {
+						log += ` The Elders hit for a combined <b>${actualTaken}</b> damage!`;
+						fxManager.flashRed();
+					} else {
+						log += ` Your defenses absorbed the blow.`;
+					}
+				}
+			} else if (isStun) {
+				 log += `<span class='text-yellow-400'>The Elders are stunned and skip their turn!</span> `;
+			}
+
+			// --- 5. COOLDOWN TICK ---
+			if (state.allyCooldowns.silas > 0) state.allyCooldowns.silas--;
+			if (state.allyCooldowns.blink > 0) state.allyCooldowns.blink--;
+
+			addToHistory(log, 'combat');
+			updateUI(); 
+			renderScene(state.currentSceneId); 
+		}
+
+		// Update the global allyCommand to correctly call the Horde Resolution
+		window.allyCommand = function(allyId) {
+			const state = gameState;
+			if (state.isBossCombat && state.allyCooldowns[allyId] === 0) {
+				
+				if (allyId === 'silas') {
+					state.negateNextDamage = true;
+					
+					// --- CRITICAL FIX: Silas Vengeance Check (Only for Vampire Elders fight) ---
+					let baseCooldown = 2;
+					if (state.silasVengeanceActive && state.currentEnemy.includes('Vampire')) {
+						 baseCooldown = 1; 
+						 addToHistory("Vengeance Status: Silas Intercept Cooldown reduced to 1!", 'system');
+					}
+					state.allyCooldowns.silas = baseCooldown;
+					// --------------------------------------------------------------------------
+					
+					addToHistory(`<span class="text-emerald-400 font-bold">Silas: Intercept!</span> Silas materializes, shield raised.`, 'system');
+				} else if (allyId === 'blink') {
+					gameState.nextAttackCrit = true;
+					gameState.allyCooldowns.blink = 3;
+					addToHistory(`<span class="text-emerald-400 font-bold">Blink: Phase Shift!</span> The cub blurs and you feel the tether momentarily shift.`, 'system');
+				}
+				
+				// Tick down the OTHER ally's cooldown
+				Object.keys(state.allyCooldowns).forEach(key => {
+					if (key !== allyId) {
+						state.allyCooldowns[key] = Math.max(0, state.allyCooldowns[key] - 1);
+					}
+				});
+				
+				addToHistory("The turn passes as you command your companion, triggering the enemy's attack.", 'system');
+				
+				// Trigger enemy attack if in Horde Combat, otherwise use old single-target method
+				if (state.activeEnemies && state.activeEnemies.length > 0) {
+					 window.resolveHordeRound('none', 'none'); 
+				} else {
+					window.resolveCombatRound('none');
+				}
+				
+			} else {
+				addToHistory(`Ally ${allyId.charAt(0).toUpperCase() + allyId.slice(1)} is on cooldown or you are not in combat!`, 'system');
+			}
+			
+			saveGame();
+			updateUI();
+		}
+		
+		
+		
+		
+
+        // Standard Combat (Kept for Coral Hulk)
         window.resolveCombatRound = function(attackType) {
 			const state = gameState;
 			let playerDmg = 0;
@@ -954,10 +1214,27 @@
 				playerDmg = 0;
 				log += "Flash Powder blinds them! They cannot strike back this turn. ";
 			}
+			// NEW: Sun-Star Grenade Logic
+			else if (attackType === 'item_sun_star') {
+				playerDmg = 25;
+				log += "<b>The Sun-Star detonates!</b> 25 Damage! The enemy is blinded by the flare! ";
+			}
 			// NEW: CHAOS WEAPON (STAKE DRIVER) 
 			else if (attackType === 'item_stake_driver') {
 				playerDmg = Math.floor(Math.random() * 8) + 4 + levelBonus;
 				log += "<b>THWACK!</b> The bone bolt pins the enemy! (Stunned). ";
+			}
+			
+			// BATTLE RHYTHM CHECK
+			if (gameState.battleRhythm && playerDmg > 0) {
+				playerDmg = playerDmg * 2;
+				gameState.battleRhythm = false; // Consume buff
+				
+				// Remove icon from inventory if you're using it as a marker
+				const buffIdx = gameState.inventory.indexOf("Battle Rhythm");
+				if (buffIdx > -1) gameState.inventory.splice(buffIdx, 1);
+
+				log += "<span class='text-red-500 font-bold'>BATTLE RHYTHM! (Double Damage)</span> ";
 			}
 
 			// BLINK CRIT MODIFIER
@@ -987,7 +1264,7 @@
 			// --- 3. ENEMY LOGIC (RETALIATION & REGEN) ---
 			
 			// Check Stun (Flash Powder or Stake Driver)
-			let enemySkipped = (attackType === 'item_flash' || attackType === 'item_stake_driver'); 
+			let enemySkipped = (attackType === 'item_flash' || attackType === 'item_stake_driver' || attackType === 'item_sun_star');
 
 			if (!enemySkipped) {
 				let enemyDmg = Math.floor(Math.random() * (state.enemyDamageRange[1] - state.enemyDamageRange[0] + 1)) + state.enemyDamageRange[0];
@@ -1031,7 +1308,7 @@
 				}
 			}
 
-			// --- 4. REGENERATION (CORAL-HULK SPECIFIC) [cite: 41, 42] ---
+			// --- 4. REGENERATION (CORAL-HULK SPECIFIC) ---
 			if (state.currentEnemy === 'Coral-Hulk' && state.enemyHP > 0) {
 				const regenAmount = 5;
 				state.enemyHP = Math.min(state.maxEnemyHP, state.enemyHP + regenAmount);
@@ -1482,19 +1759,183 @@
 					return `Ate Slurry. Healed ${state.currentHP - oldHP} HP.`;
 				}
 			},
+			"Royal Signet Ring": {
+				name: "Royal Signet Ring",
+				type: 'key',
+				icon: 'fa-ring',
+				color: 'text-blue-300',
+				desc: "A silver ring bearing the crest of the Citadel. Proof of a guard's death.",
+				btnText: "SELL",
+				action: (state) => "Can be returned to the Citadel for a reward or sold."
+			},
+			"Volatile Mutagen": {
+				name: "Volatile Mutagen",
+				type: 'consumable',
+				icon: 'fa-syringe',
+				color: 'text-purple-500',
+				btnText: "INJECT",
+				desc: "A glowing syringe of experimental beast blood. Highly unstable. 50% chance to gain +2 Max HP, 50% chance to take massive Poison damage. Can be stabilized at a Forge.",
+				isCombinable: true, 
+				action: (state) => {
+					if (Math.random() > 0.5) {
+						state.maxHP += 2;
+						state.currentHP += 2;
+						const idx = state.inventory.indexOf("Volatile Mutagen");
+						if (idx > -1) state.inventory.splice(idx, 1);
+						return "Success! The mutagen rewrites your DNA. +2 Max HP.";
+					} else {
+						state.currentHP = applyDamage(state.currentHP, 6);
+						const idx = state.inventory.indexOf("Volatile Mutagen");
+						if (idx > -1) state.inventory.splice(idx, 1);
+						fxManager.flashRed();
+						return "Rejection! Your veins burn. Took 6 Poison Damage.";
+					}
+				}
+			},
+			"Stabilized Mutagen": {
+				name: "Stabilized Mutagen",
+				type: 'consumable',
+				icon: 'fa-dna',
+				color: 'text-emerald-400',
+				btnText: "INJECT",
+				desc: "Refined beast blood. Safe to use. Permanently increases Max HP by 3.",
+				action: (state) => {
+					state.maxHP += 3;
+					state.currentHP += 3;
+					const idx = state.inventory.indexOf("Stabilized Mutagen");
+					if (idx > -1) state.inventory.splice(idx, 1);
+					return "You inject the serum. You feel stronger, faster. +3 Max HP.";
+				}
+			},
+			"Beast Whistle": {
+				name: "Beast Whistle",
+				type: 'key',
+				icon: 'fa-dog',
+				color: 'text-gray-400',
+				desc: "A silver whistle used by Vampires to command their experiments. May allow you to bypass feral beasts."
+			},
+			"Sun-Star Grenade": {
+				name: "Sun-Star Grenade",
+				type: 'consumable',
+				icon: 'fa-bomb',
+				color: 'text-orange-400',
+				btnText: "THROW",
+				desc: "A volatile fusion of Flash Powder and Alchemical Fire. Deals 25 Damage AND Stuns the enemy (skips their next turn).",
+				action: (state) => {
+					if (!state.isBossCombat) return "Save this for a worthy foe.";
+					
+					state.enemyHP -= 25;
+					// Logic for Stun is handled in resolveCombatRound by checking item name, 
+					// but we can simulate it by not triggering enemy turn immediately here if handled manually, 
+					// or by adding a specific flag. For now, we deal massive damage.
+					// We will update resolveCombatRound to handle this specific item name for the Stun effect.
+					return "<b>BOOM!</b> The grenade erupts with the heat of a star! Dealt 25 Damage and blinded the enemy!";
+				}
+			},
+			"Captain's Reserve": {
+				name: "Captain's Reserve",
+				type: 'consumable',
+				icon: 'fa-flask',
+				color: 'text-amber-600',
+				btnText: "DRINK",
+				desc: "Rum distilled with Vitality Tincture. Heals 25 HP and cures all status effects. Tastes like victory.",
+				action: (state) => {
+					const oldHP = state.currentHP;
+					state.currentHP = Math.min(state.maxHP, state.currentHP + 25);
+					state.currentHP = Math.min(state.maxHP, state.currentHP); // Cap at max
+					
+					const idx = state.inventory.indexOf("Captain's Reserve");
+					if (idx > -1) state.inventory.splice(idx, 1);
+					
+					return `Downed the Captain's Reserve. Healed ${state.currentHP - oldHP} HP. You feel invincible.`;
+				}
+			},
+			"Snare Trap": {
+				name: "Snare Trap",
+				type: 'key',
+				icon: 'fa-link',
+				color: 'text-gray-400',
+				desc: "A Beast Whistle rigged to a heavy Rope loop. Can be used to instantly capture/defeat a Beast enemy without rolling."
+			},
+			"Feeding Ground Map": {
+				name: "Feeding Ground Map",
+				type: 'key',
+				icon: 'fa-map',
+				color: 'text-indigo-400',
+				desc: "A waterproof chart marked with the Leviathan's hunting patterns. Unlocks a high-risk loot location."
+			},
 			"Mirror Shield": {
 				name: "Mirror Shield",
 				type: 'gear',
 				icon: 'fa-shield-alt',
 				color: 'text-gray-200',
-				desc: "Order Reward: A polished silver tower shield. Passive: -1 Damage taken. Active: Reflects the first attack of a round[cite: 46, 47, 48]."
+				desc: "Order Reward: A polished silver tower shield. Passive: -1 Damage taken. Active: Reflects the first attack of a round."
 			},
 			"Scale-Stake Driver": {
 				name: "Scale-Stake Driver",
 				type: 'weapon',
 				icon: 'fa-crosshairs',
 				color: 'text-orange-600',
-				desc: "Chaos Reward: A heavy crossbow carved from Leviathan scale. Active: Deals damage and Stuns the enemy[cite: 49, 50, 51]."
+				desc: "Chaos Reward: A heavy crossbow carved from Leviathan scale. Active: Deals damage and Stuns the enemy."
+			},
+			"Gilded Sextant": {
+				name: "Gilded Sextant",
+				type: 'passive',
+				icon: 'fa-compass-drafting',
+				color: 'text-yellow-400',
+				desc: "Passive: An instrument of impossible precision. Reduces Supply cost of all sea travel by 1."
+			},
+			"Codex of Tides": {
+				name: "Codex of Tides",
+				type: 'passive',
+				icon: 'fa-book-atlas',
+				color: 'text-blue-300',
+				desc: "Passive: Quinn's research notes. Grants Advantage (roll twice/bonus) on History & Investigation checks."
+			},
+			"Battle Rhythm": {
+				name: "Battle Rhythm",
+				type: 'passive',
+				icon: 'fa-stopwatch',
+				color: 'text-red-500',
+				desc: "Status: You have sparred with Gareth. Your next combat attack deals Double Damage. (One use)."
+			},
+			"Deep-Iron Ingot": {
+				name: "Deep-Iron Ingot",
+				type: 'ingredient',
+				icon: 'fa-cube',
+				color: 'text-gray-400',
+				desc: "A heavy bar of cold iron dredged from the abyss. Can be forged into a weapon."
+			},
+			"Deep-Forged Cutlass": {
+				name: "Deep-Forged Cutlass",
+				type: 'weapon',
+				icon: 'fa-khanda',
+				color: 'text-indigo-400',
+				desc: "A Sword of Valor fused with Deep-Iron. Heavy, brutal, and unbreakable. Deals 1d10+2 Damage.",
+				damage: '1d10+2'
+			},
+			"Brass Gears": {
+				name: "Brass Gears",
+				type: 'ingredient',
+				icon: 'fa-cogs',
+				color: 'text-amber-600',
+				desc: "High-value scrap scavenged from the Manor walls. Can be sold or crafted.",
+				btnText: "SELL",
+				action: (state) => "Sell at a Quartermaster for coin, or use at the Forge."
+			},
+			"Grapple Hook": {
+				name: "Grapple Hook",
+				type: 'gear',
+				icon: 'fa-anchor',
+				color: 'text-gray-300',
+				desc: "Passive: A climber's best friend. Automatically passes vertical Athletics checks."
+			},
+			"Skeleton Key": {
+				name: "Skeleton Key",
+				type: 'key',
+				icon: 'fa-key',
+				color: 'text-white',
+				desc: "Key: A bone key that opens high-security lockboxes in Faction Hubs."
 			},
         };
         
@@ -1838,7 +2279,7 @@
 			'guard_respect': {
                 title: "Order and Law",
                 text: "You salute with practiced discipline. 'Just a shipwrecked sailor, sir. Keeping to the road.' The Guard straightens, recognizing the posture. 'Carry on then. And take these—get yourself a warm meal.' He flicks two silver coins at you.",
-                journal: "Played the part of the good sailor. Saluted the uniform, not the man. It worked. Order has its uses, even if it tastes like bile.",
+                journal: "Played the part of the good sailor. Saluted the uniform, not the man. I worked. Order has its uses, even if it tastes like bile.",
                 onEnter: (state) => {
                     state.influence = Math.max(-50, state.influence - 4); 
                     state.shillings += 2;
@@ -3653,7 +4094,7 @@
                         reqItem: "Dead Man's Die", 
                         consume: true,
                         customClass: 'btn-hero'
-                    }
+                    },
                 ]
                 ,
                 onEnter: (s) => { 
@@ -3867,7 +4308,7 @@
                         reqFlag: 'isSurpriseRound',
                         customClass: 'btn-shadow-glow'
                     },
-                    { text: "Engage in Psychic Struggle (Brute Force)", nextScene: 'chapel_victory_brute', type: 'combat' }
+                    { text: "Engage in Psychic Struggle (Brute Force)", nextScene: 'chapel_victory_brute', type: 'combat' },
                 ]
                 ,
                 onEnter: (state) => {
@@ -3974,37 +4415,41 @@
 
             // --- ACT 2: MANOR ARRIVAL & HUB ---
             'act2_arrival': {
-                title: "The Vanishing Manor",
-                text: "The world doesn't just break; it inverts. You stand in the center of the Port of Shadows, but it is a silent, <span class='text-void'>grey echo</span> of the city you knew. Ash falls *upwards* into a void-black sky. The ruins of the Smelter are merely skeletal ghosts in the distance. <br><br>But here, where the muddy town square should be, stands a pristine, glorious estate: The <span class='text-spectral'>Vanishing Manor</span>. It exists in the negative space of the world.<br><br>A solitary lamp post stands at the gates, holding a heavy brass lantern burning with cold, pale fire. You take the <span class='text-item'>Spectral Lantern</span> from its hook to light your path. The voices of your crew are crystal clear here—they are standing right beside you.",
-                journal: "The Material Plane is an echo here. I found the Vanishing Manor sitting right on top of the town square. Took a Spectral Lantern to light the way.",
-                onEnter: (state) => {
-                    state.act1Started = false;
-                    state.isRiftCollapse = false;
-                    state.doomTimer = 0;
-                    state.quinnLogistics = false;
-                    
-                    state.act2Started = true;
-                    state.isEthereal = true;
-                    state.tetherTimer = 20;
-                    
-                    if (!state.inventory.includes("Spectral Lantern")) {
-                        state.inventory.push("Spectral Lantern");
-                    }
-                    
-                    const lanternDef = itemRegistry["Spectral Lantern"];
-                    if (lanternDef && lanternDef.onAcquire) {
-                        lanternDef.onAcquire(state);
-                    }
+				title: "The Vanishing Manor",
+				text: "The world inverts. You stand in the Port of Shadows, but it is a silent, <span class='text-void'>grey echo</span>. Ash falls *upwards* into a void-black sky. The ruins of the Smelter are merely skeletal ghosts in the distance. <br><br>But here, where the muddy town square should be, stands a pristine estate: The <span class='text-spectral'>Vanishing Manor</span>. It exists in the negative space of the world.<br><br>A solitary lamp post stands at the gates. You take the <span class='text-item'>Spectral Lantern</span> from its hook. The cold light reveals your breath, but you aren't breathing air—you are breathing memory.",
+				journal: "I stepped sideways into the Ethereal Plane. The Manor was waiting for me. It feels like walking inside a tomb that hasn't been built yet.",
+				banter: {
+					'gareth': "Steady. The ground here doesn't care if you walk on it or fall through it. Will is gravity here.",
+					'quinn': "Fascinating. The architecture... it's a mnemonic device. The building is a physical memory."
+				},
+				onEnter: (state) => {
+					state.act1Started = false;
+					state.isRiftCollapse = false;
+					state.doomTimer = 0;
+					state.quinnLogistics = false;
+					
+					state.act2Started = true;
+					state.isEthereal = true;
+					state.tetherTimer = 20;
+					
+					if (!state.inventory.includes("Spectral Lantern")) {
+						state.inventory.push("Spectral Lantern");
+					}
+					
+					const lanternDef = itemRegistry["Spectral Lantern"];
+					if (lanternDef && lanternDef.onAcquire) {
+						lanternDef.onAcquire(state);
+					}
 
-                    Object.keys(state.crew).forEach(k => state.crew[k].used = false);
+					Object.keys(state.crew).forEach(k => state.crew[k].used = false);
 
-                    document.getElementById('tether-display').classList.remove('hidden');
-                    return "Act 1 Complete. Acquired Spectral Lantern. Tether Unstable.";
-                },
-                choices: [
-                    { text: "Enter the Foyer", nextScene: 'manor_foyer', type: 'travel', tetherCost: 1 }
-                ]
-            },
+					document.getElementById('tether-display').classList.remove('hidden');
+					return "Act 1 Complete. Acquired Spectral Lantern. Tether Unstable.";
+				},
+				choices: [
+					{ text: "Enter the Foyer", nextScene: 'manor_foyer', type: 'travel', tetherCost: 1 }
+				]
+			},
             'act2_tether_fail': {
                 title: "The Ripping Back",
                 text: "The silver cord of your consciousness snaps. The Manor dissolves, and the Ethereal Plane violently rejects you, hurling your body and soul back into the Material Plane with the force of a cannonball. You suffer massive psychic trauma and find yourself in the grim port, having lost all progress within the Manor.",
@@ -4026,16 +4471,20 @@
             
             // ACT 2: MANOR EXPLORATION
             'manor_foyer': {
-                title: "The Grand Foyer",
-                text: "The Manor is a labyrinth of memory. The grand staircase ahead is shattered, floating in the void. Three arches stand before you, breathing cold mist.<br><br><b>West:</b> <span class='memory-keyword' data-lore='A repository of planar maps and the Wolf King’s contracts.'>The Warden's Library</span><br><b>East:</b> The Service Wing (Kitchens).<br><b>North:</b> The Grand Hall (Patrolled).",
-                journal: "The Foyer is the center. I can go West, East, or brave the North.",
-                choices: [
-                    { text: "Enter Library (West)", nextScene: 'manor_library', type: 'travel', tetherCost: 1 },
-                    { text: "Enter Kitchens (East)", nextScene: 'manor_kitchens', type: 'travel', tetherCost: 1 },
-                    { text: "Enter Grand Hall (North)", nextScene: 'manor_hall', type: 'travel', tetherCost: 1 },
-                    { text: "Check Blueprint (Map)", nextScene: 'manor_map_view', type: 'map_view', reqItem: 'Manor Blueprint', tetherCost: 0 } 
-                ]
-            },
+				title: "The Grand Foyer",
+				text: "The Manor is a labyrinth of silence. The grand staircase ahead is shattered, its marble steps floating freely in the void. Three arches stand before you, breathing cold mist.<br><br><b>West:</b> <span class='text-item'>The Warden's Library</span> (Archives)<br><b>East:</b> The Service Wing (Kitchens)<br><b>North:</b> The Grand Hall (Patrolled)",
+				journal: "The Foyer is the hub. The stairs are broken. I have to find another way up.",
+				banter: {
+					'talon': "I hear ticking to the North. Metal on stone. Heavy patrols.",
+					'bones': "There's a smell of ozone coming from the West. Old magic."
+				},
+				choices: [
+					{ text: "Enter Library", nextScene: 'manor_library', type: 'travel', tetherCost: 1 },
+					{ text: "Enter Kitchens", nextScene: 'manor_kitchens', type: 'travel', tetherCost: 1 },
+					{ text: "Enter Grand Hall", nextScene: 'manor_hall', type: 'travel', tetherCost: 1 },
+					{ text: "Check Blueprint", nextScene: 'manor_map_view', type: 'map_view', reqItem: 'Manor Blueprint', tetherCost: 0 } 
+				]
+			},
             'manor_map_view': {
                 title: "Architect's Blueprint",
                 text: "The ink glows, showing the layout:<br><b>[West] Library</b> <-> <b>[East] Kitchens</b> (Connected via Crawlspace)<br><b>[North] Grand Hall</b> (Blocked by Patrols)<br><b>Secret Route:</b> Library -> Hall (Shortcut)",
@@ -4063,34 +4512,36 @@
             
             // ACT 2: WEST WING (LIBRARY)
             'manor_library': {
-                title: "The Warden's Library",
-                text: "Books float freely here. Quinn flies toward a specific scroll case. A draft comes from a low grate near the floor, suggesting a <span class='memory-keyword' data-lore='Small tunnels used by maintenance constructs.'>ventilation shaft</span> connecting to the East Wing.",
-                banter: {
-                    'quinn': "The architecture is efficient. That vent leads to the kitchens. And this bookshelf... it's a door."
-                },
-                choices: [
-                    { 
-                        text: "Decipher Archives", 
-                        nextScene: 'library_search_logic', 
-                        type: 'skill', 
-                        skill: 'History', 
-                        dc: 12,
-                        tetherCost: 1,
-                        reqNotItem: 'Manor Blueprint'
-                    },
-                    { 
-                        text: "Open Secret Passage", 
-                        nextScene: 'manor_servants_passage', 
-                        type: 'travel', 
-                        reqItem: 'Manor Blueprint',
-                        tetherCost: 0,
-                        customClass: 'btn-success-glow'
-                    },
-                    { text: "Enter Crawlspace (To Kitchens)", nextScene: 'manor_crawlspace', type: 'travel', tetherCost: 1 },
-                    { text: "Return to Foyer", nextScene: 'manor_foyer', type: 'travel', tetherCost: 1 },
-                    { text: "Check Blueprint (Map)", nextScene: 'manor_map_view', type: 'map_view', reqItem: 'Manor Blueprint', tetherCost: 0 }
-                ]
-            },
+				title: "The Warden's Library",
+				text: "Books float freely here, drifting like jellyfish in the spectral currents. Scrolls unfurl and rewrite themselves. A draft comes from a low grate near the floor, suggesting a <span class='text-item'>ventilation shaft</span> connecting to the East Wing.",
+				journal: "The Library is alive with information. Quinn is practically vibrating.",
+				banter: {
+					'quinn': "Look at this! The classification system is multidimensional. I can decipher the location of the Anchor if you give me a moment. (History Check)",
+					'talon': "Forget the books. That vent near the floor... it bypasses the patrols."
+				},
+				choices: [
+					{ 
+						text: "Decipher Archives", 
+						nextScene: 'library_search_logic', 
+						type: 'skill', 
+						skill: 'History', 
+						dc: 12,
+						tetherCost: 1,
+						reqNotItem: 'Manor Blueprint'
+					},
+					{ 
+						text: "Open Secret Passage", 
+						nextScene: 'manor_servants_passage', 
+						type: 'travel', 
+						reqItem: 'Manor Blueprint',
+						tetherCost: 0,
+						customClass: 'btn-success-glow'
+					},
+					{ text: "Enter Crawlspace", nextScene: 'manor_crawlspace', type: 'travel', tetherCost: 1 },
+					{ text: "Return to Foyer", nextScene: 'manor_foyer', type: 'travel', tetherCost: 1 },
+					{ text: "Check Blueprint", nextScene: 'manor_map_view', type: 'map_view', reqItem: 'Manor Blueprint', tetherCost: 0 }
+				]
+			},
             'library_search_logic': {
                 isLogic: true,
                 resolve: (roll, state) => {
@@ -4129,40 +4580,44 @@
             
             // ACT 2: INTERCONNECT (CRAWLSPACE & CUB)
             'manor_crawlspace': {
-                title: "The Service Crawlspace",
-                text: "You are crawling inside the walls. It is tight, dark, and smells of rats. You hear a high-pitched, vibrating purr coming from a side vent.",
-                journal: "In the crawlspace, I heard something strange.",
-                choices: [
-                    { 
-                        text: "Investigate Purring Sound", 
-                        nextScene: 'cub_encounter', 
-                        type: 'travel', 
-                        reqNotFlag: 'hasBlinkSkill',
-                        tetherCost: 1 
-                    },
-                    { text: "Crawl to Library (West)", nextScene: 'manor_library', type: 'travel', tetherCost: 1 },
-                    { text: "Crawl to Kitchens (East)", nextScene: 'manor_kitchens', type: 'travel', tetherCost: 1 }
-                ]
-            },
+				title: "The Service Crawlspace",
+				text: "You are crawling inside the veins of the house. It is tight, dark, and smells of spectral rats. You hear a high-pitched, vibrating purr coming from a side vent. Something is alive in here.",
+				journal: "Crawling in the walls. Heard a sound. Not a rat. Something... shifting.",
+				banter: {
+					'bones': "That's not a monster. It sounds hurt. And hungry.",
+					'talon': "Careful. Even small things bite when cornered."
+				},
+				choices: [
+					{ 
+						text: "Investigate Sound", 
+						nextScene: 'cub_encounter', 
+						type: 'travel', 
+						reqNotFlag: 'hasBlinkSkill',
+						tetherCost: 1 
+					},
+					{ text: "Crawl to Library", nextScene: 'manor_library', type: 'travel', tetherCost: 1 },
+					{ text: "Crawl to Kitchens", nextScene: 'manor_kitchens', type: 'travel', tetherCost: 1 }
+				]
+			},
             'cub_encounter': {
-                title: "The Displacer Cub",
-                text: "Huddled in the corner is a kitten-sized <span class='text-void'>Displacer Cub</span>. It hisses, flickering in and out of existence, terrified. It is starving. It seems to be phasing uncontrollably.",
-                journal: "Found a lost Displacer Cub in the walls.",
-                banter: {
-                    'bones': "It's not aggressive, Edward. It's starving. It can't control its shifts because it's weak."
-                },
-                choices: [
-                    { 
-                        text: "Feed & Soothe", 
-                        nextScene: 'cub_tame_check', 
-                        type: 'skill', 
-                        dc: 12, 
-                        skill: 'Nature', 
-                        tetherCost: 1
-                    },
-                    { text: "Leave it be", nextScene: 'manor_crawlspace', type: 'travel', tetherCost: 0 }
-                ]
-            },
+				title: "The Displacer Cub",
+				text: "Huddled in the corner is a kitten-sized <span class='text-void'>Displacer Cub</span>. It hisses, flickering in and out of existence, terrified. It is starving. It seems to be phasing uncontrollably because it lacks the energy to anchor itself.",
+				journal: "Found a Displacer Cub. It's phasing out of reality from starvation.",
+				banter: {
+					'bones': "It's fading, Edward! It needs food to ground itself, or it will dissolve into the ether. Do we have anything organic? (Nature Check)"
+				},
+				choices: [
+					{ 
+						text: "Feed & Soothe", 
+						nextScene: 'cub_tame_check', 
+						type: 'skill', 
+						dc: 12, 
+						skill: 'Nature', 
+						tetherCost: 1
+					},
+					{ text: "Leave it be", nextScene: 'manor_crawlspace', type: 'travel', tetherCost: 0 }
+				]
+			},
             'cub_tame_check': {
                 isLogic: true,
                 resolve: (roll, state) => {
@@ -4213,30 +4668,38 @@
 
             // ACT 2: EAST WING (KITCHENS & BALLROOM)
             'manor_kitchens': {
-                title: "The Ghost Kitchens",
-                text: "Spectral fires roar in cold hearths. Ghostly chefs prepare feasts that rot the instant they are plated. A heavy oak door leads further East to the Ballroom. A rusted grate sits low on the West wall.",
-                journal: "Found the Kitchens. They connect to the Library via a grate.",
-                onEnter: (state) => {
-                    if (!state.inventory.includes("Pearlescent Mushroom")) {
-                         state.inventory.push("Pearlescent Mushroom");
-                         return "Found a dried Pearlescent Mushroom near the hearth.";
-                    }
-                    return null;
-                },
-                choices: [
-                    { text: "Push through to Ballroom", nextScene: 'manor_ballroom_encounter', type: 'travel', tetherCost: 1 },
-                    { text: "Enter Crawlspace (To Library)", nextScene: 'manor_crawlspace', type: 'travel', tetherCost: 1 },
-                    { text: "Return to Foyer", nextScene: 'manor_foyer', type: 'travel', tetherCost: 1 }
-                ]
-            },
+				title: "The Ghost Kitchens",
+				text: "Spectral fires roar in cold hearths. Ghostly chefs prepare feasts that rot the instant they are plated. The smell is intoxicating and nauseating all at once. A heavy oak door leads East to the Ballroom.",
+				journal: "The Kitchens mimic life, but offer none. Found a mushroom that looked real enough.",
+				banter: {
+					'bones': "Don't eat the food on the tables. It's glamour. It'll turn to ash in your gut. But... that mushroom in the corner is real.",
+					'gareth': "Focus. We aren't here to eat. The Ballroom is ahead."
+				},
+				onEnter: (state) => {
+					if (!state.inventory.includes("Pearlescent Mushroom")) {
+							state.inventory.push("Pearlescent Mushroom");
+							return "Found a dried Pearlescent Mushroom near the hearth.";
+					}
+					return null;
+				},
+				choices: [
+					{ text: "Push to Ballroom", nextScene: 'manor_ballroom_encounter', type: 'travel', tetherCost: 1 },
+					{ text: "Enter Crawlspace", nextScene: 'manor_crawlspace', type: 'travel', tetherCost: 1 },
+					{ text: "Return to Foyer", nextScene: 'manor_foyer', type: 'travel', tetherCost: 1 }
+				]
+			},
             'manor_ballroom_encounter': {
 				title: "The Phase Hunter",
 				text: "The air shimmers. A massive, six-legged panther materializes, then shifts two feet to the left. A <span class='text-danger'>Displacer Beast</span>. It hunts not with eyes, but with planar vibration. It blocks the path to the Hall.",
-				journal: "Encountered a Displacer Beast.",
-				isBoss: true, 
+				journal: "Ran into a Displacer Beast in the Ballroom. It's flickering like a broken image.",
+				isBoss: true,
+				banter: {
+					'talon': "It tracks movement in the ether! Stop moving linearly. Or use the artifacts to pin it down!",
+					'gareth': "Stand your ground! If you run, it strikes!"
+				},
 				choices: [
 					{ 
-						text: "Command Blink: Distract the Beast", 
+						text: "Command Blink: Distract", 
 						nextScene: 'beast_blink_distract',
 						type: 'action', 
 						reqFlag: 'hasBlinkSkill',
@@ -4244,14 +4707,14 @@
 						tetherCost: 1
 					},
 					{ 
-						text: "See True Form (Ring/Spyglass)", 
+						text: "See True Form", 
 						nextScene: 'beast_true_sight', 
 						type: 'action', 
 						reqItems: ['Ring of Brass', 'Salt-Warped Spyglass'],
 						customClass: 'btn-keen-senses' 
 					},
 					{ 
-						text: "Talon: Track Planar Distortion", 
+						text: "Track Distortion", 
 						nextScene: 'beast_track_logic', 
 						type: 'skill', 
 						dc: 17,
@@ -4261,6 +4724,47 @@
 					{ text: "Retreat to Kitchens", nextScene: 'manor_kitchens', type: 'travel', tetherCost: 2 }
 				]
 			},
+			'manor_ballroom_safe': {
+					title: "The Dueling Circle",
+					text: "Gareth has cleared the center of the room. He paces, cutlass drawn, cutting the air with precise, angry strokes. 'The enemy doesn't rest, Mariner. Neither should we. Draw your blade.'",
+					choices: [
+						{ 
+							text: "Spar with Gareth", 
+							nextScene: 'gareth_spar_logic', 
+							type: 'skill', 
+							skill: 'Insight', 
+							dc: 15,
+							reqNotFlag: 'battleRhythm', // Buff lasts until used
+							customClass: 'btn-hero'
+						},
+						{ text: "Return to Hall", nextScene: 'manor_hall_safe', type: 'travel', doomCost: 0 }
+					]
+				},
+				'gareth_spar_logic': {
+					isLogic: true,
+					resolve: (roll, state) => {
+						return roll >= 15 ? 'gareth_spar_success' : 'gareth_spar_fail';
+					}
+				},
+				'gareth_spar_success': {
+					title: "Battle Rhythm",
+					text: "Steel rings against steel. Gareth is fast, but you anticipate his feint, catching his blade in a bind. He grins fiercely. 'Good. You see the tempo now. Don't lose it.'",
+					onEnter: (state) => {
+						if (!state.inventory.includes("Battle Rhythm")) state.inventory.push("Battle Rhythm"); 
+						state.battleRhythm = true; 
+						return "Gained Status: Battle Rhythm (Next attack 2x Damage).";
+					},
+					choices: [{ text: "Sheathe Blade", nextScene: 'manor_ballroom_safe', type: 'travel' }]
+				},
+				'gareth_spar_fail': {
+					title: "Too Slow",
+					text: "Gareth disarms you with a brutal pommel strike. 'Dead. You'd be dead. Again.'",
+					onEnter: (state) => {
+						state.currentHP = Math.max(1, state.currentHP - 1);
+						return "Sparring Accident. Took 1 Damage.";
+					},
+					choices: [{ text: "Get Up", nextScene: 'manor_ballroom_safe', type: 'travel' }]
+				},
 			'beast_blink_distract': {
 				title: "A Game of Shadows",
 				text: "You whistle sharply. Blink phases out of your pack, appearing behind the massive Displacer Beast. He chirps—a sound that cuts through the ether. The beast spins around, confused by the familiar planar signature. <br><br>While the mother is distracted by the cub, you slip past into the shadows of the Hall. Blink rejoins you moments later, vibrating with adrenaline.",
@@ -4297,17 +4801,21 @@
             
             // ACT 2: GRAND HALL & MIMIC
             'manor_hall': {
-                title: "The Grand Hall",
-                text: "All paths converge here. The Hall is massive and cold. Patrols of <span class='text-danger'>Brass Automatons</span> phase through the walls. At the far end, a dizzying, spiraling <span class='text-spectral'>Penrose Staircase</span> ascends into the dark.",
-                journal: "Reached the Grand Hall. The exit is blocked by the Penrose Staircase.",
-                choices: [
-                    { text: "Search for a weak point (Talon)", nextScene: 'manor_hall_check', type: 'skill', dc: 15, skill: 'Perception', tetherCost: 1, reqNotFlag: 'hallLooted' },
-                    { text: "Approach the Penrose Staircase", nextScene: 'manor_automaton_encounter', type: 'travel', tetherCost: 1 },
-                    { text: "Return to Foyer (South)", nextScene: 'manor_foyer', type: 'travel', tetherCost: 1 },
-                    { text: "Enter Ballroom (East)", nextScene: 'manor_ballroom_encounter', type: 'travel', tetherCost: 1 }, 
-                    { text: "Check Blueprint (Map)", nextScene: 'manor_map_view', type: 'map_view', reqItem: 'Manor Blueprint', tetherCost: 0 }
-                ]
-            },
+				title: "The Grand Hall",
+				text: "All paths converge here. The Hall is massive and cold. Patrols of <span class='text-danger'>Brass Automatons</span> phase through the walls, their clockwork ticking echoing like gunshots. At the far end, a dizzying, spiraling <span class='text-spectral'>Penrose Staircase</span> ascends into the dark.",
+				journal: "The Grand Hall. Covered in clockwork guards. The exit is a staircase that shouldn't exist.",
+				banter: {
+					'talon': "That chest in the corner... it's breathing. Don't touch it. (Perception Check)",
+					'quinn': "The automatons run on a predictable loop. We can bypass them if we move precisely."
+				},
+				choices: [
+					{ text: "Search for traps", nextScene: 'manor_hall_check', type: 'skill', dc: 15, skill: 'Perception', tetherCost: 1, reqNotFlag: 'hallLooted' },
+					{ text: "Approach Staircase", nextScene: 'manor_automaton_encounter', type: 'travel', tetherCost: 1 },
+					{ text: "Return to Foyer", nextScene: 'manor_foyer', type: 'travel', tetherCost: 1 },
+					{ text: "Enter Ballroom", nextScene: 'manor_ballroom_encounter', type: 'travel', tetherCost: 1 }, 
+					{ text: "Check Blueprint", nextScene: 'manor_map_view', type: 'map_view', reqItem: 'Manor Blueprint', tetherCost: 0 }
+				]
+			},
             'manor_hall_check': {
 				isLogic: true,
 				resolve: (roll) => roll >= 15 ? 'manor_mimic_reveal' : 'manor_mimic_trap'
@@ -4382,15 +4890,19 @@
             // ACT 2: BRASS SENTINEL & FINALE STAIRS
             'manor_automaton_encounter': {
 				title: "The Brass Sentinel",
-				text: "A <span class='text-danger'>Brass Sentinel</span> blocks the path. Eight feet of clockwork perfection, wielding a lightning-wreathed glaive.",
-				isBoss: true, 
+				text: "A <span class='text-danger'>Brass Sentinel</span> blocks the path. Eight feet of clockwork perfection, wielding a lightning-wreathed glaive. It doesn't breathe. It doesn't blink. It waits.",
+				isBoss: true,
+				banter: {
+					'quinn': "It has a gyroscopic stabilizer on its hip! Knock that off axis and it falls! (Investigation Check)",
+					'gareth': "It's just metal! Hit it until it stops moving! (Athletics Check)"
+				},
 				choices: [
 					{ 
-						text: "Sunder", 
+						text: "Sunder Armor", 
 						nextScene: 'automaton_sunder_logic', 
 						type: 'skill', 
 						skill: 'Athletics',
-                        dc: 15,
+						dc: 15,
 						reqItem: 'Sword of Valor',
 						customClass: 'btn-hero' 
 					},
@@ -4485,21 +4997,26 @@
             
             // ACT 2: FINALE SEQUENCE
             'manor_staircase': {
-                title: "The Penrose Staircase",
-                text: "You step onto the stairs behind the Grand Hall. Looking up, you see the bottom of the staircase directly above you. It loops infinitely. Gravity shifts uncomfortably. Without a guide, you will be trapped in the loop.",
-                choices: [
-                    { 
-                        text: "Follow Blueprint Instructions", 
-                        nextScene: 'manor_anchor_door', 
-                        type: 'action', 
-                        reqItem: 'Manor Blueprint',
-                        tetherCost: 1,
-                        customClass: 'btn-success-glow'
-                    },
-                    { text: "Analyze Spatial Distortion", nextScene: 'staircase_logic', type: 'skill', dc: 16, skill: 'Investigation', tetherCost: 1 },
-                    { text: "Give Up (Return to Hall)", nextScene: 'manor_hall', type: 'travel', tetherCost: 1 }
-                ]
-            },
+				title: "The Penrose Staircase",
+				text: "You step onto the stairs. Looking up, you see the bottom of the staircase directly above you. It loops infinitely. Gravity shifts uncomfortably. Without a guide, your mind will break before you find the top.",
+				journal: "The stairs are a trap. A mathematical impossibility.",
+				banter: {
+					'quinn': "This is non-euclidean geometry! Logic doesn't apply here! Wait... I can see the pattern if I squint... (Investigation Check)",
+					'gareth': "Don't look up! Just climb!"
+				},
+				choices: [
+					{ 
+						text: "Follow Blueprint", 
+						nextScene: 'manor_anchor_door', 
+						type: 'action', 
+						reqItem: 'Manor Blueprint',
+						tetherCost: 1,
+						customClass: 'btn-success-glow'
+					},
+					{ text: "Analyze Geometry", nextScene: 'staircase_logic', type: 'skill', dc: 16, skill: 'Investigation', tetherCost: 1 },
+					{ text: "Give Up", nextScene: 'manor_hall', type: 'travel', tetherCost: 1 }
+				]
+			},
             'staircase_logic': {
                 isLogic: true,
                 resolve: (roll) => roll >= 16 ? 'manor_anchor_door' : 'staircase_fail'
@@ -4523,7 +5040,7 @@
             },
             'act2_finale_resolution': {
                 title: "The World Restored",
-                text: "You plant the Sword of Valor into the spectral anchor. The Ring of Brass flares, binding the energies. The Vanishing Manor implodes into a singularity of white light.<br><br>While you were in the Ethereal, your <span class='text-item'>Compass</span> spun wildly, drunk on the infinite directions of the void. But as the weight of the Ethereal lifts and you fall back into the salt spray of the material ocean, the needle slams to a halt. It locks onto a single, unwavering heading deep in the open sea. The storm is over, but the signal remains.",
+                text: "You plant the Sword of Valor into the spectral anchor. The Ring of Brass flares, binding the energies. The Vanishing Manor implodes into a singularity of white light.<br><br>While you were in the Ethereal, your <span class='text-item'>Compass</span> spun wildly, drunk on the infinite directions of the void. But as the weight of the Ethereal lifts and you fall back into the salt spray of the material ocean, the needle slams to a halt. It locks onto a single, unwavering heading deep in the open sea.",
                 journal: "Closed the Rift. The Compass has stopped spinning and locked onto a new target.",
                 choices: [
                     { text: "Wake up at Sea (Begin Act 3)", nextScene: 'act3_name_ship', type: 'travel', doomCost: 0 }
@@ -4543,6 +5060,46 @@
 				title: "Item Combiner: Recipes",
 				text: "Select an available recipe to fuse two items into one powerful artifact. Note: Combining items consumes the original components.",
 				choices: [
+				{
+						text: "Sun-Star Grenade (Flash Powder + Alchemical Fire)",
+						nextScene: 'manor_forge',
+						type: 'combine',
+						reqItems: ["Flash Powder", "Alchemical Fire"],
+						customClass: 'btn-fire-glow',
+						onSelect: (state) => {
+							return combineItems("Flash Powder", "Alchemical Fire", "Sun-Star Grenade");
+						}
+					},
+					{
+						text: "Captain's Reserve (Rum + Vitality Tincture)",
+						nextScene: 'manor_forge',
+						type: 'combine',
+						reqItems: ["Rum", "Vitality Tincture"],
+						customClass: 'btn-success-glow',
+						onSelect: (state) => {
+							return combineItems("Rum", "Vitality Tincture", "Captain's Reserve");
+						}
+					},
+					{
+						text: "Snare Trap (Rope + Beast Whistle)",
+						nextScene: 'manor_forge',
+						type: 'combine',
+						reqItems: ["Rope", "Beast Whistle"],
+						customClass: 'btn-keen-senses',
+						onSelect: (state) => {
+							return combineItems("Rope", "Beast Whistle", "Snare Trap");
+						}
+					},
+					{
+						text: "Stabilize Mutagen (Volatile Mutagen + Vitality Tincture)",
+						nextScene: 'manor_forge',
+						type: 'combine',
+						reqItems: ["Volatile Mutagen", "Vitality Tincture"],
+						customClass: 'btn-success-glow',
+						onSelect: (state) => {
+							return combineItems("Volatile Mutagen", "Vitality Tincture", "Stabilized Mutagen");
+						}
+					},
 					{
 						text: "Mind-Expanding Grog (Rum + Pearlescent Mushroom)",
 						nextScene: 'manor_forge',
@@ -4581,6 +5138,26 @@
 						customClass: 'btn-lantern-glow',
 						onSelect: (state) => {
 							return combineItems("Spectral Lantern", "Alchemical Fire", "The Warding Ember");
+						}
+					},
+					{
+						text: "Deep-Forged Cutlass (Sword of Valor + Deep-Iron Ingot)",
+						nextScene: 'manor_forge',
+						type: 'combine',
+						reqItems: ["Sword of Valor", "Deep-Iron Ingot"],
+						customClass: 'btn-hero',
+						onSelect: (state) => {
+							return combineItems("Sword of Valor", "Deep-Iron Ingot", "Deep-Forged Cutlass");
+						}
+					},
+					{
+						text: "Grapple Hook (Rope + Brass Gears)",
+						nextScene: 'manor_forge',
+						type: 'combine',
+						reqItems: ["Rope", "Brass Gears"],
+						customClass: 'btn-keen-senses',
+						onSelect: (state) => {
+							return combineItems("Rope", "Brass Gears", "Grapple Hook");
 						}
 					},
 					{ text: "Back to the Forge", nextScene: 'manor_forge', type: 'travel', doomCost: 0 }
@@ -4726,6 +5303,7 @@
 						return "Warning: Supplies Depleted.";
 					} 
 					
+					
 					scenes['sea_map_hub'].text = "You stand at the wheel. Where to, Captain?";
 
 					// 2. DYNAMIC CHOICE GENERATION (Fixes syntax error)
@@ -4754,22 +5332,134 @@
 							customClass: 'btn-anchor' 
 						});
 					}
+					if (state.inventory.includes("Feeding Ground Map")) {
+						navChoices.push({ 
+							text: "Sail to Feeding Grounds (Danger)", 
+							nextScene: 'sea_feeding_grounds', // We need to create this scene!
+							type: 'travel', 
+							suppliesCost: 4, 
+							customClass: 'btn-danger' 
+						});
+					}
 
 					scenes['sea_map_hub'].choices = navChoices;
 					return `Current Location: ${state.currentLocation}. Supplies: ${state.supplies}/20.`;
 				},
 				choices: [] // Populated by onEnter
 			},
+			
+			'sea_feeding_grounds': {
+				title: "The Leviathan's Feeding Ground",
+				text: "The water here is red and churning. Massive shapes move beneath the surface. Wreckage from a hundred ships circles in a slow vortex. It is a graveyard of wealth, but the Guardians are hungry.",
+				choices: [
+					{ 
+						text: "Salvage Wreckage (High Risk)", 
+						nextScene: 'feeding_salvage_logic', 
+						type: 'skill', 
+						dc: 16, 
+						skill: 'Survival' 
+					},
+					{ text: "Return to Sea Map", nextScene: 'sea_map_hub', type: 'travel' }
+				]
+			},
+			'feeding_salvage_logic': {
+				isLogic: true,
+				resolve: (roll, state) => {
+					return roll >= 16 ? 'feeding_success' : 'feeding_fail';
+				}
+			},
+			'feeding_success': {
+				title: "The Motherlode",
+				text: "You navigate the sharks and the currents. You haul up a Captain's Chest.",
+				onEnter: (state) => {
+					state.shillings += 30;
+					if (!state.inventory.includes("Captain's Reserve")) state.inventory.push("Captain's Reserve");
+					return "Found 30 Shillings and Captain's Reserve.";
+				},
+				choices: [{ text: "Escape", nextScene: 'sea_map_hub', type: 'travel' }]
+			},
+			'feeding_fail': {
+				title: "The Depths Bite Back",
+				text: "Something massive strikes your hull. You lose supplies overboard and take heavy damage.",
+				onEnter: (state) => {
+					state.currentHP = applyDamage(state.currentHP, 8);
+					state.supplies = Math.max(0, state.supplies - 5);
+					return "Took 8 Damage. Lost 5 Supplies.";
+				},
+				choices: [{ text: "Flee", nextScene: 'sea_map_hub', type: 'travel' }]
+			},
+			
+			'sea_flotsam_event': {
+				title: "Wreckage in the Water",
+				text: "You spot debris drifting in the current—remnants of a ship that didn't make it. Barrels bob in the swell among the <span class='text-item'>Flotsam</span>. It's dangerous to haul them in while moving, but there might be supplies.",
+				banter: {
+					'talon': "The currents gather everything eventually. Even the dead.",
+					'quinn': "That crate marking... Royal Navy standard issue. Likely Rope or Rationing."
+				},
+				choices: [
+					{ 
+						text: "Salvage Operation", 
+						nextScene: 'flotsam_salvage_logic', 
+						type: 'skill', 
+						dc: 13, 
+						skill: 'Survival' 
+					},
+					{ text: "Sail On", nextScene: 'sea_map_hub', type: 'travel', doomCost: 0 }
+				]
+			},
+			'flotsam_salvage_logic': {
+				isLogic: true,
+				resolve: (roll, state) => {
+					return roll >= 13 ? 'flotsam_success' : 'flotsam_fail';
+				}
+			},
+			'flotsam_success': {
+				title: "Salvage Secured",
+				text: "The crew hauls the dripping crates aboard. You pry them open.",
+				onEnter: (state) => {
+					// Loot Table logic
+					const roll = Math.random();
+					let loot = "";
+					
+					if (roll > 0.7) {
+						if (!state.inventory.includes("Rope")) { state.inventory.push("Rope"); loot = "Rope"; }
+						else { state.supplies += 3; loot = "3 Supplies"; }
+					} else if (roll > 0.4) {
+						if (!state.inventory.includes("Rum")) { state.inventory.push("Rum"); loot = "Rum"; }
+						else { state.shillings += 5; loot = "5 Shillings"; }
+					} else {
+						// Rare chance for missed Act 1 items
+						if (!state.inventory.includes("Curious Cargo")) { state.inventory.push("Curious Cargo"); loot = "Curious Cargo (Rare!)"; }
+						else { state.inventory.push("Healing Potion"); loot = "Healing Potion"; }
+					}
+					
+					return `Salvaged: ${loot}.`;
+				},
+				choices: [{ text: "Stow and Continue", nextScene: 'sea_map_hub', type: 'travel', doomCost: 0 }]
+			},
+			'flotsam_fail': {
+				title: "Lost to the Sea",
+				text: "The current is too strong. The crate slips from the hook and sinks into the black depths. You wasted time.",
+				choices: [{ text: "Sail On", nextScene: 'sea_map_hub', type: 'travel', doomCost: 0 }]
+			},
 
 			// --- UPDATED TRAVEL LOGIC (Includes Navy Chance) ---
 			'travel_to_port': {
 				isLogic: true,
 				resolve: (roll, state) => {
-					state.supplies -= 2;
+					let cost = 2;
+					if (state.inventory.includes("Gilded Sextant")) {
+						cost = Math.max(1, cost - 1); 
+						addToHistory("Passive (Gilded Sextant): Travel cost reduced.", 'system');
+					}
+					state.supplies -= cost;
 					state.currentLocation = 'port_hub';
 					
 					// RNG Event Logic
 					const rng = Math.random();
+					if (rng < 0.15) return 'sea_flotsam_event'; // 15% Chance for Flotsam
+					if (rng < 0.1) return 'sea_scavenger_encounter'; // 10% chance
+					if (window.gameFunctions.checkForContraband() && rng < 0.5) return 'sea_navy_encounter';
 					const hasContraband = window.gameFunctions.checkForContraband();
 					
 					// High chance of Navy if carrying contraband (40%), otherwise Fog (30%)
@@ -4780,14 +5470,23 @@
 				}
 			},
 			'travel_to_dogtooth': {
-				 isLogic: true,
+				isLogic: true,
 				resolve: (roll, state) => {
-					state.supplies -= 5;
+					// APPLY SEXTANT BONUS
+					let cost = 5;
+					if (state.inventory.includes("Gilded Sextant")) {
+						cost = Math.max(1, cost - 1); // Reduced cost
+						addToHistory("Passive (Gilded Sextant): Travel cost reduced.", 'system');
+					}
+
+					state.supplies -= cost; 
 					state.currentLocation = 'dogtooth';
 					
-					const rng = Math.random();
-					const hasContraband = window.gameFunctions.checkForContraband();
+					const rng = Math.random(); // Declared ONCE
+					if (rng < 0.15) return 'sea_flotsam_event';
+					if (rng < 0.25) return 'sea_scavenger_encounter';
 					
+					const hasContraband = window.gameFunctions.checkForContraband();
 					if (hasContraband && rng < 0.4) return 'sea_navy_encounter'; 
 					if (rng < 0.3) return 'sea_event_fog';
 					
@@ -4797,12 +5496,20 @@
 			'travel_to_spire': {
 				 isLogic: true,
 				resolve: (roll, state) => {
-					state.supplies -= 8;
+					let cost = 8;
+					if (state.inventory.includes("Gilded Sextant")) {
+						cost = Math.max(1, cost - 1); 
+						addToHistory("Passive (Gilded Sextant): Travel cost reduced.", 'system');
+					}
+					state.supplies -= cost;
 					state.currentLocation = 'spire';
 					
-					const rng = Math.random();
-					const hasContraband = window.gameFunctions.checkForContraband();
+					const rng = Math.random(); // Declared ONCE
+					if (rng < 0.15) return 'sea_flotsam_event';
+					if (rng < 0.25) return 'sea_scavenger_encounter';
+					if (rng > 0.90 && state.silasJoined) return 'sea_sanguine_tithe_event';
 					
+					const hasContraband = window.gameFunctions.checkForContraband();
 					if (hasContraband && rng < 0.4) return 'sea_navy_encounter'; 
 					if (rng < 0.3) return 'sea_event_fog';
 					
@@ -4836,35 +5543,36 @@
 
             // ACT 3: RANDOM ENCOUNTERS
             'sea_event_fog': {
-                title: "Ghost Fog",
-                text: "A bank of unnatural <span class='text-spectral'>Ghost Fog</span> rolls over the deck. The compass needle spins violently. If you press on, you risk striking a reef and losing supplies. Only the Light can guide you.",
+				title: "Ghost Fog",
+				text: "A bank of unnatural <span class='text-spectral'>Ghost Fog</span> rolls over the deck. The compass needle spins violently. The air turns freezing. If you press on blindly, you will strike a reef.",
 				banter: {
-                    'quinn': "That's a thick barrier. I think I can calculate the drift based on these old charts."
-                },
-                choices: [
-                    { 
-                        text: "Spectral Lantern: Cut a Path", 
-                        nextScene: 'sea_fog_success', 
-                        type: 'action', 
-                        reqItem: 'Spectral Lantern',
-                        customClass: 'btn-lantern-glow'
-                    },
-                    { 
-                        text: "Keen Senses Navigation", 
-                        nextScene: 'sea_fog_partial', 
-                        type: 'action', 
-                        reqItem: 'Ring of Brass',
-                        suppliesCost: 2,
-                        customClass: 'btn-keen-senses'
-                    },
-                    { text: "Recall Ancient Charts", nextScene: 'sea_fog_history_logic', type: 'skill', dc: 14, skill: 'History' },
+					'quinn': "The stars are gone, but I can calculate the drift based on the current speed! Hand me the sextant! (History/Charts)",
+					'gareth': "Put your back into the oars! We row through it! (Athletics)"
+				},
+				choices: [
+					{ 
+						text: "Use Spectral Lantern", 
+						nextScene: 'sea_fog_success', 
+						type: 'action', 
+						reqItem: 'Spectral Lantern',
+						customClass: 'btn-lantern-glow'
+					},
+					{ 
+						text: "Use Ring of Brass", 
+						nextScene: 'sea_fog_partial', 
+						type: 'action', 
+						reqItem: 'Ring of Brass',
+						suppliesCost: 2,
+						customClass: 'btn-keen-senses'
+					},
+					{ text: "Recall Ancient Charts", nextScene: 'sea_fog_history_logic', type: 'skill', dc: 14, skill: 'History' },
 					{ text: "Brute Force Through", nextScene: 'sea_fog_athletics_logic', type: 'skill', dc: 15, skill: 'Athletics' }
-                ]
-            },
+				]
+			},
 			// --- ROYAL NAVY INTERCEPT (Contraband Check) ---
 			'sea_navy_encounter': {
 				title: "Royal Navy Blockade",
-				text: "An iron-hulled Interceptor looms out of the fog, its cannons run out. A magewright amplifies the captain's voice: 'Heave to! We are scanning for illicit magical artifacts and biological hazards!'<br><br>They are looking for **Contraband**.",
+				text: "An iron-hulled Interceptor looms out of the fog, its cannons run out. A magewright amplifies the captain's voice: 'Heave to! We are scanning for illicit magical artifacts and biological hazards!'<br><br>They are looking for <span class='text-danger'>Contraband</span>.",
 				onEnter: (state) => {
 					const hasContraband = window.gameFunctions.checkForContraband();
 					if (hasContraband) return "WARNING: Contraband detected in hold.";
@@ -4875,7 +5583,6 @@
 						text: "Submit to Search",
 						nextScene: 'sea_navy_clean',
 						type: 'action',
-						// Disable if user HAS contraband
 						isDisabled: (gameState) => window.gameFunctions.checkForContraband() 
 					},
 					{
@@ -4888,7 +5595,6 @@
 						text: "Jettison Contraband",
 						nextScene: 'sea_navy_jettison',
 						type: 'action',
-						// Only show option if you actually have something to hide
 						isDisabled: (gameState) => !window.gameFunctions.checkForContraband()
 					},
 					{
@@ -4951,19 +5657,19 @@
                 resolve: (roll) => roll >= 14 ? 'sea_fog_success' : 'sea_fog_fail'
             },
             'sea_fog_success': {
-                title: "The True Course",
-                text: "The **Spectral Lantern** cuts a path through the mist, revealing safe waters that don't exist in the material world. You bypass the hazard flawlessly.",
-                choices: [{ text: "Continue Journey", nextScene: 'sea_map_hub', type: 'travel', doomCost: 0 }]
-            },
+				title: "The True Course",
+				text: "The <span class='text-item'>Spectral Lantern</span> cuts a path through the mist, revealing safe waters that don't exist in the material world. You bypass the hazard flawlessly.",
+				choices: [{ text: "Continue Journey", nextScene: 'sea_map_hub', type: 'travel', doomCost: 0 }]
+			},
             'sea_fog_partial': {
-                title: "Slow Going",
-                text: "The **Ring of Brass** amplifies the sound of waves against the hidden reefs, allowing you to proceed, but the delay costs precious resources.",
-                onEnter: (state) => {
-                    state.supplies = Math.max(0, state.supplies - 2);
-                    return "Navigated safely, but lost 2 Supplies.";
-                },
-                choices: [{ text: "Continue Journey", nextScene: 'sea_map_hub', type: 'travel', doomCost: 0 }]
-            },
+				title: "Slow Going",
+				text: "The <span class='text-item'>Ring of Brass</span> amplifies the sound of waves against the hidden reefs, allowing you to proceed, but the delay costs precious resources.",
+				onEnter: (state) => {
+					state.supplies = Math.max(0, state.supplies - 2);
+					return "Navigated safely, but lost 2 Supplies.";
+				},
+				choices: [{ text: "Continue Journey", nextScene: 'sea_map_hub', type: 'travel', doomCost: 0 }]
+			},
             'sea_fog_fail': {
                 title: "Shipwrecked",
                 text: "You strike an unseen reef. The hull groans, and your ship takes heavy damage.",
@@ -4978,60 +5684,72 @@
             
             // ACT 3: BLEAK DOGTOOTH (SILAS)
             'bleak_dogtooth': {
-                title: "The Bleak Dogtooth",
-                text: "This jagged, wind-whipped island is home to the <span class='text-danger' data-lore='Feral werewolves who have succumbed to savagery'>Lost Pack</span>. Once noble guardians, they are now broken things, patrolling the black rocks and snarling at the sea.<br><br>The <span class='text-item'>Ring of Brass</span> begins to throb against your finger. It is a slow, rhythmic heat—like a heartbeat calling out to its own kind. The signal pulls you away from the shore, toward the high cliffs.",
-                onEnter: (state) => {
-                    state.currentLocation = 'dogtooth';
-                    const overlay = document.getElementById('vignette-overlay');
-                    
-                    if (state.companions.silas.joined) {
-                        overlay.classList.remove('fx-heartbeat-slow', 'fx-heartbeat-fast');
-                        return "Silas is with you. The Lost Pack growls but backs away.";
-                    } else {
-                        overlay.classList.remove('fx-heartbeat-fast');
-                        overlay.classList.add('fx-heartbeat-slow');
-                        return "The Ring pulses. Someone is here.";
-                    }
-                },
-                banter: {
-                    'bones': "Look at the one on the rocks. That foam at the mouth isn't rage; it's sickness. The veins are black. Let me see what killed it.",
-                    'gareth': "They aren't soldiers; they're rabid dogs. Don't show fear. Stare them down. Make them remember who is at the top of the food chain."
-                },
-                choices: [
-                    { 
-                        text: "Follow the Ring's Pulse", 
-                        nextScene: 'dogtooth_cliff_wall', 
-                        type: 'travel', 
-                        reqItem: 'Ring of Brass',
-                        reqNotFlag: 'silasJoined',
-                        customClass: 'btn-pulse'
-                    },
-                    { 
-                        text: "Examine the Dead", 
-                        nextScene: 'dogtooth_lore_check', 
-                        type: 'skill', 
-                        dc: 14, 
-                        skill: 'Medicine',
-                        reqNotFlag: 'dogtoothExamined' // CHANGED: Added Flag Requirement
-                    },
-                    { 
-                        text: "Cow the Pack", 
-                        nextScene: 'dogtooth_intimidate_logic', 
-                        type: 'skill', 
-                        dc: 15, 
-                        skill: 'Intimidation',
-                        reqNotFlag: 'dogtoothIntimidated' // CHANGED: Added Flag Requirement
-                    },
+				title: "The Bleak Dogtooth",
+				text: "This jagged, wind-whipped island is home to the <span class='text-danger'>Lost Pack</span>. Once noble guardians, they are now broken things, patrolling the black rocks and snarling at the sea. Their fur is matted with black ichor.<br><br>The <span class='text-item'>Ring of Brass</span> begins to throb against your finger. It is a slow, rhythmic heat—like a heartbeat calling out to its own kind.",
+				onEnter: (state) => {
+					state.currentLocation = 'dogtooth';
+					const overlay = document.getElementById('vignette-overlay');
+					
+					if (state.companions.silas.joined) {
+						overlay.classList.remove('fx-heartbeat-slow', 'fx-heartbeat-fast');
+						return "Silas is with you. The Lost Pack growls but backs away.";
+					} else {
+						overlay.classList.remove('fx-heartbeat-fast');
+						overlay.classList.add('fx-heartbeat-slow');
+						return "The Ring pulses. Someone is here.";
+					}
+				},
+				banter: {
+					'bones': "Look at the one on the rocks. That foam isn't rage; it's sickness. The veins are black. Let me check the bodies. (Medicine Check)",
+					'gareth': "They aren't soldiers anymore; they're rabid dogs. Stand tall. Alpha to Alpha. (Intimidation Check)"
+				},
+				choices: [
+					{ 
+						text: "Follow the Ring's Pulse", 
+						nextScene: 'dogtooth_cliff_wall', 
+						type: 'travel', 
+						reqItem: 'Ring of Brass',
+						reqNotFlag: 'silasJoined',
+						customClass: 'btn-pulse'
+					},
+					{ 
+						text: "Examine the Dead", 
+						nextScene: 'dogtooth_lore_check', 
+						type: 'skill', 
+						dc: 14, 
+						skill: 'Medicine',
+						reqNotFlag: 'dogtoothExamined' 
+					},
+					{ 
+						text: "Cow the Pack", 
+						nextScene: 'dogtooth_intimidate_logic', 
+						type: 'skill', 
+						dc: 15, 
+						skill: 'Intimidation',
+						reqNotFlag: 'dogtoothIntimidated' 
+					},
+					{ 
+						text: "Investigate Smoke", 
+						nextScene: 'dogtooth_envoy', 
+						type: 'travel', 
+						reqNotFlag: 'envoyResolved' 
+					},
+					{
+						text: "Explore Sea Caves",
+						nextScene: 'dogtooth_lab_ruins',
+						type: 'travel',
+						reqNotFlag: 'labLooted',
+					},
 					{ text: "Return to Sea Map", nextScene: 'sea_map_hub', type: 'travel', doomCost: 0 }
 				]
-            },
+			},
             'dogtooth_intimidate_logic': {
                 isLogic: true,
                 resolve: (roll, state) => {
                      // Check Tricorn Bonus
                      if (state.inventory.includes("Captain's Tricorn")) {
                         roll += 1;
-                        addToHistory(`Passive Bonus (Tricorn): +1`, 'roll');
+                        addToHistory(`Passive Bonus (Captain's Tricorn): +1`, 'roll');
                      }
                      return roll >= 15 ? 'dogtooth_intimidate_success' : 'dogtooth_intimidate_fail';
                 }
@@ -5166,6 +5884,71 @@
                 },
                 choices: [{ text: "Return to Bleak Dogtooth", nextScene: 'bleak_dogtooth', type: 'travel', doomCost: 0 }]
             },
+			// 1. THE TURNED GUARD
+			'dogtooth_envoy': {
+				title: "The Turned Guard",
+				text: "You find a Royal Guard huddled against a rock, sweating <span class='text-void'>black ichor</span>. His jaw is distending, teeth lengthening.<br><br>'Please,' he wheezes. 'Don't let me turn. The Citadel burns the infected... I ran... but the Wolf is here.'<br><br>The Pack watches from the ridge.",
+				banter: {
+					'silas': "The change is agony, but power lies at the end. Let him turn.",
+					'gareth': "Give him a soldier's death."
+				},
+				choices: [
+					{ 
+						text: "Grant Mercy (Kill)", 
+						nextScene: 'envoy_mercy_kill', 
+						type: 'action', 
+						orderGain: 5 
+					},
+					{ 
+						text: "Let Him Turn", 
+						nextScene: 'envoy_turn', 
+						type: 'action', 
+						chaosGain: 5 
+					}
+				]
+			},
+			'envoy_mercy_kill': {
+				title: "A Clean End",
+				text: "You end his suffering. You collect his **Royal Signet Ring** to return to his family.",
+				onEnter: (state) => {
+					state.envoyResolved = true;
+					if (!state.inventory.includes("Royal Signet Ring")) state.inventory.push("Royal Signet Ring");
+					state.influence = Math.max(-50, state.influence - 5);
+					return "Mercy Kill. Found Signet Ring. Order +5.";
+				},
+				choices: [{ text: "Return to Shore", nextScene: 'bleak_dogtooth', type: 'travel' }]
+			},
+			'envoy_turn': {
+				title: "The New Pack",
+				text: "You step back. The guard screams as his bones snap and reshape. He rises, a wolf-thing, and bounds up the ridge to join his new kin.",
+				onEnter: (state) => {
+					state.envoyResolved = true;
+					state.influence = Math.min(50, state.influence + 5);
+					return "Allowed Transformation. Chaos +5.";
+				},
+				choices: [{ text: "Return to Shore", nextScene: 'bleak_dogtooth', type: 'travel' }]
+			},
+
+			// 2. THE RUINED LAB (New Exploration Node)
+			'dogtooth_lab_ruins': {
+				title: "The Vampire Laboratory",
+				text: "Hidden in a sea-cave, you find the remains of a laboratory. Cages line the walls—too small for men, too large for dogs. Broken glass crunches underfoot.<br><br>This is where they made the plague. Amidst the ruin, you see a pristine silver <span class='text-item'>Beast Whistle</span> and a syringe glowing with <span class='text-void'>Volatile Mutagen</span>.",
+				journal: "Found the lab where the Vampires engineered the Lycanthropy. Looted the prototypes.",
+				onEnter: (state) => {
+					state.labLooted = true;
+					let msg = "Looted Lab: ";
+					if (!state.inventory.includes("Beast Whistle")) {
+						state.inventory.push("Beast Whistle");
+						msg += "Beast Whistle. ";
+					}
+					if (!state.inventory.includes("Volatile Mutagen")) {
+						state.inventory.push("Volatile Mutagen");
+						msg += "Volatile Mutagen.";
+					}
+					return msg;
+				},
+				choices: [{ text: "Return to Shore", nextScene: 'bleak_dogtooth', type: 'travel' }]
+			},
 			
 			// --- ACT 3 FACTION HUBS ---
 
@@ -5174,6 +5957,9 @@
 				title: "The Iron Citadel",
 				text: "You dock at the Citadel. It was once a pristine fortress of grey stone, but now it looks... diseased. Patches of stark white, jagged reef are growing directly out of the masonry, choking the statues and sealing arrow slits.<br><br>The air is thick with soot. You see squads of soldiers with flamethrowers burning the walls, their faces wrapped in wet cloth. They aren't fighting an army; they are fighting the architecture itself.",
 				journal: "Docked at the Citadel. The fortress is being eaten alive. The stone is growing white tumors. The soldiers look exhausted.",
+				banter: {
+					'gareth': "Look at those walls. Discipline holding back the tide. This is how men survive, Edward."
+				},
 				onEnter: (state) => {
 					state.currentLocation = 'hub_order';
 					return "Docked at Iron Citadel (Order HQ).";
@@ -5192,6 +5978,20 @@
 						doomCost: 0 
 					},
 					{ 
+						text: "Investigate Barracks", 
+						nextScene: 'citadel_barracks_investigate', 
+						type: 'skill', 
+						dc: 13, 
+						skill: 'Investigation', 
+						reqNotFlag: 'traitorQuestActive' 
+					},
+					{ 
+						text: "Visit Quartermaster", 
+						nextScene: 'order_quartermaster', 
+						type: 'travel', 
+						doomCost: 0 
+					},
+					{ 
 						text: "Request Supplies", 
 						type: 'action', 
 						cost: 10,
@@ -5200,17 +6000,82 @@
 					{ text: "Return to Sea Map", nextScene: 'sea_map_hub', type: 'travel' }
 				]
 			},
+			'order_quartermaster': {
+				title: "Citadel Quartermaster",
+				text: "The Quartermaster stands behind a cage of reinforced steel. 'We have seized contraband and surplus ordnance. If you have the coin, I can release it for the war effort.'",
+				stock: {
+					"Holy Water": 2,
+					"Flash Powder": 2,
+					"Industrial Lubricant": 2,
+					"Supplies": 99
+				},
+				choices: [
+					{ 
+						text: "Buy Holy Water (12s)", 
+						type: 'action', 
+						cost: 12, 
+						stockItem: 'Holy Water',
+						action: (state) => { state.inventory.push("Holy Water"); return "Bought Holy Water."; },
+						nextScene: 'order_quartermaster'
+					},
+					{ 
+						text: "Buy Flash Powder (10s)", 
+						type: 'action', 
+						cost: 10, 
+						stockItem: 'Flash Powder',
+						action: (state) => { state.inventory.push("Flash Powder"); return "Bought Flash Powder."; },
+						nextScene: 'order_quartermaster'
+					},
+					{ 
+						text: "Buy 5 Supplies (10s)", 
+						type: 'action', 
+						cost: 10, 
+						action: (state) => { state.supplies += 5; return "Bought Supplies."; },
+						nextScene: 'order_quartermaster'
+					},
+					{ text: "Return to Citadel", nextScene: 'hub_order', type: 'travel', doomCost: 0 }
+				]
+			},
+			'citadel_barracks_investigate': {
+				isLogic: true,
+				resolve: (roll) => roll >= 13 ? 'barracks_clue_found' : 'barracks_clue_fail'
+			},
+			'barracks_clue_found': {
+				title: "The Sick Ledger",
+				text: "Quinn finds a discrepancy in the supply logs. A Quartermaster is smuggling maps out of the Citadel. But he isn't taking money—he's taking **Nutrient Slurry**.<br><br>The note reads: *'I have the patrol routes. Bring the dose to the Rib-Cage Tavern. The white veins are spreading to my face.'*",
+				journal: "Found a traitor's note. He's infected with Hyper-Coral and trading secrets for Rook's cure.",
+				onEnter: (state) => {
+					state.traitorQuestActive = true;
+					return "Quest Started: Ambush the Traitor at Titan's Molt.";
+				},
+				choices: [{ text: "Go to Titan's Molt", nextScene: 'hub_chaos', type: 'travel' }]
+			},
+			'barracks_clue_fail': {
+				title: "Dead End",
+				text: "You search the barracks but find only tired soldiers cleaning their gear. The traitor covers their tracks well.",
+				choices: [{ text: "Return to Hub", nextScene: 'hub_order', type: 'travel' }]
+			},
 
 			// 2. CHAOS HUB: THE TITAN'S MOLT
 			'hub_chaos': {
 				title: "The Titan's Molt",
 				text: "Your boots sink slightly as you step off the gangplank. This isn't rock. The floating island has a texture like cured leather, vast and pockmarked. The shantytown built upon it is carved from materials that look suspiciously like ribcages and teeth.<br><br>The air smells copper-sharp—like blood and ozone. Scavengers are everywhere, hacking into the ground beneath their feet with pickaxes, harvesting glowing, gelatinous chunks of the island itself.",
 				journal: "Docked at the 'Molt'. I'm walking on something's skin. The people here are mining the ground for meat and fuel. It's gruesome. It's survival.",
+				banter: {
+					'talon': "It smells like blood and opportunity here. No laws, no guards. Just the quick and the dead."
+				},
 				onEnter: (state) => {
 					state.currentLocation = 'hub_chaos';
 					return "Docked at Titan's Molt (Chaos HQ).";
 				},
 				choices: [
+				{ 
+						text: "Ambush the Traitor", 
+						nextScene: 'molt_traitor_confront', 
+						type: 'dialogue', 
+						reqFlag: 'traitorQuestActive', 
+						customClass: 'btn-pulse' 
+					},
 					{ 
 						text: "Follow Compass Signal", 
 						nextScene: 'chaos_fence_confrontation',
@@ -5226,6 +6091,12 @@
 						customClass: 'btn-pulse'
 					},
 					{ 
+						text: "Visit The Drift Market", 
+						nextScene: 'chaos_market', 
+						type: 'travel', 
+						doomCost: 0 
+					},
+					{ 
 						text: "Barter for Supplies", 
 						type: 'action', 
 						cost: 8, 
@@ -5234,13 +6105,186 @@
 					{ text: "Return to Sea Map", nextScene: 'sea_map_hub', type: 'travel' }
 				]
 			},
+			'chaos_market': {
+				title: "The Drift Market",
+				text: "Vendors hawk wares from blankets made of sailcloth. Here, you can buy what others throw away. A nervous doctor in a stained coat watches you from the shadows.",
+				stock: {
+					"Alchemical Fire": 2,
+					"Pearlescent Mushroom": 2, // Not contraband here!
+					"Mimic's Bile": 1,
+					"Volatile Mutagen": 1
+				},
+				choices: [
+					{ 
+						text: "Buy Alchemical Fire (12s)", 
+						type: 'action', 
+						cost: 12, 
+						stockItem: 'Alchemical Fire',
+						action: (state) => { state.inventory.push("Alchemical Fire"); return "Bought Alchemical Fire."; },
+						nextScene: 'chaos_market'
+					},
+					{ 
+						text: "Buy Pearlescent Mushroom (15s)", 
+						type: 'action', 
+						cost: 15, 
+						stockItem: 'Pearlescent Mushroom',
+						action: (state) => { state.inventory.push("Pearlescent Mushroom"); return "Bought Mushroom."; },
+						nextScene: 'chaos_market'
+					},
+					{ 
+						text: "Approach Nervous Doctor (Secret)", 
+						nextScene: 'chaos_secret_shop_check', 
+						type: 'skill', 
+						dc: 14, 
+						skill: 'Medicine',
+						reqNotFlag: 'knowsDoctorSecret',
+						customClass: 'btn-pulse'
+					},
+					{ 
+						text: "Buy Volatile Mutagen (20s)", 
+						type: 'action', 
+						cost: 20, 
+						stockItem: 'Volatile Mutagen',
+						reqFlag: 'knowsDoctorSecret',
+						action: (state) => { state.inventory.push("Volatile Mutagen"); return "Bought Mutagen."; },
+						nextScene: 'chaos_market',
+						customClass: 'btn-danger'
+					},
+					{ text: "Buy 5 Supplies (8s)", type: 'action', cost: 8, action: (state) => { state.supplies += 5; return "Bought Supplies."; }, nextScene: 'chaos_market' },
+					{ text: "Return to The Molt", nextScene: 'hub_chaos', type: 'travel', doomCost: 0 }
+				]
+			},
+			'chaos_secret_shop_check': {
+				isLogic: true,
+				resolve: (roll, state) => {
+					return roll >= 14 ? 'chaos_secret_success' : 'chaos_secret_fail';
+				}
+			},
+			'chaos_secret_success': {
+				title: "The Back Room",
+				text: "Bones notices the chemical stains on the man's hands. 'He's been working with the Vampire strains,' he whispers. You confront the doctor, and he reveals his hidden stock.",
+				onEnter: (state) => {
+					state.knowsDoctorSecret = true;
+					return "Unlocked Secret Shop: Volatile Mutagen available.";
+				},
+				choices: [{ text: "Access Secret Stock", nextScene: 'chaos_market', type: 'travel', doomCost: 0 }]
+			},
+			'chaos_secret_fail': {
+				title: "Paranoia",
+				text: "The doctor sees you watching and packs up his special wares. He refuses to speak to you.",
+				choices: [{ text: "Back to Market", nextScene: 'chaos_market', type: 'travel', doomCost: 0 }]
+			},
+			'molt_traitor_confront': {
+				title: "The Desperate Deal",
+				text: "You corner the Quartermaster in a dark corner of the Molt. He is shaking. He pulls down his collar to reveal <span class='text-danger'>white, calcified veins</span> climbing his neck.<br><br>'Please,' he begs, clutching a jar of Slurry. 'The Citadel burns the infected! This sludge is the only thing that stops the growth. I'm not a traitor; I'm just trying to stay human!'",
+				banter: {
+					'bones': "He's telling the truth. The Slurry halts the calcification. It's a treatment, not a cure.",
+					'gareth': "He sold out his post. Infection is no excuse for treason."
+				},
+				choices: [
+					{ 
+						text: "Execute Him (Order)", 
+						nextScene: 'traitor_execute', 
+						type: 'action', 
+						orderGain: 8,
+						action: (state) => {
+							state.traitorQuestActive = false;
+							state.influence = Math.max(-50, state.influence - 8);
+							return "Traitor executed. Secrets secured. Order +8.";
+						}
+					},
+					{ 
+						text: "Let Him Go (Chaos)", 
+						nextScene: 'traitor_mercy', 
+						type: 'action', 
+						chaosGain: 8,
+						action: (state) => {
+							state.traitorQuestActive = false;
+							state.influence = Math.min(50, state.influence + 8);
+							return "You let him keep the cure and the secrets. Chaos +8.";
+						}
+					},
+					{ 
+						text: "Blackmail (Neutral)", 
+						nextScene: 'traitor_blackmail', 
+						type: 'action', 
+						shillingGain: 20,
+						action: (state) => {
+							state.traitorQuestActive = false;
+							state.shillings += 20;
+							return "Took his bribe. +20 Shillings.";
+						}
+					}
+				]
+			},
+			'traitor_execute': {
+				title: "Duty First",
+				text: "You end it quickly. You take the maps back. The infection dies with him.",
+				choices: [{ text: "Return to Hub", nextScene: 'hub_chaos', type: 'travel' }]
+			},
+			'traitor_mercy': {
+				title: "Survival",
+				text: "You step aside. He vanishes into the crowd, clutching the Slurry like gold. The secrets of the Citadel are now in Smuggler hands.",
+				choices: [{ text: "Return to Hub", nextScene: 'hub_chaos', type: 'travel' }]
+			},
+			'traitor_blackmail': {
+				title: "The Cost of Silence",
+				text: "He empties his purse into your hands. You walk away, leaving him to his sickness and his treason.",
+				choices: [{ text: "Return to Hub", nextScene: 'hub_chaos', type: 'travel' }]
+			},
 			
-			// --- NEW SCENE: THE CALCIFICATION WARD (Body Horror) ---
+			'sea_scavenger_encounter': {
+				title: "The Deep Scavenger",
+				text: "A brass diving bell breaches the surface near your ship. The hatch opens, revealing a man whose skin is fused with barnacles and rust. He cannot leave the suit.<br><br>'The pressure...' he gasps. 'It holds me together. Do you seek the <span class='text-danger'>Feeding Grounds</span>? The Leviathan eats well tonight.'",
+				banter: {
+					'bones': "Look at his joints. The metal has grown into the bone. He isn't wearing that suit; he *is* the suit.",
+					'quinn': "That brass alloy... pre-Rift. He's been down there a long time."
+				},
+				onEnter: (state) => {
+					if (state.inventory.includes("Feeding Ground Map")) {
+						scenes['sea_scavenger_encounter'].text = "The diving bell breaches again. The man inside sees you and waves a rusted gauntlet. 'You have the map... why are you still here? Go before *It* wakes up.'";
+						scenes['sea_scavenger_encounter'].choices = [
+							{ text: "Sail On", nextScene: 'sea_map_hub', type: 'travel' }
+						];
+					}
+				},
+				choices: [
+					{ 
+						text: "Buy Map", // Removed "(15s)"
+						type: 'action', 
+						cost: 15,
+						action: (state) => {
+							if (!state.inventory.includes("Feeding Ground Map")) {
+								state.inventory.push("Feeding Ground Map");
+								// Note: Ensure 'feeding_ground_node' exists or this does nothing but add item
+								if (!state.knownIslands.includes('feeding_ground_node')) {
+									 state.knownIslands.push('feeding_ground_node');
+								}
+							}
+							state.shillings -= 15;
+							return "Purchased Feeding Ground Map.";
+						},
+						nextScene: 'sea_map_hub'
+					},
+					{ text: "Sail On", nextScene: 'sea_map_hub', type: 'travel' }
+				]
+			},
 			'order_petrified_ward': {
 				title: "The Calcification Ward",
-				text: "The infirmary is silent, save for the wet, tearing sound of rapid growth. Rows of soldiers lie in iron cots. They aren't wounded; they are *blooming*. White, jagged coral bursts from their shoulders and chests, fusing them to the bedframes.<br><br>The Surgeon wipes green slime from a bone-saw. 'We don't cure them,' he whispers, looking at you with dead eyes. 'We just prune the growth so they can hold a rifle for one more day.'",
+				text: "The infirmary is silent, save for the wet, tearing sound of rapid growth. Rows of soldiers lie in iron cots. They aren't wounded; they are *blooming*. White, jagged <span class='text-danger'>Hyper-Coral</span> bursts from their shoulders and chests, fusing them to the bedframes.<br><br>The Surgeon wipes green slime from a bone-saw. 'We don't cure them,' he whispers, looking at you with dead eyes. 'We just prune the growth so they can hold a rifle for one more day.'",
 				journal: "The Citadel's hospital. They are farming soldiers here. I can hear the coral growing inside them.",
+				banter: {
+					'bones': "The Surgeon is a butcher. Look at that boy in the corner—the coral hasn't hit the lymph nodes yet. If I excise the root *now*, I can save the limb and the life. (Medicine Check)"
+				},
 				choices: [
+					{ 
+						text: "Perform Surgical Excision", 
+						nextScene: 'ward_medicine_logic', 
+						type: 'skill', 
+						dc: 15, 
+						skill: 'Medicine',
+						orderGain: 4
+					},
 					{ 
 						text: "Donate Rum (Anesthetic)", 
 						nextScene: 'ward_donate_rum', 
@@ -5258,6 +6302,33 @@
 					{ text: "Leave the Ward", nextScene: 'hub_order', type: 'travel' }
 				]
 			},
+
+			// NEW LOGIC SCENES FOR BONES
+			'ward_medicine_logic': {
+				isLogic: true,
+				resolve: (roll) => roll >= 15 ? 'ward_medicine_success' : 'ward_medicine_fail'
+			},
+			'ward_medicine_success': {
+				title: "The Precision Cut",
+				text: "Bones guides your hand. You ignore the Surgeon's protests and cut deep, bypassing the hardened shell to find the pulsing, soft root of the parasite. With a wet *shluck*, you tear it free.<br><br>The soldier gasps, the white lines on his skin fading instantly. The Surgeon stares in awe. 'I... I didn't know that was possible.' He hands you a pouch of coin meant for supplies.",
+				journal: "Performed a life-saving surgery. Bones was right—it can be cut out.",
+				onEnter: (state) => {
+					state.shillings += 10;
+					audioManager.playCoins();
+					return "Surgery Successful. Earned 10 Shillings. Order +4.";
+				},
+				choices: [{ text: "Return to Ward", nextScene: 'order_petrified_ward', type: 'travel' }]
+			},
+			'ward_medicine_fail': {
+				title: "Too Deep",
+				text: "You try to cut the root, but the coral is harder than bone. The scalpel snaps. The soldier screams as the trauma accelerates the growth, instantly calcifying his arm. The Surgeon shoves you away. 'You've done enough damage, Mariner.'",
+				journal: "Botched the surgery. The soldier lost his arm.",
+				onEnter: (state) => {
+					state.influence = Math.min(50, state.influence + 2); // Failure causes Chaos/Loss of Order respect
+					return "Surgery Failed. Chaos +2.";
+				},
+				choices: [{ text: "Back away", nextScene: 'order_petrified_ward', type: 'travel' }]
+			},
 			'ward_donate_rum': {
 				title: "A Small Mercy",
 				text: "The surgeon nods gratefully, administering the spirits to a young guard whose legs have fused together. The soldier's breathing slows, the panic fading from his eyes.",
@@ -5269,17 +6340,17 @@
 			},
 			'ward_bloom_event': {
 				title: "The Rapid Bloom",
-				text: "You approach a young soldier. He looks at you, trying to speak, but a massive spike of white coral bursts through his jaw. His back arches, ribs snapping as the reef takes him completely. <br><br>The Surgeon screams, 'He's blooming! Hold him down!' The soldier—no longer a man, but a **Coral-Husk**—thrashes violently, razor-sharp barnacles erupting from his skin.",
+				text: "You approach a young soldier. He looks at you, trying to speak, but a massive spike of white coral bursts through his jaw. His back arches, ribs snapping as the reef takes him completely. <br><br>The Surgeon screams, 'He's blooming! Hold him down!' The soldier—no longer a man, but a <span class='text-danger'>Coral-Husk</span>—thrashes violently, razor-sharp barnacles erupting from his skin.",
 				journal: "I watched a man turn into a reef in seconds. The sound of his bones breaking will stay with me.",
 				choices: [
 					{ 
-						text: "End His Suffering)", 
+						text: "End His Suffering", 
 						nextScene: 'ward_bloom_combat', 
 						type: 'combat',
 						doomCost: 0
 					},
 					{ 
-						text: "Hold him down", 
+						text: "Hold Him Down", 
 						nextScene: 'ward_bloom_hold', 
 						type: 'skill', 
 						dc: 15, 
@@ -5324,7 +6395,7 @@
 
 			'order_quest_fence_start': {
 				title: "Contract: The Cold Furnace",
-				text: "The Commander leads you deep into the bowels of the fortress. You expect heat, but the Great Foundry is dark and freezing. The massive pistons hang silent.<br><br>'It's the cold that kills us first,' the Commander admits, his breath misting. 'The **Ember-Heart**. It was our sun. Rook stole it. Without that heat, we can't forge the plating to stop the white growth. We are three days from being sealed inside our own tomb. Find him.'",
+				text: "The Commander leads you deep into the bowels of the fortress. You expect heat, but the Great Foundry is dark and freezing. The massive pistons hang silent.<br><br>'It's the cold that kills us first,' the Commander admits, his breath misting. 'The <span class='text-item'>Ember-Heart</span>. It was our sun. Rook stole it. Without that heat, we can't forge the plating to stop the white growth. We are three days from being sealed inside our own tomb. Find him.'",
 				journal: "The Foundry is dead. Rook stole their power source. Without it, the Citadel freezes and the reef takes them.",
 				onEnter: (state) => {
 					state.fenceQuestActive = true;
@@ -5336,12 +6407,12 @@
 			},
 
 			'chaos_fence_confrontation': {
-				title: "Rook's Crucible",
-				text: "You follow the Compass to a hollowed-out chamber deep beneath the surface of the Molt. The heat here is suffocating. In the center, Rook stands before a jury-rigged machine of brass pipes and organic valves. The **Ember-Heart** pulses at its base, beating like a living thing.<br><br>Rook shovels chunks of the white reef-growth into the hopper. The machine groans and spits out a thick, glowing slurry. He offers you a spoonful. 'Don't look at me like that. It's ugly, but it's pure energy. The Citadel burns the Heart to make walls. I'm using it to turn the plague into food.'",
+				title: "Rook's Experiment",
+				text: "You follow the Compass to a hollowed-out chamber deep beneath the surface of the Molt. The heat here is suffocating. In the center, Rook stands before a jury-rigged machine of brass pipes and organic valves. The <span class='text-item'>Ember-Heart</span> pulses at its base, beating like a living thing.<br><br>Rook shovels chunks of the white reef-growth into the hopper. The machine groans and spits out a thick, glowing slurry. He offers you a spoonful. 'Don't look at me like that. It's ugly, but it's pure energy. The Citadel burns the Heart to make walls. I'm using it to turn the plague into food.'",
 				journal: "Found Rook. He's built a reactor. He's turning the infection into sustenance. It's disgusting, but... nobody here is starving.",
 				banter: {
-					'quinn': "He's right. The caloric value is immense. But... he controls the only furnace. He controls the price. This isn't freedom; it's a monopoly.",
-					'gareth': "He’s trading one set of chains for another! The Citadel makes weapons for survival; he's making food for tyranny."
+					'quinn': "Efficient. He's solved the supply crisis. But he controls the only tap.",
+					'gareth': "He's feeding them rot! It's unnatural. Burn it down, Edward."
 				},
 				choices: [
 					{ 
@@ -5357,7 +6428,7 @@
 						chaosGain: 15
 					},
 					{ 
-						text: "Demand 'Royalties'", 
+						text: "Demand Royalties", 
 						nextScene: 'fence_resolution_neutral', 
 						type: 'action',
 						shillingGain: 50
@@ -5366,13 +6437,13 @@
 			},
 			'fence_resolution_order': {
 				title: "The Furnace Roars",
-				text: "You kick the machine over. The slurry spills, hissing on the bone floor. You rip the **Ember-Heart** free, searing your gloves. Rook screams, 'You just starved us all! You chose stone over flesh!'<br><br>You leave him in the dark. Back at the Citadel, the Foundry roars to life. The pistons thunder, a rhythmic heartbeat of industry that shakes the very ocean. The walls will hold.",
+				text: "You kick the machine over. The slurry spills, hissing on the bone floor. You rip the <span class='text-item'>Ember-Heart</span> free, searing your gloves. Rook screams, 'You just starved us all! You chose stone over flesh!'<br><br>You leave him in the dark. Back at the Citadel, the Foundry roars to life. The pistons thunder, a rhythmic heartbeat of industry that shakes the very ocean. The walls will hold.",
 				journal: "I took the Heart back. The Citadel stands. Rook's people will hunger, but the defense holds.",
 				onEnter: (state) => {
 					if (!state.inventory.includes("Ember-Heart")) state.inventory.push("Ember-Heart");
 					state.fenceQuestActive = false;
 					state.influence = Math.max(-50, state.influence - 15);
-					return "Quest Complete. Order +15. Acquired Ember-Heart.";
+					return "Quest Complete. Order +15.";
 				},
 				choices: [{ text: "Return to Iron Citadel", nextScene: 'hub_order', type: 'travel' }]
 			},
@@ -5405,7 +6476,7 @@
 
 			'order_quest_start': {
 				title: "Quest: Defense of the Citadel",
-				text: "The Commander points to a breached sector. 'The Hyper-Coral has birthed a monstrosity inside our armory. A <span class='text-danger'>Coral-Hulk</span>. It heals faster than we can kill it. Hold the line, Mariner, and the Mirror Shield is yours.' [cite: 23, 24, 46]",
+				text: "The Commander points to a breached sector. 'The Hyper-Coral has birthed a monstrosity inside our armory. A <span class='text-danger'>Coral-Hulk</span>. It heals faster than we can kill it. Hold the line, Mariner, and the Mirror Shield is yours.'",
 				choices: [
 					{ text: "Enter the Breach (Boss Fight)", nextScene: 'coral_hulk_intro', type: 'travel' }
 				]
@@ -5413,20 +6484,19 @@
 
 			'chaos_quest_start': {
 				title: "Quest: The Citadel Heist",
-				text: "Your contact grins. 'The Order is busy burning coral. Perfect time to slip into their armory. There's a <span class='text-item'>Scale-Stake Driver</span> prototype in there. Only problem? A massive <span class='text-danger'>Coral-Hulk</span> has claimed the room. Kill it, grab the loot, get out.' [cite: 30, 31, 32]",
+				text: "Your contact grins. 'The Order is busy burning coral. Perfect time to slip into their armory. There's a <span class='text-item'>Scale-Stake Driver</span> prototype in there. Only problem? A massive <span class='text-danger'>Coral-Hulk</span> has claimed the room. Kill it, grab the loot, get out.'",
 				choices: [
 					{ text: "Breach the Armory (Boss Fight)", nextScene: 'coral_hulk_intro', type: 'travel' }
 				]
 			},
 
-			// --- BOSS: THE CORAL HULK [cite: 36, 37] ---
+			// --- BOSS: THE CORAL HULK ---
 
 			'coral_hulk_intro': {
 				title: "The Coral-Hulk",
 				text: "You step into the corrupted chamber. A Royal Guard Dreadnought—massive steam armor—stands there, but it is fused with white coral. The organic matter pulses, knitting metal back together. It roars, a wet, grinding sound.",
 				isBoss: true,
 				onEnter: (state) => {
-					// [cite: 40, 41]
 					initCombat("Coral-Hulk", 80, [6, 12]); 
 					return "Combat Started! The enemy regenerates 5 HP per round.";
 				},
@@ -5437,7 +6507,7 @@
 
 			'coral_hulk_combat': {
 				title: "Battle: Coral-Hulk",
-				text: "The Hulk swings a massive, coral-encrusted fist. At the end of every moment, you see its wounds closing. You must out-damage its regeneration! [cite: 43]",
+				text: "The Hulk swings a massive, coral-encrusted fist. At the end of every moment, you see its wounds closing. You must out-damage its regeneration!",
 				isBoss: true,
 				choices: [
 					// Standard Attacks
@@ -5454,12 +6524,42 @@
 						type: 'action', 
 						reqNotItem: 'Sword of Valor'
 					},
-					// NEW: Mirror Shield Mechanic (Only if Order aligned/owned, mostly for testing, but let's assume unlocking)
-					// Note: You don't have the item yet, so we use standard items.
+
+					// C. ALLY COMMANDS (Only available if joined)
+					{
+						text: "Command Silas (Intercept)",
+						type: 'action',
+						reqFlag: 'silasJoined',
+						action: () => window.allyCommand('silas'),
+						doomCost: 0
+					},
+					{
+						text: "Command Blink (Phase Shift)",
+						type: 'action',
+						reqFlag: 'hasBlinkSkill',
+						action: () => window.allyCommand('blink'),
+						doomCost: 0
+					},
 					
+					// D. ITEM ACTIONS (Mirror Shield Reflect)
 					{ 
-						text: "Throw Alchemical Fire (Stop Regen?)", 
-						// Fire deals high damage, effectively countering regen
+						text: "Mirror Shield (Reflect Stance)", 
+						action: () => window.resolveCombatRound('reflect_stance'),
+						type: 'action', 
+						reqItem: 'Mirror Shield',
+						customClass: 'btn-success-glow'
+					},
+					{ 
+						text: "Scale-Stake Driver (Stun)", 
+						action: () => window.resolveCombatRound('item_stake_driver'),
+						type: 'action', 
+						reqItem: 'Scale-Stake Driver',
+						customClass: 'btn-fire-glow'
+					},
+					
+					// E. CONSUMABLES (Strategic Nuke Buttons)
+					{ 
+						text: "Throw Alchemical Fire", 
 						action: () => window.resolveCombatRound('item_fire'),
 						type: 'action', 
 						reqItem: 'Alchemical Fire',
@@ -5486,7 +6586,7 @@
 					// Determine Reward based on Faction
 					if (state.factionAligned === 'order') {
 						if (!state.inventory.includes("Mirror Shield")) state.inventory.push("Mirror Shield");
-						return "Victory! Reward: Mirror Shield.";
+						return "Victory! Reward: Mirror Shield. Defense +1.";
 					} else {
 						if (!state.inventory.includes("Scale-Stake Driver")) state.inventory.push("Scale-Stake Driver");
 						return "Victory! Reward: Scale-Stake Driver.";
@@ -5503,124 +6603,130 @@
 					}
 				]
 			},
-
-            // ACT 3: SANGUINE SPIRE (FINALE)
             'sanguine_spire_entry': {
-                title: "The Sanguine Spire",
-                text: "The sheer stone spire rises out of the ocean. It is capped by a gothic cathedral, pulsing with a deep, red light. This is the seat of the <span class='text-danger'>Sanguine Court</span>.",
-                onEnter: (state) => {
-                    state.currentLocation = 'spire';
-                    return "The Spire is heavily defended. Brace for combat.";
-                },
+				title: "The Sanguine Spire",
+				text: "The sheer stone spire rises out of the ocean like a dagger. It is capped by a gothic cathedral, pulsing with a deep, red light. This is the seat of the <span class='text-blood'>Sanguine Court</span>.<br><br>The waves crashing against the base are thick with blood.",
+				onEnter: (state) => {
+					state.currentLocation = 'spire';
+					return "The Spire is heavily defended. Brace for combat.";
+				},
 				banter: {
-                    'talon': "I see movement on the parapets. They aren't hiding. They know we're here. Check your weapons.",
-                    'gareth': "Then let them look. We didn't come this far to sneak in the back door."
-                },
-                choices: [
-                    { text: "Confront the Court", nextScene: 'sanguine_spire_combat', type: 'combat', doomCost: 0 },
-                    { text: "Return to Sea Map", nextScene: 'sea_map_hub', type: 'travel', doomCost: 0 }
-                ]
-            },
-			// ENDGAME: SANGUINE SPIRE
-            // --- FINALE: SANGUINE SPIRE COMBAT ---
-            
-            // 1. INITIALIZE COMBAT
+					'talon': "I see movement on the parapets. Snipers. Keep your heads down.",
+					'gareth': "Let them look. We didn't come this far to sneak in the back door. Draw steel."
+				},
+				choices: [
+					{ text: "Confront the Court", nextScene: 'sanguine_spire_combat', type: 'combat', doomCost: 0 },
+					{ text: "Return to Sea Map", nextScene: 'sea_map_hub', type: 'travel', doomCost: 0 }
+				]
+			},
             'sanguine_spire_combat': {
-                title: "The Sanguine Court",
-                text: "You enter the cathedral. Three <span class='text-danger'>Vampire Elders</span> descend from the vaulted ceiling. They move with blurring speed, their claws dripping with ancient rot.<br><br>The <span class='text-item'>Sword of Valor</span> hums violently in your hand—it knows this blood. Silas steps forward, shield raised. Blink growls, phasing in and out. This is the end.",
-                journal: "Confronted the Vampire Elders. The final battle.",
-                isBoss: true,
-                onEnter: (state) => {
-                    // Boss Name, HP, Damage Range
-                    initCombat("Vampire Elders", 100, [8, 14]); 
-                    return "Combat Started! The Elders attack.";
-                },
-                choices: [
-                    { text: "Draw Weapons", nextScene: 'spire_combat_loop', type: 'travel', doomCost: 0 }
-                ]
-            },
+				title: "The Sanguine Court",
+				text: "You enter the cathedral. Three <span class='text-danger'>Vampire Elders</span> descend from the vaulted ceiling. They move with blurring speed, their claws dripping with ancient rot.<br><br>The <span class='text-item'>Sword of Valor</span> hums violently in your hand—it knows this blood. Silas steps forward, shield raised. Blink growls, phasing in and out. This is the end.",
+				journal: "Confronted the Vampire Elders. The final battle.",
+				isBoss: true,
+				onEnter: (state) => {
+					// Boss Name, HP, Damage Range, Count
+					initHordeCombat("Vampire Elder", 35, [4, 7], 3); // Reduced per-target damage
+					return "Combat Started! Three Elders attack per round.";
+				},
+				choices: [
+					{ text: "Engage the Horde", nextScene: 'spire_combat_loop', type: 'travel', doomCost: 0 }
+				]
+			},
 
-            // 2. THE COMBAT LOOP
-            'spire_combat_loop': {
-                title: "Battle: Vampire Elders",
-                text: "The Elders circle you. They are fast, dealing heavy damage every round. Use your artifacts and allies to survive.",
-                isBoss: true,
-                choices: [
-                    // A. ATTACKS
-                    { 
-                        text: "Strike with Sword of Valor", 
-                        action: () => window.resolveCombatRound('valor_strike'),
-                        type: 'action', 
-                        reqItem: 'Sword of Valor',
-                        customClass: 'btn-hero' // Visual flair
-                    },
-                    { 
-                        text: "Desperate Strike (Cutlass)", 
-                        action: () => window.resolveCombatRound('heavy_strike'),
-                        type: 'action', 
-                        reqNotItem: 'Sword of Valor' // Fallback
-                    },
+            // 2. THE HORDE COMBAT LOOP
+			'spire_combat_loop': {
+				title: "Battle: Vampire Elders",
+				text: "",
+				isBoss: true,
+				choices: [], // This array will be filled by onEnter/renderChoices
+				
+				onEnter: (state) => {
+					// --- 1. SET DYNAMIC TEXT ---
+					if (state.activeEnemies.length === 1) {
+						scenes['spire_combat_loop'].text = `Only the last Elder remains! The veil is torn open—enter the Ethereal Plane to strike them with <span class='text-spectral'>Force Damage</span>.`;
+					} else if (state.activeEnemies.length > 1) {
+						scenes['spire_combat_loop'].text = `Two Elders remain! They phase in and out, gaining <span class='text-danger'>30% Evasion</span>. Use Blink or Plane Walk to guarantee strikes.`;
+					} else {
+						scenes['spire_combat_loop'].text = `Three Elders remain!`;
+					}
+					
+					// --- 2. BUILD CHOICES (Horde-specific generation) ---
+					let dynamicChoices = [];
+					
+					// A. ATTACKS (Target-Specific buttons for living Elders)
+					state.activeEnemies.forEach(elderName => {
+						// Valor Strike (If Sword of Valor is present)
+						if (state.inventory.includes('Sword of Valor')) {
+							dynamicChoices.push({
+								text: `Valor Strike (${elderName})`,
+								action: () => window.resolveHordeRound('valor_strike', elderName),
+								type: 'action',
+								customClass: 'btn-hero'
+							});
+						} else {
+							// Heavy Strike (Fallback)
+							dynamicChoices.push({
+								text: `Heavy Strike (${elderName})`,
+								action: () => window.resolveHordeRound('heavy_strike', elderName),
+								type: 'action'
+							});
+						}
+					});
+					
+					// B. ALLY COMMANDS (No target needed)
+					if (state.companions.silas.joined) dynamicChoices.push({ text: "Command Silas (Intercept)", type: 'action', action: () => window.allyCommand('silas'), doomCost: 0 });
+					if (state.companions.blink.joined) dynamicChoices.push({ text: "Command Blink (Phase Shift)", type: 'action', action: () => window.allyCommand('blink'), doomCost: 0 });
+					
+					// C. AOE/ITEM ACTIONS (No target needed - Damage applies to all)
+					if (state.inventory.includes('Holy Water')) dynamicChoices.push({ text: "Throw Holy Water (AOE)", action: () => window.resolveHordeRound('item_holy_water', 'none'), type: 'action', reqItem: 'Holy Water', consume: true, customClass: 'btn-success-glow' });
+					if (state.inventory.includes('Alchemical Fire')) dynamicChoices.push({ text: "Throw Alchemical Fire (AOE)", action: () => window.resolveHordeRound('item_fire', 'none'), type: 'action', reqItem: 'Alchemical Fire', consume: true, customClass: 'btn-fire-glow' });
+					if (state.inventory.includes('Sun-Star Grenade')) dynamicChoices.push({ text: "Throw Sun-Star (AOE Stun)", action: () => window.resolveHordeRound('item_sun_star', 'none'), type: 'action', reqItem: 'Sun-Star Grenade', consume: true, customClass: 'btn-fire-glow' });
 
-                    // B. CONSUMABLES (Strategic Nuke Buttons)
-                    { 
-                        text: "Throw Holy Water (Massive Dmg)", 
-                        action: () => window.resolveCombatRound('item_holy_water'),
-                        type: 'action', 
-                        reqItem: 'Holy Water',
-                        consume: true,
-                        customClass: 'btn-success-glow'
-                    },
-                    { 
-                        text: "Throw Alchemical Fire (High Dmg)", 
-                        action: () => window.resolveCombatRound('item_fire'),
-                        type: 'action', 
-                        reqItem: 'Alchemical Fire',
-                        consume: true,
-                        customClass: 'btn-fire-glow'
-                    },
-                    { 
-                        text: "Throw Flash Powder (Skip Enemy Turn)", 
-                        action: () => window.resolveCombatRound('item_flash'),
-                        type: 'action', 
-                        reqItem: 'Flash Powder',
-                        consume: true
-                    },
+					// D. STUN/CC (No target needed)
+					if (state.inventory.includes('Flash Powder')) dynamicChoices.push({ text: "Throw Flash Powder (Stun/Skip)", action: () => window.resolveHordeRound('item_flash', 'none'), type: 'action', reqItem: 'Flash Powder', consume: true });
+					if (state.inventory.includes('Scale-Stake Driver')) dynamicChoices.push({ text: "Fire Stake Driver (Stun)", action: () => window.resolveHordeRound('item_stake_driver', 'none'), type: 'action', reqItem: 'Scale-Stake Driver', customClass: 'btn-fire-glow' });
 
-                    // C. HEALING
-                    { 
-                        text: "Drink Healing Potion", 
-                        type: 'action',
-                        reqItem: 'Healing Potion',
-                        consume: true,
-                        action: (state) => {
-                            state.currentHP = Math.min(state.maxHP, state.currentHP + 15); // Better heal for finale
-                            addToHistory("Drank potion. Healed 15 HP.", 'combat');
-                            window.resolveCombatRound('none'); // Trigger enemy turn
-                        } 
-                    },
-                    { 
-                        text: "Drink Vitality Tincture", 
-                        type: 'action',
-                        reqItem: 'Vitality Tincture',
-                        consume: true,
-                        action: (state) => {
-                            state.currentHP = Math.min(state.maxHP, state.currentHP + 20); 
-                            addToHistory("Drank Tincture. Healed 20 HP.", 'combat');
-                            window.resolveCombatRound('none'); // Trigger enemy turn
-                        } 
-                    }
-                ]
-            },
+
+					// E. HEALING (Resolves enemy attack)
+					if (state.inventory.includes('Vitality Tincture')) {
+						dynamicChoices.push({ 
+							text: "Drink Vitality Tincture (Heal)", 
+							type: 'action',
+							reqItem: 'Vitality Tincture',
+							consume: true,
+							action: (state) => {
+								state.currentHP = Math.min(state.maxHP, state.currentHP + 15); 
+								addToHistory("Drank Tincture. Healed 15 HP.", 'combat');
+								window.resolveHordeRound('none', 'none'); // Trigger enemy turn
+							} 
+						});
+					}
+					
+					// F. PLANAR TOGGLE (No combat action, no enemy retaliation)
+					dynamicChoices.push({
+						 text: `Toggle Ethereal Plane (Now: ${state.isEthereal ? 'Ethereal' : 'Material'})`,
+						 type: 'action',
+						 action: () => window.gameFunctions.togglePlaneWalk(),
+						 customClass: 'btn-planewalk-reveal',
+						 doomCost: 0
+					});
+
+					scenes['spire_combat_loop'].choices = dynamicChoices;
+
+					return "Combat Round Rendered.";
+				}
+			},
 
             // 3. VICTORY
             'spire_victory': {
-                title: "The Sun Rises",
-                text: "The last Elder shrieks as the **Sword of Valor** pierces its heart. It crumbles into dust, followed by the others. Silence falls over the cathedral.<br><br>Through the broken stained glass, the first ray of dawn touches the ocean. The Curse is broken. The fog lifts.",
-                journal: "Defeated the Vampire Elders. The curse is broken.",
-                choices: [
-                    { text: "The End (Return to Menu)", type: 'reset', customClass: 'btn-hero' }
-                ]
-            },
+				title: "The Sun Rises",
+				text: "The last Elder shrieks as the <span class='text-item'>Sword of Valor</span> pierces its heart. It crumbles into dust, followed by the others. Silence falls over the cathedral.<br><br>Through the broken stained glass, the first ray of dawn touches the ocean. The Curse is broken. The fog lifts.",
+				journal: "Defeated the Vampire Elders. The curse is broken.",
+				choices: [
+					{ text: "The End (Return to Menu)", type: 'reset', customClass: 'btn-hero' }
+				]
+			},
 
             // ACT 3: SAFE MANOR LAYER
             'wolf_estate_safe': {
@@ -5667,47 +6773,114 @@
 
             'manor_library_safe': {
 				title: "The Warden's Library",
-				text: "The books have settled on their shelves. The knowledge here is ancient, but the room is dormant.",
+				text: "Quinn has occupied the central desk. He is surrounded by floating tomes, cross-referencing the ship's logs with ancient star charts. 'The patterns are clearer here, Captain. The flow of history is... liquid.'",
+				banter: {
+					'quinn': "If you bring me data—Lore Fragments, old maps—I can compile a Codex for you. But I need time."
+				},
 				choices: [
+					{ 
+						text: "Research with Quinn", 
+						nextScene: 'library_research_logic',
+						type: 'skill',
+						skill: 'History',
+						dc: 14,
+						reqNotItem: 'Codex of Tides',
+						reqNotFlag: 'quinnResearched'
+					},
 					{ 
 						text: "Recover Blueprint", 
 						type: 'action', 
 						reqNotItem: 'Manor Blueprint',
 						action: (state) => {
 							state.inventory.push("Manor Blueprint");
-							return "Found the Manor Blueprint on a dusty table.";
+							return "Found the Manor Blueprint.";
 						}
 					},
-					{ text: "Check Crawlspace (Vents)", nextScene: 'manor_crawlspace_safe', type: 'travel', doomCost: 0 },
+					{ text: "Check Crawlspace (Talon)", nextScene: 'manor_crawlspace_safe', type: 'travel', doomCost: 0 },
 					{ text: "Return to Foyer", nextScene: 'manor_foyer_safe', type: 'travel', doomCost: 0 }
 				]
 			},
+			'library_research_logic': {
+				isLogic: true,
+				resolve: (roll, state) => {
+					state.quinnResearched = true; // Limits to once per Long Rest
+					return roll >= 14 ? 'library_research_success' : 'library_research_fail';
+				}
+			},
+			'library_research_success': {
+				title: "The Codex of Tides",
+				text: "Quinn's eyes light up. 'Yes! The intersection of the Void and the Salt... here, take this.' He hands you a bound volume of notes.",
+				onEnter: (state) => {
+					state.inventory.push("Codex of Tides");
+					return "Acquired: Codex of Tides (+History/Investigation Buff).";
+				},
+				choices: [{ text: "Back to Library", nextScene: 'manor_library_safe', type: 'travel' }]
+			},
+			'library_research_fail': {
+				title: "Dead End",
+				text: "Quinn sighs, frustrated. 'The data is contradictory. I need more time.'",
+				choices: [{ text: "Back to Library", nextScene: 'manor_library_safe', type: 'travel' }]
+			},
 
 			'manor_crawlspace_safe': {
-				title: "The Service Crawlspace",
-				text: "The tight tunnels are empty of rats.",
-				onEnter: (state) => {
-					if (!state.companions.blink.joined) {
-						return "You hear a weak mewling. The Displacer Cub is still here, hiding in the dark.";
-					}
-					return null;
-				},
+				title: "The Rat's Nest",
+				text: "Talon has made a home in the ventilation network. It is dark, tight, and smells of oil. He is dismantling a clockwork mechanism. 'The walls are full of treasure, Edward. You just have to know where to pry.'",
 				choices: [
 					{ 
-						text: "Rescue the Displacer Cub", 
+						text: "Scavenge the Walls", 
+						nextScene: 'talon_scavenge_logic', 
+						type: 'action', 
+						reqNotFlag: 'talonScavenged', // Reset this on Long Rest
+						customClass: 'btn-keen-senses'
+					},
+					{ 
+						text: "Rescue/Visit Blink", 
 						type: 'action', 
 						reqNotFlag: 'hasBlinkSkill',
 						action: (state) => {
 							state.companions.blink.joined = true;
 							state.hasBlinkSkill = true;
-							setTimeout(updateUI, 100); 
-							return "You feed the starving cub. It bonds with you immediately. Companion Gained: Blink.";
+							return "Companion Gained: Blink.";
 						},
 						customClass: 'spectral-active'
 					},
 					{ text: "Crawl to Library", nextScene: 'manor_library_safe', type: 'travel', doomCost: 0 },
 					{ text: "Crawl to Kitchens", nextScene: 'manor_kitchens_safe', type: 'travel', doomCost: 0 }
 				]
+			},
+			'talon_scavenge_logic': {
+				isLogic: true,
+				resolve: (roll, state) => {
+					state.talonScavenged = true;
+					const rng = Math.random();
+					
+					if (rng > 0.8) {
+						state.inventory.push("Strange Coin");
+						return 'talon_scavenge_rare';
+					} else if (rng > 0.4) {
+						state.inventory.push("Brass Gears");
+						return 'talon_scavenge_gears';
+					} else {
+						state.supplies += 2;
+						return 'talon_scavenge_food';
+					}
+				}
+			},
+			'talon_scavenge_gears': {
+				title: "Scrap Harvest",
+				text: "Talon tosses you a bag of heavy <span class='text-item'>Brass Gears</span>. 'Citadel Quartermaster pays well for these. Or Bones can melt them down.'",
+				choices: [{ text: "Back to Crawlspace", nextScene: 'manor_crawlspace_safe', type: 'travel' }]
+			},
+			'talon_scavenge_rare': {
+				title: "A Glimmer in the Dark",
+				text: "Talon holds up a <span class='text-item'>Strange Coin</span>. 'Old currency. Someone hid it well.'",
+				choices: [{ text: "Back to Crawlspace", nextScene: 'manor_crawlspace_safe', type: 'travel' }]
+			},
+			'talon_scavenge_food': {
+				title: "Rat Rations",
+				text: "Talon hands you some dried meat. Best not to ask where it came from.",
+				onEnter: (state) => "Gained +2 Supplies.",
+				choices: [{ text: "Back to Crawlspace", nextScene: 'manor_crawlspace_safe', type: 'travel' }]
 			},
 
             'manor_hall_safe': {
@@ -5745,20 +6918,133 @@
 			},
 			
             'act3_long_rest': {
-                title: "A Deep Respite",
-                text: "You collapse into a spectral hammock. The crew murmurs softly. Your strength is restored.",
-                journal: "Restored strength at the Wolf King's Estate.",
-                isRest: true,
-                onEnter: (state) => {
-                    if (state.currentHP < state.maxHP) {
-                        state.currentHP = state.maxHP;
-                    }
-                    Object.keys(state.crew).forEach(k => state.crew[k].used = false);
-                    state.docksWorkCount = 0;
-                    return "HP, Crew Use, and Exhaustion Restored.";
-                },
-                choices: [{ text: "Awaken", nextScene: 'wolf_estate_safe', type: 'travel', doomCost: 0 }]
-            },
+				title: "A Deep Respite",
+				text: "You collapse into a spectral hammock. The Manor resets itself around you. Talon returns from the walls, and Quinn organizes his fresh notes.",
+				isRest: true,
+				onEnter: (state) => {
+					state.currentHP = state.maxHP;
+					Object.keys(state.crew).forEach(k => k.used = false);
+					
+					// RESET DAILY FLAGS
+					state.talonScavenged = false;
+					state.quinnResearched = false;
+					
+					return "HP Restored. Crew Rested. Manor Activities Reset.";
+				},
+				choices: [{ text: "Awaken", nextScene: 'wolf_estate_safe', type: 'travel', doomCost: 0 }]
+			},
+			'sea_sanguine_tithe_event': {
+				title: "The Sanguine Tithe",
+				text: "A sleek black schooner flies the flag of the Sanguine Court. It intercepts a Citadel transport ship. The Vampires aren't attacking; they are boarding peacefully. <br><br>Through your spyglass, you see Citadel officers handing over chained prisoners to the vampires. A transaction. 'A tithe,' Silas whispers, disgusted. 'Lives for a ceasefire.'",
+				banter: {
+					'silas': "This is the rot at the heart of the Order. We cannot let them take those people.",
+					'quinn': "Interfering breaks the truce. The Citadel will fire on us too."
+				},
+				choices: [
+					{ 
+						text: "Unleash Silas (Vengeance)", 
+						nextScene: 'silas_reckoning_logic', 
+						type: 'dialogue',
+						reqFlag: 'silasJoined',
+						customClass: 'btn-fire-glow'
+					},
+					{ 
+						text: "Intervene (Naval Combat)", 
+						nextScene: 'tithe_combat', 
+						type: 'combat',
+						orderGain: 5, // Order respects strength/saving lives, even if command hates it
+						chaosGain: 5  // Breaking the law/truce
+					},
+					{ 
+						text: "Exploit Distraction (Loot)", 
+						nextScene: 'tithe_loot', 
+						type: 'skill', 
+						dc: 14, 
+						skill: 'Perception',
+						chaosGain: 2
+					},
+					{ text: "Sail Past", nextScene: 'sea_map_hub', type: 'travel', doomCost: 0 }
+				]
+			},
+			
+			// --- SILAS RECKONING ARC ---
+			'silas_reckoning_logic': {
+				title: "Silas's Reckoning",
+				text: "Silas snarls, his eyes fixed on the Priest. 'That is a Tithe Priest, Captain. The vermin who administered the Blood Tithe to my King. They do not get to live in my sight.'",
+				choices: [
+					{ 
+						text: "Provide Tactical Cover (Use Beast Whistle)", 
+						nextScene: 'silas_reckoning_success', 
+						type: 'action', 
+						reqItem: 'Beast Whistle',
+						consume: true,
+						customClass: 'btn-keen-senses'
+					},
+					{ 
+						text: "Provide Raw Cover (Engage Combat)", 
+						nextScene: 'silas_reckoning_combat', 
+						type: 'combat', 
+						doomCost: 0
+					},
+					{ text: "Hold Silas Back", nextScene: 'sea_map_hub', type: 'travel', doomCost: 0 }
+				]
+			},
+			
+			'silas_reckoning_success': {
+				title: "The Assassin's Strike (Flawless)",
+				text: "You sound the **Beast Whistle**. The nearby werewolf thralls snap to attention, abandoning their posts. Silas uses the split second to leap the gap, driving his knife through the priest's throat. It is a clean, precise act of vengeance.",
+				journal: "Silas's vengeance achieved! He gains permanent skill bonus against Vampires.",
+				onEnter: (state) => {
+					state.silasVengeanceActive = true; 
+					state.influence = Math.max(-50, state.influence - 5); // Order likes the death of a vampire priest
+					return "Silas's Vengeance: Intercept Cooldown is reduced vs. Vampires. Order +5.";
+				},
+				choices: [{ text: "Sail On", nextScene: 'sea_map_hub', type: 'travel' }]
+			},
+			
+			'silas_reckoning_combat': {
+				title: "Vengeance by Blood (Costly)",
+				text: "Silas screams and leaps across the gap. You draw steel and leap after him. The Priest and one thrall fight back, but Silas is a whirlwind of disciplined fury. He slays them both, taking a hit but refusing to fall.",
+				journal: "Silas achieved vengeance, but took damage.",
+				onEnter: (state) => {
+					state.currentHP = applyDamage(state.currentHP, 3); // Guaranteed, low damage
+					fxManager.flashRed();
+					state.silasVengeanceActive = true; 
+					state.influence = Math.min(50, state.influence + 2); // Chaos likes the unsanctioned violence
+					return "Silas's Vengeance: Took 3 DMG. Intercept Cooldown reduced vs. Vampires. Chaos +2.";
+				},
+				choices: [{ text: "Sail On", nextScene: 'sea_map_hub', type: 'travel' }]
+			},
+			
+			// --- END SILAS RECKONING ARC ---
+			
+			'tithe_combat': {
+				title: "Blood on the Water",
+				text: "You ram the Vampire schooner. The transport captain panics and flees, leaving the prisoners behind. You cut down the vampire envoy, but the truce is shattered.",
+				onEnter: (state) => {
+					// Combat resolution simulation
+					state.currentHP = Math.max(1, state.currentHP - 8);
+					if (!state.inventory.includes("Deep-Iron Ingot")) {
+						state.inventory.push("Deep-Iron Ingot"); // Reward
+					}
+					return "Battle Won. Took 8 DMG. Found Deep-Iron Ingot on the Vampire.";
+				},
+				choices: [{ text: "Sail On", nextScene: 'sea_map_hub', type: 'travel' }]
+			},
+			'tithe_loot': {
+				isLogic: true,
+				resolve: (roll) => roll >= 14 ? 'tithe_loot_success' : 'tithe_loot_fail'
+			},
+			'tithe_loot_success': {
+				title: "War Profiteering",
+				text: "While they exchange prisoners, you grapple the blind side of the transport. You steal a crate marked 'High Command'.",
+				onEnter: (state) => {
+					state.shillings += 25;
+					if (!state.inventory.includes("Royal Signet Ring")) state.inventory.push("Royal Signet Ring");
+					return "Stole 25s and a Royal Signet Ring.";
+				},
+				choices: [{ text: "Slip Away", nextScene: 'sea_map_hub', type: 'travel' }]
+			},
 
             // --- END NEW ACT 3 SCENES ---
 
@@ -6068,12 +7354,19 @@
             rebuildJournal();
         }
 		
-		function allyCommand(allyId) {
+		window.allyCommand = function(allyId) {
 			if (gameState.isBossCombat && gameState.allyCooldowns[allyId] === 0) {
 				
 				if (allyId === 'silas') {
                     gameState.negateNextDamage = true;
-                    gameState.allyCooldowns.silas = 2;
+                    // Silas Vengeance Check (Only for Vampire Elders fight)
+                    let baseCooldown = 2;
+                    if (gameState.silasVengeanceActive && gameState.currentEnemy.includes('Vampire')) {
+                         baseCooldown = 1; 
+                         addToHistory("Vengeance Status: Silas Intercept Cooldown reduced to 1!", 'system');
+                    }
+                    gameState.allyCooldowns.silas = baseCooldown;
+                    
                     addToHistory(`<span class="text-emerald-400 font-bold">Silas: Intercept!</span> Silas materializes, shield raised.`, 'system');
                 } else if (allyId === 'blink') {
                     gameState.nextAttackCrit = true;
@@ -6081,13 +7374,21 @@
                     addToHistory(`<span class="text-emerald-400 font-bold">Blink: Phase Shift!</span> The cub blurs and you feel the tether momentarily shift.`, 'system');
                 }
 				
+				// Tick down the OTHER ally's cooldown
 				Object.keys(gameState.allyCooldowns).forEach(key => {
 					if (key !== allyId) {
 						gameState.allyCooldowns[key] = Math.max(0, gameState.allyCooldowns[key] - 1);
 					}
 				});
 				
-				addToHistory("The turn passes as you command your companion.", 'system');
+				addToHistory("The turn passes as you command your companion, triggering the enemy's attack.", 'system');
+                
+                // Trigger enemy attack if not in single-target combat (Horde or Coral-Hulk uses resolveCombatRound)
+                if (gameState.activeEnemies.length > 0) {
+                     window.resolveHordeRound('none', 'none'); 
+                } else {
+                    window.resolveCombatRound('none');
+                }
 				
 			} else {
 				addToHistory(`Ally ${allyId.charAt(0).toUpperCase() + allyId.slice(1)} is on cooldown or you are not in combat!`, 'system');
@@ -6255,20 +7556,54 @@
             let displayText = scene.text;
 
             // --- 8. INJECT BOSS HEALTH BAR (Moved Here) ---
-            if (gameState.isBossCombat && gameState.enemyHP > 0) {
-                const pct = (gameState.enemyHP / gameState.maxEnemyHP) * 100;
-                const color = 'bg-red-700'; 
+            if (gameState.isBossCombat) {
                 
-                const healthBarHTML = `
-                <div class="w-full bg-gray-900 border border-red-900 rounded h-6 mt-2 mb-6 relative overflow-hidden shadow-lg">
-                    <div class="${color} h-full transition-all duration-300" style="width: ${pct}%"></div>
-                    <div class="absolute inset-0 flex items-center justify-center text-xs cinzel font-bold text-white shadow-black drop-shadow-md tracking-widest">
-                        ${gameState.currentEnemy}: ${gameState.enemyHP} / ${gameState.maxEnemyHP}
-                    </div>
-                </div>`;
-                
-                displayText = healthBarHTML + displayText;
+                if (gameState.activeEnemies && gameState.activeEnemies.length > 0) {
+                     // HORDE COMBAT DISPLAY
+                    let hordeHPBar = '';
+                    let totalHP = 0;
+                    
+                    gameState.activeEnemies.forEach(elderName => {
+                        const elderHP = gameState.enemies[elderName];
+                        const pct = (elderHP / gameState.maxElderHP) * 100;
+                        totalHP += elderHP;
+
+                        hordeHPBar += `
+                        <div class="w-full bg-gray-900 border border-red-900 rounded h-4 mt-1 mb-1 relative overflow-hidden shadow-lg">
+                            <div class="bg-red-700 h-full transition-all duration-300" style="width: ${pct}%"></div>
+                            <div class="absolute inset-0 flex items-center justify-center text-[10px] cinzel font-bold text-white shadow-black drop-shadow-md tracking-widest">
+                                ${elderName}: ${elderHP} / ${gameState.maxElderHP}
+                            </div>
+                        </div>`;
+                    });
+                    
+                    const totalPct = (totalHP / gameState.maxEnemyHP) * 100;
+
+                    const totalHealthHTML = `
+                        <div class="w-full bg-gray-900 border border-red-500 rounded h-2 mb-3 relative overflow-hidden">
+                             <div class="bg-red-600 h-full transition-all duration-300" style="width: ${totalPct}%"></div>
+                        </div>
+                        <div class="text-xs text-red-400 cinzel mb-2">Horde Total HP: ${totalHP} / ${gameState.maxEnemyHP}</div>
+                        ${hordeHPBar}`;
+                        
+                    displayText = totalHealthHTML + displayText;
+                }
+                else if (gameState.enemyHP > 0) { // Single-target boss (Coral-Hulk)
+                    const pct = (gameState.enemyHP / gameState.maxEnemyHP) * 100;
+                    const color = 'bg-red-700'; 
+                    
+                    const healthBarHTML = `
+                    <div class="w-full bg-gray-900 border border-red-900 rounded h-6 mt-2 mb-6 relative overflow-hidden shadow-lg">
+                        <div class="${color} h-full transition-all duration-300" style="width: ${pct}%"></div>
+                        <div class="absolute inset-0 flex items-center justify-center text-xs cinzel font-bold text-white shadow-black drop-shadow-md tracking-widest">
+                            ${gameState.currentEnemy}: ${gameState.enemyHP} / ${gameState.maxEnemyHP}
+                        </div>
+                    </div>`;
+                    
+                    displayText = healthBarHTML + displayText;
+                }
             }
+
 
             // --- 9. INJECT SHIP NAME (Moved Here) ---
             if (sceneId === 'act3_intro_ship' || sceneId === 'sea_map_hub') {
@@ -6366,7 +7701,8 @@
                     type: 'action',
                     reqItem: 'Strange Coin',
                     consume: true,
-                    doomCost: 0
+                    doomCost: 0,
+                    customClass: 'btn-hero'
                 };
                 if (sellIndex !== -1) processedChoices.splice(sellIndex, 0, newChoice);
                 else processedChoices.push(newChoice); 
@@ -6475,7 +7811,7 @@
             // 5. Alchemist: Selling
 			else if (currentSceneId === 'alchemist_sell') {
 				const backToBuyNav = choices.find(c => c.nextScene === 'alchemist_triage');
-				const returnNav = { text: "Return to Port Square", nextScene: 'town_square', type: 'travel', doomCost: 0 };
+				const returnNav = choices.find(c => c.nextScene === 'town_square');
 				processedChoices = []; 
 				
 				ALCHEMIST_SELL_OPTIONS.forEach(sell => {
@@ -6623,6 +7959,13 @@
 				 processedChoices = choices.map(c => c.nextScene === 'docks_work' ? processedWorkBtn : c);
                  if (processedCargoBtn) processedChoices.unshift(processedCargoBtn);
 			}
+            
+            // 10. Horde Combat Actions (Spire)
+            else if (currentSceneId === 'spire_combat_loop') {
+                // Combat button generation is handled in onEnter for simplicity, so we need to grab them here.
+                processedChoices = scenes['spire_combat_loop'].choices;
+            }
+
 
 			// --- BUTTON GENERATION LOOP (Shared) ---
 			processedChoices.forEach(choice => {
@@ -6872,7 +8215,7 @@
 						}
 
 						if (gameState.act2Started && choice.tetherCost !== 0) {
-							 const cost = choice.tetherCost !== undefined ? choice.tetherCost : 1; 
+							 const cost = choice.tetherCost !== undefined ? choice.tetherCost : (scenes[currentSceneId].isBoss || scenes[currentSceneId].isRest ? 0 : 1);
 							 gameState.tetherTimer = Math.max(0, gameState.tetherTimer - cost);
 						}
                         
@@ -6891,8 +8234,7 @@
 					};
 				}
 
-                // --- THIS IS THE SECTION YOU WANT TO RETAIN ---
-                // Kept existing indicator logic to ensure colored styled text appears at end of buttons
+                // --- INDICATOR LOGIC (Resources, Doom, Tether) ---
 				let indicators = [];
 				if (choice.cost) indicators.push({ text: `-${choice.cost}s`, color: 'text-amber-500' });
 				else if (choice.value) indicators.push({ text: `+${choice.value}s`, color: 'text-amber-500' });
