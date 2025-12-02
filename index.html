@@ -357,6 +357,126 @@
             box-shadow: 0 0 15px rgba(34, 211, 238, 0.4);
             transform: translateX(5px);
         }
+		
+		/* --- PUZZLE & ANIMATION STYLES --- */
+
+		/* 1. Typewriter Cursor */
+		.slow-type::after {
+			content: '|';
+			animation: blink 0.7s infinite;
+			font-weight: 700;
+			color: #93c5fd;
+		}
+		@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+		/* 2. Circuit Puzzle */
+		.circuit-panel {
+			background-color: #111827; /* Gray-900 */
+			border: 1px solid #374151;
+			padding: 20px;
+			border-radius: 8px;
+			box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
+			display: flex;
+			gap: 15px;
+			justify-content: center;
+			margin-top: 1rem;
+			margin-bottom: 1rem;
+		}
+		.circuit-node {
+			width: 45px;
+			height: 45px;
+			border-radius: 8px;
+			background-color: #0f172a;
+			border: 2px solid #475569;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			font-family: 'Cinzel', serif;
+			font-weight: bold;
+			color: #94a3b8;
+			cursor: pointer;
+			transition: all 0.2s;
+		}
+		.circuit-node.active {
+			border-color: #f59e0b; /* Amber */
+			background-color: #451a03;
+			box-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
+			color: #fef3c7;
+			transform: scale(1.1);
+		}
+		.circuit-node.success {
+			border-color: #10b981; /* Emerald */
+			background-color: #064e3b;
+			color: #34d399;
+			cursor: default;
+		}
+		.circuit-node.error {
+			border-color: #ef4444; /* Red */
+			background-color: #450a0a;
+			color: #fca5a5;
+			animation: shake 0.3s;
+		}
+		@keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+
+		/* 3. Compass Puzzle */
+		@keyframes planar-pulse { 
+			0%, 100% { box-shadow: 0 0 10px rgba(167, 139, 250, 0.2), inset 0 0 8px rgba(103, 232, 249, 0.2); } 
+			50% { box-shadow: 0 0 20px rgba(167, 139, 250, 0.5), inset 0 0 15px rgba(103, 232, 249, 0.5); } 
+		}
+		#compass-container {
+			width: 220px;
+			height: 220px;
+			position: relative;
+			border-radius: 50%;
+			background: radial-gradient(#1e1b4b, #020617);
+			border: 2px solid #60a5fa;
+			animation: planar-pulse 4s infinite ease-in-out;
+			margin: 20px auto;
+			touch-action: none; /* Prevent scroll on mobile while dragging */
+		}
+		#compass-needle {
+			position: absolute;
+			width: 4px;
+			height: 100px;
+			top: 50%;
+			left: 50%;
+			margin-left: -2px;
+			margin-top: -100px;
+			transform-origin: center bottom;
+			cursor: grab;
+			z-index: 10;
+		}
+		#compass-needle:active { cursor: grabbing; }
+		#needle-head {
+			position: absolute;
+			top: 0;
+			left: -6px;
+			width: 16px;
+			height: 16px;
+			transform: rotate(45deg);
+			background-color: #67e8f9;
+			box-shadow: 0 0 8px #67e8f9;
+		}
+		#needle-body {
+			width: 100%;
+			height: 100%;
+			background: linear-gradient(to top, #4c1d95 20%, #67e8f9 100%);
+		}
+		#compass-target {
+			position: absolute;
+			width: 80px;
+			height: 80px;
+			border-radius: 50%;
+			background: rgba(16, 185, 129, 0.2);
+			border: 2px solid #10b981;
+			top: 68px; /* Centered visually */
+			left: 68px;
+			transform-origin: center center;
+			pointer-events: none;
+		}
+		/* Visual Snap Feedback */
+		#compass-needle.aligned #needle-head { background-color: #34d399; box-shadow: 0 0 15px #10b981; }
+		#compass-needle:not(.aligned) { transition: transform 0.05s linear; }
 
         /* Journal Override */
         body.plane-ethereal .water-stained { background-image: none !important; background: linear-gradient(180deg, #0f172a 0%, #172554 100%) !important; }
@@ -843,6 +963,8 @@
 				hasBlinkSkill: false,
 
 				act3Started: false,
+				cellarUnlocked: false,
+				pendingDestination: null,
 				factionAligned: null,
 				shipName: "The Iron Lung",
 				supplies: 10, 
@@ -899,6 +1021,178 @@
 		}
         let gameState = createInitialState();
         let activeCrewMember = null;
+		
+		
+		// --- PUZZLE LOGIC MANAGER ---
+        const puzzleManager = {
+            // 1. BANTER TYPEWRITER
+            typeBanter: function(elementId, text, speed = 25) {
+                const el = document.getElementById(elementId);
+                if (!el) return;
+                el.innerHTML = ''; // Clear for typing
+                el.classList.add('slow-type');
+                
+                let i = 0;
+                function type() {
+                    // Check if element still exists (in case user clicked away)
+                    if (!document.getElementById(elementId)) return;
+                    
+                    if (i < text.length) {
+                        el.innerHTML += text.charAt(i);
+                        i++;
+                        setTimeout(type, speed);
+                    } else {
+                        el.classList.remove('slow-type');
+                    }
+                }
+                type();
+            },
+
+            // 2. CIRCUIT PUZZLE
+            initCircuit: function() {
+                const correctSequence = [1, 3, 2];
+                let userSequence = [];
+                const nodes = document.querySelectorAll('.circuit-node');
+                const msgEl = document.getElementById('circuit-message');
+
+                nodes.forEach(node => {
+                    node.addEventListener('click', (e) => {
+                        const val = parseInt(e.target.dataset.value);
+                        
+                        // Prevent clicking locked nodes
+                        if (e.target.classList.contains('success') || e.target.classList.contains('active')) return;
+
+                        if (val === correctSequence[userSequence.length]) {
+                            // CORRECT
+                            userSequence.push(val);
+                            e.target.classList.add('active');
+                            e.target.classList.remove('error');
+                            audioManager.playClick();
+
+                            if (userSequence.length === correctSequence.length) {
+                                // WIN
+                                nodes.forEach(n => n.classList.add('success'));
+                                msgEl.innerHTML = "<span class='text-emerald-400'>Circuit Stabilized. Sequence Accepted.</span>";
+                                audioManager.playCoins();
+                                setTimeout(() => {
+                                    renderScene('manor_cellar_success');
+                                }, 1000);
+                            }
+                        } else {
+                            // WRONG
+                            e.target.classList.add('error');
+                            msgEl.innerHTML = "<span class='text-red-400'>Error! Circuit overloaded. Resetting...</span>";
+                            userSequence = [];
+                            audioManager.playClash();
+                            setTimeout(() => {
+                                nodes.forEach(n => n.classList.remove('active', 'error'));
+                                msgEl.innerHTML = "Input Sequence...";
+                            }, 800);
+                        }
+                    });
+                });
+            },
+
+            // 3. COMPASS PUZZLE
+            compassTimer: null,
+            isCompassAligned: false,
+            
+            initCompass: function() {
+                if (this.compassTimer) cancelAnimationFrame(this.compassTimer);
+                this.isCompassAligned = false;
+                
+                const needle = document.getElementById('compass-needle');
+                const target = document.getElementById('compass-target');
+                const timerText = document.getElementById('compass-timer-text');
+                const container = document.getElementById('compass-container');
+                
+                // Random Target Angle (Top Hemisphere)
+                const targetAngle = Math.floor(Math.random() * 140) + 20;
+                target.style.transform = `rotateZ(${targetAngle}deg)`;
+
+                let visualRotation = 0;
+                let lastRawAngle = 0;
+                let isDragging = false;
+                let startTime = Date.now();
+                const DURATION = 10; 
+
+                const getAngle = (x, y) => {
+                    const rect = container.getBoundingClientRect();
+                    const cx = rect.left + rect.width / 2;
+                    const cy = rect.top + rect.height / 2;
+                    let a = Math.atan2(y - cy, x - cx) * (180 / Math.PI) + 90;
+                    return a < 0 ? a + 360 : a;
+                };
+
+                const updateLoop = () => {
+                    if (!document.getElementById('compass-container')) return; // Stop if scene changed
+
+                    const elapsed = (Date.now() - startTime) / 1000;
+                    const left = Math.max(0, DURATION - elapsed);
+                    if(timerText) timerText.innerText = left.toFixed(1);
+
+                    if (this.isCompassAligned && left > 0) {
+                         renderScene('sea_fog_success');
+                         return;
+                    }
+                    if (left <= 0) {
+                        renderScene('sea_fog_fail');
+                        return;
+                    }
+                    this.compassTimer = requestAnimationFrame(updateLoop);
+                };
+
+                const checkAlign = (currAngle) => {
+                    const margin = 12;
+                    if (currAngle > targetAngle - margin && currAngle < targetAngle + margin) {
+                        this.isCompassAligned = true;
+                        needle.classList.add('aligned');
+                        needle.style.transform = `rotateZ(${targetAngle}deg)`; 
+                    }
+                };
+
+                const dragStart = (e) => {
+                    e.preventDefault();
+                    isDragging = true;
+                    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                    lastRawAngle = getAngle(clientX, clientY);
+                };
+
+                const dragMove = (e) => {
+                    if (!isDragging || this.isCompassAligned) return;
+                    e.preventDefault();
+                    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                    
+                    const currAngle = getAngle(clientX, clientY);
+                    let delta = currAngle - lastRawAngle;
+                    
+                    if (delta > 180) delta -= 360;
+                    if (delta < -180) delta += 360;
+                    
+                    visualRotation += delta;
+                    needle.style.transform = `rotateZ(${visualRotation}deg)`;
+                    lastRawAngle = currAngle;
+                    
+                    let checkRot = visualRotation % 360;
+                    if (checkRot < 0) checkRot += 360;
+                    checkAlign(checkRot);
+                };
+
+                const dragEnd = () => { isDragging = false; };
+
+                needle.addEventListener('mousedown', dragStart);
+                document.addEventListener('mousemove', dragMove);
+                document.addEventListener('mouseup', dragEnd);
+                needle.addEventListener('touchstart', dragStart, {passive: false});
+                document.addEventListener('touchmove', dragMove, {passive: false});
+                document.addEventListener('touchend', dragEnd);
+
+                updateLoop();
+            }
+        };
+		
         
         // --- WINDOW FUNCTIONS FOR HTML BUTTONS ---
 		window.gameFunctions = {}; // Initialize empty object
@@ -5347,6 +5641,16 @@
 				},
 				choices: [] // Populated by onEnter
 			},
+			'resume_course_logic': {
+                isLogic: true,
+                resolve: (roll, state) => {
+                    // Default to map hub if no destination is saved
+                    const target = state.pendingDestination || 'sea_map_hub';
+                    // Clear it so we don't get stuck in a loop later
+                    state.pendingDestination = null;
+                    return target;
+                }
+            },
 			
 			'sea_feeding_grounds': {
 				title: "The Leviathan's Feeding Ground",
@@ -5454,6 +5758,7 @@
 					}
 					state.supplies -= cost;
 					state.currentLocation = 'port_hub';
+					state.pendingDestination = 'town_square';
 					
 					// RNG Event Logic
 					const rng = Math.random();
@@ -5481,6 +5786,7 @@
 
 					state.supplies -= cost; 
 					state.currentLocation = 'dogtooth';
+					state.pendingDestination = 'bleak_dogtooth';
 					
 					const rng = Math.random(); // Declared ONCE
 					if (rng < 0.15) return 'sea_flotsam_event';
@@ -5503,6 +5809,7 @@
 					}
 					state.supplies -= cost;
 					state.currentLocation = 'spire';
+					state.pendingDestination = 'sanguine_spire_entry';
 					
 					const rng = Math.random(); // Declared ONCE
 					if (rng < 0.15) return 'sea_flotsam_event';
@@ -5558,6 +5865,12 @@
 						customClass: 'btn-lantern-glow'
 					},
 					{ 
+						text: "Man the Wheel", 
+						nextScene: 'sea_fog_puzzle',
+						type: 'travel', 
+						customClass: 'btn-hero'
+					},
+					{ 
 						text: "Use Ring of Brass", 
 						nextScene: 'sea_fog_partial', 
 						type: 'action', 
@@ -5567,6 +5880,20 @@
 					},
 					{ text: "Recall Ancient Charts", nextScene: 'sea_fog_history_logic', type: 'skill', dc: 14, skill: 'History' },
 					{ text: "Brute Force Through", nextScene: 'sea_fog_athletics_logic', type: 'skill', dc: 15, skill: 'Athletics' }
+				]
+			},
+			'sea_fog_puzzle': {
+				title: "Navigating the Blind",
+				text: `The magnetic storm screams against the hull. The compass in your hand burns cold, the needle thrashing like a trapped moth. The fog is trying to turn the ship into the teeth of the reef. You must force your will upon the direction.<br><br>
+                <div class="text-center text-cyan-400 font-bold mb-2">Stabilize Time: <span id="compass-timer-text">10.0</span>s</div>
+                <div id="compass-container">
+                    <div id="compass-target"></div>
+                    <div id="compass-needle"><div id="needle-body"></div><div id="needle-head"></div></div>
+                </div>
+                <div class="text-xs text-gray-400 text-center mt-2">Drag the needle to the Green Zone and hold it!</div>`,
+                journal: "The fog tried to spin us around. I had to fight the compass itself to keep us off the rocks.",
+                choices: [
+					 // Empty - controlled by timer
 				]
 			},
 			// --- ROYAL NAVY INTERCEPT (Contraband Check) ---
@@ -5658,7 +5985,8 @@
             },
             'sea_fog_success': {
 				title: "The True Course",
-				text: "The <span class='text-item'>Spectral Lantern</span> cuts a path through the mist, revealing safe waters that don't exist in the material world. You bypass the hazard flawlessly.",
+				text: "Through skill or spectral light, you find the seam in the mist. The jagged teeth of the reef loom out of the whiteout—inches from the hull—before fading behind you. You have broken the fog's grip.",
+                journal: "We cleared the Ghost Fog. Too close. I can still hear the waves breaking on the reef we missed.",
 				choices: [{ text: "Continue Journey", nextScene: 'sea_map_hub', type: 'travel', doomCost: 0 }]
 			},
             'sea_fog_partial': {
@@ -5969,8 +6297,9 @@
 						text: "Speak to Commander", 
 						nextScene: 'order_quest_fence_start', // Link to Bio-Reactor Quest
 						type: 'dialogue',
-						reqNotFlag: 'fenceQuestActive'
-					},
+						reqNotFlag: 'fenceQuestActive',
+						isDisabled: (state) => state.fenceQuestComplete
+					},					
 					{ 
 						text: "Visit Calcification Ward", 
 						nextScene: 'order_petrified_ward', // Link to New Body Horror Scene
@@ -5983,19 +6312,21 @@
 						type: 'skill', 
 						dc: 13, 
 						skill: 'Investigation', 
-						reqNotFlag: 'traitorQuestActive' 
+						reqNotFlag: 'traitorQuestActive',
+						isDisabled: (state) => state.traitorQuestComplete						
 					},
+					{ 
+						text: "Commander's Mission: Defend Armory", 
+						nextScene: 'order_quest_start', 
+						type: 'travel',
+						reqNotFlag: 'coralHulkDefeated',
+						customClass: 'btn-hero'
+					},					
 					{ 
 						text: "Visit Quartermaster", 
 						nextScene: 'order_quartermaster', 
 						type: 'travel', 
 						doomCost: 0 
-					},
-					{ 
-						text: "Request Supplies", 
-						type: 'action', 
-						cost: 10,
-						action: (state) => { state.supplies += 5; return "Bought 5 Supplies."; }
 					},
 					{ text: "Return to Sea Map", nextScene: 'sea_map_hub', type: 'travel' }
 				]
@@ -6097,6 +6428,13 @@
 						doomCost: 0 
 					},
 					{ 
+						text: "The Heist: Raid Citadel Armory", 
+						nextScene: 'chaos_quest_start', 
+						type: 'travel',
+						reqNotFlag: 'coralHulkDefeated', // Hides after victory
+						customClass: 'btn-hero'
+					},
+					{ 
 						text: "Barter for Supplies", 
 						type: 'action', 
 						cost: 8, 
@@ -6116,7 +6454,7 @@
 				},
 				choices: [
 					{ 
-						text: "Buy Alchemical Fire (12s)", 
+						text: "Buy Alchemical Fire", 
 						type: 'action', 
 						cost: 12, 
 						stockItem: 'Alchemical Fire',
@@ -6124,7 +6462,7 @@
 						nextScene: 'chaos_market'
 					},
 					{ 
-						text: "Buy Pearlescent Mushroom (15s)", 
+						text: "Buy Pearlescent Mushroom", 
 						type: 'action', 
 						cost: 15, 
 						stockItem: 'Pearlescent Mushroom',
@@ -6132,7 +6470,7 @@
 						nextScene: 'chaos_market'
 					},
 					{ 
-						text: "Approach Nervous Doctor (Secret)", 
+						text: "Approach Nervous Doctor", 
 						nextScene: 'chaos_secret_shop_check', 
 						type: 'skill', 
 						dc: 14, 
@@ -6141,15 +6479,14 @@
 						customClass: 'btn-pulse'
 					},
 					{ 
-						text: "Buy Volatile Mutagen (20s)", 
-						type: 'action', 
-						cost: 20, 
-						stockItem: 'Volatile Mutagen',
-						reqFlag: 'knowsDoctorSecret',
-						action: (state) => { state.inventory.push("Volatile Mutagen"); return "Bought Mutagen."; },
-						nextScene: 'chaos_market',
-						customClass: 'btn-danger'
-					},
+                        text: "Buy Volatile Mutagen", 
+                        type: 'action', 
+                        cost: 20, 
+                        stockItem: 'Volatile Mutagen',
+                        reqFlag: 'knowsDoctorSecret',
+                        action: (state) => { state.inventory.push("Volatile Mutagen"); return "Bought Mutagen."; },
+                        nextScene: 'chaos_market',
+                    },
 					{ text: "Buy 5 Supplies (8s)", type: 'action', cost: 8, action: (state) => { state.supplies += 5; return "Bought Supplies."; }, nextScene: 'chaos_market' },
 					{ text: "Return to The Molt", nextScene: 'hub_chaos', type: 'travel', doomCost: 0 }
 				]
@@ -6220,16 +6557,25 @@
 			'traitor_execute': {
 				title: "Duty First",
 				text: "You end it quickly. You take the maps back. The infection dies with him.",
+				onEnter: (state) => {
+				state.traitorQuestComplete = true;
+				},
 				choices: [{ text: "Return to Hub", nextScene: 'hub_chaos', type: 'travel' }]
 			},
 			'traitor_mercy': {
 				title: "Survival",
 				text: "You step aside. He vanishes into the crowd, clutching the Slurry like gold. The secrets of the Citadel are now in Smuggler hands.",
+				onEnter: (state) => {
+				state.traitorQuestComplete = true;
+				},
 				choices: [{ text: "Return to Hub", nextScene: 'hub_chaos', type: 'travel' }]
 			},
 			'traitor_blackmail': {
 				title: "The Cost of Silence",
 				text: "He empties his purse into your hands. You walk away, leaving him to his sickness and his treason.",
+				onEnter: (state) => {
+				state.traitorQuestComplete = true;
+				},
 				choices: [{ text: "Return to Hub", nextScene: 'hub_chaos', type: 'travel' }]
 			},
 			
@@ -6277,30 +6623,33 @@
 					'bones': "The Surgeon is a butcher. Look at that boy in the corner—the coral hasn't hit the lymph nodes yet. If I excise the root *now*, I can save the limb and the life. (Medicine Check)"
 				},
 				choices: [
-					{ 
-						text: "Perform Surgical Excision", 
-						nextScene: 'ward_medicine_logic', 
-						type: 'skill', 
-						dc: 15, 
-						skill: 'Medicine',
-						orderGain: 4
-					},
-					{ 
-						text: "Donate Rum (Anesthetic)", 
-						nextScene: 'ward_donate_rum', 
-						type: 'action', 
-						reqItem: 'Rum', 
-						consume: true,
-						orderGain: 4 
-					},
-					{ 
-						text: "Inspect a Critical Patient", 
-						nextScene: 'ward_bloom_event', 
-						type: 'travel',
-						doomCost: 0
-					},
-					{ text: "Leave the Ward", nextScene: 'hub_order', type: 'travel' }
-				]
+                    { 
+                        text: "Perform Surgical Excision", 
+                        nextScene: 'ward_medicine_logic', 
+                        type: 'skill', 
+                        dc: 15, 
+                        skill: 'Medicine',
+                        orderGain: 4,
+                        reqNotFlag: 'wardSurgeryDone' 
+                    },
+                    { 
+                        text: "Donate Rum (Anesthetic)", 
+                        nextScene: 'ward_donate_rum', 
+                        type: 'action', 
+                        reqItem: 'Rum', 
+                        consume: true,
+                        orderGain: 4,
+                        reqNotFlag: 'wardRumDonated' 
+                    },
+                    { 
+                        text: "Inspect a Critical Patient", 
+                        nextScene: 'ward_bloom_event', 
+                        type: 'travel',
+                        doomCost: 0,
+                        reqNotFlag: 'wardBloomDone' 
+                    },
+                    { text: "Leave the Ward", nextScene: 'hub_order', type: 'travel' }
+                ]
 			},
 
 			// NEW LOGIC SCENES FOR BONES
@@ -6314,6 +6663,7 @@
 				journal: "Performed a life-saving surgery. Bones was right—it can be cut out.",
 				onEnter: (state) => {
 					state.shillings += 10;
+					state.wardSurgeryDone = true;
 					audioManager.playCoins();
 					return "Surgery Successful. Earned 10 Shillings. Order +4.";
 				},
@@ -6324,7 +6674,8 @@
 				text: "You try to cut the root, but the coral is harder than bone. The scalpel snaps. The soldier screams as the trauma accelerates the growth, instantly calcifying his arm. The Surgeon shoves you away. 'You've done enough damage, Mariner.'",
 				journal: "Botched the surgery. The soldier lost his arm.",
 				onEnter: (state) => {
-					state.influence = Math.min(50, state.influence + 2); // Failure causes Chaos/Loss of Order respect
+					state.influence = Math.min(50, state.influence + 2);
+					state.wardSurgeryDone = true;
 					return "Surgery Failed. Chaos +2.";
 				},
 				choices: [{ text: "Back away", nextScene: 'order_petrified_ward', type: 'travel' }]
@@ -6334,7 +6685,8 @@
 				text: "The surgeon nods gratefully, administering the spirits to a young guard whose legs have fused together. The soldier's breathing slows, the panic fading from his eyes.",
 				onEnter: (state) => {
 					state.influence = Math.max(-50, state.influence - 4);
-					return "Donated Rum. Order Influence Gained.";
+					state.wardRumDonated = true;
+					return "Donated Rum.";
 				},
 				choices: [{ text: "Return to Hub", nextScene: 'hub_order', type: 'travel' }]
 			},
@@ -6362,8 +6714,9 @@
 				title: "A Mercy Kill",
 				text: "You draw your weapon. One clean strike severs the brain stem before the coral fully takes hold. The body goes limp, the rapid growth stopping instantly. The Surgeon stares at you, shaking, covered in spores.",
 				onEnter: (state) => {
-					state.influence = Math.max(-50, state.influence - 5); // Order likes decisive action
-					return "Mercy Kill performed. Order +5.";
+					state.influence = Math.max(-50, state.influence - 5);
+					state.wardBloomDone = true;
+					return "Mercy Kill performed.";
 				},
 				choices: [{ text: "Leave the Ward", nextScene: 'hub_order', type: 'travel' }]
 			},
@@ -6376,7 +6729,8 @@
 				text: "You pin the thrashing husk to the bed, ignoring the coral cutting your hands. The Surgeon manages to inject a concentrated saline solution directly into the heart. The growth arrests. The man is still alive... for now.",
 				onEnter: (state) => {
 					state.currentHP = applyDamage(state.currentHP, 2);
-					return "Stabilized the Bloom. Took 2 Damage.";
+					state.wardBloomDone = true;
+					return "Stabilized the Bloom.";
 				},
 				choices: [{ text: "Leave the Ward", nextScene: 'hub_order', type: 'travel' }]
 			},
@@ -6385,6 +6739,7 @@
 				text: "The coral growth is explosive. A spike catches you in the shoulder, throwing you back. By the time you recover, the soldier is gone—fully consumed. The guards rush in with flamethrowers to incinerate the corpse.",
 				onEnter: (state) => {
 					state.currentHP = applyDamage(state.currentHP, 5);
+					state.wardBloomDone = true;
 					fxManager.flashRed();
 					return "Failed to hold him. Took 5 Damage.";
 				},
@@ -6442,6 +6797,7 @@
 				onEnter: (state) => {
 					if (!state.inventory.includes("Ember-Heart")) state.inventory.push("Ember-Heart");
 					state.fenceQuestActive = false;
+					state.fenceQuestComplete = true;
 					state.influence = Math.max(-50, state.influence - 15);
 					return "Quest Complete. Order +15.";
 				},
@@ -6453,6 +6809,7 @@
 				journal: "I let him keep it. The Order will fall, but the Molt will adapt. I tasted the slurry. It tastes like ash and life.",
 				onEnter: (state) => {
 					state.fenceQuestActive = false;
+					state.fenceQuestComplete = true;
 					state.shillings += 25;
 					state.influence = Math.min(50, state.influence + 15);
 					// Add a permanent food item as a reward/symbol of the choice
@@ -6763,7 +7120,7 @@
                                 type: 'travel', 
                                 customClass: 'btn-shadow-glow',
                             },
-                            { text: "Take a Long Rest", nextScene: 'act3_long_rest', type: 'action', doomCost: 0 }
+                            { text: "Take a Long Rest", nextScene: 'act3_long_rest', type: 'rest', doomCost: 0 }
                         ];
                         return "The final piece is in your hand. The Anchor calls.";
                     }
@@ -6833,10 +7190,11 @@
 			},
 			'library_research_success': {
 				title: "The Codex of Tides",
-				text: "Quinn's eyes light up. 'Yes! The intersection of the Void and the Salt... here, take this.' He hands you a bound volume of notes.",
+				text: "Quinn's eyes light up. 'The intersection of Void and Salt... wait.' He pulls a loose brick from the wall. 'A hidden switch. It opens the Cellar beneath the Crawlspace.'",
 				onEnter: (state) => {
 					state.inventory.push("Codex of Tides");
-					return "Acquired: Codex of Tides (+History/Investigation Buff).";
+					state.cellarUnlocked = true; // UNLOCK FLAG
+					return "Acquired: Codex of Tides. Cellar Unlocked.";
 				},
 				choices: [{ text: "Back to Library", nextScene: 'manor_library_safe', type: 'travel' }]
 			},
@@ -6867,6 +7225,13 @@
 							return "Companion Gained: Blink.";
 						},
 						customClass: 'spectral-active'
+					},
+					{ 
+						text: "Enter Hidden Cellar", 
+						nextScene: 'manor_cellar_puzzle', 
+						type: 'travel', 
+						reqFlag: 'cellarUnlocked', // CONDITIONAL BUTTON
+						customClass: 'btn-pulse'
 					},
 					{ text: "Crawl to Library", nextScene: 'manor_library_safe', type: 'travel', doomCost: 0 },
 					{ text: "Crawl to Kitchens", nextScene: 'manor_kitchens_safe', type: 'travel', doomCost: 0 }
@@ -6906,6 +7271,37 @@
 				onEnter: (state) => "Gained +2 Supplies.",
 				choices: [{ text: "Back to Crawlspace", nextScene: 'manor_crawlspace_safe', type: 'travel' }]
 			},
+			'manor_cellar_puzzle': {
+				title: "The Brass Circuit",
+				text: `You descend into a small, sealed room. On the wall is a brass mechanism with three numbered nodes. It hums with broken energy.<br><br>
+				<div class="text-center text-amber-500 mb-2">Sequence Required:</div>
+				<div class="circuit-panel">
+					<div class="circuit-node" data-value="1">1</div>
+					<div class="circuit-node" data-value="2">2</div>
+					<div class="circuit-node" data-value="3">3</div>
+				</div>
+				<div id="circuit-message" class="text-xs text-gray-500 h-4">Input Sequence...</div>`,
+				journal: "Found a sealed room beneath the crawlspace. Some kind of brass logic-lock guards it. Quinn is practically drooling over the mechanism.",
+                banter: {
+                    'quinn': "Fascinating! It's a tri-state voltage gate. Don't force it. One, then Three, then Two...",
+                    'talon': "Just smash it. Gears break like bones."
+                },
+				choices: [
+					{ text: "Give Up (Return)", nextScene: 'manor_crawlspace_safe', type: 'travel' }
+				]
+			},
+			'manor_cellar_success': {
+				title: "Circuit Stabilized",
+				text: "The mechanism clicks with a satisfying, heavy thud. Pneumatic tubes hiss, and a heavy compartment slides open. Inside, pristine <span class='text-item'>Brass Gears</span> rest on velvet—components stripped from the Wolf King's own clockwork soldiers.",
+                journal: "Cracked the lock. Found a cache of pristine gears. These are worth a fortune to the right Quartermaster.",
+				onEnter: (state) => {
+					 return "Puzzle Solved.";
+				},
+				choices: [
+					{ text: "Take Gears & Return", nextScene: 'manor_crawlspace_safe', type: 'travel' }
+				]
+			},
+			
 
             'manor_hall_safe': {
 				title: "The Grand Hall",
@@ -7798,6 +8194,45 @@
 
             generateSceneImage(sceneId);
             renderChoices(scene.choices, isDeathScene);
+			// --- PUZZLE & BANTER HOOKS ---
+            
+            // 1. Initialize Puzzles
+            if (sceneId === 'manor_cellar_puzzle') {
+                setTimeout(() => puzzleManager.initCircuit(), 100);
+            }
+            if (sceneId === 'sea_fog_puzzle') {
+                setTimeout(() => puzzleManager.initCompass(), 100);
+            }
+
+            // 2. Trigger Banter Animation
+            if (scene.banter || isScriptedScene) {
+                // We target the specific styling classes applied in renderScene
+                const banterContainers = textEl.querySelectorAll('.italic'); 
+                
+                banterContainers.forEach((container, index) => {
+                    // Find the text node immediately after the bold Name span
+                    const nameSpan = container.querySelector('span');
+                    
+                    if (nameSpan && nameSpan.nextSibling) {
+                        // Get the text (e.g., "The stars are gone...")
+                        const rawText = nameSpan.nextSibling.textContent.replace(/"/g, '').trim();
+                        
+                        // Clear the text node so we can type it back in
+                        nameSpan.nextSibling.textContent = ' "'; 
+                        
+                        // Create a specific span for the typing effect
+                        const typeSpan = document.createElement('span');
+                        typeSpan.id = `banter-type-${index}`;
+                        container.appendChild(typeSpan);
+                        
+                        // Trigger the typewriter with a slight delay based on index
+                        setTimeout(() => {
+                            puzzleManager.typeBanter(typeSpan.id, rawText + '"');
+                        }, index * 1000); 
+                    }
+                });
+            }
+			
             updateUI();
         }
 
@@ -8115,7 +8550,11 @@
 				if (choice.cost && gameState.shillings < choice.cost) { isDisabled = true; disabledClass = 'btn-disabled-cost'; }
                 if (choice.suppliesCost && gameState.supplies < choice.suppliesCost) { isDisabled = true; disabledClass = 'btn-disabled-cost'; }
 				if (choice.costHP !== undefined && gameState.currentHP <= choice.costHP) { isDisabled = true; disabledClass = 'btn-disabled-cost'; }
-				if (choice.isDisabled) { isDisabled = true; disabledClass = 'btn-disabled-cost'; }
+				let disabledResult = choice.isDisabled;
+                if (typeof disabledResult === 'function') {
+                    disabledResult = disabledResult(gameState);
+                }
+                if (disabledResult) { isDisabled = true; disabledClass = 'btn-disabled-cost'; }
 				
 				if (choice.type === 'combine' && choice.reqItems) {
 					const missingItem = choice.reqItems.some(item => !gameState.inventory.includes(item));
