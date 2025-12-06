@@ -8,489 +8,207 @@
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=Dancing+Script:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* --- CORE LAYOUT & TYPOGRAPHY --- */
-        body {
-            font-family: 'Crimson Text', serif;
-            background-color: #050a10;
-            color: #cdd5e0;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-        h1, h2, h3, .cinzel { font-family: 'Cinzel', serif; }
-        .journal-font { font-family: 'Dancing Script', cursive; font-size: 1.2rem; line-height: 1.6; color: #94a3b8; }
-        
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #0f172a; }
-        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #475569; }
-        
-        .text-shadow { text-shadow: 0 2px 4px rgba(0,0,0,0.8); }
-        .fade-in { animation: fadeIn 0.8s ease-in; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-        /* --- GLOBAL BUTTON BASE --- */
-        .btn-game { 
-            transition: all 0.2s ease-out; 
-            position: relative; 
-            overflow: hidden; 
-            padding: 12px; 
-            width: 100%; 
-            display: flex; 
-            align-items: center; 
-            justify-content: space-between; 
-            border-radius: 4px; 
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            font-size: 1rem;
-            font-weight: 700;
-            cursor: pointer;
-        }
-        .btn-game:active { transform: translateY(1px) !important; }
-        .btn-game:hover { transform: translateY(-1px); } 
-        
-        .btn-disabled-cost { opacity: 0.4; cursor: not-allowed; background-color: #1f2937 !important; border-color: #475569 !important; box-shadow: none !important; transform: none !important; }
-
-        /* --- 1. STANDARD BUTTON (Dark Blue-Grey) --- */
-        /* NOTE: We target .bg-gray-800 here to override the Game Engine's default classes */
-        .btn-standard, .btn-game.bg-gray-800 {
-            background: linear-gradient(180deg, #1f2937 0%, #111827 100%) !important;
-            border: 1px solid #475569 !important;
-            color: #cdd5e0;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
-        }
-        .btn-standard:hover, .btn-game.bg-gray-800:hover { 
-            border-color: #fbbf24 !important; /* Amber Border on Hover */
-            background: linear-gradient(180deg, #334155 0%, #1f2937 100%) !important; 
-        }
-
-        /* --- 2. HERO BUTTON (Blue / Order / Artifact) --- */
-        @keyframes hero-pulse { 
-            0%, 100% { box-shadow: 0 0 4px rgba(59, 130, 246, 0.2); border-color: #60a5fa; } 
-            50% { box-shadow: 0 0 12px rgba(59, 130, 246, 0.5); border-color: #93c5fd; } 
-        }
-        .btn-hero { 
-            background: linear-gradient(90deg, rgba(30, 58, 138, 0.4) 0%, rgba(15, 23, 42, 0.6) 100%); 
-            border: 1px solid #60a5fa; 
-            color: #dbeafe; 
-            animation: hero-pulse 3s infinite ease-in-out; 
-        }
-        .btn-hero:hover { 
-            background: linear-gradient(90deg, rgba(30, 58, 138, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%); 
-            box-shadow: 0 0 15px rgba(59, 130, 246, 0.6); 
-        }
-        .hero-icon { color: #60a5fa; filter: drop-shadow(0 0 5px rgba(59, 130, 246, 0.8)); }
-
-        /* --- 3. FIRE BUTTON (Red / Absorb) --- */
-        @keyframes fire-pulse { 
-            0%, 100% { box-shadow: 0 0 3px rgba(239, 68, 68, 0.2); border-color: #f87171; } 
-            50% { box-shadow: 0 0 10px rgba(248, 113, 113, 0.4); border-color: #fca5a5; } 
-        }
-        .btn-fire-glow { 
-            background: linear-gradient(90deg, rgba(127, 29, 29, 0.3) 0%, rgba(69, 10, 10, 0.5) 100%); 
-            border: 1px solid #f87171; 
-            color: #fecaca; 
-            animation: fire-pulse 3s infinite ease-in-out; 
-        }
-        .btn-fire-glow:hover { 
-            background: linear-gradient(90deg, rgba(127, 29, 29, 0.5) 0%, rgba(69, 10, 10, 0.7) 100%);
-            border-color: #fca5a5; 
-            box-shadow: 0 0 15px rgba(248, 113, 113, 0.6); 
-        }
-
-        /* --- 4. SHADOW BUTTON (Primeval Awareness) --- */
-        @keyframes shadow-pulse { 
-            0%, 100% { box-shadow: 0 0 4px rgba(139, 92, 246, 0.2); border-color: #a78bfa; } 
-            50% { box-shadow: 0 0 12px rgba(167, 139, 250, 0.5); border-color: #d8b4fe; } 
-        }
-        .btn-shadow-glow { 
-            background: linear-gradient(90deg, rgba(88, 28, 135, 0.3) 0%, rgba(59, 7, 100, 0.5) 100%); 
-            border: 1px solid #a78bfa; 
-            color: #e9d5ff; 
-            animation: shadow-pulse 3s infinite ease-in-out; 
-        }
-        .btn-shadow-glow:hover { 
-            background: linear-gradient(90deg, rgba(88, 28, 135, 0.5) 0%, rgba(59, 7, 100, 0.7) 100%); 
-            border-color: #d8b4fe; 
-            box-shadow: 0 0 15px rgba(167, 139, 250, 0.6); 
-        }
-
-        /* --- 5. SUCCESS/SECRET BUTTON (Muted / No Glow) --- */
-        .btn-success-glow { 
-            background: linear-gradient(180deg, #374151 0%, #1f2937 100%);
-            border: 1px solid #9ca3af; 
-            color: #f3f4f6; 
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-        }
-        .btn-success-glow:hover { 
-            background: linear-gradient(180deg, #4b5563 0%, #374151 100%);
-            border-color: #d1d5db;
-            color: white;
-        }
-
-        /* --- 6. KEEN SENSES (Indigo + Brass) --- */
-        @keyframes keen-pulse { 
-            0%, 100% { border-color: #d97706; box-shadow: 0 0 2px rgba(217, 119, 6, 0.2); } 
-            50% { border-color: #fbbf24; box-shadow: 0 0 8px rgba(251, 191, 36, 0.4); } 
-        }
-        .btn-keen-senses { 
-            background: linear-gradient(90deg, rgba(49, 46, 129, 0.4) 0%, rgba(30, 27, 75, 0.6) 100%); 
-            border: 1px solid #d97706; 
-            color: #e0e7ff; 
-            animation: keen-pulse 3s infinite ease-in-out;
-        }
-        .btn-keen-senses:hover { 
-            background: linear-gradient(90deg, rgba(49, 46, 129, 0.6) 0%, rgba(30, 27, 75, 0.8) 100%); 
-            border-color: #fcd34d; 
-            box-shadow: 0 0 12px rgba(251, 191, 36, 0.5); 
-        }
-
-        /* --- 7. SPECTRAL LANTERN (Violet + Amber Hybrid) --- */
-        @keyframes lantern-pulse { 
-            0%, 100% { border-color: #f59e0b; box-shadow: inset 0 0 5px rgba(139, 92, 246, 0.1); } 
-            50% { border-color: #fcd34d; box-shadow: inset 0 0 15px rgba(139, 92, 246, 0.3); } 
-        }
-        .btn-lantern-glow { 
-            background: linear-gradient(90deg, rgba(88, 28, 135, 0.4) 0%, rgba(66, 32, 6, 0.4) 100%); 
-            border: 1px solid #f59e0b; 
-            color: #fef3c7; 
-            animation: lantern-pulse 3s infinite ease-in-out; 
-        }
-        .btn-lantern-glow:hover { 
-            background: linear-gradient(90deg, rgba(88, 28, 135, 0.6) 0%, rgba(66, 32, 6, 0.6) 100%);
-            border-color: #fde047; 
-            box-shadow: 0 0 12px rgba(253, 224, 71, 0.4); 
-        }
-
-        /* --- 8. ANCHOR BUTTON (Muted / Navigation) --- */
-        .btn-anchor { 
-            background: linear-gradient(180deg, #1f2937 0%, #111827 100%);
-            border: 1px solid #475569; 
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2); 
-        }
-        /* Override inner span color to Cyan, even if JS says white */
-        .btn-anchor, .btn-anchor span, .btn-anchor i { 
-            color: #22d3ee !important; 
-        }
-        
-        .btn-anchor:hover { 
-            border-color: #fbbf24; /* Amber Hover */
-            background: linear-gradient(180deg, #334155 0%, #1f2937 100%);
-        }
-
-        /* --- 9. PULSE BUTTON (Amber / Search) --- */
-        @keyframes pulse-amber { 
-            0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.3); border-color: #f59e0b; } 
-            70% { box-shadow: 0 0 0 6px rgba(245, 158, 11, 0); border-color: #fbbf24; } 
-            100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); border-color: #f59e0b; } 
-        }
-        .btn-pulse { 
-            background: linear-gradient(90deg, rgba(120, 53, 15, 0.3) 0%, rgba(69, 26, 3, 0.5) 100%); 
-            border: 1px solid #f59e0b; 
-            color: #fef3c7; 
-            animation: pulse-amber 2s infinite; 
-        }
-        .btn-pulse:hover { 
-            background: linear-gradient(90deg, rgba(120, 53, 15, 0.5) 0%, rgba(69, 26, 3, 0.7) 100%);
-            border-color: #fbbf24; 
-            box-shadow: 0 0 10px rgba(245, 158, 11, 0.4); 
-        }
-
-        /* --- 10. PLANEWALK / ETHEREAL REVEAL --- */
-        @keyframes spectral-pulse { 
-            0%, 100% { box-shadow: 0 0 4px rgba(59, 130, 246, 0.3); border-color: #3b82f6; } 
-            50% { box-shadow: 0 0 12px rgba(59, 130, 246, 0.6); border-color: #60a5fa; } 
-        }
-        .btn-planewalk-reveal { 
-            background-color: rgba(30, 58, 138, 0.3); 
-            border-color: #60a5fa !important; 
-            color: #cffafe !important;
-            animation: spectral-pulse 2s infinite ease-in-out !important; 
-        }
-        .btn-planewalk-reveal:hover { 
-            background-color: rgba(30, 58, 138, 0.5);
-            border-color: #22d3ee !important; 
-            box-shadow: 0 0 15px rgba(34, 211, 238, 0.5); 
-        }
-        .spectral-active { 
-            animation: spectral-pulse 2s infinite ease-in-out !important; 
-            background-color: rgba(30, 58, 138, 0.3); 
-            border-color: #60a5fa !important; 
-        }
-
-        /* --- 11. CHANNEL BUTTON (HOLD) --- */
-        .btn-channel { 
-            background: linear-gradient(90deg, #1e1b4b 0%, #312e81 100%); 
-            border: 1px solid #818cf8; 
-            color: #e0e7ff; 
-            overflow: hidden; 
-            user-select: none;
-            -webkit-user-select: none;
-            touch-action: none;
-        }
-        .btn-channel::before { 
-            content: ''; position: absolute; top: 0; left: 0; height: 100%; width: 0%; 
-            background: rgba(139, 92, 246, 0.6); z-index: 0; transition: width 0s; 
-        }
-        .btn-channel.channeling::before { 
-            width: 100%; transition: width var(--channel-duration, 3000ms) linear; 
-        }
-        .btn-content-wrapper {
-            position: relative;
-            z-index: 10;
-            display: flex;
-            width: 100%;
-            align-items: center;
-        }
-
-        /* --- GAME-SPECIFIC UTILITIES --- */
-        .prologue-blur { filter: blur(4px); opacity: 0.5; pointer-events: none; transition: all 1s; }
-        .prologue-active { opacity: 1; filter: none; }
-        
-        .log-hidden { opacity: 0; pointer-events: none; transform: translateY(20px); }
-        .log-visible { opacity: 1; pointer-events: auto; transform: translateY(0); transition: all 1s ease-out; }
-
-        /* Custom glow for FREE USE / Mushroom */
-        @keyframes pulse-purple {
-            0%, 100% { box-shadow: 0 0 8px rgba(168, 85, 247, 0.5); border-color: #a855f7; }
-            50% { box-shadow: 0 0 18px rgba(192, 132, 252, 0.8); border-color: #c084fc; }
-        }
-        .crew-free-use-glow {
-            animation: pulse-purple 2s infinite;
-            background-color: rgba(88, 28, 135, 0.5);
-            border-color: #a855f7 !important;
-            color: #f3e8ff !important;
-        }
-
-        /* Tutorial Pulse */
-        @keyframes pulse-amber-border {
-            0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); border-color: #f59e0b; }
-            70% { box-shadow: 0 0 0 10px rgba(245, 158, 11, 0); border-color: #fbbf24; } 
-            100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); border-color: #f59e0b; } 
-        }
-        .tutorial-pulse { 
-            animation: pulse-amber-border 2s infinite; 
-            border: 2px solid #f59e0b !important; 
-            background-color: rgba(180, 83, 9, 0.4);
-            z-index: 10;
-        }
-        
-        @keyframes item-pulse {
-            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.4); }
-            50% { box-shadow: 0 0 10px 0 rgba(16, 185, 129, 0.2); border-color: rgba(16, 185, 129, 0.8); }
-            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.4); }
-        }
-        .item-consumable { animation: item-pulse 3s infinite; }
-
-        #inf-marker { transition: left 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
-
-        /* --- TEXT COLORS --- */
-        .text-fire { color: #fb923c; text-shadow: 0 0 8px rgba(249, 115, 22, 0.6); font-weight: 700; }
-        .text-void { color: #c084fc; text-shadow: 0 0 8px rgba(147, 51, 234, 0.5); font-weight: 700; }
-        .text-spectral { color: #67e8f9; text-shadow: 0 0 8px rgba(34, 211, 238, 0.6); font-weight: 700; }
-        .text-item { color: #fcd34d; text-shadow: 0 0 5px rgba(245, 158, 11, 0.4); font-weight: 700; }
-        .text-danger { color: #f87171; text-shadow: 0 0 5px rgba(220, 38, 38, 0.6); font-weight: 700; }
-        .text-blood { color: #ef4444; text-shadow: 0 0 8px rgba(220, 38, 38, 0.8); font-weight: 700; font-family: 'Cinzel', serif; }
-        .spectral-text-glow { color: #93c5fd; text-shadow: 0 0 5px rgba(59, 130, 246, 0.6); font-weight: 700; }
-
-        /* --- TOOLTIPS --- */
-        .memory-keyword { color: #93c5fd; text-shadow: 0 0 8px rgba(59, 130, 246, 0.5); cursor: help; position: relative; font-weight: 600; border-bottom: 1px solid transparent; transition: all 0.3s ease; }
-        .memory-keyword:hover { text-shadow: 0 0 12px rgba(59, 130, 246, 0.9), 0 0 2px #fff; color: #bfdbfe; }
-        .memory-keyword:hover::after { content: attr(data-lore); position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%) translateY(-8px); background: #0f172a; border: 1px solid #3b82f6; color: #e2e8f0; padding: 10px; border-radius: 4px; width: 240px; font-size: 0.85rem; line-height: 1.4; z-index: 100; pointer-events: none; font-family: 'Crimson Text', serif; box-shadow: 0 0 20px rgba(59, 130, 246, 0.2); text-align: center; white-space: normal; animation: fadeInTooltip 0.2s forwards; }
-        .memory-keyword:hover::before { content: ''; position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%) translateY(0px); border-width: 6px; border-style: solid; border-color: #3b82f6 transparent transparent transparent; z-index: 100; animation: fadeInTooltip 0.2s forwards; }
-        @keyframes fadeInTooltip { to { opacity: 1; } }
-
-        /* --- FX & ATMOSPHERE --- */
-        #fx-overlay { position: absolute; inset: 0; pointer-events: none; z-index: 20; transition: box-shadow 0.5s ease; }
-        
-        @keyframes rift-pulse-anim { 0%, 100% { box-shadow: inset 0 0 20px 0px rgba(139, 92, 246, 0.1); background-color: rgba(139, 92, 246, 0.05); } 50% { box-shadow: inset 0 0 80px 20px rgba(139, 92, 246, 0.4); background-color: rgba(139, 92, 246, 0.15); } }
-        .fx-rift-pulse { animation: rift-pulse-anim 4s infinite ease-in-out; mix-blend-mode: overlay; }
-
-        @keyframes rift-collapse-anim { 0% { box-shadow: inset 0 0 30px 10px rgba(109, 40, 217, 0.4); background-color: rgba(88, 28, 135, 0.05); } 50% { box-shadow: inset 0 0 90px 30px rgba(139, 92, 246, 0.5); background-color: rgba(124, 58, 237, 0.10); } 100% { box-shadow: inset 0 0 30px 10px rgba(109, 40, 217, 0.4); background-color: rgba(88, 28, 135, 0.05); } }
-        .fx-rift-collapsed { animation: rift-collapse-anim 4s infinite ease-in-out !important; mix-blend-mode: normal !important; z-index: 25; border: 1px solid rgba(139, 92, 246, 0.4); }
-
-        @keyframes flash-red-anim { 0% { background-color: rgba(220, 38, 38, 0.6); } 100% { background-color: transparent; } }
-        .fx-flash-red { animation: flash-red-anim 0.4s ease-out forwards; }
-
-        #vignette-overlay { box-shadow: inset 0 0 80px 30px rgba(127, 29, 29, 0.5); }
-        .vignette-active { opacity: 1 !important; }
-        
-        @keyframes heartbeat-anim { 0% { box-shadow: inset 0 0 20px 5px rgba(234, 88, 12, 0.1); } 50% { box-shadow: inset 0 0 60px 20px rgba(245, 158, 11, 0.3); } 100% { box-shadow: inset 0 0 20px 5px rgba(234, 88, 12, 0.1); } }
-        .fx-heartbeat-slow { animation: heartbeat-anim 3s infinite ease-in-out; opacity: 1 !important; }
-        .fx-heartbeat-fast { animation: heartbeat-anim 0.8s infinite ease-in-out; opacity: 1 !important; }
-
-        .water-stained { background-color: #1e293b; background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23334155' fill-opacity='0.1' fill-rule='evenodd'/%3E%3C/svg%3E"); }
-
-        /* --- ETHEREAL PLANE THEME --- */
-        body.plane-ethereal { background-color: #020617; transition: background-color 1s ease; }
-        
-        body.plane-ethereal .text-amber-500, body.plane-ethereal .text-amber-600, body.plane-ethereal .text-amber-700 { color: #22d3ee !important; text-shadow: 0 0 10px rgba(34, 211, 238, 0.6); }
-        body.plane-ethereal .text-gray-300, body.plane-ethereal .text-gray-400 { color: #e2e8f0 !important; }
-        body.plane-ethereal h1, body.plane-ethereal h2, body.plane-ethereal h3, body.plane-ethereal .cinzel { color: #67e8f9 !important; text-shadow: 0 0 15px rgba(103, 232, 249, 0.4); }
-        
-        /* Panels */
-        body.plane-ethereal #stats-panel, body.plane-ethereal #main-scene-text, body.plane-ethereal #journal-container { 
-            background-color: rgba(15, 23, 42, 0.8) !important; 
-            backdrop-filter: blur(5px); 
-            box-shadow: 0 0 30px rgba(34, 211, 238, 0.05);
-        }
-        body.plane-ethereal .bg-gray-800:not(#stats-panel):not(#journal-container), body.plane-ethereal .bg-gray-900 {
-            background-color: rgba(15, 23, 42, 0.6) !important;
-            box-shadow: none !important; 
-        }
-        
-        /* Borders */
-        body.plane-ethereal .border-gray-700, body.plane-ethereal .border-gray-600 {
-            border-color: #1e3a8a !important;
-            box-shadow: 0 0 8px rgba(59, 130, 246, 0.3);
-        }
-        
-        /* Buttons Override */
-        body.plane-ethereal .btn-game:not(.btn-hero):not(.btn-fire-glow):not(.btn-shadow-glow):not(.btn-success-glow):not(.btn-keen-senses):not(.btn-lantern-glow):not(.btn-planewalk-reveal) {
-            background: linear-gradient(90deg, rgba(30, 27, 75, 0.9) 0%, rgba(15, 23, 42, 0.9) 100%) !important;
-            border-color: #4f46e5 !important;
-            color: #e0e7ff !important;
-            box-shadow: 0 0 10px rgba(79, 70, 229, 0.2);
-        }
-        body.plane-ethereal .btn-game:not(.btn-hero):hover {
-            border-color: #22d3ee !important;
-            box-shadow: 0 0 15px rgba(34, 211, 238, 0.4);
-            transform: translateX(5px);
-        }
+		/* --- CORE LAYOUT & TYPOGRAPHY --- */
+		body { font-family: 'Crimson Text', serif; background-color: #050a10; color: #cdd5e0; min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; }
+		h1, h2, h3, .cinzel { font-family: 'Cinzel', serif; }
+		.journal-font { font-family: 'Dancing Script', cursive; font-size: 1.2rem; line-height: 1.6; color: #94a3b8; }
+		::-webkit-scrollbar { width: 8px; }
+		::-webkit-scrollbar-track { background: #0f172a; }
+		::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+		.text-shadow { text-shadow: 0 2px 4px rgba(0,0,0,0.8); }
+		.fade-in { animation: fadeIn 0.8s ease-in; }
+		@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 		
-		/* --- PUZZLE & ANIMATION STYLES --- */
+		/* FIX #3: Force Spectral Text Color */
+		.spectral-text-glow { color: #93c5fd !important; text-shadow: 0 0 5px rgba(59, 130, 246, 0.6); font-weight: 700; }
 
-		/* 1. Typewriter Cursor */
-		.slow-type::after {
-			content: '|';
-			animation: blink 0.7s infinite;
-			font-weight: 700;
-			color: #93c5fd;
+		/* --- BUTTON BASE --- */
+		.btn-game { 
+			transition: all 0.2s ease-out; position: relative; overflow: hidden; 
+			padding: 12px; width: 100%; display: flex; align-items: center; justify-content: space-between; 
+			border-radius: 4px; text-transform: uppercase; letter-spacing: 0.05em; 
+			font-size: 1rem; font-weight: 700; cursor: pointer; user-select: none; z-index: 1;
 		}
+		.btn-game span, .btn-game i, .btn-game div { position: relative; z-index: 5; }
+		.btn-game:active { transform: translateY(1px); }
+		.btn-game:hover { transform: translateY(-1px); } 
+		.btn-disabled-cost { opacity: 0.4; cursor: not-allowed; background-color: #1f2937 !important; border-color: #475569 !important; box-shadow: none !important; transform: none !important; }
+
+		/* --- BUTTON VARIANTS --- */
+		/* Standard Button */
+		.btn-standard, .btn-game.bg-gray-800 { background: linear-gradient(180deg, #1f2937 0%, #111827 100%) !important; border: 1px solid #475569 !important; color: #cdd5e0; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2); }
+		.btn-standard:hover, .btn-game.bg-gray-800:hover { border-color: #fbbf24 !important; background: linear-gradient(180deg, #334155 0%, #1f2937 100%) !important; }
+
+		/* Hero (Blue/Surge) */
+		@keyframes hero-pulse { 0%, 100% { box-shadow: 0 0 4px rgba(59, 130, 246, 0.2); border-color: #60a5fa; } 50% { box-shadow: 0 0 12px rgba(59, 130, 246, 0.5); border-color: #93c5fd; } }
+		.btn-hero { background: linear-gradient(90deg, rgba(30, 58, 138, 0.4) 0%, rgba(15, 23, 42, 0.6) 100%); border: 1px solid #60a5fa; color: #dbeafe; animation: hero-pulse 3s infinite ease-in-out; }
+		.btn-hero:hover { background: linear-gradient(90deg, rgba(30, 58, 138, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%); box-shadow: 0 0 15px rgba(59, 130, 246, 0.6); border-color: #93c5fd !important; }
+		.hero-icon { color: #60a5fa; filter: drop-shadow(0 0 5px rgba(59, 130, 246, 0.8)); }
+
+		/* Fire (Red/Burn) */
+		.btn-fire-glow { background: linear-gradient(90deg, rgba(127, 29, 29, 0.3) 0%, rgba(69, 10, 10, 0.5) 100%); border: 1px solid #f87171; color: #fecaca; box-shadow: 0 0 5px rgba(239, 68, 68, 0.2); }
+		.btn-fire-glow:hover { border-color: #fca5a5 !important; box-shadow: 0 0 15px rgba(248, 113, 113, 0.6) !important; }
+
+		/* Shadow (Purple/Mist) */
+		.btn-shadow-glow { background: linear-gradient(90deg, rgba(88, 28, 135, 0.3) 0%, rgba(59, 7, 100, 0.5) 100%); border: 1px solid #a78bfa; color: #e9d5ff; box-shadow: 0 0 5px rgba(139, 92, 246, 0.2); }
+		.btn-shadow-glow:hover { border-color: #d8b4fe !important; box-shadow: 0 0 15px rgba(167, 139, 250, 0.6) !important; }
+
+		/* Success/Safe */
+		.btn-success-glow { background: linear-gradient(180deg, #374151 0%, #1f2937 100%); border: 1px solid #9ca3af; color: #f3f4f6; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+		.btn-success-glow:hover { background: linear-gradient(180deg, #4b5563 0%, #374151 100%) !important; border-color: #d1d5db !important; color: white !important; }
+
+		/* Keen Senses (Indigo) */
+		@keyframes keen-pulse { 0%, 100% { border-color: #d97706; box-shadow: 0 0 2px rgba(217, 119, 6, 0.2); } 50% { border-color: #fbbf24; box-shadow: 0 0 8px rgba(251, 191, 36, 0.4); } }
+		.btn-keen-senses { background: linear-gradient(90deg, rgba(49, 46, 129, 0.4) 0%, rgba(30, 27, 75, 0.6) 100%); border: 1px solid #d97706; color: #e0e7ff; animation: keen-pulse 3s infinite ease-in-out; }
+		.btn-keen-senses:hover { border-color: #fcd34d !important; box-shadow: 0 0 12px rgba(251, 191, 36, 0.5) !important; }
+
+		/* Lantern (Yellow) */
+		@keyframes lantern-pulse { 0%, 100% { border-color: #f59e0b; box-shadow: inset 0 0 5px rgba(139, 92, 246, 0.1); } 50% { border-color: #fcd34d; box-shadow: inset 0 0 15px rgba(139, 92, 246, 0.3); } }
+		.btn-lantern-glow { background: linear-gradient(90deg, rgba(88, 28, 135, 0.4) 0%, rgba(66, 32, 6, 0.4) 100%); border: 1px solid #f59e0b; color: #fef3c7; animation: lantern-pulse 3s infinite ease-in-out; }
+		.btn-lantern-glow:hover { border-color: #fde047 !important; box-shadow: 0 0 12px rgba(253, 224, 71, 0.4) !important; }
+
+		/* Anchor (Cyan) */
+		.btn-anchor { background: linear-gradient(180deg, #1f2937 0%, #111827 100%); border: 1px solid #475569; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2); color: #22d3ee !important; }
+		.btn-anchor:hover { border-color: #fbbf24 !important; background: linear-gradient(180deg, #334155 0%, #1f2937 100%) !important; }
+
+		/* Planewalk (Glitch) */
+		@keyframes spectral-pulse { 0%, 100% { box-shadow: 0 0 4px rgba(59, 130, 246, 0.3); border-color: #3b82f6; } 50% { box-shadow: 0 0 12px rgba(59, 130, 246, 0.6); border-color: #60a5fa; } }
+		.btn-planewalk-reveal { background-color: rgba(30, 58, 138, 0.3); border: 1px solid #60a5fa; color: #cffafe; animation: spectral-pulse 2s infinite ease-in-out; }
+		.btn-planewalk-reveal:hover { background-color: rgba(30, 58, 138, 0.5) !important; border-color: #22d3ee !important; box-shadow: 0 0 15px rgba(34, 211, 238, 0.5) !important; }
+		.spectral-active { animation: spectral-pulse 2s infinite ease-in-out !important; background-color: rgba(30, 58, 138, 0.3); border-color: #60a5fa !important; }
+
+		/* Pulse (Search) */
+		@keyframes pulse-amber { 0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.3); border-color: #f59e0b; } 70% { box-shadow: 0 0 0 6px rgba(245, 158, 11, 0); border-color: #fbbf24; } 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); border-color: #f59e0b; } }
+		.btn-pulse { background: linear-gradient(90deg, rgba(120, 53, 15, 0.3) 0%, rgba(69, 26, 3, 0.5) 100%); border: 1px solid #f59e0b; color: #fef3c7; animation: pulse-amber 2s infinite; }
+		.btn-pulse:hover { border-color: #fbbf24 !important; box-shadow: 0 0 10px rgba(245, 158, 11, 0.4) !important; }
+
+		/* Hold Button */
+		.btn-channel { background: linear-gradient(90deg, #1e1b4b 0%, #312e81 100%); border: 1px solid #818cf8; color: #e0e7ff; overflow: hidden; user-select: none; touch-action: none; }
+		.btn-channel::before { content: ''; position: absolute; top: 0; left: 0; height: 100%; width: 0%; background: rgba(139, 92, 246, 0.6); z-index: 0; transition: width 0s; }
+		.btn-channel.channeling::before { width: 100%; transition: width var(--channel-duration, 3000ms) linear; }
+		.btn-content-wrapper { position: relative; z-index: 10; display: flex; width: 100%; align-items: center; }
+
+		/* --- FX ANIMATIONS --- */
+		/* 1. Fire Wipe */
+		@keyframes burn-mask { 0% { clip-path: inset(0 0 0 0); opacity: 1; filter: brightness(1); } 30% { background-color: #ef4444; color: #000; border-color: #fca5a5; filter: brightness(2) contrast(1.5); } 50% { clip-path: inset(0 0 0 0); opacity: 0.8; transform: scale(1.02); } 100% { clip-path: inset(0 0 0 100%); opacity: 0; transform: scale(0.95); background-color: #000; } }
+		@keyframes burn-line { 0% { transform: translateX(-100%); opacity: 0; } 40% { opacity: 1; } 100% { transform: translateX(100%); opacity: 0; } }
+		.fx-burn-active { pointer-events: none; animation: burn-mask 1.8s cubic-bezier(0.55, 0.055, 0.675, 0.19) forwards !important; }
+		.fx-burn-active::after { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(90deg, transparent 0%, #fbbf24 90%, transparent 100%); width: 100%; height: 100%; z-index: 10; opacity: 0; animation: burn-line 1.8s linear forwards !important; }
+
+		/* 2. Mist/Shadow */
+		@keyframes mist-dissolve-smoke { 0% { transform: scale(1); filter: blur(0px); opacity: 1; letter-spacing: 0.05em; -webkit-mask-position: 100% 0; mask-position: 100% 0; } 45% { transform: scale(1.05); filter: blur(2px); opacity: 0.9; -webkit-mask-position: 90% 0; mask-position: 90% 0; } 100% { transform: scale(1.3) translateX(20px); filter: blur(15px); opacity: 0; letter-spacing: 0.5em; -webkit-mask-position: 0% 0; mask-position: 0% 0; } }
+		.fx-mist-active { pointer-events: none; -webkit-mask: linear-gradient(to right, transparent 40%, black 80%); mask: linear-gradient(to right, transparent 40%, black 80%); -webkit-mask-size: 250% 100%; mask-size: 250% 100%; animation: mist-dissolve-smoke 1.8s ease-in forwards !important; color: #d8b4fe !important; border-color: rgba(167, 139, 250, 0.3) !important; }
+
+		/* 3. Skill Check Shake */
+		@keyframes dice-rattle { 0% { transform: translate(0, 0) rotate(0deg); } 25% { transform: translate(-2px, 1px) rotate(-1deg); } 50% { transform: translate(2px, -1px) rotate(1deg); } 75% { transform: translate(-1px, -2px) rotate(0deg); } 100% { transform: translate(0, 0) rotate(0deg); } }
+		.fx-skill-active { pointer-events: none; animation: dice-rattle 0.1s linear infinite; }
+
+		/* Icon Spin for Skill Checks */
+		@keyframes icon-spin { 0% { transform: rotate(0deg) scale(1); } 50% { transform: rotate(180deg) scale(1.4); color: #fbbf24; } 100% { transform: rotate(360deg) scale(1); color: #cdd5e0; } }
+
+		/* Success Pulse (Green) */
+		@keyframes success-pulse { 0% { border-color: #10b981; background-color: #064e3b; transform: scale(1); } 30% { box-shadow: 0 0 20px rgba(16, 185, 129, 0.6); border-color: #34d399; transform: scale(1.02); } 100% { border-color: #475569; background-color: #1f2937; transform: scale(1); } }
+		.fx-skill-success { pointer-events: none; animation: success-pulse 0.6s ease-out forwards; }
+		.fx-skill-success i { color: #34d399 !important; transition: color 0.2s; }
+
+		/* Failure Shake (Red) */
+		@keyframes fail-shake { 0% { border-color: #ef4444; background-color: #450a0a; transform: translateX(0); } 20% { transform: translateX(-4px); } 40% { transform: translateX(4px); } 60% { transform: translateX(-2px); } 80% { transform: translateX(2px); } 100% { border-color: #475569; background-color: #1f2937; transform: translateX(0); } }
+		.fx-skill-fail { pointer-events: none; animation: fail-shake 0.5s ease-out forwards; }
+		.fx-skill-fail i { color: #f87171 !important; transition: color 0.2s; }
+
+		.fx-skill-active i { animation: icon-spin 0.8s ease-out forwards; }
+
+		/* 4. Hero Surge */
+		@keyframes hero-shockwave { 0% { box-shadow: 0 0 0 0 rgba(96, 165, 250, 0.7), inset 0 0 0 0 rgba(255, 255, 255, 0.5); border-color: #60a5fa; transform: scale(1); } 15% { box-shadow: 0 0 50px 20px rgba(96, 165, 250, 0.5), inset 0 0 60px 20px rgba(255, 255, 255, 0.8); border-color: #fff; background-color: #1e3a8a; transform: scale(1.1); color: #fff; text-shadow: 0 0 10px #fff; } 100% { box-shadow: 0 0 0 0 rgba(96, 165, 250, 0); transform: scale(1); opacity: 0; } }
+		.fx-hero-active { pointer-events: none; animation: hero-shockwave 1.2s cubic-bezier(0.25, 1, 0.5, 1) forwards; color: #fff !important; z-index: 20; }
+
+		/* 5. Planar Glitch */
+		@keyframes glitch-skew { 0% { transform: skew(0deg) translateX(0); opacity: 1; filter: none; } 10% { transform: skew(-10deg) translateX(-3px); } 20% { transform: skew(10deg) translateX(3px); } 30% { transform: skew(-5deg) translateX(-1px); } 31% { transform: skew(-10deg) scale(1.05); background-color: #000 !important; border-color: #c084fc !important; color: #c084fc !important; box-shadow: 0 0 20px #c084fc !important; text-shadow: 2px 0 #fff; opacity: 1; } 70% { transform: skew(0deg) scale(1.05); background-color: #000 !important; border-color: #c084fc !important; color: #c084fc !important; opacity: 1; } 100% { transform: scale(1.1) translateX(10px); opacity: 0; filter: blur(8px); color: transparent !important; background-color: transparent !important; border-color: #c084fc !important; } }
+		.fx-glitch-active { pointer-events: none; animation: glitch-skew 1.8s ease-out forwards !important; }
+
+		/* --- GAME UTILS --- */
+		.prologue-blur { filter: blur(4px); opacity: 0.5; pointer-events: none; transition: all 1s; }
+		.prologue-active { opacity: 1; filter: none; }
+		.log-hidden { opacity: 0; pointer-events: none; transform: translateY(20px); }
+		.log-visible { opacity: 1; pointer-events: auto; transform: translateY(0); transition: all 1s ease-out; }
+		.crew-free-use-glow { animation: pulse-purple 2s infinite; background-color: rgba(88, 28, 135, 0.5); border-color: #a855f7 !important; color: #f3e8ff !important; }
+		@keyframes pulse-purple { 0%, 100% { box-shadow: 0 0 8px rgba(168, 85, 247, 0.5); border-color: #a855f7; } 50% { box-shadow: 0 0 18px rgba(192, 132, 252, 0.8); border-color: #c084fc; } }
+		.tutorial-pulse { animation: pulse-amber-border 2s infinite; border: 2px solid #f59e0b !important; background-color: rgba(180, 83, 9, 0.4); z-index: 10; }
+		@keyframes pulse-amber-border { 0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); border-color: #f59e0b; } 70% { box-shadow: 0 0 0 10px rgba(245, 158, 11, 0); border-color: #fbbf24; } 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); border-color: #f59e0b; } }
+		@keyframes item-pulse { 0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.4); } 50% { box-shadow: 0 0 10px 0 rgba(16, 185, 129, 0.2); border-color: rgba(16, 185, 129, 0.8); } 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.4); } }
+		.item-consumable { animation: item-pulse 3s infinite; }
+		#inf-marker { transition: left 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+		.text-fire { color: #fb923c; text-shadow: 0 0 8px rgba(249, 115, 22, 0.6); font-weight: 700; }
+		.text-void { color: #c084fc; text-shadow: 0 0 8px rgba(147, 51, 234, 0.5); font-weight: 700; }
+		.text-spectral { color: #67e8f9; text-shadow: 0 0 8px rgba(34, 211, 238, 0.6); font-weight: 700; }
+		.text-item { color: #fcd34d; text-shadow: 0 0 5px rgba(245, 158, 11, 0.4); font-weight: 700; }
+		.text-danger { color: #f87171; text-shadow: 0 0 5px rgba(220, 38, 38, 0.6); font-weight: 700; }
+		.text-blood { color: #ef4444; text-shadow: 0 0 8px rgba(220, 38, 38, 0.8); font-weight: 700; font-family: 'Cinzel', serif; }
+		.text-spectral-d8 { color: #67e8f9; text-shadow: 0 0 10px #67e8f9; }
+		.memory-keyword { color: #93c5fd; text-shadow: 0 0 8px rgba(59, 130, 246, 0.5); cursor: help; position: relative; font-weight: 600; border-bottom: 1px solid transparent; transition: all 0.3s ease; }
+		.memory-keyword:hover { text-shadow: 0 0 12px rgba(59, 130, 246, 0.9), 0 0 2px #fff; color: #bfdbfe; }
+		.memory-keyword:hover::after { content: attr(data-lore); position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%) translateY(-8px); background: #0f172a; border: 1px solid #3b82f6; color: #e2e8f0; padding: 10px; border-radius: 4px; width: 240px; font-size: 0.85rem; line-height: 1.4; z-index: 100; pointer-events: none; font-family: 'Crimson Text', serif; box-shadow: 0 0 20px rgba(59, 130, 246, 0.2); text-align: center; white-space: normal; animation: fadeInTooltip 0.2s forwards; }
+		.memory-keyword:hover::before { content: ''; position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%) translateY(0px); border-width: 6px; border-style: solid; border-color: #3b82f6 transparent transparent transparent; z-index: 100; animation: fadeInTooltip 0.2s forwards; }
+		@keyframes fadeInTooltip { to { opacity: 1; } }
+		#fx-overlay { position: absolute; inset: 0; pointer-events: none; z-index: 20; transition: box-shadow 0.5s ease; }
+		@keyframes rift-pulse-anim { 0%, 100% { box-shadow: inset 0 0 20px 0px rgba(139, 92, 246, 0.1); background-color: rgba(139, 92, 246, 0.05); } 50% { box-shadow: inset 0 0 80px 20px rgba(139, 92, 246, 0.4); background-color: rgba(139, 92, 246, 0.15); } }
+		.fx-rift-pulse { animation: rift-pulse-anim 4s infinite ease-in-out; mix-blend-mode: overlay; }
+		@keyframes rift-collapse-anim { 0% { box-shadow: inset 0 0 30px 10px rgba(109, 40, 217, 0.4); background-color: rgba(88, 28, 135, 0.05); } 50% { box-shadow: inset 0 0 90px 30px rgba(139, 92, 246, 0.5); background-color: rgba(124, 58, 237, 0.10); } 100% { box-shadow: inset 0 0 30px 10px rgba(109, 40, 217, 0.4); background-color: rgba(88, 28, 135, 0.05); } }
+		.fx-rift-collapsed { animation: rift-collapse-anim 4s infinite ease-in-out !important; mix-blend-mode: normal !important; z-index: 25; border: 1px solid rgba(139, 92, 246, 0.4); }
+		@keyframes flash-red-anim { 0% { background-color: rgba(220, 38, 38, 0.6); } 100% { background-color: transparent; } }
+		.fx-flash-red { animation: flash-red-anim 0.4s ease-out forwards; }
+		#vignette-overlay { box-shadow: inset 0 0 80px 30px rgba(127, 29, 29, 0.5); }
+		.vignette-active { opacity: 1 !important; }
+		@keyframes heartbeat-anim { 0% { box-shadow: inset 0 0 20px 5px rgba(234, 88, 12, 0.1); } 50% { box-shadow: inset 0 0 60px 20px rgba(245, 158, 11, 0.3); } 100% { box-shadow: inset 0 0 20px 5px rgba(234, 88, 12, 0.1); } }
+		.fx-heartbeat-slow { animation: heartbeat-anim 3s infinite ease-in-out; opacity: 1 !important; }
+		.fx-heartbeat-fast { animation: heartbeat-anim 0.8s infinite ease-in-out; opacity: 1 !important; }
+		.water-stained { background-color: #1e293b; background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23334155' fill-opacity='0.1' fill-rule='evenodd'/%3E%3C/svg%3E"); }
+
+		/* --- FIX #4: ETHEREAL PLANE & PUZZLES --- */
+		body.plane-ethereal { background-color: #020617; transition: background-color 1s ease; }
+		body.plane-ethereal .text-amber-500, body.plane-ethereal .text-amber-600 { color: #22d3ee !important; text-shadow: 0 0 10px rgba(34, 211, 238, 0.6); }
+		body.plane-ethereal .text-gray-300, body.plane-ethereal .text-gray-400 { color: #e2e8f0 !important; }
+		body.plane-ethereal h1, body.plane-ethereal h2, body.plane-ethereal h3 { color: #67e8f9 !important; text-shadow: 0 0 15px rgba(103, 232, 249, 0.4); }
+		body.plane-ethereal #stats-panel, body.plane-ethereal #main-scene-text, body.plane-ethereal #journal-container { background-color: rgba(15, 23, 42, 0.8) !important; backdrop-filter: blur(5px); box-shadow: 0 0 30px rgba(34, 211, 238, 0.05); }
+		body.plane-ethereal .bg-gray-800:not(#stats-panel):not(#journal-container) { background-color: rgba(15, 23, 42, 0.6) !important; box-shadow: none !important; }
+		body.plane-ethereal .border-gray-700 { border-color: #1e3a8a !important; box-shadow: 0 0 8px rgba(59, 130, 246, 0.3); }
+		
+		/* Ethereal Button Override - targeting btn-standard specifically to fix Act 2 styling */
+		body.plane-ethereal .btn-game:not(.btn-hero):not(.btn-fire-glow):not(.btn-shadow-glow):not(.btn-success-glow):not(.btn-keen-senses):not(.btn-lantern-glow):not(.btn-planewalk-reveal),
+		body.plane-ethereal .btn-standard { 
+			background: linear-gradient(90deg, rgba(30, 27, 75, 0.9) 0%, rgba(15, 23, 42, 0.9) 100%) !important; 
+			border-color: #4f46e5 !important; 
+			color: #e0e7ff !important; 
+			box-shadow: 0 0 10px rgba(79, 70, 229, 0.2); 
+		}
+		body.plane-ethereal .btn-game:not(.btn-hero):hover { border-color: #22d3ee !important; box-shadow: 0 0 15px rgba(34, 211, 238, 0.4); transform: translateX(5px); }
+		
+		body.plane-ethereal .water-stained { background-image: none !important; background: linear-gradient(180deg, #0f172a 0%, #172554 100%) !important; }
+		body.plane-ethereal #journal-container { border-color: #60a5fa !important; }
+		body.plane-ethereal .journal-font { color: #bae6fd !important; font-family: 'Dancing Script', cursive !important; }
+		body.plane-ethereal #scene-image { filter: brightness(1.1) contrast(1.05); mix-blend-mode: normal; }
+		body.plane-ethereal .clean-spectral-title { box-shadow: none !important; background: transparent !important; border-color: #1e3a8a !important; }
+		.bg-tether { background: linear-gradient(90deg, #06b6d4 0%, #cffafe 100%); box-shadow: 0 0 10px rgba(34, 211, 238, 0.6); }
+		.map-active #scene-image { filter: brightness(1.1) !important; border: 2px solid #22d3ee; }
+
+		/* Puzzle Styles */
+		.slow-type::after { content: '|'; animation: blink 0.7s infinite; font-weight: 700; color: #93c5fd; }
 		@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
-
-		/* 2. Circuit Puzzle */
-		.circuit-panel {
-			background-color: #111827; /* Gray-900 */
-			border: 1px solid #374151;
-			padding: 20px;
-			border-radius: 8px;
-			box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
-			display: flex;
-			gap: 15px;
-			justify-content: center;
-			margin-top: 1rem;
-			margin-bottom: 1rem;
-		}
-		.circuit-node {
-			width: 45px;
-			height: 45px;
-			border-radius: 8px;
-			background-color: #0f172a;
-			border: 2px solid #475569;
-			display: flex;
-			align-items: center;
-			justify-content: center;
-			font-family: 'Cinzel', serif;
-			font-weight: bold;
-			color: #94a3b8;
-			cursor: pointer;
-			transition: all 0.2s;
-		}
-		.circuit-node.active {
-			border-color: #f59e0b; /* Amber */
-			background-color: #451a03;
-			box-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
-			color: #fef3c7;
-			transform: scale(1.1);
-		}
-		.circuit-node.success {
-			border-color: #10b981; /* Emerald */
-			background-color: #064e3b;
-			color: #34d399;
-			cursor: default;
-		}
-		.circuit-node.error {
-			border-color: #ef4444; /* Red */
-			background-color: #450a0a;
-			color: #fca5a5;
-			animation: shake 0.3s;
-		}
+		.circuit-panel { background-color: #111827; border: 1px solid #374151; padding: 20px; border-radius: 8px; box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5); display: flex; gap: 15px; justify-content: center; margin-top: 1rem; margin-bottom: 1rem; }
+		.circuit-node { width: 45px; height: 45px; border-radius: 8px; background-color: #0f172a; border: 2px solid #475569; display: flex; align-items: center; justify-content: center; font-family: 'Cinzel', serif; font-weight: bold; color: #94a3b8; cursor: pointer; transition: all 0.2s; }
+		.circuit-node.active { border-color: #f59e0b; background-color: #451a03; box-shadow: 0 0 10px rgba(245, 158, 11, 0.5); color: #fef3c7; transform: scale(1.1); }
+		.circuit-node.success { border-color: #10b981; background-color: #064e3b; color: #34d399; cursor: default; }
+		.circuit-node.error { border-color: #ef4444; background-color: #450a0a; color: #fca5a5; animation: shake 0.3s; }
 		@keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
-
-		/* 3. Compass Puzzle */
-		@keyframes planar-pulse { 
-			0%, 100% { box-shadow: 0 0 10px rgba(167, 139, 250, 0.2), inset 0 0 8px rgba(103, 232, 249, 0.2); } 
-			50% { box-shadow: 0 0 20px rgba(167, 139, 250, 0.5), inset 0 0 15px rgba(103, 232, 249, 0.5); } 
-		}
-		#compass-container {
-			width: 220px;
-			height: 220px;
-			position: relative;
-			border-radius: 50%;
-			background: radial-gradient(#1e1b4b, #020617);
-			border: 2px solid #60a5fa;
-			animation: planar-pulse 4s infinite ease-in-out;
-			margin: 20px auto;
-			touch-action: none; /* Prevent scroll on mobile while dragging */
-		}
-		#compass-needle {
-			position: absolute;
-			width: 4px;
-			height: 100px;
-			top: 50%;
-			left: 50%;
-			margin-left: -2px;
-			margin-top: -100px;
-			transform-origin: center bottom;
-			cursor: grab;
-			z-index: 10;
-		}
+		@keyframes planar-pulse { 0%, 100% { box-shadow: 0 0 10px rgba(167, 139, 250, 0.2), inset 0 0 8px rgba(103, 232, 249, 0.2); } 50% { box-shadow: 0 0 20px rgba(167, 139, 250, 0.5), inset 0 0 15px rgba(103, 232, 249, 0.5); } }
+		#compass-container { width: 220px; height: 220px; position: relative; border-radius: 50%; background: radial-gradient(#1e1b4b, #020617); border: 2px solid #60a5fa; animation: planar-pulse 4s infinite ease-in-out; margin: 20px auto; touch-action: none; }
+		#compass-needle { position: absolute; width: 4px; height: 100px; top: 50%; left: 50%; margin-left: -2px; margin-top: -100px; transform-origin: center bottom; cursor: grab; z-index: 10; }
 		#compass-needle:active { cursor: grabbing; }
-		#needle-head {
-			position: absolute;
-			top: 0;
-			left: -6px;
-			width: 16px;
-			height: 16px;
-			transform: rotate(45deg);
-			background-color: #67e8f9;
-			box-shadow: 0 0 8px #67e8f9;
-		}
-		#needle-body {
-			width: 100%;
-			height: 100%;
-			background: linear-gradient(to top, #4c1d95 20%, #67e8f9 100%);
-		}
-		#compass-target {
-			position: absolute;
-			width: 80px;
-			height: 80px;
-			border-radius: 50%;
-			background: rgba(16, 185, 129, 0.2);
-			border: 2px solid #10b981;
-			top: 68px; /* Centered visually */
-			left: 68px;
-			transform-origin: center center;
-			pointer-events: none;
-		}
-		/* Visual Snap Feedback */
+		#needle-head { position: absolute; top: 0; left: -6px; width: 16px; height: 16px; transform: rotate(45deg); background-color: #67e8f9; box-shadow: 0 0 8px #67e8f9; }
+		#needle-body { width: 100%; height: 100%; background: linear-gradient(to top, #4c1d95 20%, #67e8f9 100%); }
+		#compass-target { position: absolute; width: 80px; height: 80px; border-radius: 50%; background: rgba(16, 185, 129, 0.2); border: 2px solid #10b981; top: 68px; left: 68px; transform-origin: center center; pointer-events: none; }
 		#compass-needle.aligned #needle-head { background-color: #34d399; box-shadow: 0 0 15px #10b981; }
 		#compass-needle:not(.aligned) { transition: transform 0.05s linear; }
-
-        /* Journal Override */
-        body.plane-ethereal .water-stained { background-image: none !important; background: linear-gradient(180deg, #0f172a 0%, #172554 100%) !important; }
-        body.plane-ethereal #journal-container { border-color: #60a5fa !important; }
-        body.plane-ethereal .journal-font { color: #bae6fd !important; font-family: 'Dancing Script', cursive !important; }
-        
-        /* Image Filter */
-        body.plane-ethereal #scene-image { filter: brightness(1.1) contrast(1.05); mix-blend-mode: normal; }
-        body.plane-ethereal .clean-spectral-title { box-shadow: none !important; background: transparent !important; border-color: #1e3a8a !important; }
-
-        /* --- ACT 2 & 3 SPECIFICS --- */
-        .bg-tether { background: linear-gradient(90deg, #06b6d4 0%, #cffafe 100%); box-shadow: 0 0 10px rgba(34, 211, 238, 0.6); }
-        .map-active #scene-image { filter: brightness(1.1) !important; border: 2px solid #22d3ee; }
-        .text-spectral-d8 { color: #67e8f9; text-shadow: 0 0 10px #67e8f9; }
     </style>
 </head>
 <body>
@@ -604,7 +322,7 @@
 
                 <div id="abilities-wrapper" class="flex flex-col gap-2 transition-all duration-300">
                     
-                    <div id="planar-skills-container" class="hidden pb-2 fade-in clean-spectral-title">
+                    <div id="planar-skills-container" class="hidden pb-2 fade-in clean-spectral-title h-full">
                         <div class="flex justify-between items-end mb-1 clean-spectral-title">
                             <span class="text-xs cinzel text-cyan-400"><i class="fas fa-bolt mr-1"></i> Horizon Walker</span>
                         </div>
@@ -615,7 +333,7 @@
                         </div>
                     </div>
                     
-                    <div id="companion-panel" class="hidden pb-2 fade-in clean-spectral-title">
+                    <div id="companion-panel" class="hidden pb-2 fade-in clean-spectral-title h-full">
                         <div class="flex justify-between items-end mb-1 clean-spectral-title">
                             <span class="text-xs cinzel text-emerald-400"><i class="fas fa-users mr-1"></i> Allies</span>
                         </div>
@@ -674,7 +392,6 @@
         import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // --- FIREBASE CONFIGURATION ---
         const firebaseConfig = {
 			apiKey: "AIzaSyDlg5dETZJpbJ9GzMV01pUYA06XbFmySbw",
 			authDomain: "edward-jones-75546.firebaseapp.com",
@@ -687,13 +404,12 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        
         const appId = "edward-jones-standalone";
         let user;
-        
         const MAX_OVERHEAL_CAP = 25;
 
-        // --- AUDIO MANAGER ---
+        // ... [Keep existing Audio/FX Managers] ...
+		// --- AUDIO MANAGER ---
         class AudioManager {
             constructor() {
                 this.ambience = new Audio('audio/ambience.mp3');
@@ -703,8 +419,8 @@
                 this.clickSound = new Audio('audio/click.mp3');
                 this.clickSound.volume = 0.5;
                 
-                this.gaspSound = new Audio('audio/gasp.mp3');
-                this.gaspSound.volume = 0.6;
+                this.gaspSound = new Audio('audio/gasp-slow.mp3');
+                this.gaspSound.volume = 0.3;
                 
                 this.clashSound = new Audio('audio/clash.mp3');
                 this.clashSound.volume = 0.5;
@@ -717,7 +433,15 @@
                 this.vulnerableSound.loop = true;
                 
                 this.ghostSound = new Audio('audio/ghost.mp3');
-                this.ghostSound.volume = 0.4;
+                this.ghostSound.volume = 0.2;
+				
+				
+				this.diceSound = new Audio('audio/dice.mp3');
+				this.diceSound.volume = 0.7; // Volume for the rattle
+				this.successSound = new Audio('audio/success.mp3');
+				this.successSound.volume = 0.7; // Volume for the "ding"
+				this.failSound = new Audio('audio/fail.mp3');
+				this.failSound.volume = 0.6; // Volume for the "dun-dun"
 
                 this.isMuted = true;
                 this.hasInteracted = false;
@@ -735,6 +459,12 @@
                     sound.play().catch(e => console.log("Audio play blocked"));
                 }
             }
+			
+			// --- NEW SKILL CHECK PLAYERS ---
+			playDice() { this.playSFX(this.diceSound); }
+			playSuccess() { this.playSFX(this.successSound); }
+			playFail() { this.playSFX(this.failSound); }
+			// -----------------------------
 
             playClick() { this.playSFX(this.clickSound); }
             playGasp() { this.playSFX(this.gaspSound); }
@@ -3009,21 +2739,20 @@
                 journal: null,
                 isRest: true,
                 onEnter: (state) => {
-                    const shanty = `The shanty holds the truth. I must find the Ring and the Blade to save my crew. I am the Captain now.<br><br>
-                      <i class='spectral-text-glow'>“There’s a tax for the coin and a tax for the bread,<br>
-                      But who pays the toll for the army of dead?<br>
-                      The Wolf King did, so the legends say,<br>
-                      To call back the souls who lost their way.<br><br>
-                      He found the Ring of ancient Brass,<br>
+					const shanty = `The shanty holds the truth. I must find the Ring and the Blade to save my crew. I am the Captain now.<br><br>
+					  <i class='spectral-text-glow'>“There’s a tax for the coin and a tax for the bread,<br>
+					  But who pays the toll for the army of dead?<br>
+					  The Wolf King did, so the legends say,<br>
+					  To call back the souls who lost their way.<br><br>
+					  He found the Ring of ancient Brass,<br>
 					  And the Blade that lets no Vampire pass.<br>
-                      He gave them a home and a people to keep,<br>
-                      And woke the crew from their deep cold sleep.<br><br>
-                      The dead stood fast 'til the war was won,<br>
-                      Then vanished like mist in the morning sun.<br>
-                      Now the Ring and the Blade are lost at sea,<br>
-                      Waiting for a Captain as cursed as he.“</i>`;
-                    
-                    addToHistory(shanty, 'entry');
+					  He gave them a home and a people to keep,<br>
+					  And woke the crew from their deep cold sleep.<br><br>
+					  The dead stood fast 'til the war was won,<br>
+					  Then vanished like mist in the morning sun.<br>
+					  Waiting for a Captain as cursed as he.“</i>`;
+					
+					addToHistory(shanty, 'entry');
                     
                     if (state.currentHP < state.maxHP) {
                         state.currentHP = state.maxHP;
@@ -4693,19 +4422,19 @@
                 ]
             },
 			'finale_ritual_start': { 
-                title: "The Wolf King's Ritual", 
-                text: "The Ring and the Blade flare in your hands, vibrating with a hum that rattles your teeth. The Rift above screams, a violet wound in the sky. To close it, you must become the anchor. You must channel the artifacts until the gateway shatters.<br><br><span class='text-purple-400 italic'>Hold the button to channel the ritual...</span>", 
-                isBoss: true, 
-                choices: [
-                    { 
-                        text: "Channel the Power", 
-                        nextScene: 'act2_arrival',
-                        type: 'hold', 
-                        customClass: 'btn-channel',
-                        doomCost: 0
-                    }
-                ] 
-            },
+				title: "The Wolf King's Ritual", 
+				text: "The Ring and the Blade flare in your hands, vibrating with a hum that rattles your teeth. The Rift above screams, a violet wound in the sky. To close it, you must become the anchor. You must channel the artifacts until the gateway shatters.<br><br><span class='text-purple-400 italic'>Hold the button to channel the ritual...</span>", 
+				isBoss: true, 
+				choices: [
+					{ 
+						text: "Channel the Power", 
+						nextScene: 'act2_arrival',
+						type: 'hold', 
+						customClass: 'btn-channel',
+						doomCost: 0
+					}
+				] 
+			},
 
             // --- ACT 2: MANOR ARRIVAL & HUB ---
             'act2_arrival': {
@@ -6678,7 +6407,7 @@
 					state.wardSurgeryDone = true;
 					return "Surgery Failed. Chaos +2.";
 				},
-				choices: [{ text: "Back away", nextScene: 'order_petrified_ward', type: 'travel' }]
+				choices: [{ text: "Back to Ward", nextScene: 'order_petrified_ward', type: 'travel' }]
 			},
 			'ward_donate_rum': {
 				title: "A Small Mercy",
@@ -6812,7 +6541,6 @@
 					state.fenceQuestComplete = true;
 					state.shillings += 25;
 					state.influence = Math.min(50, state.influence + 15);
-					// Add a permanent food item as a reward/symbol of the choice
 					if (!state.inventory.includes("Nutrient Slurry")) state.inventory.push("Nutrient Slurry");
 					return "Quest Complete. Chaos +15. Gained 25s.";
 				},
@@ -6820,7 +6548,7 @@
 			},
 			'fence_resolution_neutral': {
 				title: "The Price of Ambition",
-				text: "'Ambition is expensive,' you say, ignoring the boiling crucible. 'Pay me to leave your business alone.' Rook glares but empties his till. You walk away, indifferent to who starves or who rules.",
+				text: "He empties his purse into your hands. You walk away, leaving him to his sickness and his treason.",
 				onEnter: (state) => {
 					state.fenceQuestActive = false;
 					state.shillings += 50;
@@ -6851,7 +6579,7 @@
 
 			'coral_hulk_intro': {
 				title: "The Coral-Hulk",
-				text: "You step into the corrupted chamber. A Royal Guard Dreadnought—massive steam armor—stands there, but it is fused with white coral. The organic matter pulses, knitting metal back together. It roars, a wet, grinding sound.",
+				text: "You step into the corrupted chamber. A Royal Guard Dreadnought—massive steam armor—but it is fused with white coral. The organic matter pulses, knitting metal back together. It roars, a wet, grinding sound.",
 				isBoss: true,
 				onEnter: (state) => {
 					initCombat("Coral-Hulk", 80, [6, 12]); 
@@ -6940,7 +6668,6 @@
 				journal: "Defeated the Coral-Hulk. The corruption is halted in this sector.",
 				onEnter: (state) => {
 					state.coralHulkDefeated = true;
-					// Determine Reward based on Faction
 					if (state.factionAligned === 'order') {
 						if (!state.inventory.includes("Mirror Shield")) state.inventory.push("Mirror Shield");
 						return "Victory! Reward: Mirror Shield. Defense +1.";
@@ -6982,8 +6709,7 @@
 				journal: "Confronted the Vampire Elders. The final battle.",
 				isBoss: true,
 				onEnter: (state) => {
-					// Boss Name, HP, Damage Range, Count
-					initHordeCombat("Vampire Elder", 35, [4, 7], 3); // Reduced per-target damage
+					initHordeCombat("Vampire Elder", 35, [4, 7], 3); 
 					return "Combat Started! Three Elders attack per round.";
 				},
 				choices: [
@@ -6996,7 +6722,7 @@
 				title: "Battle: Vampire Elders",
 				text: "",
 				isBoss: true,
-				choices: [], // This array will be filled by onEnter/renderChoices
+				choices: [], 
 				
 				onEnter: (state) => {
 					// --- 1. SET DYNAMIC TEXT ---
@@ -7580,7 +7306,7 @@
             }
         };
 
-        // --- CORE FUNCTIONS ---
+        // --- CORE FUNCTIONS & ENGINE ---
         
         function applyDamage(currentHP, damageAmount) {
             let finalDamage = damageAmount;
@@ -7591,11 +7317,11 @@
                     addToHistory("Passive (Watchman's Lens): Damage reduced by 1.", 'system');
                 }
             }
-			if (gameState.negateNextDamage) {
-				finalDamage = 0;
-				gameState.negateNextDamage = false; 
-				addToHistory("Silas intercepted the attack! Damage negated.", 'system');
-			}
+            if (gameState.negateNextDamage) {
+                finalDamage = 0;
+                gameState.negateNextDamage = false; 
+                addToHistory("Silas intercepted the attack! Damage negated.", 'system');
+            }
 
             let finalHP = Math.max(0, currentHP - finalDamage);
             
@@ -7612,24 +7338,17 @@
             return Math.max(0, finalHP);
         }
 
-        // Helper function to provide initial stock data structure
-        scenes['market_stall'].stock = {
-            "Healing Potion": 1,
-            "Rope": 1,
-            "Torch": 1,
-            "Curious Cargo": 1, 
-            "Rum": 1 
-        };
-        scenes['alchemist_triage'].stock = {
-            "Vitality Tincture": 2,
-            "Smelling Salts": 3,
-            "Flash Powder": 1,
-            "Alchemical Fire": 1, 
-            "Holy Water": 1 
-        };
-        scenes['blackwater_tavern'].stock = {
-            "Gruel": 5 
-        };
+        // --- STOCK INITIALIZATION ---
+        // Ensure stock is defined even if not loaded from save
+        if (!scenes['market_stall'].stock) {
+            scenes['market_stall'].stock = { "Healing Potion": 1, "Rope": 1, "Torch": 1, "Curious Cargo": 1, "Rum": 1 };
+        }
+        if (!scenes['alchemist_triage'].stock) {
+            scenes['alchemist_triage'].stock = { "Vitality Tincture": 2, "Smelling Salts": 3, "Flash Powder": 1, "Alchemical Fire": 1, "Holy Water": 1 };
+        }
+        if (!scenes['blackwater_tavern'].stock) {
+            scenes['blackwater_tavern'].stock = { "Gruel": 5 };
+        }
         
         async function generateSceneImage(sceneId) {
             const key = sceneId || 'default';
@@ -7647,31 +7366,32 @@
             tempImg.src = url;
 
             tempImg.onload = () => {
-                // Once loaded, apply source, hide loader, and fade in
                 imgEl.src = url;
                 loader.style.display = 'none';
                 imgEl.style.opacity = 1;
             };
 
             tempImg.onerror = () => {
-                console.warn(`Failed to load image for scene: ${sceneId}. Falling back to placeholder.`);
                 imgEl.src = sceneImages['default'];
                 loader.style.display = 'none';
                 imgEl.style.opacity = 1;
             };
         }
 
-			async function init() {
+        async function init() {
             window.confirmReset = confirmReset;
             window.resetGame = resetGame; 
-            window.allyCommand = allyCommand;
+            // allyCommand is attached to window below
 
             onAuthStateChanged(auth, async (u) => {
                 if (u) {
                     user = u;
                     await setupRealtimeListener();
                     document.getElementById('app-loading').classList.add('fade-out');
-                    setTimeout(() => document.getElementById('app-loading').remove(), 500);
+                    setTimeout(() => {
+                        const el = document.getElementById('app-loading');
+                        if(el) el.remove();
+                    }, 500);
                 }
             });
 
@@ -7692,25 +7412,17 @@
                     renderScene('prologue_storm');
                 } else {
                     const data = snap.data();
-                    if (data.influence === undefined) {
-                        data.influence = 0; 
-                    }
+                    if (data.influence === undefined) data.influence = 0; 
+                    
                     const savedState = { ...createInitialState(), ...data }; 
                     gameState = savedState;
                     
-                    if (data.market_stall_stock) {
-                         scenes['market_stall'].stock = data.market_stall_stock;
-                    }
-                    if (data.alchemist_triage_stock) {
-                        scenes['alchemist_triage'].stock = data.alchemist_triage_stock;
-                    }
-                    if (data.blackwater_tavern_stock) {
-                        scenes['blackwater_tavern'].stock = data.blackwater_tavern_stock;
-                    }
+                    // Restore Stock
+                    if (data.market_stall_stock) scenes['market_stall'].stock = data.market_stall_stock;
+                    if (data.alchemist_triage_stock) scenes['alchemist_triage'].stock = data.alchemist_triage_stock;
+                    if (data.blackwater_tavern_stock) scenes['blackwater_tavern'].stock = data.blackwater_tavern_stock;
 
-                    if (gameState.isEthereal) {
-                        document.body.classList.add('plane-ethereal');
-                    }
+                    if (gameState.isEthereal) document.body.classList.add('plane-ethereal');
                     
                     renderScene(gameState.currentSceneId, false);
                     rebuildJournal();
@@ -7740,11 +7452,8 @@
 
                         gameState = { ...gameState, ...data };
                         
-                        if (gameState.isEthereal) {
-                            document.body.classList.add('plane-ethereal');
-                        } else {
-                            document.body.classList.remove('plane-ethereal');
-                        }
+                        if (gameState.isEthereal) document.body.classList.add('plane-ethereal');
+                        else document.body.classList.remove('plane-ethereal');
                         
                         updateUI();
                     }
@@ -7788,27 +7497,15 @@
         async function resetGame() {
             gameState = createInitialState();
             
-            scenes['market_stall'].stock = {
-                "Healing Potion": 1,
-                "Rope": 1,
-                "Torch": 1,
-                "Curious Cargo": 1, 
-                "Rum": 0 
-            };
-            scenes['alchemist_triage'].stock = {
-                "Vitality Tincture": 2,
-                "Smelling Salts": 3,
-                "Flash Powder": 1,
-                "Alchemical Fire": 1, 
-                "Holy Water": 1 
-            };
-            scenes['blackwater_tavern'].stock = {
-                "Gruel": 5 
-            };
+            // Reset Stocks
+            scenes['market_stall'].stock = { "Healing Potion": 1, "Rope": 1, "Torch": 1, "Curious Cargo": 1, "Rum": 0 };
+            scenes['alchemist_triage'].stock = { "Vitality Tincture": 2, "Smelling Salts": 3, "Flash Powder": 1, "Alchemical Fire": 1, "Holy Water": 1 };
+            scenes['blackwater_tavern'].stock = { "Gruel": 5 };
             
             const workBtn = scenes['town_docks'].choices.find(c => c.nextScene === 'docks_work');
             if (workBtn) workBtn.costHP = 2; 
             
+            // Reset core flags
             gameState.isAbsorbCharged = false;
             gameState.isSurpriseRound = false;
             gameState.isRiftCollapse = false;
@@ -7818,20 +7515,17 @@
             gameState.docksWorkCount = 0;
             gameState.quinnLogistics = false;
             gameState.isEthereal = false;
-            
             gameState.hallLooted = false;
             gameState.hasBlinkSkill = false;
             gameState.act2Started = false;
             gameState.tetherTimer = 20;
-
             gameState.act3Started = false;
-			gameState.shipName = "The Iron Lung";
+            gameState.shipName = "The Iron Lung";
             gameState.knownIslands = ['port_hub'];
             gameState.currentLocation = 'port_hub';
             gameState.supplies = 10;
             gameState.companions.silas.joined = false;
             gameState.silasJoined = false;
-
 
             document.getElementById('journal-content').innerHTML = '';
             await saveGame();
@@ -7862,91 +7556,52 @@
             } else if (type === 'roll') {
                 html = `<div class="text-xs spectral-text-glow font-bold mb-2 fade-in font-serif">${text}</div>`;
             } else if (type === 'danger') {
-				html = `<div class="text-xs text-red-400 font-bold mb-2 fade-in font-serif">${text}</div>`;
-			}
-			if (type === 'combat') {
+                html = `<div class="text-xs text-red-400 font-bold mb-2 fade-in font-serif">${text}</div>`;
+            }
+            if (type === 'combat') {
                 html = `<div class="text-xs text-red-100 border-l-2 border-red-600 pl-2 mb-2 font-mono bg-red-900/20 p-2 shadow-inner fade-in">${text}</div>`;
             }
             if(html) gameState.history.push(html);
             rebuildJournal();
         }
-		
-		window.allyCommand = function(allyId) {
-			if (gameState.isBossCombat && gameState.allyCooldowns[allyId] === 0) {
-				
-				if (allyId === 'silas') {
-                    gameState.negateNextDamage = true;
-                    // Silas Vengeance Check (Only for Vampire Elders fight)
-                    let baseCooldown = 2;
-                    if (gameState.silasVengeanceActive && gameState.currentEnemy.includes('Vampire')) {
-                         baseCooldown = 1; 
-                         addToHistory("Vengeance Status: Silas Intercept Cooldown reduced to 1!", 'system');
-                    }
-                    gameState.allyCooldowns.silas = baseCooldown;
-                    
-                    addToHistory(`<span class="text-emerald-400 font-bold">Silas: Intercept!</span> Silas materializes, shield raised.`, 'system');
-                } else if (allyId === 'blink') {
-                    gameState.nextAttackCrit = true;
-                    gameState.allyCooldowns.blink = 3;
-                    addToHistory(`<span class="text-emerald-400 font-bold">Blink: Phase Shift!</span> The cub blurs and you feel the tether momentarily shift.`, 'system');
-                }
-				
-				// Tick down the OTHER ally's cooldown
-				Object.keys(gameState.allyCooldowns).forEach(key => {
-					if (key !== allyId) {
-						gameState.allyCooldowns[key] = Math.max(0, gameState.allyCooldowns[key] - 1);
-					}
-				});
-				
-				addToHistory("The turn passes as you command your companion, triggering the enemy's attack.", 'system');
-                
-                // Trigger enemy attack if not in single-target combat (Horde or Coral-Hulk uses resolveCombatRound)
-                if (gameState.activeEnemies.length > 0) {
-                     window.resolveHordeRound('none', 'none'); 
-                } else {
-                    window.resolveCombatRound('none');
-                }
-				
-			} else {
-				addToHistory(`Ally ${allyId.charAt(0).toUpperCase() + allyId.slice(1)} is on cooldown or you are not in combat!`, 'system');
-			}
-			
-			saveGame();
-			updateUI();
-		}
 
-		function combineItems(baseItem, ingredient, resultItem) {
-			if (!gameState.inventory.includes(baseItem) || !gameState.inventory.includes(ingredient)) {
-				return "Error: Missing ingredients for combination.";
-			}
+        // --- GLOBAL WINDOW FUNCTIONS ---
+        // allyCommand is already defined in the main script block above for HTML access,
+        // but we ensure it calls the right logic here.
+        // NOTE: The previous window.allyCommand definition in the file is sufficient if correct,
+        // but to be safe we leave this logic here as part of renderChoices/renderScene flow.
 
-			const baseIndex = gameState.inventory.indexOf(baseItem);
-			const ingredientIndex = gameState.inventory.indexOf(ingredient);
-			
-			const baseDef = itemRegistry[baseItem];
-			if (baseDef && baseDef.onRemove) {
-				baseDef.onRemove(gameState);
-				addToHistory(`Passive benefit of ${baseItem} removed.`, 'system');
-			}
-			
-			gameState.inventory.splice(Math.max(baseIndex, ingredientIndex), 1); 
-			gameState.inventory.splice(Math.min(baseIndex, ingredientIndex), 1); 
+        function combineItems(baseItem, ingredient, resultItem) {
+            if (!gameState.inventory.includes(baseItem) || !gameState.inventory.includes(ingredient)) {
+                return "Error: Missing ingredients.";
+            }
 
-			gameState.inventory.push(resultItem);
+            const baseIndex = gameState.inventory.indexOf(baseItem);
+            const ingredientIndex = gameState.inventory.indexOf(ingredient);
+            
+            const baseDef = itemRegistry[baseItem];
+            if (baseDef && baseDef.onRemove) {
+                baseDef.onRemove(gameState);
+                addToHistory(`Passive benefit of ${baseItem} removed.`, 'system');
+            }
+            
+            gameState.inventory.splice(Math.max(baseIndex, ingredientIndex), 1); 
+            gameState.inventory.splice(Math.min(baseIndex, ingredientIndex), 1); 
 
-			const resultDef = itemRegistry[resultItem];
-			if (resultDef && resultDef.onAcquire) {
-				resultDef.onAcquire(gameState);
-				addToHistory(`Passive benefit of ${resultItem} applied.`, 'system');
-			}
-			
-			saveGame();
-			updateUI();
-			return `${baseItem} and ${ingredient} were fused at the Spectral Forge, yielding the <span class="text-item">${resultDef.name}</span>!`;
-		}
+            gameState.inventory.push(resultItem);
 
-        
-        async function renderScene(sceneId, logText = true) {
+            const resultDef = itemRegistry[resultItem];
+            if (resultDef && resultDef.onAcquire) {
+                resultDef.onAcquire(gameState);
+                addToHistory(`Passive benefit of ${resultItem} applied.`, 'system');
+            }
+            
+            saveGame();
+            updateUI();
+            return `${baseItem} and ${ingredient} were fused at the Spectral Forge, yielding the <span class="text-item">${resultDef.name}</span>!`;
+        }
+
+		async function renderScene(sceneId, logText = true) {
             const scene = scenes[sceneId];
             
             if (!scene) return;
@@ -7984,57 +7639,61 @@
 
             // --- 4. HANDLE LOGIC/ROLL SCENES ---
             if (scene.isLogic) {
-                // ... (Keep existing Logic/Roll code exactly as is) ...
-                let roll = Math.floor(Math.random() * 20) + 1;
-                let crewUsedName = "None";
-                let logMsg = `Check (DC ${gameState.lastDC || 10}): Rolled d20 (${roll})`;
-                
-                gameState.lastCrewUsedId = null;
+                let roll;
+                let logMsg = "";
 
-                if (activeCrewMember) {
-                    const isSkilled = getBonusForSkill(activeCrewMember, gameState.lastSkillType);
-                    const crewKey = activeCrewMember.id;
-                    
-                    if (isSkilled) { 
-                        const dieSize = gameState.isEthereal ? 8 : 4; 
-                        const bonus = Math.floor(Math.random() * dieSize) + 1;
-                        roll += bonus;
-                        crewUsedName = activeCrewMember.name;
-
-                        const dieLabel = gameState.isEthereal ? `(Spectral D8!)` : `(${crewUsedName})`;
-
-                        logMsg += ` + <span class="${gameState.isEthereal ? 'text-spectral-d8' : ''}">${bonus}</span> ${dieLabel}`; 
-                        
-                        if (gameState.crewUseFree) {
-                            addToHistory(`*Pearlescent Mushroom consumed for FREE GUIDANCE.*`, 'system');
-                            gameState.crewUseFree = false;
-                        } else {
-                            gameState.crew[crewKey].used = true;
-                        }
-                        
-                        if (roll >= gameState.lastDC) {
-                            gameState.lastCrewUsedId = crewKey;
-                        }
-                        
-                    } else if (gameState.crewUseFree) {
-                        crewUsedName = activeCrewMember.name;
-                        logMsg += ` + 0 (${crewUsedName} - Invalid Skill, Mushroom conserved)`;
-                        addToHistory(`*Mushroom conserved: ${crewUsedName} doesn't have expertise in ${gameState.lastSkillType}.*`, 'system');
-                    } else {
-                        crewUsedName = activeCrewMember.name;
-                        logMsg += ` + 0 (${crewUsedName} - Invalid Skill)`;
-                    }
-                    
-                    if (gameState.isRiftCollapse) {
-                        roll = Math.max(1, roll - 2); 
-                        logMsg += ` - 2 (Rift Penalty)`;
-                    }
-                    
-                    activeCrewMember = null;
+                if (gameState.pendingRoll) {
+                    // Use the roll calculated by the button animation
+                    roll = gameState.pendingRoll.total;
+                    logMsg = gameState.pendingRoll.log;
+                    gameState.pendingRoll = null; // Clear it
                 } else {
-                    if (gameState.isRiftCollapse) {
-                        roll = Math.max(1, roll - 2); 
-                        logMsg += ` - 2 (Rift Penalty)`;
+                    // Fallback: Calculate fresh if triggered without button (console/legacy)
+                    roll = Math.floor(Math.random() * 20) + 1;
+                    let crewUsedName = "None";
+                    logMsg = `Check (DC ${gameState.lastDC || 10}): Rolled d20 (${roll})`;
+                    
+                    gameState.lastCrewUsedId = null;
+
+                    if (activeCrewMember) {
+                        const isSkilled = getBonusForSkill(activeCrewMember, gameState.lastSkillType);
+                        const crewKey = activeCrewMember.id;
+                        
+                        if (isSkilled) { 
+                            const dieSize = gameState.isEthereal ? 8 : 4; 
+                            const bonus = Math.floor(Math.random() * dieSize) + 1;
+                            roll += bonus;
+                            crewUsedName = activeCrewMember.name;
+                            const dieLabel = gameState.isEthereal ? `(Spectral D8!)` : `(${crewUsedName})`;
+                            logMsg += ` + <span class="${gameState.isEthereal ? 'text-spectral-d8' : ''}">${bonus}</span> ${dieLabel}`; 
+                            
+                            if (gameState.crewUseFree) {
+                                addToHistory(`*Pearlescent Mushroom consumed for FREE GUIDANCE.*`, 'system');
+                                gameState.crewUseFree = false;
+                            } else {
+                                gameState.crew[crewKey].used = true;
+                            }
+                            if (roll >= gameState.lastDC) gameState.lastCrewUsedId = crewKey;
+                            
+                        } else if (gameState.crewUseFree) {
+                            crewUsedName = activeCrewMember.name;
+                            logMsg += ` + 0 (${crewUsedName} - Invalid Skill, Mushroom conserved)`;
+                            addToHistory(`*Mushroom conserved: ${crewUsedName} doesn't have expertise in ${gameState.lastSkillType}.*`, 'system');
+                        } else {
+                            crewUsedName = activeCrewMember.name;
+                            logMsg += ` + 0 (${crewUsedName} - Invalid Skill)`;
+                        }
+                        
+                        if (gameState.isRiftCollapse) {
+                            roll = Math.max(1, roll - 2); 
+                            logMsg += ` - 2 (Rift Penalty)`;
+                        }
+                        activeCrewMember = null;
+                    } else {
+                        if (gameState.isRiftCollapse) {
+                            roll = Math.max(1, roll - 2); 
+                            logMsg += ` - 2 (Rift Penalty)`;
+                        }
                     }
                 }
 
@@ -8059,7 +7718,7 @@
                 document.getElementById('fx-overlay').classList.add('fx-rift-pulse');
             }
 
-            // --- 6. EXECUTE ONENTER (Updates State & Text) ---
+            // --- 6. EXECUTE ONENTER ---
             if (scene.onEnter) {
                 const msg = scene.onEnter(gameState);
                 if (msg && logText) {
@@ -8068,61 +7727,31 @@
                 saveGame();
             }
             
-            // --- 7. DEFINE TEXT VARIABLES (After onEnter) ---
+            // --- 7. TEXT & TITLE ---
             let displayTitle = scene.title;
             let displayText = scene.text;
 
-            // --- 8. INJECT BOSS HEALTH BAR (Moved Here) ---
+            // --- 8. INJECT BOSS HEALTH BAR ---
             if (gameState.isBossCombat) {
-                
                 if (gameState.activeEnemies && gameState.activeEnemies.length > 0) {
-                     // HORDE COMBAT DISPLAY
                     let hordeHPBar = '';
                     let totalHP = 0;
-                    
                     gameState.activeEnemies.forEach(elderName => {
                         const elderHP = gameState.enemies[elderName];
                         const pct = (elderHP / gameState.maxElderHP) * 100;
                         totalHP += elderHP;
-
-                        hordeHPBar += `
-                        <div class="w-full bg-gray-900 border border-red-900 rounded h-4 mt-1 mb-1 relative overflow-hidden shadow-lg">
-                            <div class="bg-red-700 h-full transition-all duration-300" style="width: ${pct}%"></div>
-                            <div class="absolute inset-0 flex items-center justify-center text-[10px] cinzel font-bold text-white shadow-black drop-shadow-md tracking-widest">
-                                ${elderName}: ${elderHP} / ${gameState.maxElderHP}
-                            </div>
-                        </div>`;
+                        hordeHPBar += `<div class="w-full bg-gray-900 border border-red-900 rounded h-4 mt-1 mb-1 relative overflow-hidden shadow-lg"><div class="bg-red-700 h-full transition-all duration-300" style="width: ${pct}%"></div><div class="absolute inset-0 flex items-center justify-center text-[10px] cinzel font-bold text-white shadow-black drop-shadow-md tracking-widest">${elderName}: ${elderHP} / ${gameState.maxElderHP}</div></div>`;
                     });
-                    
                     const totalPct = (totalHP / gameState.maxEnemyHP) * 100;
-
-                    const totalHealthHTML = `
-                        <div class="w-full bg-gray-900 border border-red-500 rounded h-2 mb-3 relative overflow-hidden">
-                             <div class="bg-red-600 h-full transition-all duration-300" style="width: ${totalPct}%"></div>
-                        </div>
-                        <div class="text-xs text-red-400 cinzel mb-2">Horde Total HP: ${totalHP} / ${gameState.maxEnemyHP}</div>
-                        ${hordeHPBar}`;
-                        
-                    displayText = totalHealthHTML + displayText;
+                    displayText = `<div class="w-full bg-gray-900 border border-red-500 rounded h-2 mb-3 relative overflow-hidden"><div class="bg-red-600 h-full transition-all duration-300" style="width: ${totalPct}%"></div></div><div class="text-xs text-red-400 cinzel mb-2">Horde Total HP: ${totalHP} / ${gameState.maxEnemyHP}</div>${hordeHPBar}` + displayText;
                 }
-                else if (gameState.enemyHP > 0) { // Single-target boss (Coral-Hulk)
+                else if (gameState.enemyHP > 0) { 
                     const pct = (gameState.enemyHP / gameState.maxEnemyHP) * 100;
-                    const color = 'bg-red-700'; 
-                    
-                    const healthBarHTML = `
-                    <div class="w-full bg-gray-900 border border-red-900 rounded h-6 mt-2 mb-6 relative overflow-hidden shadow-lg">
-                        <div class="${color} h-full transition-all duration-300" style="width: ${pct}%"></div>
-                        <div class="absolute inset-0 flex items-center justify-center text-xs cinzel font-bold text-white shadow-black drop-shadow-md tracking-widest">
-                            ${gameState.currentEnemy}: ${gameState.enemyHP} / ${gameState.maxEnemyHP}
-                        </div>
-                    </div>`;
-                    
-                    displayText = healthBarHTML + displayText;
+                    displayText = `<div class="w-full bg-gray-900 border border-red-900 rounded h-6 mt-2 mb-6 relative overflow-hidden shadow-lg"><div class="bg-red-700 h-full transition-all duration-300" style="width: ${pct}%"></div><div class="absolute inset-0 flex items-center justify-center text-xs cinzel font-bold text-white shadow-black drop-shadow-md tracking-widest">${gameState.currentEnemy}: ${gameState.enemyHP} / ${gameState.maxEnemyHP}</div></div>` + displayText;
                 }
             }
 
-
-            // --- 9. INJECT SHIP NAME (Moved Here) ---
+            // --- 9. INJECT SHIP NAME ---
             if (sceneId === 'act3_intro_ship' || sceneId === 'sea_map_hub') {
                 if (gameState.shipName) {
                     displayTitle = gameState.shipName;
@@ -8139,11 +7768,8 @@
 
             // --- 11. VIGNETTE FX ---
             const hpPct = (gameState.currentHP / gameState.maxHP) * 100;
-            if (hpPct <= 30) {
-                fxManager.setVignette(true);
-            } else {
-                fxManager.setVignette(false);
-            }
+            if (hpPct <= 30) fxManager.setVignette(true);
+            else fxManager.setVignette(false);
             
             if (gameState.companions.silas.joined) {
                 if (sceneId === 'bleak_dogtooth' || sceneId === 'dogtooth_cliff_wall') {
@@ -8158,7 +7784,6 @@
             // --- 12. RENDER TO DOM ---
             const textEl = document.getElementById('main-scene-text');
             const isDeathScene = sceneId === 'edward_death';
-            
             let titleClass = isDeathScene ? 'text-red-500' : 'text-amber-500';
             let textClass = isDeathScene ? 'text-red-300' : 'text-gray-300';
             
@@ -8168,10 +7793,7 @@
                 Object.keys(scene.banter).forEach(crewId => {
                     const crewMember = gameState.crew[crewId];
                     if (crewMember && (!crewMember.used || gameState.crewUseFree)) {
-                         finalHtml += `<div class="mt-4 spectral-text-glow italic border-l-2 border-blue-500 pl-3 fade-in">
-                                <span class="font-bold text-xs uppercase block mb-1">${crewMember.name}:</span>
-                                "${scene.banter[crewId]}"
-                              </div>`;
+                         finalHtml += `<div class="mt-4 spectral-text-glow italic border-l-2 border-blue-500 pl-3 fade-in"><span class="font-bold text-xs uppercase block mb-1">${crewMember.name}:</span>"${scene.banter[crewId]}"</div>`;
                     }
                 });
             }
@@ -8180,63 +7802,41 @@
             if (!isScriptedScene && !sceneId.startsWith('prologue') && gameState.act1Started) {
                  const dynamicLine = getDynamicBanter();
                  if (dynamicLine) {
-                      finalHtml += `<div class="mt-4 spectral-text-glow italic border-l-2 border-blue-500 pl-3 fade-in">
-                            <span class="font-bold text-xs uppercase block mb-1">${dynamicLine.name}:</span>
-                            "${dynamicLine.line}"
-                          </div>`;
+                      finalHtml += `<div class="mt-4 spectral-text-glow italic border-l-2 border-blue-500 pl-3 fade-in"><span class="font-bold text-xs uppercase block mb-1">${dynamicLine.name}:</span>"${dynamicLine.line}"</div>`;
                  }
             }
             
             textEl.innerHTML = finalHtml;
             document.getElementById('scene-title').innerText = displayTitle;
-            
             activeCrewMember = null; 
 
             generateSceneImage(sceneId);
             renderChoices(scene.choices, isDeathScene);
-			// --- PUZZLE & BANTER HOOKS ---
             
-            // 1. Initialize Puzzles
-            if (sceneId === 'manor_cellar_puzzle') {
-                setTimeout(() => puzzleManager.initCircuit(), 100);
-            }
-            if (sceneId === 'sea_fog_puzzle') {
-                setTimeout(() => puzzleManager.initCompass(), 100);
-            }
+            // --- PUZZLE & BANTER HOOKS ---
+            if (sceneId === 'manor_cellar_puzzle') setTimeout(() => puzzleManager.initCircuit(), 100);
+            if (sceneId === 'sea_fog_puzzle') setTimeout(() => puzzleManager.initCompass(), 100);
 
-            // 2. Trigger Banter Animation
             if (scene.banter || isScriptedScene) {
-                // We target the specific styling classes applied in renderScene
                 const banterContainers = textEl.querySelectorAll('.italic'); 
-                
                 banterContainers.forEach((container, index) => {
-                    // Find the text node immediately after the bold Name span
                     const nameSpan = container.querySelector('span');
-                    
                     if (nameSpan && nameSpan.nextSibling) {
-                        // Get the text (e.g., "The stars are gone...")
                         const rawText = nameSpan.nextSibling.textContent.replace(/"/g, '').trim();
-                        
-                        // Clear the text node so we can type it back in
                         nameSpan.nextSibling.textContent = ' "'; 
-                        
-                        // Create a specific span for the typing effect
                         const typeSpan = document.createElement('span');
                         typeSpan.id = `banter-type-${index}`;
                         container.appendChild(typeSpan);
-                        
-                        // Trigger the typewriter with a slight delay based on index
                         setTimeout(() => {
                             puzzleManager.typeBanter(typeSpan.id, rawText + '"');
                         }, index * 1000); 
                     }
                 });
             }
-			
             updateUI();
         }
-
-			function renderChoices(choices, isDeathScene = false) {
+		
+		function renderChoices(choices, isDeathScene = false) {
             const container = document.getElementById('choices-area');
             container.innerHTML = '';
 
@@ -8247,1033 +7847,933 @@
             let processedChoices = [...choices]; 
             
             // --- DYNAMIC INJECTIONS ---
-
-            // 1. Alchemist Secret Trade Injection
             if (currentSceneId === 'alchemist_triage' && gameState.inventory.includes('Strange Coin') && !gameState.inventory.includes('Phoenix Draft')) {
                 const sellIndex = processedChoices.findIndex(c => c.nextScene === 'alchemist_sell');
-                const newChoice = {
-                    text: "Offer Strange Coin (Trade for Phoenix Draft)",
-                    nextScene: 'alchemist_secret_stock',
-                    type: 'action',
-                    reqItem: 'Strange Coin',
-                    consume: true,
-                    doomCost: 0,
-                    customClass: 'btn-hero'
-                };
+                const newChoice = { text: "Offer Strange Coin (Trade for Phoenix Draft)", nextScene: 'alchemist_secret_stock', type: 'action', reqItem: 'Strange Coin', consume: true, doomCost: 0, customClass: 'btn-hero' };
                 if (sellIndex !== -1) processedChoices.splice(sellIndex, 0, newChoice);
                 else processedChoices.push(newChoice); 
             }
-            
-            // 2. Market Stall: Buying
             if (currentSceneId === 'market_stall') {
                 const sellWaresNav = choices.find(c => c.nextScene === 'market_sell');
                 const isMainGame = gameState.act1Started || gameState.act2Started || gameState.act3Started;
                 const returnTarget = isMainGame ? 'town_square' : 'market_crossroads';
                 const leaveNav = { text: "Leave", nextScene: returnTarget, type: 'travel', doomCost: 0 };
-                
                 processedChoices = []; 
-
                 MARKET_BUY_OPTIONS.forEach(sale => {
                     const actualStock = currentSceneStock[sale.item] || 0;
                     const itemDef = itemRegistry[sale.item];
                     const isHealing = itemDef && (itemDef.name || '').includes('Heal') || (itemDef.name || '').includes('Rum');
                     const isFull = gameState.currentHP >= gameState.maxHP;
                     const canAfford = gameState.shillings >= sale.cost;
-                    
-                    if (actualStock > 0) {
-                        processedChoices.push({
-                            // FIX: Only the Item Name. The cost indicator is added automatically at the end.
-                            text: `Buy ${sale.item.split('(')[0].trim()}`, 
-                            nextScene: sale.nextScene,
-                            type: 'action',
-                            cost: sale.cost,
-                            stockItem: sale.item,
-                            doomCost: 0,
-                            isDisabled: !canAfford || (isHealing && isFull)
-                        });
-                    }
+                    if (actualStock > 0) processedChoices.push({ text: `Buy ${sale.item.split('(')[0].trim()}`, nextScene: sale.nextScene, type: 'action', cost: sale.cost, stockItem: sale.item, doomCost: 0, isDisabled: !canAfford || (isHealing && isFull) });
                 });
-
                 if (sellWaresNav) processedChoices.push(sellWaresNav);
                 processedChoices.push(leaveNav);
             }
-			
-            // 3. Market Stall: Selling
-			else if (currentSceneId === 'market_sell') {
+            else if (currentSceneId === 'market_sell') {
                 const backToBuyNav = choices.find(c => c.nextScene === 'market_stall');
                 const isMainGame = gameState.act1Started || gameState.act2Started || gameState.act3Started;
                 const returnTarget = isMainGame ? 'town_square' : 'market_crossroads';
                 const leaveNav = { text: "Stop Selling", nextScene: returnTarget, type: 'travel', doomCost: 0 };
-                
                 processedChoices = []; 
-
-				MARKET_SELL_OPTIONS.forEach(sell => {
-					if (gameState.inventory.includes(sell.item)) {
-						if (sell.item === 'Curious Cargo' && marketStock['Curious Cargo'] === 0 && !gameState.act3Started) return; 
-						
-						processedChoices.push({
-                            // FIX: Only the Item Name. The value indicator is added automatically.
-							text: `Sell ${sell.item.split('(')[0].trim()}`, 
-							nextScene: sell.nextScene,
-							type: 'action',
-							reqItem: sell.item,
-							value: sell.value,
-							doomCost: sell.doomCost 
-						});
-					}
-				});
-				if (backToBuyNav) processedChoices.push(backToBuyNav);
-				processedChoices.push(leaveNav);
+                MARKET_SELL_OPTIONS.forEach(sell => {
+                    if (gameState.inventory.includes(sell.item)) {
+                        if (sell.item === 'Curious Cargo' && marketStock['Curious Cargo'] === 0 && !gameState.act3Started) return; 
+                        processedChoices.push({ text: `Sell ${sell.item.split('(')[0].trim()}`, nextScene: sell.nextScene, type: 'action', reqItem: sell.item, value: sell.value, doomCost: sell.doomCost });
+                    }
+                });
+                if (backToBuyNav) processedChoices.push(backToBuyNav);
+                processedChoices.push(leaveNav);
             } 
-
-            // 4. Alchemist: Buying
             else if (currentSceneId === 'alchemist_triage') {
-				const sellWaresNav = choices.find(c => c.nextScene === 'alchemist_sell');
-				const returnNav = { text: "Return to Port Square", nextScene: 'town_square', type: 'travel', doomCost: 0 };
-
-				processedChoices = []; 
+                const sellWaresNav = choices.find(c => c.nextScene === 'alchemist_sell');
+                const returnNav = { text: "Return to Port Square", nextScene: 'town_square', type: 'travel', doomCost: 0 };
+                processedChoices = []; 
                 const secretTrade = choices.find(c => c.nextScene === 'alchemist_secret_stock');
-				if (secretTrade) processedChoices.push(secretTrade);
-
-				ALCHEMIST_BUY_OPTIONS.forEach(sale => {
-					const itemText = sale.item.split('(')[0].trim();
-					const actualStock = currentSceneStock[sale.item] || 0;
-					const itemDef = itemRegistry[sale.item];
-					const isHealingItem = itemDef && (itemDef.name && (itemDef.name.includes('Tincture') || itemDef.name.includes('Potion')));
-					const isFullHP = gameState.currentHP >= gameState.maxHP;
-					const canAfford = gameState.shillings >= sale.cost;
-
-					if (actualStock > 0) {
-						processedChoices.push({
-                            // FIX: Only the Item Name.
-							text: `Buy ${itemText}`, 
-							nextScene: sale.nextScene,
-							type: 'action',
-							cost: sale.cost,
-							stockItem: sale.item,
-							doomCost: sale.doomCost, 
-							isDisabled: !canAfford || (isHealingItem && isFullHP)
-						});
-					}
-				});
-
-				if (sellWaresNav) { 
-                    const sellBtn = { ...sellWaresNav, text: "Sell Wares (Premium)" };
-                    processedChoices.push(sellBtn); 
-                }
-				processedChoices.push(returnNav);
-			} 
-			
-            // 5. Alchemist: Selling
-			else if (currentSceneId === 'alchemist_sell') {
-				const backToBuyNav = choices.find(c => c.nextScene === 'alchemist_triage');
-				const returnNav = choices.find(c => c.nextScene === 'town_square');
-				processedChoices = []; 
-				
-				ALCHEMIST_SELL_OPTIONS.forEach(sell => {
-					if (gameState.inventory.includes(sell.item)) {
-						let isDisabled = false;
-						if (sell.nextScene === 'sell_tincture' && currentSceneStock["Vitality Tincture"] >= 2) isDisabled = true; 
-                        
-						const isArtifactSell = sell.nextScene === 'sell_fire' || sell.nextScene === 'sell_water';
-						const hasRing = gameState.inventory.includes("Ring of Brass");
-						const hasSword = gameState.inventory.includes("Sword of Valor");
-						if (isArtifactSell && (hasRing || hasSword)) isDisabled = true;
-
-						processedChoices.push({
-                            // FIX: Only the Item Name.
-							text: `Sell ${sell.item.split('(')[0].trim()}`, 
-							nextScene: sell.nextScene,
-							type: 'action',
-							reqItem: sell.item,
-							value: sell.value,
-							doomCost: sell.doomCost,
-							isDisabled: isDisabled
-						});
-					}
-				});
-				if (backToBuyNav) processedChoices.push(backToBuyNav);
-				processedChoices.push(returnNav);
-
+                if (secretTrade) processedChoices.push(secretTrade);
+                ALCHEMIST_BUY_OPTIONS.forEach(sale => {
+                    const itemText = sale.item.split('(')[0].trim();
+                    const actualStock = currentSceneStock[sale.item] || 0;
+                    const itemDef = itemRegistry[sale.item];
+                    const isHealingItem = itemDef && (itemDef.name && (itemDef.name.includes('Tincture') || itemDef.name.includes('Potion')));
+                    const isFullHP = gameState.currentHP >= gameState.maxHP;
+                    const canAfford = gameState.shillings >= sale.cost;
+                    if (actualStock > 0) processedChoices.push({ text: `Buy ${itemText}`, nextScene: sale.nextScene, type: 'action', cost: sale.cost, stockItem: sale.item, doomCost: sale.doomCost, isDisabled: !canAfford || (isHealingItem && isFullHP) });
+                });
+                if (sellWaresNav) processedChoices.push({ ...sellWaresNav, text: "Sell Wares (Premium)" }); 
+                processedChoices.push(returnNav);
             } 
-            
-            // 6. Act 3: Harbor Provisioner (BUYING) -- NEW FIX
+            else if (currentSceneId === 'alchemist_sell') {
+                const backToBuyNav = choices.find(c => c.nextScene === 'alchemist_triage');
+                const returnNav = choices.find(c => c.nextScene === 'town_square');
+                processedChoices = []; 
+                ALCHEMIST_SELL_OPTIONS.forEach(sell => {
+                    if (gameState.inventory.includes(sell.item)) {
+                        let isDisabled = false;
+                        if (sell.nextScene === 'sell_tincture' && currentSceneStock["Vitality Tincture"] >= 2) isDisabled = true; 
+                        const isArtifactSell = sell.nextScene === 'sell_fire' || sell.nextScene === 'sell_water';
+                        const hasRing = gameState.inventory.includes("Ring of Brass");
+                        const hasSword = gameState.inventory.includes("Sword of Valor");
+                        if (isArtifactSell && (hasRing || hasSword)) isDisabled = true;
+                        processedChoices.push({ text: `Sell ${sell.item.split('(')[0].trim()}`, nextScene: sell.nextScene, type: 'action', reqItem: sell.item, value: sell.value, doomCost: sell.doomCost, isDisabled: isDisabled });
+                    }
+                });
+                if (backToBuyNav) processedChoices.push(backToBuyNav);
+                processedChoices.push(returnNav);
+            } 
             else if (currentSceneId === 'port_provisioner') {
                 const sellNav = choices.find(c => c.nextScene === 'port_provisioner_sell');
                 const returnNav = choices.find(c => c.nextScene === 'town_square');
-                
                 processedChoices = [];
-
                 SHIP_SUPPLIES_OPTIONS.forEach(sale => {
                     const canAfford = gameState.shillings >= sale.cost;
                     const isMax = gameState.supplies >= 20;
-                    processedChoices.push({
-                        // FIX: Clean text. The cost (-10s) comes from 'indicators' later.
-                        text: `Buy ${sale.amount} Supplies`,
-                        type: 'action',
-                        cost: sale.cost,
-                        doomCost: 0,
-                        isDisabled: !canAfford || isMax,
-                        action: (state) => {
-                            state.supplies = Math.min(20, state.supplies + sale.amount);
-                            return `Purchased ${sale.amount} Supplies.`;
-                        },
-                        nextScene: 'port_provisioner' // Reloads scene
-                    });
+                    processedChoices.push({ text: `Buy ${sale.amount} Supplies`, type: 'action', cost: sale.cost, doomCost: 0, isDisabled: !canAfford || isMax, action: (state) => { state.supplies = Math.min(20, state.supplies + sale.amount); return `Purchased ${sale.amount} Supplies.`; }, nextScene: 'port_provisioner' });
                 });
-
                 if (sellNav) processedChoices.push(sellNav);
                 if (returnNav) processedChoices.push(returnNav);
             }
-
-            // 7. Act 3: Harbor Provisioner (SELLING)
             else if (currentSceneId === 'port_provisioner_sell') {
                 const buyNav = choices.find(c => c.nextScene === 'port_provisioner');
                 const returnNav = choices.find(c => c.nextScene === 'town_square');
-                
                 processedChoices = [];
-
-                const SELLABLE_ITEMS_ACT3 = [
-                    "Curious Cargo", "Rope", "Torch", "Healing Potion", "Rum", 
-                    "Silver Locket", "Vitality Tincture", "Smelling Salts", "Flash Powder", 
-                    "Pearlescent Mushroom", "Dead Man's Die"
-                ];
-
+                const SELLABLE_ITEMS_ACT3 = [ "Curious Cargo", "Rope", "Torch", "Healing Potion", "Rum", "Silver Locket", "Vitality Tincture", "Smelling Salts", "Flash Powder", "Pearlescent Mushroom", "Dead Man's Die" ];
                 SELLABLE_ITEMS_ACT3.forEach(itemName => {
                     const itemDef = itemRegistry[itemName];
                     if (gameState.inventory.includes(itemName) && itemDef && itemDef.btnText && (itemDef.btnText === 'SELL' || itemDef.btnText === 'PASSIVE' || itemDef.btnText === 'DRINK' || itemDef.btnText === 'USE' || itemDef.btnText === 'INSPECT' || itemDef.btnText === 'THROW')) {
                         const saleOption = [...MARKET_SELL_OPTIONS, ...ALCHEMIST_SELL_OPTIONS].find(opt => opt.item === itemName) || { value: 3, doomCost: 0 }; 
-                        
-                        processedChoices.push({
-                            // FIX: Only the Item Name.
-                            text: `Sell ${itemName.split('(')[0].trim()}`, 
-                            nextScene: 'port_provisioner_sell',
-                            type: 'action',
-                            reqItem: itemName,
-                            value: saleOption.value,
-                            doomCost: 0,
-                            action: (state) => {
-                                const idx = state.inventory.indexOf(itemName);
-                                if (idx > -1) state.inventory.splice(idx, 1);
-                                state.shillings += saleOption.value;
-                                audioManager.playCoins();
-                                return `Sold ${itemName} for ${saleOption.value}s.`;
-                            }
-                        });
+                        processedChoices.push({ text: `Sell ${itemName.split('(')[0].trim()}`, nextScene: 'port_provisioner_sell', type: 'action', reqItem: itemName, value: saleOption.value, doomCost: 0, action: (state) => { const idx = state.inventory.indexOf(itemName); if (idx > -1) state.inventory.splice(idx, 1); state.shillings += saleOption.value; audioManager.playCoins(); return `Sold ${itemName} for ${saleOption.value}s.`; } });
                     }
                 });
-
                 if (buyNav) processedChoices.push(buyNav);
                 if (returnNav) processedChoices.push(returnNav);
             }
-
-            // 8. Tavern Logic
             else if (currentSceneId === 'blackwater_tavern') {
-				const restOption = choices.find(c => c.nextScene === 'tavern_rest_success');
-				const returnOption = choices.find(c => c.nextScene === 'town_square');
-				const gamblerOption = choices.find(c => c.nextScene === 'tavern_gambler');
-				const infoSmelter = choices.find(c => c.nextScene === 'gather_info_smelter');
-				const infoChapel = choices.find(c => c.nextScene === 'gather_info_chapel');
-				const instantEat = choices.find(c => c.nextScene === 'eat_gruel_instant');
-				const buyToGo = choices.find(c => c.nextScene === 'buy_gruel_to_go');
-				
-				processedChoices = []; 
-				const gruelStock = currentSceneStock['Gruel'] || 0;
-				const canAfford = gameState.shillings >= 1;
-				const isHealingWasteful = gameState.currentHP >= gameState.maxHP; 
-				
-				if (instantEat) {
-					processedChoices.push({
-						...instantEat, 
-						text: `Eat Gruel Now (Stock: ${gruelStock})`, 
-						isDisabled: !canAfford || gruelStock <= 0 || isHealingWasteful,
-					});
-				}
-				if (buyToGo) {
-					processedChoices.push({
-						...buyToGo,
-						text: `Buy Gruel (To Go) (Stock: ${gruelStock})`,
-						isDisabled: gruelStock <= 0 || !canAfford
-					});
-				}
-				if (restOption) processedChoices.push(restOption);
-				if (infoSmelter && !gameState.knowsSmelterSecret && !gameState.inventory.includes('Sword of Valor')) processedChoices.push(infoSmelter);
-				if (infoChapel && !gameState.knowsChapelSecret && !gameState.inventory.includes('Ring of Brass')) processedChoices.push(infoChapel);
-				if (gamblerOption && gameState.inventory.includes('Ring of Brass') && !gameState.hasObservedGambler) processedChoices.push(gamblerOption);
-				if (returnOption) processedChoices.push(returnOption);
-
-			} 
-            
-            // 9. Docks Logic
+                const restOption = choices.find(c => c.nextScene === 'tavern_rest_success');
+                const returnOption = choices.find(c => c.nextScene === 'town_square');
+                const gamblerOption = choices.find(c => c.nextScene === 'tavern_gambler');
+                const infoSmelter = choices.find(c => c.nextScene === 'gather_info_smelter');
+                const infoChapel = choices.find(c => c.nextScene === 'gather_info_chapel');
+                const instantEat = choices.find(c => c.nextScene === 'eat_gruel_instant');
+                const buyToGo = choices.find(c => c.nextScene === 'buy_gruel_to_go');
+                processedChoices = []; 
+                const gruelStock = currentSceneStock['Gruel'] || 0;
+                const canAfford = gameState.shillings >= 1;
+                const isHealingWasteful = gameState.currentHP >= gameState.maxHP; 
+                if (instantEat) processedChoices.push({ ...instantEat, text: `Eat Gruel Now (Stock: ${gruelStock})`, isDisabled: !canAfford || gruelStock <= 0 || isHealingWasteful });
+                if (buyToGo) processedChoices.push({ ...buyToGo, text: `Buy Gruel (To Go) (Stock: ${gruelStock})`, isDisabled: gruelStock <= 0 || !canAfford });
+                if (restOption) processedChoices.push(restOption);
+                if (infoSmelter && !gameState.knowsSmelterSecret && !gameState.inventory.includes('Sword of Valor')) processedChoices.push(infoSmelter);
+                if (infoChapel && !gameState.knowsChapelSecret && !gameState.inventory.includes('Ring of Brass')) processedChoices.push(infoChapel);
+                if (gamblerOption && gameState.inventory.includes('Ring of Brass') && !gameState.hasObservedGambler) processedChoices.push(gamblerOption);
+                if (returnOption) processedChoices.push(returnOption);
+            } 
             else if (currentSceneId === 'town_docks') {
-				 const workBtn = choices.find(c => c.nextScene === 'docks_work');
-				 const currentCost = workBtn.costHP !== undefined ? workBtn.costHP : 2;
-				 const processedWorkBtn = { ...workBtn, isDisabled: gameState.currentHP <= currentCost };
-				 const cargoBtn = choices.find(c => c.nextScene === 'docks_sell_cargo');
-				 const processedCargoBtn = (cargoBtn && gameState.inventory.includes('Curious Cargo') && !gameState.act3Started) ? cargoBtn : null;
-
-				 processedChoices = choices.map(c => c.nextScene === 'docks_work' ? processedWorkBtn : c);
+                 const workBtn = choices.find(c => c.nextScene === 'docks_work');
+                 const currentCost = workBtn.costHP !== undefined ? workBtn.costHP : 2;
+                 const processedWorkBtn = { ...workBtn, isDisabled: gameState.currentHP <= currentCost };
+                 const cargoBtn = choices.find(c => c.nextScene === 'docks_sell_cargo');
+                 const processedCargoBtn = (cargoBtn && gameState.inventory.includes('Curious Cargo') && !gameState.act3Started) ? cargoBtn : null;
+                 processedChoices = choices.map(c => c.nextScene === 'docks_work' ? processedWorkBtn : c);
                  if (processedCargoBtn) processedChoices.unshift(processedCargoBtn);
-			}
-            
-            // 10. Horde Combat Actions (Spire)
+            }
             else if (currentSceneId === 'spire_combat_loop') {
-                // Combat button generation is handled in onEnter for simplicity, so we need to grab them here.
                 processedChoices = scenes['spire_combat_loop'].choices;
             }
 
-
-			// --- BUTTON GENERATION LOOP (Shared) ---
-			processedChoices.forEach(choice => {
-				
-				if (choice.reqItem && !gameState.inventory.includes(choice.reqItem)) return;
-				if (choice.reqItems && Array.isArray(choice.reqItems)) {
-					const hasAnyItem = choice.reqItems.some(item => gameState.inventory.includes(item));
-					if (!hasAnyItem) return;
-				}
-				
-				if (choice.reqSmuggler && gameState.influence < choice.reqSmuggler) return;
-				if (choice.reqGuard && gameState.influence > -choice.reqGuard) return;
-				if (choice.reqNotItem && gameState.inventory.includes(choice.reqNotItem)) return; 
-				if (choice.reqFlag && !gameState[choice.reqFlag]) return;
-				if (choice.reqNotFlag && gameState[choice.reqNotFlag]) return; 
-				if (choice.reqSkill && !gameState.skills.includes(choice.reqSkill) && choice.type !== 'skill') return;
+            // --- BUTTON GENERATION LOOP ---
+            processedChoices.forEach(choice => {
+                if (choice.reqItem && !gameState.inventory.includes(choice.reqItem)) return;
+                if (choice.reqItems && Array.isArray(choice.reqItems)) {
+                    if (!choice.reqItems.some(item => gameState.inventory.includes(item))) return;
+                }
+                if (choice.reqSmuggler && gameState.influence < choice.reqSmuggler) return;
+                if (choice.reqGuard && gameState.influence > -choice.reqGuard) return;
+                if (choice.reqNotItem && gameState.inventory.includes(choice.reqNotItem)) return; 
+                if (choice.reqFlag && !gameState[choice.reqFlag]) return;
+                if (choice.reqNotFlag && gameState[choice.reqNotFlag]) return; 
+                if (choice.reqSkill && !gameState.skills.includes(choice.reqSkill) && choice.type !== 'skill') return;
 
                 let rawText = choice.text;
                 let icon = '<i class="fas fa-chevron-right text-gray-300 group-hover:text-amber-100"></i>';
                 let content = `<span class="cinzel font-bold text-gray-300 group-hover:text-amber-100">${rawText}</span>`;
                 let supplementalText = '';
                 
-				let isDisabled = false;
-				let disabledClass = '';
-				
-				if (choice.cost && gameState.shillings < choice.cost) { isDisabled = true; disabledClass = 'btn-disabled-cost'; }
+                let isDisabled = false;
+                let disabledClass = '';
+                
+                if (choice.cost && gameState.shillings < choice.cost) { isDisabled = true; disabledClass = 'btn-disabled-cost'; }
                 if (choice.suppliesCost && gameState.supplies < choice.suppliesCost) { isDisabled = true; disabledClass = 'btn-disabled-cost'; }
-				if (choice.costHP !== undefined && gameState.currentHP <= choice.costHP) { isDisabled = true; disabledClass = 'btn-disabled-cost'; }
-				let disabledResult = choice.isDisabled;
-                if (typeof disabledResult === 'function') {
-                    disabledResult = disabledResult(gameState);
-                }
+                if (choice.costHP !== undefined && gameState.currentHP <= choice.costHP) { isDisabled = true; disabledClass = 'btn-disabled-cost'; }
+                let disabledResult = choice.isDisabled;
+                if (typeof disabledResult === 'function') disabledResult = disabledResult(gameState);
                 if (disabledResult) { isDisabled = true; disabledClass = 'btn-disabled-cost'; }
-				
-				if (choice.type === 'combine' && choice.reqItems) {
-					const missingItem = choice.reqItems.some(item => !gameState.inventory.includes(item));
-					if (missingItem) {
-						isDisabled = true;
-						disabledClass = 'btn-disabled-cost';
-						rawText = `${rawText} (Missing Item)`;
-					}
-				}
+                
+                if (choice.type === 'combine' && choice.reqItems) {
+                    if (choice.reqItems.some(item => !gameState.inventory.includes(item))) {
+                        isDisabled = true;
+                        disabledClass = 'btn-disabled-cost';
+                        rawText = `${rawText} (Missing Item)`;
+                    }
+                }
 
-				const btn = document.createElement('button');
-				
+                const btn = document.createElement('button');
+                
                 let isHeroButton = choice.reqSkill ? true : false;
-				let isCustomClassButton = choice.customClass ? true : false;
-				let isTradeButton = choice.cost || choice.value || choice.shillingGain || (choice.nextScene && choice.nextScene.includes('sell') && currentSceneId.includes('alchemist'));
-				let isSkillCheck = choice.type === 'skill';
-				const isCombineButton = choice.type === 'combine'; 
+                let isCustomClassButton = choice.customClass ? true : false;
+                let isTradeButton = choice.cost || choice.value || choice.shillingGain || (choice.nextScene && choice.nextScene.includes('sell') && currentSceneId.includes('alchemist'));
+                let isSkillCheck = choice.type === 'skill';
+                const isCombineButton = choice.type === 'combine'; 
 
-				const alignmentClass = (isSkillCheck || isTradeButton || choice.chaosGain || choice.orderGain || choice.costHP !== undefined || choice.shillingGain || choice.doomCost !== undefined || choice.tetherCost !== undefined || choice.suppliesCost !== undefined || choice.reqFlag || isCombineButton) ? 'justify-start' : 'justify-between';
-				let btnClass = "";
-				
-				if (isDeathScene) {
-					btnClass = `btn-game w-full p-3 text-left rounded shadow flex items-center ${alignmentClass} cinzel font-bold bg-red-900 border-red-700 hover:bg-red-800 hover:border-amber-500 text-white text-xl text-center`;
-				} else if (isCustomClassButton) {
-					content = `<span class="cinzel font-bold text-white">${rawText}</span>`;
-					if (choice.customClass === 'btn-success-glow') icon = '<i class="fas fa-ear-listen text-gray-300"></i>';
-					else if (choice.customClass === 'btn-keen-senses') icon = '<i class="fas fa-eye text-purple-300"></i>';
+                const alignmentClass = (isSkillCheck || isTradeButton || choice.chaosGain || choice.orderGain || choice.costHP !== undefined || choice.shillingGain || choice.doomCost !== undefined || choice.tetherCost !== undefined || choice.suppliesCost !== undefined || choice.reqFlag || isCombineButton) ? 'justify-start' : 'justify-between';
+                let btnClass = "";
+                
+                if (isDeathScene) {
+                    btnClass = `btn-game w-full p-3 text-left rounded shadow flex items-center ${alignmentClass} cinzel font-bold bg-red-900 border-red-700 hover:bg-red-800 hover:border-amber-500 text-white text-xl text-center`;
+                } else if (isCustomClassButton) {
+                    content = `<span class="cinzel font-bold text-white">${rawText}</span>`;
+                    if (choice.customClass === 'btn-success-glow') icon = '<i class="fas fa-ear-listen text-gray-300"></i>';
+                    else if (choice.customClass === 'btn-keen-senses') icon = '<i class="fas fa-eye text-purple-300"></i>';
                     else if (choice.customClass === 'btn-lantern-glow') icon = '<i class="fas fa-lightbulb text-yellow-300"></i>';
-					else if (choice.customClass === 'btn-anchor') icon = '<i class="fas fa-anchor text-cyan-300"></i>';
-					else if (choice.customClass === 'btn-planewalk-reveal') icon = '<i class="fas fa-shoe-prints text-cyan-300"></i>';
-					else if (choice.customClass === 'btn-pulse') icon = '<i class="fas fa-ring text-amber-300"></i>';					
-					else icon = '<i class="fas fa-chevron-right text-white"></i>';
+                    else if (choice.customClass === 'btn-anchor') icon = '<i class="fas fa-anchor text-cyan-300"></i>';
+                    else if (choice.customClass === 'btn-planewalk-reveal') icon = '<i class="fas fa-shoe-prints text-cyan-300"></i>';
+                    else if (choice.customClass === 'btn-pulse') icon = '<i class="fas fa-ring text-amber-300"></i>';                    
+                    else icon = '<i class="fas fa-chevron-right text-white"></i>';
 
                     if (choice.customClass && choice.customClass.includes('spectral-active')) {
-						 btnClass = `btn-game w-full text-left rounded shadow flex items-center ${alignmentClass} cinzel font-bold mb-2 spectral-active text-blue-100 ring-1 ring-blue-400 hover:ring-white`;
-					} else {
-						btnClass = `btn-game w-full text-left rounded shadow flex items-center ${alignmentClass} cinzel font-bold mb-2 ${choice.customClass}`;
-					}
-				} else {
-					btnClass = `btn-game w-full text-left rounded shadow flex items-center ${alignmentClass} cinzel font-bold bg-gray-800 border-gray-600 hover:border-amber-500 hover:bg-gray-750 text-gray-300 group`;
-				}
-				
-				if (isDisabled) {
-					btnClass += ` ${disabledClass}`;
-					btn.disabled = true;
-				}
+                         btnClass = `btn-game w-full text-left rounded shadow flex items-center ${alignmentClass} cinzel font-bold mb-2 spectral-active text-blue-100 ring-1 ring-blue-400 hover:ring-white`;
+                    } else {
+                        btnClass = `btn-game w-full text-left rounded shadow flex items-center ${alignmentClass} cinzel font-bold mb-2 ${choice.customClass}`;
+                    }
+                } else {
+                    btnClass = `btn-game w-full text-left rounded shadow flex items-center ${alignmentClass} cinzel font-bold bg-gray-800 border-gray-600 hover:border-amber-500 hover:bg-gray-750 text-gray-300 group`;
+                }
+                
+                if (isDisabled) {
+                    btnClass += ` ${disabledClass}`;
+                    btn.disabled = true;
+                }
                 if (isTradeButton) icon = '<i class="fas fa-coins text-amber-500"></i>';
-				if (choice.type === 'reset') icon = '<i class="fas fa-sync-alt text-gray-400 group-hover:text-white"></i>';
+                if (choice.type === 'reset') icon = '<i class="fas fa-sync-alt text-gray-400 group-hover:text-white"></i>';
                 if (isHeroButton) icon = '<i class="fas fa-star hero-icon"></i>'; 
-				if (isCombineButton) icon = '<i class="fas fa-hammer text-yellow-500"></i>';
-				
-				
-				
-				if (gameState.negateNextDamage && (isDeathScene || choice.type === 'action' || choice.costHP)) {
-                btnClass += " ring-1 ring-emerald-500 bg-emerald-900/30";
-                supplementalText += " <span class='text-emerald-400 text-[10px] uppercase font-bold animate-pulse ml-2'>[Silas Blocking]</span>";
-				}
+                if (isCombineButton) icon = '<i class="fas fa-hammer text-yellow-500"></i>';
+                
+                if (gameState.negateNextDamage && (isDeathScene || choice.type === 'action' || choice.costHP)) {
+                    btnClass += " ring-1 ring-emerald-500 bg-emerald-900/30";
+                    supplementalText += " <span class='text-emerald-400 text-[10px] uppercase font-bold animate-pulse ml-2'>[Silas Blocking]</span>";
+                }
+                if (gameState.nextAttackCrit && (choice.type === 'action')) {
+                    btnClass += " ring-1 ring-emerald-500 bg-emerald-900/30";
+                    supplementalText += " <span class='text-emerald-400 text-[10px] uppercase font-bold animate-pulse ml-2'>[Phase Strike Ready]</span>";
+                }
+                if (isSkillCheck) {
+                    const displayDC = gameState.isRiftCollapse ? choice.dc + 2 : choice.dc;
+                    supplementalText += ` <span class="spectral-text-glow text-sm uppercase tracking-wider ml-2 mr-4">[${choice.skill} DC ${displayDC}]</span>`;
+                    icon = '<i class="fas fa-dice-d20 spectral-text-glow"></i>';
+                } 
 
-				if (gameState.nextAttackCrit && (choice.type === 'action')) {
-					btnClass += " ring-1 ring-emerald-500 bg-emerald-900/30";
-					supplementalText += " <span class='text-emerald-400 text-[10px] uppercase font-bold animate-pulse ml-2'>[Phase Strike Ready]</span>";
-				}
-				
-				
-				
+                btn.className = btnClass;
 
-                // --- SKILL CHECK FORMATTING ---
-				if (isSkillCheck) {
-					const displayDC = gameState.isRiftCollapse ? choice.dc + 2 : choice.dc;
-					supplementalText += ` <span class="spectral-text-glow text-sm uppercase tracking-wider ml-2 mr-4">[${choice.skill} DC ${displayDC}]</span>`;
-					icon = '<i class="fas fa-dice-d20 spectral-text-glow"></i>';
-				} 
+                // --- CLICK HANDLERS ---
+                if (choice.type === 'hold') {
+                    let holdTimer = null;
+                    const duration = 3000;
+                    btn.style.setProperty('--channel-duration', `${duration}ms`);
 
-				btn.className = btnClass;
+                    const startChannel = (e) => {
+                        if (e.type === 'touchstart') e.preventDefault(); 
+                        if (btn.disabled) return;
+                        btn.classList.add('channeling');
+                        // FIX 1: Removed audioManager.playGhost() here
 
-				// --- CLICK HANDLERS ---
-				if (choice.type === 'hold') {
-					let holdTimer = null;
-					const duration = 3000;
-					btn.style.setProperty('--channel-duration', `${duration}ms`);
+                        holdTimer = setTimeout(async () => {
+                            // FIX 1: Removed audioManager.playClash() here
+                            fxManager.setVignette(false); 
+                            fxManager.clearEffects();     
+                            if (choice.nextScene === 'act2_arrival') {
+                                gameState.isEthereal = true; 
+                                document.body.classList.add('plane-ethereal'); 
+                                await saveGame(); 
+                            }
+                            renderScene(choice.nextScene);
+                        }, duration);
+                    };
+                    const cancelChannel = (e) => {
+                        if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
+                        btn.classList.remove('channeling');
+                    };
+                    btn.addEventListener('mousedown', startChannel);
+                    btn.addEventListener('mouseup', cancelChannel);
+                    btn.addEventListener('mouseleave', cancelChannel);
+                    btn.addEventListener('touchstart', startChannel);
+                    btn.addEventListener('touchend', cancelChannel);
+                    btn.onclick = null; 
+                } 
+                else {
+                    btn.onclick = (e) => {
+                        if (btn.disabled) { audioManager.playClick(); return; }
 
-					const startChannel = (e) => {
-						if (e.type === 'touchstart') e.preventDefault(); 
-						if (btn.disabled) return;
-						btn.classList.add('channeling');
-						audioManager.playGhost(); 
+                        // SKILL CHECK LOGIC (ANIMATED)
+                        if (choice.type === 'skill') {
+                            const allBtns = document.querySelectorAll('.btn-game');
+                            allBtns.forEach(b => b.disabled = true);
+                            audioManager.playDice(); // <-- ACTION 1: START DICE SOUND
 
-						holdTimer = setTimeout(async () => {
-							audioManager.playClash(); 
-							fxManager.setVignette(false); 
-							fxManager.clearEffects();     
-							if (choice.nextScene === 'act2_arrival') {
-								gameState.isEthereal = true; 
-								document.body.classList.add('plane-ethereal'); 
-								await saveGame(); 
-							}
-							renderScene(choice.nextScene);
-						}, duration);
-					};
-					const cancelChannel = (e) => {
-						if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
-						btn.classList.remove('channeling');
-					};
-					btn.addEventListener('mousedown', startChannel);
-					btn.addEventListener('mouseup', cancelChannel);
-					btn.addEventListener('mouseleave', cancelChannel);
-					btn.addEventListener('touchstart', startChannel);
-					btn.addEventListener('touchend', cancelChannel);
-					btn.onclick = null; 
-				} 
-				else {
-					btn.onclick = (e) => {
-						if (btn.disabled) { audioManager.playClick(); return; }
-						
-						if (choice.nextScene === 'manor_map_view') {
-							 gameState.returnSceneId = gameState.currentSceneId; 
-							 renderScene('manor_map_view');
-							 return;
-						}
+                            btn.classList.add('fx-skill-active'); 
 
-						audioManager.playClick();
-						
-						if (choice.type === 'combine') {
-							const result = choice.onSelect(gameState);
-							if (result) addToHistory(result, 'system');
-							renderScene(choice.nextScene);
-							return;
-						}
-						
-						if (choice.action && typeof choice.action === 'function') {
-							const result = choice.action(gameState);
-							if (result) addToHistory(result, 'system');
-							
-							if (choice.nextScene) {
-								if (choice.nextScene === 'lighthouse_morning' && currentSceneId === 'captain_orders' && choice.onSelect) {
-									choice.onSelect(gameState);
-								}
-								renderScene(choice.nextScene);
-							} else {
-								updateUI(); 
-							}
-							return; 
-						}
-						
-						if (choice.type === 'reset') { resetGame(); return; }
-						
-						if (gameState.crewUseFree && choice.type !== 'skill' && choice.type !== 'dialogue' && !choice.nextScene.includes('captain_orders')) {
-							addToHistory(`*Warning: The Pearlescent Mushroom's clarity is best saved for a crucial skill check.*`, 'system');
-						}
+                            // Pre-Calculate Roll
+                            let roll = Math.floor(Math.random() * 20) + 1;
+                            let logMsg = `Check (DC ${gameState.isRiftCollapse ? choice.dc + 2 : choice.dc}): Rolled d20 (${roll})`;
+                            
+                            gameState.lastSkillType = choice.skill;
+                            gameState.lastDC = gameState.isRiftCollapse ? choice.dc + 2 : choice.dc;
+                            gameState.lastCrewUsedId = null;
 
-						if (choice.type === 'action' && (currentSceneId === 'market_stall' || currentSceneId === 'alchemist_triage' || currentSceneId === 'blackwater_tavern') && choice.stockItem) {
-							 const currentStock = scenes[currentSceneId].stock[choice.stockItem] || 0;
-							 if (currentStock <= 0) {
-								addToHistory(`${choice.stockItem} is out of stock.`, 'system');
-								renderScene(currentSceneId); 
-								return;
-							}
-                             scenes[currentSceneId].stock[choice.stockItem] = Math.max(0, scenes[currentSceneId].stock[choice.stockItem] - 1);
-						}
-                        
-                        if (choice.type === 'action' && choice.reqItem === 'Curious Cargo' && currentSceneId === 'market_sell') {
-                             if (marketStock['Curious Cargo'] <= 0) {
-                                addToHistory(`The Market Merchant has no need for another Curious Cargo.`, 'system');
-                                renderScene(currentSceneId);
+                            if (choice.skill === 'Intimidation' && gameState.inventory.includes("Captain's Tricorn")) {
+                                roll += 1; logMsg += ` + 1 (Tricorn)`;
+                            }
+
+                            if (activeCrewMember) {
+                                const isSkilled = getBonusForSkill(activeCrewMember, choice.skill);
+                                const crewKey = activeCrewMember.id;
+                                if (isSkilled) { 
+                                    const dieSize = gameState.isEthereal ? 8 : 4; 
+                                    const bonus = Math.floor(Math.random() * dieSize) + 1;
+                                    roll += bonus;
+                                    const dieLabel = gameState.isEthereal ? `(Spectral D8!)` : `(${activeCrewMember.name})`;
+                                    logMsg += ` + <span class="${gameState.isEthereal ? 'text-spectral-d8' : ''}">${bonus}</span> ${dieLabel}`; 
+                                    
+                                    if (gameState.crewUseFree) {
+                                        addToHistory(`*Pearlescent Mushroom consumed for FREE GUIDANCE.*`, 'system');
+                                        gameState.crewUseFree = false;
+                                    } else {
+                                        gameState.crew[crewKey].used = true;
+                                    }
+                                    if (roll >= gameState.lastDC) gameState.lastCrewUsedId = crewKey;
+                                } else {
+                                    logMsg += ` + 0 (${activeCrewMember.name} - Invalid Skill)`;
+                                }
+                                activeCrewMember = null;
+                            }
+
+                            if (gameState.isRiftCollapse) { roll = Math.max(1, roll - 2); logMsg += ` - 2 (Rift Penalty)`; }
+
+                            const isSuccess = roll >= gameState.lastDC;
+
+                            setTimeout(() => {
+                                btn.classList.remove('fx-skill-active');
+                                if (isSuccess) {
+                                    audioManager.playSuccess(); // <-- ACTION 2: PLAY SUCCESS SOUND
+                                    btn.classList.add('fx-skill-success');
+                                } else {
+                                    audioManager.playFail(); // <-- ACTION 2: PLAY FAIL SOUND
+                                    btn.classList.add('fx-skill-fail');
+                                }
+
+                                setTimeout(() => {
+                                    gameState.pendingRoll = { total: roll, log: logMsg };
+                                    renderScene(choice.nextScene);
+                                }, 600);
+                            }, 800);
+                            return; 
+                        }
+
+                        // STANDARD LOGIC & FX
+                        let fxClass = null;
+                        let fxDuration = 0;
+
+                        if (choice.customClass) {
+                            if (choice.customClass.includes('btn-fire-glow')) { fxClass = 'fx-burn-active'; fxDuration = 1800; }
+                            else if (choice.customClass.includes('btn-shadow-glow')) { fxClass = 'fx-mist-active'; fxDuration = 1800; }
+                            else if (choice.customClass.includes('btn-hero')) { fxClass = 'fx-hero-active'; fxDuration = 1200; }
+                            else if (choice.customClass.includes('btn-planewalk-reveal')) { fxClass = 'fx-glitch-active'; fxDuration = 1800; }
+                        }
+
+                        const executeAction = () => {
+                            if (choice.nextScene === 'manor_map_view') {
+                                gameState.returnSceneId = gameState.currentSceneId; 
+                                renderScene('manor_map_view');
                                 return;
                             }
-                        }
-
-						if (choice.consume && choice.reqItem) {
-							const idx = gameState.inventory.indexOf(choice.reqItem);
-							if (idx > -1) {
-								gameState.inventory.splice(idx, 1);
-								addToHistory(`${choice.reqItem} consumed and discarded.`, 'system');
-							}
-						}
-                        
-						if (choice.consumeItems && Array.isArray(choice.consumeItems)) {
-							choice.consumeItems.forEach(itemToConsume => {
-								const idx = gameState.inventory.indexOf(itemToConsume);
-								if (idx > -1) {
-									gameState.inventory.splice(idx, 1);
-									addToHistory(`${itemToConsume} consumed.`, 'system');
-								}
-							});
-						}
-
-						const currentScene = scenes[gameState.currentSceneId];
-						if (currentScene.journal !== null && currentScene.journal !== undefined) {
-							let journalText = currentScene.journal;
-							if (currentSceneId === 'act3_name_ship') {
-								journalText = journalText.replace('[SHIP_NAME]', gameState.shipName);
-							}
-							addToHistory(journalText, 'entry');
-						}
-
-						if (choice.cost) gameState.shillings -= choice.cost;
-						if (choice.costHP !== undefined) gameState.currentHP = applyDamage(gameState.currentHP, choice.costHP);
-
-						let extraGold = 0;
-						if (gameState.inventory.includes("Salt-Warped Spyglass") && gameState.influence >= 15) {
-							 extraGold = 1;
-							 addToHistory("Passive (Privateer's Lens): Found +1 extra Shilling.", 'system');
-						}
-						if (choice.shillingGain) gameState.shillings += (choice.shillingGain + extraGold);
-						if (choice.value) gameState.shillings += (choice.value + extraGold);
-						
-						if (choice.chaosGain) gameState.influence = Math.min(50, gameState.influence + choice.chaosGain);
-						if (choice.orderGain) gameState.influence = Math.max(-50, gameState.influence - choice.orderGain); 
-						
-						if (choice.nextScene === 'lighthouse_morning' && currentSceneId === 'captain_orders' && choice.onSelect) {
-							choice.onSelect(gameState);
-						}
-
-						if (gameState.act1Started && choice.doomCost !== 0) {
-							const cost = choice.doomCost !== undefined ? choice.doomCost : 1; 
-							gameState.doomTimer = Math.max(0, gameState.doomTimer - cost);
-							if (gameState.doomTimer > 0) addToHistory(`Rift Stability: ${gameState.doomTimer} turns remaining.`, 'system');
-						}
-
-						if (gameState.act2Started && choice.tetherCost !== 0) {
-							 const cost = choice.tetherCost !== undefined ? choice.tetherCost : (scenes[currentSceneId].isBoss || scenes[currentSceneId].isRest ? 0 : 1);
-							 gameState.tetherTimer = Math.max(0, gameState.tetherTimer - cost);
-						}
-                        
-						if (choice.type === 'skill') {
-							gameState.lastSkillType = choice.skill;
-							let finalDC = choice.dc;
-							if (gameState.isRiftCollapse) { 
-								finalDC += 2;
-								addToHistory(`Rift Penalty: DC increased by 2 (New DC: ${finalDC})`, 'system');
-							}
-							gameState.lastDC = finalDC;
-							renderScene(choice.nextScene);
-							return;
-						}
-						if (choice.type !== 'skill') renderScene(choice.nextScene);
-					};
-				}
-
-                // --- INDICATOR LOGIC (Resources, Doom, Tether) ---
-				let indicators = [];
-				if (choice.cost) indicators.push({ text: `-${choice.cost}s`, color: 'text-amber-500' });
-				else if (choice.value) indicators.push({ text: `+${choice.value}s`, color: 'text-amber-500' });
-				else if (choice.shillingGain) indicators.push({ text: `+${choice.shillingGain}s`, color: 'text-amber-500' });
-                
-                if (choice.suppliesCost) indicators.push({ text: `-${choice.suppliesCost} Supplies`, color: 'text-indigo-400' });
-
-				if (choice.costHP !== undefined) indicators.push({ text: `-${choice.costHP} HP`, color: 'text-red-400' });
-				if (choice.chaosGain) indicators.push({ text: `+${choice.chaosGain} Chaos`, color: 'text-emerald-400' });
-				else if (choice.orderGain) indicators.push({ text: `+${choice.orderGain} Order`, color: 'text-blue-400' });
-				
-				const isStandardAct1Scene = gameState.act1Started && !scenes[currentSceneId].isBoss && !scenes[currentSceneId].isRest;
-				
-				if (gameState.act1Started && gameState.quinnLogistics && isStandardAct1Scene) {
-					const hasExplicitCost = choice.doomCost !== undefined;
-					const cost = hasExplicitCost ? choice.doomCost : (isStandardAct1Scene ? 1 : 0);
-					if (cost >= 0 && choice.type !== 'reset' && choice.nextScene !== 'lighthouse_vigil') {
-						if (cost > 0) indicators.push({ text: `-${cost} Time`, color: 'text-purple-400' }); 
-						else if (cost === 0 && (hasExplicitCost || choice.type === 'travel')) indicators.push({ text: `0 Time`, color: 'text-purple-400' });
-					}
-				} else if (gameState.act2Started) {
-					const hasExplicitCost = choice.tetherCost !== undefined;
-					const cost = hasExplicitCost ? choice.tetherCost : (scenes[currentSceneId].isBoss || scenes[currentSceneId].isRest ? 0 : 1);
-					
-					if (cost >= 0 && choice.type !== 'reset') {
-						if (cost > 0) indicators.push({ text: `-${cost} Turns`, color: 'text-cyan-400' }); 
-						else if (cost === 0 && hasExplicitCost) indicators.push({ text: `0 Turns`, color: 'text-cyan-400' });
-					}
-				}
-
-				let indicatorString = '';
-				indicators.forEach(ind => { indicatorString += ` <span class="${ind.color} text-sm ml-1">(${ind.text})</span>`; });
-
-				if (supplementalText) content += supplementalText;
-
-				if (indicatorString) btn.innerHTML = `<div class="btn-content-wrapper ${alignmentClass}">${content} ${indicatorString} <span class="ml-auto">${icon}</span></div>`;
-				else btn.innerHTML = `${content} <span class="ml-auto">${icon}</span>`;
-
-				container.appendChild(btn);
-			});
-        }
-
-				function updateUI() {
-					const statsPanel = document.getElementById('stats-panel');
-					const journalContainer = document.getElementById('journal-container');
-					const sceneId = gameState.currentSceneId;
-					
-                    const suppliesDisplay = document.getElementById('supplies-display');
-                    const companionPanel = document.getElementById('companion-panel');
-                    
-                    if (gameState.act3Started) {
-                        suppliesDisplay.classList.remove('hidden');
-                        document.getElementById('supplies-count').innerText = gameState.supplies;
-                    } else {
-                        suppliesDisplay.classList.add('hidden');
-                    }
-                    
-                    const isSilasJoined = gameState.companions.silas.joined;
-                    const isBlinkJoined = gameState.companions.blink.joined;
-                    
-                    if (isSilasJoined || isBlinkJoined) { 
-                        companionPanel.classList.remove('hidden');
-                        renderCompanions(isSilasJoined, isBlinkJoined);
-                    } else {
-                        companionPanel.classList.add('hidden');
-                    }
-					
-					const abilitiesWrapper = document.getElementById('abilities-wrapper');
-                    const hasPlaneWalk = gameState.skills.includes("Plane Walking");
-                    
-                    // --- FIX: DEFINITIONS ADDED HERE ---
-                    const planarContainer = document.getElementById('planar-skills-container');
-                    const companionContainer = document.getElementById('companion-panel');
-                    // -----------------------------------
-                    
-                    let allyCount = 0;
-                    if (isSilasJoined) allyCount++;
-                    if (isBlinkJoined) allyCount++;
-
-                    // Now these variables exist, so this won't crash:
-                    planarContainer.classList.remove('h-full');
-                    companionContainer.classList.remove('h-full');
-
-                    if (hasPlaneWalk && allyCount === 1) {
-                        abilitiesWrapper.classList.remove('flex', 'flex-col');
-                        // CHANGED: items-start -> items-stretch to make heights equal
-                        abilitiesWrapper.classList.add('grid', 'grid-cols-2', 'items-stretch', 'gap-2');
-                        
-                        // Force children to fill height so backgrounds match
-                        planarContainer.classList.add('h-full');
-                        companionContainer.classList.add('h-full');
-                        
-                        document.getElementById('companions-list').className = "flex flex-col gap-2 h-full justify-center"; 
-                    } else {
-                        abilitiesWrapper.classList.remove('grid', 'grid-cols-2', 'items-stretch', 'gap-2');
-                        abilitiesWrapper.classList.add('flex', 'flex-col');
-                        
-                        if (allyCount > 1) {
-                             document.getElementById('companions-list').className = "grid grid-cols-2 gap-2";
-                        } else {
-                             document.getElementById('companions-list').className = "flex flex-col gap-2";
-                        }
-                    }
-                    
-					const tetherDisplay = document.getElementById('tether-display');
-					const planarSkills = document.getElementById('planar-skills-container');
-
-					if (gameState.act2Started) {
-						tetherDisplay.classList.remove('hidden');
-					} else {
-						tetherDisplay.classList.add('hidden');
-					}
-
-					if (gameState.skills.includes("Plane Walking")) {
-						planarSkills.classList.remove('hidden');
-					} else {
-						planarSkills.classList.add('hidden');
-					}
-					
-					if (sceneId && sceneId.startsWith('prologue')) {
-						statsPanel.classList.add('prologue-blur');
-						journalContainer.classList.add('log-hidden');
-						journalContainer.classList.remove('log-visible');
-					} else {
-						statsPanel.classList.remove('prologue-blur');
-						statsPanel.classList.add('prologue-active');
-						
-						if(gameState.inventory.includes("Ship's Log")) {
-							journalContainer.classList.remove('log-hidden');
-							journalContainer.classList.add('log-visible');
-						} else {
-							journalContainer.classList.add('log-hidden');
-							journalContainer.classList.remove('log-visible');
-						}
-					}
-
-					const displayMaxHP = gameState.maxHP;
-					const hpToDisplay = gameState.currentHP;
-
-					const hpPct = (hpToDisplay / displayMaxHP) * 100;
-					const bar = document.getElementById('hp-bar');
-					
-					bar.style.width = `${Math.min(100, hpPct)}%`;
-					bar.className = `h-full transition-all duration-500 ${hpToDisplay < (displayMaxHP * 0.3) ? 'bg-red-600 animate-pulse' : 'bg-red-800'}`;
-					
-					document.getElementById('hp-text').innerText = `${hpToDisplay}/${displayMaxHP}`; 
-
-					audioManager.checkVulnerable(gameState.currentHP, gameState.maxHP);
-					
-					const doomDisplay = document.getElementById('doom-counter-display');
-					const doomText = document.getElementById('doom-timer-text');
-					const doomBar = document.getElementById('doom-bar');
-					const maxDoom = 20; 
-
-					if (gameState.act1Started && !gameState.act2Started && !gameState.act3Started) {
-						doomDisplay.classList.remove('hidden');
-						doomText.textContent = `${gameState.doomTimer} Turns`;
-						const doomPct = (gameState.doomTimer / maxDoom) * 100;
-						doomBar.style.width = `${doomPct}%`;
-						
-						doomBar.classList.remove('bg-purple-600', 'bg-red-700', 'bg-yellow-600', 'animate-pulse');
-						doomText.classList.remove('text-red-500', 'text-yellow-500');
-						
-						if (!gameState.isRiftCollapse) {
-							document.getElementById('fx-overlay').classList.remove('fx-rift-collapsed');
-						}
-
-						if (gameState.isRiftCollapse) {
-							doomBar.classList.add('bg-red-700', 'animate-pulse');
-							doomText.textContent = `COLLAPSED!`;
-							doomText.classList.add('text-red-500');
-							document.getElementById('fx-overlay').classList.add('fx-rift-collapsed');
-						} 
-						else if (gameState.doomTimer <= 5) {
-							doomBar.classList.add('bg-yellow-600', 'animate-pulse');
-							doomBar.classList.remove('bg-purple-600');
-							doomText.classList.add('text-yellow-500');
-						} 
-						else {
-							doomBar.classList.add('bg-purple-600');
-						}
-					} else {
-						doomDisplay.classList.add('hidden');
-						document.getElementById('fx-overlay').classList.remove('fx-rift-collapsed');
-					}
-					
-					const tetherText = document.getElementById('tether-text');
-					const tetherBar = document.getElementById('tether-bar');
-					const maxTether = 20; 
-
-					if (gameState.act2Started) {
-						tetherText.textContent = `${gameState.tetherTimer} Turns`;
-						const tetherPct = (gameState.tetherTimer / maxTether) * 100;
-						tetherBar.style.width = `${tetherPct}%`;
-						
-						if (gameState.tetherTimer <= 5) {
-							tetherBar.style.boxShadow = '0 0 15px rgba(255, 69, 0, 0.8)';
-							tetherText.classList.add('text-red-400');
-						} else {
-							tetherBar.style.boxShadow = '0 0 10px rgba(34, 211, 238, 0.6)';
-							tetherText.classList.remove('text-red-400');
-						}
-					}
-
-					document.getElementById('shillings-display').innerText = gameState.shillings;
-					
-					const inf = gameState.influence || 0;
-					const pct = ((inf + 50) / 100) * 100;
-					const marker = document.getElementById('inf-marker');
-					if (marker) marker.style.left = `${Math.max(0, Math.min(100, pct))}%`;
-					
-					const infText = document.getElementById('inf-status-text');
-					if (infText) {
-						if (inf <= -30) infText.textContent = "Sworn to the Crown (Max Order)";
-						else if (inf <= -15) infText.textContent = "Watchman (Spyglass Active)";
-						else if (inf >= 30) infText.textContent = "Pirate Lord (Max Chaos)";
-						else if (inf >= 15) infText.textContent = "Privateer (Spyglass Active)";
-						else infText.textContent = "Neutral / Growing";
-					}
-
-					const ind = document.getElementById('active-crew-indicator');
-					const nameSpan = document.getElementById('active-crew-name');
-					if (activeCrewMember) {
-						ind.classList.remove('hidden');
-						nameSpan.innerText = activeCrewMember.name;
-					} else {
-						ind.classList.add('hidden');
-					}
-
-					const crewContainer = document.getElementById('crew-panel');
-					crewContainer.innerHTML = '';
-					
-					const crewOrder = ['gareth', 'quinn', 'talon', 'bones'];
-					
-					crewOrder.forEach(key => {
-						const c = gameState.crew[key];
-						if (!c) return;
-
-						const btn = document.createElement('button');
-						const isSelected = activeCrewMember && activeCrewMember.name === c.name;
-						const isAvailableForFreeUse = gameState.crewUseFree && !c.used;
-
-						let baseClass = "p-2 rounded border text-left transition-all relative overflow-hidden ";
-						
-						
-						if (c.used) { 
-							baseClass += "bg-black/50 border-gray-800 text-gray-700 cursor-not-allowed opacity-50";
-						} else if (gameState.crewUseFree && isSelected) {
-							 baseClass += "crew-free-use-glow";
-						} else if (gameState.crewUseFree && !isSelected) {
-							if (!activeCrewMember) {
-								baseClass += "crew-free-use-glow";
-							} else {
-								 baseClass += "bg-gray-800 border-gray-600 text-gray-300 hover:border-gray-400 hover:bg-gray-700";
-							}
-						} else if (isSelected) {
-							baseClass += "spectral-active text-blue-100 ring-1 ring-blue-400";
-						} else {
-							baseClass += "bg-gray-800 border-gray-600 text-gray-300 hover:border-gray-400 hover:bg-gray-700";
-						}
-
-						if (gameState.currentSceneId === 'start' && !c.used && !activeCrewMember) {
-                            if (c.name === 'Quinn' || c.name === 'Bones') {
-                                baseClass += " tutorial-pulse";
+                            
+                            // FIX 2: Explicit Coin Sound Check for Transactional Actions
+                            if (choice.cost || choice.value || choice.shillingGain) {
+                                audioManager.playCoins();
+                            } else if (!fxClass) {
+                                // Only play click if it's not a special FX button (which are silent per request) or a coin transaction
+                                audioManager.playClick();
                             }
-						}
+                            
+                            if (choice.type === 'combine') {
+                                const result = choice.onSelect(gameState);
+                                if (result) addToHistory(result, 'system');
+                                renderScene(choice.nextScene);
+                                return;
+                            }
+                            
+                            if (choice.action && typeof choice.action === 'function') {
+                                const result = choice.action(gameState);
+                                if (result) addToHistory(result, 'system');
+                                if (choice.nextScene) {
+                                    if (choice.nextScene === 'lighthouse_morning' && gameState.currentSceneId === 'captain_orders' && choice.onSelect) {
+                                        choice.onSelect(gameState);
+                                    }
+                                    renderScene(choice.nextScene);
+                                } else { updateUI(); }
+                                return; 
+                            }
+                            
+                            if (choice.type === 'reset') { resetGame(); return; }
+                            
+                            if (gameState.crewUseFree && choice.type !== 'dialogue' && !choice.nextScene.includes('captain_orders')) {
+                                addToHistory(`*Warning: The Pearlescent Mushroom's clarity is best saved for a crucial skill check.*`, 'system');
+                            }
 
-						btn.className = baseClass;
-						btn.disabled = c.used; 
-						btn.innerHTML = `
-							<div class="font-bold text-[12px] cinzel leading-tight">${c.name}</div>
-							<div class="text-[10px] ${isSelected || isAvailableForFreeUse ? 'text-white' : 'text-gray-500'}">${c.skill}</div>
-							${c.used ? '<i class="fas fa-lock absolute top-1 right-1 text-[10px]"></i>' : ''}
-							${isAvailableForFreeUse ? '<i class="fas fa-star absolute top-1 right-1 text-[10px] text-purple-300"></i>' : ''}
-						`;
-						btn.onclick = () => {
-							audioManager.playClick();
-							
-							if (isSelected) {
-								activeCrewMember = null;
-							} else {
-								activeCrewMember = c;
-								audioManager.playGhost();
-							}
-							updateUI();
-						};
-						crewContainer.appendChild(btn);
-					});
+                            if (choice.type === 'action' && (currentSceneId === 'market_stall' || currentSceneId === 'alchemist_triage' || currentSceneId === 'blackwater_tavern') && choice.stockItem) {
+                                 const currentStock = scenes[currentSceneId].stock[choice.stockItem] || 0;
+                                 if (currentStock <= 0) {
+                                    addToHistory(`${choice.stockItem} is out of stock.`, 'system');
+                                    renderScene(currentSceneId); 
+                                    return;
+                                }
+                                scenes[currentSceneId].stock[choice.stockItem] = Math.max(0, scenes[currentSceneId].stock[choice.stockItem] - 1);
+                            }
+                            
+                            if (choice.consume && choice.reqItem) {
+                                const idx = gameState.inventory.indexOf(choice.reqItem);
+                                if (idx > -1) {
+                                    gameState.inventory.splice(idx, 1);
+                                    addToHistory(`${choice.reqItem} consumed.`, 'system');
+                                }
+                            }
+                            if (choice.consumeItems && Array.isArray(choice.consumeItems)) {
+                                choice.consumeItems.forEach(itemToConsume => {
+                                    const idx = gameState.inventory.indexOf(itemToConsume);
+                                    if (idx > -1) {
+                                        gameState.inventory.splice(idx, 1);
+                                        addToHistory(`${itemToConsume} consumed.`, 'system');
+                                    }
+                                });
+                            }
+
+                            const currentScene = scenes[gameState.currentSceneId];
+                            if (currentScene.journal) {
+                                let journalText = currentScene.journal;
+                                if (currentSceneId === 'act3_name_ship') journalText = journalText.replace('[SHIP_NAME]', gameState.shipName);
+                                addToHistory(journalText, 'entry');
+                            }
+
+                            if (choice.cost) gameState.shillings -= choice.cost;
+                            if (choice.costHP !== undefined) gameState.currentHP = applyDamage(gameState.currentHP, choice.costHP);
+
+                            let extraGold = 0;
+                            if (gameState.inventory.includes("Salt-Warped Spyglass") && gameState.influence >= 15) {
+                                 extraGold = 1;
+                                 addToHistory("Passive (Privateer's Lens): Found +1 extra Shilling.", 'system');
+                            }
+                            if (choice.shillingGain) gameState.shillings += (choice.shillingGain + extraGold);
+                            if (choice.value) gameState.shillings += (choice.value + extraGold);
+                            
+                            if (choice.chaosGain) gameState.influence = Math.min(50, gameState.influence + choice.chaosGain);
+                            if (choice.orderGain) gameState.influence = Math.max(-50, gameState.influence - choice.orderGain); 
+                            
+                            if (choice.nextScene === 'lighthouse_morning' && currentSceneId === 'captain_orders' && choice.onSelect) {
+                                choice.onSelect(gameState);
+                            }
+
+                            if (gameState.act1Started && choice.doomCost !== 0) {
+                                const cost = choice.doomCost !== undefined ? choice.doomCost : 1; 
+                                gameState.doomTimer = Math.max(0, gameState.doomTimer - cost);
+                                if (gameState.doomTimer > 0) addToHistory(`Rift Stability: ${gameState.doomTimer} turns remaining.`, 'system');
+                            }
+
+                            if (gameState.act2Started && choice.tetherCost !== 0) {
+                                 const cost = choice.tetherCost !== undefined ? choice.tetherCost : (scenes[currentSceneId].isBoss || scenes[currentSceneId].isRest ? 0 : 1);
+                                 gameState.tetherTimer = Math.max(0, gameState.tetherTimer - cost);
+                            }
+                            
+                            renderScene(choice.nextScene);
+                        };
+
+                        if (fxClass && !isDeathScene) {
+                            const allBtns = document.querySelectorAll('.btn-game');
+                            allBtns.forEach(b => b.disabled = true);
+                            btn.classList.add(fxClass);
+                            
+                            // FIX 1: Removed audioManager.playGhost() and playClash() from generic FX block.
+                            // Only playClick is triggered in executeAction now, unless it's a silent FX.
+
+                            setTimeout(() => { executeAction(); }, fxDuration);
+                        } else {
+                            executeAction();
+                        }
+                    };
+                }
+
+                let indicators = [];
+                if (choice.cost) indicators.push({ text: `-${choice.cost}s`, color: 'text-amber-500' });
+                else if (choice.value) indicators.push({ text: `+${choice.value}s`, color: 'text-amber-500' });
+                else if (choice.shillingGain) indicators.push({ text: `+${choice.shillingGain}s`, color: 'text-amber-500' });
+                if (choice.suppliesCost) indicators.push({ text: `-${choice.suppliesCost} Supplies`, color: 'text-indigo-400' });
+                if (choice.costHP !== undefined) indicators.push({ text: `-${choice.costHP} HP`, color: 'text-red-400' });
+                if (choice.chaosGain) indicators.push({ text: `+${choice.chaosGain} Chaos`, color: 'text-emerald-400' });
+                else if (choice.orderGain) indicators.push({ text: `+${choice.orderGain} Order`, color: 'text-blue-400' });
+                
+                const isStandardAct1Scene = gameState.act1Started && !scenes[currentSceneId].isBoss && !scenes[currentSceneId].isRest;
+                if (gameState.act1Started && gameState.quinnLogistics && isStandardAct1Scene) {
+                    const hasExplicitCost = choice.doomCost !== undefined;
+                    const cost = hasExplicitCost ? choice.doomCost : (isStandardAct1Scene ? 1 : 0);
+                    if (cost >= 0 && choice.type !== 'reset' && choice.nextScene !== 'lighthouse_vigil') {
+                        if (cost > 0) indicators.push({ text: `-${cost} Time`, color: 'text-purple-400' }); 
+                        else if (cost === 0 && (hasExplicitCost || choice.type === 'travel')) indicators.push({ text: `0 Time`, color: 'text-purple-400' });
+                    }
+                } else if (gameState.act2Started) {
+                    const hasExplicitCost = choice.tetherCost !== undefined;
+                    const cost = hasExplicitCost ? choice.tetherCost : (scenes[currentSceneId].isBoss || scenes[currentSceneId].isRest ? 0 : 1);
+                    if (cost >= 0 && choice.type !== 'reset') {
+                        if (cost > 0) indicators.push({ text: `-${cost} Turns`, color: 'text-cyan-400' }); 
+                        else if (cost === 0 && hasExplicitCost) indicators.push({ text: `0 Turns`, color: 'text-cyan-400' });
+                    }
+                }
+
+                let indicatorString = '';
+                indicators.forEach(ind => { indicatorString += ` <span class="${ind.color} text-sm ml-1">(${ind.text})</span>`; });
+                if (supplementalText) content += supplementalText;
+                if (indicatorString) btn.innerHTML = `<div class="btn-content-wrapper ${alignmentClass}">${content} ${indicatorString} <span class="ml-auto">${icon}</span></div>`;
+                else btn.innerHTML = `${content} <span class="ml-auto">${icon}</span>`;
+
+                container.appendChild(btn);
+            });
+        }
+		
+		
+
+        function updateUI() {
+            const statsPanel = document.getElementById('stats-panel');
+            const journalContainer = document.getElementById('journal-container');
+            const sceneId = gameState.currentSceneId;
+            
+            const suppliesDisplay = document.getElementById('supplies-display');
+            const companionPanel = document.getElementById('companion-panel');
+            
+            if (gameState.act3Started) {
+                suppliesDisplay.classList.remove('hidden');
+                document.getElementById('supplies-count').innerText = gameState.supplies;
+            } else {
+                suppliesDisplay.classList.add('hidden');
+            }
+            
+            const isSilasJoined = gameState.companions.silas.joined;
+            const isBlinkJoined = gameState.companions.blink.joined;
+            
+            if (isSilasJoined || isBlinkJoined) { 
+                companionPanel.classList.remove('hidden');
+                renderCompanions(isSilasJoined, isBlinkJoined);
+            } else {
+                companionPanel.classList.add('hidden');
+            }
+            
+            const abilitiesWrapper = document.getElementById('abilities-wrapper');
+            const hasPlaneWalk = gameState.skills.includes("Plane Walking");
+            
+            const planarContainer = document.getElementById('planar-skills-container');
+            const companionContainer = document.getElementById('companion-panel');
+            
+            let allyCount = 0;
+            if (isSilasJoined) allyCount++;
+            if (isBlinkJoined) allyCount++;
+
+            planarContainer.classList.remove('h-full');
+            companionContainer.classList.remove('h-full');
+
+            if (hasPlaneWalk && allyCount === 1) {
+                abilitiesWrapper.classList.remove('flex', 'flex-col');
+                abilitiesWrapper.classList.add('grid', 'grid-cols-2', 'items-stretch', 'gap-2');
+                planarContainer.classList.add('h-full');
+                companionContainer.classList.add('h-full');
+                document.getElementById('companions-list').className = "flex flex-col gap-2 h-full justify-center"; 
+            } else {
+                abilitiesWrapper.classList.remove('grid', 'grid-cols-2', 'items-stretch', 'gap-2');
+                abilitiesWrapper.classList.add('flex', 'flex-col');
+                
+                if (allyCount > 1) {
+                     document.getElementById('companions-list').className = "grid grid-cols-2 gap-2";
+                } else {
+                     document.getElementById('companions-list').className = "flex flex-col gap-2";
+                }
+            }
+            
+            const tetherDisplay = document.getElementById('tether-display');
+            const planarSkills = document.getElementById('planar-skills-container');
+
+            if (gameState.act2Started) {
+                tetherDisplay.classList.remove('hidden');
+            } else {
+                tetherDisplay.classList.add('hidden');
+            }
+
+            if (gameState.skills.includes("Plane Walking")) {
+                planarSkills.classList.remove('hidden');
+            } else {
+                planarSkills.classList.add('hidden');
+            }
+            
+            if (sceneId && sceneId.startsWith('prologue')) {
+                statsPanel.classList.add('prologue-blur');
+                journalContainer.classList.add('log-hidden');
+                journalContainer.classList.remove('log-visible');
+            } else {
+                statsPanel.classList.remove('prologue-blur');
+                statsPanel.classList.add('prologue-active');
+                
+                if(gameState.inventory.includes("Ship's Log")) {
+                    journalContainer.classList.remove('log-hidden');
+                    journalContainer.classList.add('log-visible');
+                } else {
+                    journalContainer.classList.add('log-hidden');
+                    journalContainer.classList.remove('log-visible');
+                }
+            }
+
+            const displayMaxHP = gameState.maxHP;
+            const hpToDisplay = gameState.currentHP;
+
+            const hpPct = (hpToDisplay / displayMaxHP) * 100;
+            const bar = document.getElementById('hp-bar');
+            
+            bar.style.width = `${Math.min(100, hpPct)}%`;
+            bar.className = `h-full transition-all duration-500 ${hpToDisplay < (displayMaxHP * 0.3) ? 'bg-red-600 animate-pulse' : 'bg-red-800'}`;
+            
+            document.getElementById('hp-text').innerText = `${hpToDisplay}/${displayMaxHP}`; 
+
+            audioManager.checkVulnerable(gameState.currentHP, gameState.maxHP);
+            
+            const doomDisplay = document.getElementById('doom-counter-display');
+            const doomText = document.getElementById('doom-timer-text');
+            const doomBar = document.getElementById('doom-bar');
+            const maxDoom = 20; 
+
+            if (gameState.act1Started && !gameState.act2Started && !gameState.act3Started) {
+                doomDisplay.classList.remove('hidden');
+                doomText.textContent = `${gameState.doomTimer} Turns`;
+                const doomPct = (gameState.doomTimer / maxDoom) * 100;
+                doomBar.style.width = `${doomPct}%`;
+                
+                doomBar.classList.remove('bg-purple-600', 'bg-red-700', 'bg-yellow-600', 'animate-pulse');
+                doomText.classList.remove('text-red-500', 'text-yellow-500');
+                
+                if (!gameState.isRiftCollapse) {
+                    document.getElementById('fx-overlay').classList.remove('fx-rift-collapsed');
+                }
+
+                if (gameState.isRiftCollapse) {
+                    doomBar.classList.add('bg-red-700', 'animate-pulse');
+                    doomText.textContent = `COLLAPSED!`;
+                    doomText.classList.add('text-red-500');
+                    document.getElementById('fx-overlay').classList.add('fx-rift-collapsed');
+                } 
+                else if (gameState.doomTimer <= 5) {
+                    doomBar.classList.add('bg-yellow-600', 'animate-pulse');
+                    doomBar.classList.remove('bg-purple-600');
+                    doomText.classList.add('text-yellow-500');
+                } 
+                else {
+                    doomBar.classList.add('bg-purple-600');
+                }
+            } else {
+                doomDisplay.classList.add('hidden');
+                document.getElementById('fx-overlay').classList.remove('fx-rift-collapsed');
+            }
+            
+            const tetherText = document.getElementById('tether-text');
+            const tetherBar = document.getElementById('tether-bar');
+            const maxTether = 20; 
+
+            if (gameState.act2Started) {
+                tetherText.textContent = `${gameState.tetherTimer} Turns`;
+                const tetherPct = (gameState.tetherTimer / maxTether) * 100;
+                tetherBar.style.width = `${tetherPct}%`;
+                
+                if (gameState.tetherTimer <= 5) {
+                    tetherBar.style.boxShadow = '0 0 15px rgba(255, 69, 0, 0.8)';
+                    tetherText.classList.add('text-red-400');
+                } else {
+                    tetherBar.style.boxShadow = '0 0 10px rgba(34, 211, 238, 0.6)';
+                    tetherText.classList.remove('text-red-400');
+                }
+            }
+
+            document.getElementById('shillings-display').innerText = gameState.shillings;
+            
+            const inf = gameState.influence || 0;
+            const pct = ((inf + 50) / 100) * 100;
+            const marker = document.getElementById('inf-marker');
+            if (marker) marker.style.left = `${Math.max(0, Math.min(100, pct))}%`;
+            
+            const infText = document.getElementById('inf-status-text');
+            if (infText) {
+                if (inf <= -30) infText.textContent = "Sworn to the Crown (Max Order)";
+                else if (inf <= -15) infText.textContent = "Watchman (Spyglass Active)";
+                else if (inf >= 30) infText.textContent = "Pirate Lord (Max Chaos)";
+                else if (inf >= 15) infText.textContent = "Privateer (Spyglass Active)";
+                else infText.textContent = "Neutral / Growing";
+            }
+
+            const ind = document.getElementById('active-crew-indicator');
+            const nameSpan = document.getElementById('active-crew-name');
+            if (activeCrewMember) {
+                ind.classList.remove('hidden');
+                nameSpan.innerText = activeCrewMember.name;
+            } else {
+                ind.classList.add('hidden');
+            }
+
+            const crewContainer = document.getElementById('crew-panel');
+            crewContainer.innerHTML = '';
+            
+            const crewOrder = ['gareth', 'quinn', 'talon', 'bones'];
+            
+            crewOrder.forEach(key => {
+                const c = gameState.crew[key];
+                if (!c) return;
+
+                const btn = document.createElement('button');
+                const isSelected = activeCrewMember && activeCrewMember.name === c.name;
+                const isAvailableForFreeUse = gameState.crewUseFree && !c.used;
+
+                let baseClass = "p-2 rounded border text-left transition-all relative overflow-hidden ";
+                
+                if (c.used) { 
+                    baseClass += "bg-black/50 border-gray-800 text-gray-700 cursor-not-allowed opacity-50";
+                } else if (gameState.crewUseFree && isSelected) {
+                     baseClass += "crew-free-use-glow";
+                } else if (gameState.crewUseFree && !isSelected) {
+                    if (!activeCrewMember) {
+                        baseClass += "crew-free-use-glow";
+                    } else {
+                         baseClass += "bg-gray-800 border-gray-600 text-gray-300 hover:border-gray-400 hover:bg-gray-700";
+                    }
+                } else if (isSelected) {
+                    baseClass += "spectral-active text-blue-100 ring-1 ring-blue-400";
+                } else {
+                    baseClass += "bg-gray-800 border-gray-600 text-gray-300 hover:border-gray-400 hover:bg-gray-700";
+                }
+
+                if (gameState.currentSceneId === 'start' && !c.used && !activeCrewMember) {
+                    if (c.name === 'Quinn' || c.name === 'Bones') {
+                        baseClass += " tutorial-pulse";
+                    }
+                }
+
+                btn.className = baseClass;
+                btn.disabled = c.used; 
+                btn.innerHTML = `
+                    <div class="font-bold text-[12px] cinzel leading-tight">${c.name}</div>
+                    <div class="text-[10px] ${isSelected || isAvailableForFreeUse ? 'text-white' : 'text-gray-500'}">${c.skill}</div>
+                    ${c.used ? '<i class="fas fa-lock absolute top-1 right-1 text-[10px]"></i>' : ''}
+                    ${isAvailableForFreeUse ? '<i class="fas fa-star absolute top-1 right-1 text-[10px] text-purple-300"></i>' : ''}
+                `;
+                btn.onclick = () => {
+                    audioManager.playClick();
                     
-					function renderCompanions(isSilasJoined, isBlinkJoined) { 
-						const companionList = document.getElementById('companions-list');
-						companionList.innerHTML = ''; 
-						companionList.className = "grid grid-cols-2 gap-2";
+                    if (isSelected) {
+                        activeCrewMember = null;
+                    } else {
+                        activeCrewMember = c;
+                        audioManager.playGhost();
+                    }
+                    updateUI();
+                };
+                crewContainer.appendChild(btn);
+            });
+            
+            function renderCompanions(isSilasJoined, isBlinkJoined) { 
+                const companionList = document.getElementById('companions-list');
+                companionList.innerHTML = ''; 
+                companionList.className = "grid grid-cols-2 gap-2";
 
-						if (isSilasJoined) {
-							const silasDiv = document.createElement('div');
-							const isCooldown = gameState.allyCooldowns.silas > 0;
-							
-							silasDiv.className = `p-2 bg-gray-800 border rounded flex items-center justify-between ${
-								isCooldown ? 'border-gray-900 opacity-60' : 'border-emerald-600/50'
-							}`;
-							
-							silasDiv.innerHTML = `
-								<div class="flex items-center gap-2">
-									<i class="fas fa-moon text-lg text-emerald-400"></i>
-									<div class="text-left">
-										<span class="font-bold text-xs cinzel text-emerald-300 block">Silas</span>
-										<span class="text-[10px] text-gray-500 italic block">Seneschal (Pack Tactics)</span>
-									</div>
-								</div>
-								${gameState.isBossCombat ? `
-									<button onclick="allyCommand('silas')" 
-											class="btn-game px-2 py-1 text-xs rounded transition-all 
-											${isCooldown ? 'btn-disabled-cost' : 'bg-red-900/40 text-red-300 hover:bg-red-800/60'}"
-											${isCooldown ? 'disabled' : ''}>
-										INTERCEPT! (${isCooldown ? gameState.allyCooldowns.silas : 'Ready'})
-									</button>
-								` : ''}
-							`;
-							companionList.appendChild(silasDiv);
-						};
-						
-						if (isBlinkJoined) {
-							const blinkDiv = document.createElement('div');
-							const isCooldown = gameState.allyCooldowns.blink > 0;
-							
-							blinkDiv.className = `p-2 bg-gray-800 border rounded flex items-center justify-between ${
-								isCooldown ? 'border-gray-900 opacity-60' : 'border-emerald-600/50'
-							}`;
-							
-							let actionButtonHTML = '';
-							if (gameState.isBossCombat) {
-								actionButtonHTML = `
-									<button onclick="allyCommand('blink')" 
-											class="btn-game px-2 py-1 text-xs rounded transition-all 
-											${isCooldown ? 'btn-disabled-cost' : 'bg-red-900/40 text-red-300 hover:bg-red-800/60'}"
-											${isCooldown ? 'disabled' : ''}>
-										PHASE SHIFT (${isCooldown ? gameState.allyCooldowns.blink : 'Ready'})
-									</button>
-								`;
-							} else {
-								actionButtonHTML = `
-									<button onclick="window.gameFunctions.triggerBlink()"
-                                            class="px-2 py-1 text-xs rounded transition-all bg-emerald-900/40 text-emerald-300 hover:bg-emerald-800/60 font-bold border border-emerald-900">
-										PHASE
-									</button>
-								`;
-							}
-							
-							blinkDiv.innerHTML = `
-								<div class="flex items-center gap-2">
-									<i class="fas fa-paw text-lg text-emerald-400"></i>
-									<div class="text-left">
-										<span class="font-bold text-xs cinzel text-emerald-300 block">Blink</span>
-										<span class="text-[10px] text-gray-500 italic block">Phase-Cub</span>
-									</div>
-								</div>
-								${actionButtonHTML}
-							`;
-							companionList.appendChild(blinkDiv);
-						}
-					}
+                if (isSilasJoined) {
+                    const silasDiv = document.createElement('div');
+                    const isCooldown = gameState.allyCooldowns.silas > 0;
+                    
+                    silasDiv.className = `p-2 bg-gray-800 border rounded flex items-center justify-between ${
+                        isCooldown ? 'border-gray-900 opacity-60' : 'border-emerald-600/50'
+                    }`;
+                    
+                    silasDiv.innerHTML = `
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-moon text-lg text-emerald-400"></i>
+                            <div class="text-left">
+                                <span class="font-bold text-xs cinzel text-emerald-300 block">Silas</span>
+                                <span class="text-[10px] text-gray-500 italic block">Seneschal (Pack Tactics)</span>
+                            </div>
+                        </div>
+                        ${gameState.isBossCombat ? `
+                            <button onclick="allyCommand('silas')" 
+                                    class="btn-game px-2 py-1 text-xs rounded transition-all 
+                                    ${isCooldown ? 'btn-disabled-cost' : 'bg-red-900/40 text-red-300 hover:bg-red-800/60'}"
+                                    ${isCooldown ? 'disabled' : ''}>
+                                INTERCEPT! (${isCooldown ? gameState.allyCooldowns.silas : 'Ready'})
+                            </button>
+                        ` : ''}
+                    `;
+                    companionList.appendChild(silasDiv);
+                };
+                
+                if (isBlinkJoined) {
+                    const blinkDiv = document.createElement('div');
+                    const isCooldown = gameState.allyCooldowns.blink > 0;
+                    
+                    blinkDiv.className = `p-2 bg-gray-800 border rounded flex items-center justify-between ${
+                        isCooldown ? 'border-gray-900 opacity-60' : 'border-emerald-600/50'
+                    }`;
+                    
+                    let actionButtonHTML = '';
+                    if (gameState.isBossCombat) {
+                        actionButtonHTML = `
+                            <button onclick="allyCommand('blink')" 
+                                    class="btn-game px-2 py-1 text-xs rounded transition-all 
+                                    ${isCooldown ? 'btn-disabled-cost' : 'bg-red-900/40 text-red-300 hover:bg-red-800/60'}"
+                                    ${isCooldown ? 'disabled' : ''}>
+                                PHASE SHIFT (${isCooldown ? gameState.allyCooldowns.blink : 'Ready'})
+                            </button>
+                        `;
+                    } else {
+                        actionButtonHTML = `
+                            <button onclick="window.gameFunctions.triggerBlink()"
+                                    class="px-2 py-1 text-xs rounded transition-all bg-emerald-900/40 text-emerald-300 hover:bg-emerald-800/60 font-bold border border-emerald-900">
+                                PHASE
+                            </button>
+                        `;
+                    }
+                    
+                    blinkDiv.innerHTML = `
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-paw text-lg text-emerald-400"></i>
+                            <div class="text-left">
+                                <span class="font-bold text-xs cinzel text-emerald-300 block">Blink</span>
+                                <span class="text-[10px] text-gray-500 italic block">Phase-Cub</span>
+                            </div>
+                        </div>
+                        ${actionButtonHTML}
+                    `;
+                    companionList.appendChild(blinkDiv);
+                }
+            }
 
-					renderCompanions(isSilasJoined, isBlinkJoined);
+            const invContainer = document.getElementById('inventory-panel');
+            invContainer.innerHTML = '';
 
-					
-					const invContainer = document.getElementById('inventory-panel');
-					invContainer.innerHTML = '';
+            invContainer.className = "flex flex-col gap-1 max-h-[220px] overflow-y-auto pr-1";
 
-					invContainer.className = "flex flex-col gap-1 max-h-[220px] overflow-y-auto pr-1";
+            const descArea = document.getElementById('item-desc-area');
+            const defaultText = "Hover over an item to inspect it.";
 
-					const descArea = document.getElementById('item-desc-area');
-					const defaultText = "Hover over an item to inspect it.";
+            descArea.innerText = defaultText;
+            descArea.classList.remove('text-amber-400');
+            descArea.classList.add('text-gray-400'); 
 
-					descArea.innerText = defaultText;
-					descArea.classList.remove('text-amber-400');
-					descArea.classList.add('text-gray-400'); 
+            if (gameState.inventory.length === 0) {
+                invContainer.innerHTML = '<div class="text-center text-[10px] text-gray-600 italic py-2">Inventory Empty</div>';
+            } else {
+                const tempInventory = Array.from(gameState.inventory);
 
-					if (gameState.inventory.length === 0) {
-						invContainer.innerHTML = '<div class="text-center text-[10px] text-gray-600 italic py-2">Inventory Empty</div>';
-					} else {
-						const tempInventory = Array.from(gameState.inventory);
+                const sortedInventory = tempInventory.sort((aName, bName) => {
+                    const itemA = itemRegistry[aName] || { type: 'misc' };
+                    const itemB = itemRegistry[bName] || { type: 'misc' };
+                    
+                    const indexA = gameState.inventory.indexOf(aName);
+                    const indexB = gameState.inventory.indexOf(bName);
+                    
+                    const isAConsumable = itemA.type === 'consumable';
+                    const isBConsumable = itemB.type === 'consumable';
 
-						const sortedInventory = tempInventory.sort((aName, bName) => {
-							const itemA = itemRegistry[aName] || { type: 'misc' };
-							const itemB = itemRegistry[bName] || { type: 'misc' };
-							
-							const indexA = gameState.inventory.indexOf(aName);
-							const indexB = gameState.inventory.indexOf(bName);
-							
-							const isAConsumable = itemA.type === 'consumable';
-							const isBConsumable = itemB.type === 'consumable';
+                    if (isAConsumable && !isBConsumable) return -1;
+                    if (!isAConsumable && isBConsumable) return 1;
+                    
+                    const typeOrder = { 'weapon': 1, 'gear': 2, 'passive': 3, 'key': 4, 'ingredient': 5, 'misc': 6 };
+                    const orderA = typeOrder[itemA.type] || 99;
+                    const orderB = typeOrder[itemB.type] || 99;
+                    
+                    if (orderA !== orderB) return orderA - orderB;
 
-							if (isAConsumable && !isBConsumable) return -1;
-							if (!isAConsumable && isBConsumable) return 1;
-                            
-                            const typeOrder = { 'weapon': 1, 'gear': 2, 'passive': 3, 'key': 4, 'ingredient': 5, 'misc': 6 };
-                            const orderA = typeOrder[itemA.type] || 99;
-                            const orderB = typeOrder[itemB.type] || 99;
-                            
-                            if (orderA !== orderB) return orderA - orderB;
+                    return indexB - indexA;
+                });
 
-							return indexB - indexA;
-						});
+                sortedInventory.forEach(itemName => {
+                    let itemDef = itemRegistry[itemName] || { type: 'misc', icon: 'fa-box', color: 'text-gray-500', desc: "A strange item." };
+                    
+                    if (itemName === "Salt-Warped Spyglass") {
+                        itemDef = { ...itemDef };
+                        if (gameState.influence <= -15) {
+                            itemDef.name = "Watchman's Spyglass (Order)";
+                            itemDef.color = "text-blue-400";
+                            itemDef.desc = "Passive: The lens aligns with Order. Damage taken reduced by 1.";
+                        } else if (gameState.influence >= 15) {
+                            itemDef.name = "Privateer's Spyglass (Chaos)";
+                            itemDef.color = "text-emerald-400";
+                            itemDef.desc = "Passive: The lens aligns with Chaos. Gain +1 coin on all earnings.";
+                        } else {
+                            itemDef.name = "Salt-Warped Spyglass";
+                            itemDef.color = "text-cyan-400";
+                            itemDef.desc = "Key: The lens seems to shift focus on its own. (Awaiting Alignment)";
+                        }
+                    }
+                    
+                    const isConsumable = itemDef.type === 'consumable';
+                    
+                    const itemRow = document.createElement('div');
+                    itemRow.className = `group w-full flex items-center justify-between p-2 rounded border transition-all cursor-default relative shrink-0 ${
+                        isConsumable 
+                        ? 'bg-gray-900/80 border-emerald-900/50 hover:border-emerald-500 hover:bg-gray-800 item-consumable' 
+                        : 'bg-gray-900/60 border-gray-800 hover:border-gray-600'
+                    }`;
 
-						sortedInventory.forEach(itemName => {
-							let itemDef = itemRegistry[itemName] || { type: 'misc', icon: 'fa-box', color: 'text-gray-500', desc: "A strange item." };
-							
-							if (itemName === "Salt-Warped Spyglass") {
-								itemDef = { ...itemDef };
-								if (gameState.influence <= -15) {
-									itemDef.name = "Watchman's Spyglass (Order)";
-									itemDef.color = "text-blue-400";
-									itemDef.desc = "Passive: The lens aligns with Order. Damage taken reduced by 1.";
-								} else if (gameState.influence >= 15) {
-									itemDef.name = "Privateer's Spyglass (Chaos)";
-									itemDef.color = "text-emerald-400";
-									itemDef.desc = "Passive: The lens aligns with Chaos. Gain +1 coin on all earnings.";
-								} else {
-									itemDef.name = "Salt-Warped Spyglass";
-									itemDef.color = "text-cyan-400";
-									itemDef.desc = "Key: The lens seems to shift focus on its own. (Awaiting Alignment)";
-								}
-							}
-							
-							const isConsumable = itemDef.type === 'consumable';
-							
-							const itemRow = document.createElement('div');
-							itemRow.className = `group w-full flex items-center justify-between p-2 rounded border transition-all cursor-default relative shrink-0 ${
-								isConsumable 
-								? 'bg-gray-900/80 border-emerald-900/50 hover:border-emerald-500 hover:bg-gray-800 item-consumable' 
-								: 'bg-gray-900/60 border-gray-800 hover:border-gray-600'
-							}`;
+                    const leftSide = document.createElement('div');
+                    leftSide.className = 'flex items-center gap-3';
+                    leftSide.innerHTML = `
+                        <div class="text-lg w-5 text-center ${itemDef.color}"><i class="fas ${itemDef.icon}"></i></div>
+                        <span class="text-xs cinzel text-gray-300 group-hover:text-gray-100 transition-colors">${itemDef.name || itemName.split('(')[0].trim()}</span>
+                    `;
+                    itemRow.appendChild(leftSide);
 
-							const leftSide = document.createElement('div');
-							leftSide.className = 'flex items-center gap-3';
-							leftSide.innerHTML = `
-								<div class="text-lg w-5 text-center ${itemDef.color}"><i class="fas ${itemDef.icon}"></i></div>
-								<span class="text-xs cinzel text-gray-300 group-hover:text-gray-100 transition-colors">${itemDef.name || itemName.split('(')[0].trim()}</span>
-							`;
-							itemRow.appendChild(leftSide);
+                    const rightSide = document.createElement('div');
+                    if (isConsumable && itemDef.btnText && itemDef.btnText !== 'PASSIVE' && itemDef.btnText !== 'SELL' && itemDef.btnText !== 'INSPECT' && itemDef.btnText !== 'THROW') { 
+                        const actionBtn = document.createElement('button');
+                        actionBtn.className = "px-2 py-1 bg-emerald-900/40 border border-emerald-600/30 text-emerald-500 text-[9px] font-bold rounded hover:bg-emerald-600 hover:text-white transition-all tracking-wider";
+                        actionBtn.innerText = itemDef.btnText || "USE";
+                        actionBtn.onclick = (e) => {
+                            e.stopPropagation();
+                            audioManager.playClick();
+                            const result = itemDef.action(gameState);
+                            addToHistory(result, 'system');
+                            saveGame();
+                            updateUI();
+                        };
+                        rightSide.appendChild(actionBtn);
+                    } else {
+                        const tag = document.createElement('span');
+                        tag.className = "text-[9px] text-gray-600 uppercase tracking-wider font-bold opacity-50 group-hover:opacity-100 transition-opacity";
+                        tag.innerText = itemDef.btnText || "PASSIVE";
+                        rightSide.appendChild(tag);
+                    }
+                    itemRow.appendChild(rightSide);
 
-							const rightSide = document.createElement('div');
-							if (isConsumable && itemDef.btnText && itemDef.btnText !== 'PASSIVE' && itemDef.btnText !== 'SELL' && itemDef.btnText !== 'INSPECT' && itemDef.btnText !== 'THROW') { 
-								const actionBtn = document.createElement('button');
-								actionBtn.className = "px-2 py-1 bg-emerald-900/40 border border-emerald-600/30 text-emerald-500 text-[9px] font-bold rounded hover:bg-emerald-600 hover:text-white transition-all tracking-wider";
-								actionBtn.innerText = itemDef.btnText || "USE";
-								actionBtn.onclick = (e) => {
-									e.stopPropagation();
-									audioManager.playClick();
-									const result = itemDef.action(gameState);
-									addToHistory(result, 'system');
-									saveGame();
-									updateUI();
-								};
-								rightSide.appendChild(actionBtn);
-							} else {
-								const tag = document.createElement('span');
-								tag.className = "text-[9px] text-gray-600 uppercase tracking-wider font-bold opacity-50 group-hover:opacity-100 transition-opacity";
-								tag.innerText = itemDef.btnText || "PASSIVE";
-								rightSide.appendChild(tag);
-							}
-							itemRow.appendChild(rightSide);
+                    itemRow.onmouseenter = () => {
+                        descArea.innerText = itemDef.desc || defaultText;
+                        descArea.classList.add('text-amber-400');
+                        descArea.classList.remove('text-gray-400');
+                    };
+                    itemRow.onmouseleave = () => {
+                        descArea.innerText = defaultText;
+                        descArea.classList.remove('text-amber-400');
+                        descArea.classList.add('text-gray-400');
+                    };
 
-							itemRow.onmouseenter = () => {
-								descArea.innerText = itemDef.desc || defaultText;
-								descArea.classList.add('text-amber-400');
-								descArea.classList.remove('text-gray-400');
-							};
-							itemRow.onmouseleave = () => {
-								descArea.innerText = defaultText;
-								descArea.classList.remove('text-amber-400');
-								descArea.classList.add('text-gray-400');
-							};
-
-							invContainer.appendChild(itemRow);
-						});
-					}
-				}
+                    invContainer.appendChild(itemRow);
+                });
+            }
+        }
 
         init();
     </script>
