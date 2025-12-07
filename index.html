@@ -111,8 +111,9 @@
 		.fx-skill-success { pointer-events: none; animation: success-pulse 0.6s ease-out forwards; }
 		.fx-skill-success i { color: #34d399 !important; transition: color 0.2s; }
 
-		/* Failure Shake (Red) */
-		@keyframes fail-shake { 0% { border-color: #ef4444; background-color: #450a0a; transform: translateX(0); } 20% { transform: translateX(-4px); } 40% { transform: translateX(4px); } 60% { transform: translateX(-2px); } 80% { transform: translateX(2px); } 100% { border-color: #475569; background-color: #1f2937; transform: translateX(0); } }
+		/* Failure Shake (Red) - NOW WITH GLOW */
+		@keyframes fail-shake { 0% { border-color: #ef4444; background-color: #450a0a; transform: translateX(0); box-shadow: 0 0 0 rgba(239, 68, 68, 0); } 20% { transform: translateX(-4px); box-shadow: 0 0 15px rgba(239, 68, 68, 0.6); } 40% { transform: translateX(4px); box-shadow: 0 0 30px rgba(239, 68, 68, 0.8); } 60% { transform: translateX(-2px); box-shadow: 0 0 10px rgba(239, 68, 68, 0.4); } 80% { transform: translateX(2px); } 100% { border-color: #475569; background-color: #1f2937; transform: translateX(0); box-shadow: 0 0 0 rgba(239, 68, 68, 0); } 
+		}
 		.fx-skill-fail { pointer-events: none; animation: fail-shake 0.5s ease-out forwards; }
 		.fx-skill-fail i { color: #f87171 !important; transition: color 0.2s; }
 
@@ -122,9 +123,65 @@
 		@keyframes hero-shockwave { 0% { box-shadow: 0 0 0 0 rgba(96, 165, 250, 0.7), inset 0 0 0 0 rgba(255, 255, 255, 0.5); border-color: #60a5fa; transform: scale(1); } 15% { box-shadow: 0 0 50px 20px rgba(96, 165, 250, 0.5), inset 0 0 60px 20px rgba(255, 255, 255, 0.8); border-color: #fff; background-color: #1e3a8a; transform: scale(1.1); color: #fff; text-shadow: 0 0 10px #fff; } 100% { box-shadow: 0 0 0 0 rgba(96, 165, 250, 0); transform: scale(1); opacity: 0; } }
 		.fx-hero-active { pointer-events: none; animation: hero-shockwave 1.2s cubic-bezier(0.25, 1, 0.5, 1) forwards; color: #fff !important; z-index: 20; }
 
-		/* 5. Planar Glitch */
-		@keyframes glitch-skew { 0% { transform: skew(0deg) translateX(0); opacity: 1; filter: none; } 10% { transform: skew(-10deg) translateX(-3px); } 20% { transform: skew(10deg) translateX(3px); } 30% { transform: skew(-5deg) translateX(-1px); } 31% { transform: skew(-10deg) scale(1.05); background-color: #000 !important; border-color: #c084fc !important; color: #c084fc !important; box-shadow: 0 0 20px #c084fc !important; text-shadow: 2px 0 #fff; opacity: 1; } 70% { transform: skew(0deg) scale(1.05); background-color: #000 !important; border-color: #c084fc !important; color: #c084fc !important; opacity: 1; } 100% { transform: scale(1.1) translateX(10px); opacity: 0; filter: blur(8px); color: transparent !important; background-color: transparent !important; border-color: #c084fc !important; } }
-		.fx-glitch-active { pointer-events: none; animation: glitch-skew 1.8s ease-out forwards !important; }
+		/* 5. Planar Glitch - CLEAN REVISION (Updated from Lab) */
+        @keyframes glitch-step {
+            0% { transform: translate(0); opacity: 1; border-color: #60a5fa; }
+            
+            /* 1. Digital Jitter */
+            10% { transform: translate(-2px, 0); clip-path: inset(0 0 0 0); }
+            20% { transform: translate(2px, 0); border-color: #fff; }
+            
+            /* 2. THE BLACK IMPACT (0.1s HOLD) */
+            30% { 
+                background-color: #000 !important; 
+                border-color: #000 !important; 
+                color: #333 !important; 
+                transform: scale(0.98);
+                box-shadow: none !important;
+            }
+            35% {
+                background-color: #000 !important;
+                transform: scale(0.98);
+            }
+
+            /* 3. THE RIFT (Violet Step) */
+            36% {
+                background-color: #2e1065 !important; /* Deep Violet */
+                border-color: #d8b4fe !important;      /* Pale Violet */
+                color: #fff !important;
+                transform: translate(4px, 0);          /* Sidestep */
+                box-shadow: 0 0 10px #a855f7 !important;
+            }
+            
+            /* 4. Glitch Out */
+            60% { transform: translate(-4px, 0); opacity: 1; }
+            80% { transform: translate(0, 0); opacity: 0.8; filter: hue-rotate(20deg); }
+            
+            /* 5. Gone */
+            100% { 
+                opacity: 0; 
+                transform: scale(0.95);
+                filter: blur(2px);
+            }
+        }
+        .fx-glitch-active { 
+            pointer-events: none; 
+            animation: glitch-step 1.2s cubic-bezier(0.25, 1, 0.5, 1) forwards !important; 
+            z-index: 50; 
+        }
+
+        /* 6. SAIL HOIST (New from Lab) */
+        @keyframes sail-hoist {
+            0% { transform: scale(1); filter: brightness(1); }
+            20% { transform: scale(0.95); filter: brightness(0.8); border-color: #fff; } 
+            40% { transform: scale(1.02) skewX(-2deg); filter: brightness(1.2); } 
+            100% { transform: translateX(120%) translateY(-10px) skewX(-5deg); opacity: 0; filter: blur(2px); } 
+        }
+        .fx-sail-active {
+            animation: sail-hoist 1.5s ease-in forwards;
+            pointer-events: none;
+            z-index: 50;
+        }
 
 		/* --- GAME UTILS --- */
 		.prologue-blur { filter: blur(4px); opacity: 0.5; pointer-events: none; transition: all 1s; }
@@ -417,7 +474,7 @@
                 this.ambience.volume = 0.3;
                 
                 this.clickSound = new Audio('audio/click.mp3');
-                this.clickSound.volume = 0.5;
+                this.clickSound.volume = 0.4;
                 
                 this.gaspSound = new Audio('audio/gasp.mp3');
                 this.gaspSound.volume = 0.3;
@@ -545,121 +602,299 @@
 
         // --- STATIC IMAGE MAPPING ---
 		const sceneImages = {
-			// PROLOGUE
+			// --- PROLOGUE & ACT 1 START ---
 			'prologue_storm': 'images/storm.jpg',
 			'prologue_abyss': 'images/abyss.jpg',
 			'start': 'images/wreckage.jpg',
+			'start_medicine_success': 'images/wreckage.jpg',
+			'start_medicine_fail': 'images/wreckage.jpg',
 			'wreckage_success': 'images/chest.jpg',
-			'wreckage_fail': 'images/sand_empty.jpg', 
+			'wreckage_fail': 'images/sand_empty.jpg',
 
-			// ACT 1: LIGHTHOUSE APPROACH & FACTION CHECK
+			// --- ACT 1: FOREST & GUARD ---
 			'treeline': 'images/forest.jpg',
 			'treeline_prepared': 'images/forest.jpg',
 			'road_encounter': 'images/guard_road.jpg',
 			'trail_success': 'images/smuggler_cove_high.jpg',
 			'trail_success_talon': 'images/smuggler_cove_high.jpg',
-			'trail_fail': 'images/stumble_guard.jpg', 
+			'trail_fail': 'images/stumble_guard.jpg',
 			'guard_talk': 'images/guard_face.jpg',
-			'guard_respect': 'images/guard_salute.jpg', 
-			'guard_bribe': 'images/guard_bribe.jpg', 
-			'guard_scared': 'images/guard_scared.jpg', 
-			'combat_guard': 'images/combat_hammer.jpg', 
+			'guard_respect': 'images/guard_salute.jpg',
+			'guard_bribe': 'images/guard_bribe.jpg',
+			'guard_scared': 'images/guard_scared.jpg',
+			'combat_guard': 'images/combat_hammer.jpg',
+
+			// --- ACT 1: SMUGGLERS & MARKET ---
 			'smuggler_meet': 'images/smuggler_standoff.jpg',
-            'smuggler_cargo': 'images/smuggler_pay.jpg',			
-			'smuggler_friend': 'images/smuggler_rum.jpg', 
-			'smuggler_pay': 'images/smuggler_pay.jpg', 
+			'smuggler_cargo': 'images/smuggler_pay.jpg',
+			'smuggler_friend': 'images/smuggler_rum.jpg',
+			'smuggler_pay': 'images/smuggler_pay.jpg',
 			'market_crossroads': 'images/market.jpg',
 			'market_stall': 'images/merchant.jpg',
 			'market_sell': 'images/merchant.jpg',
+			'buy_rum': 'images/merchant.jpg',
 			'buy_potion': 'images/merchant.jpg',
 			'buy_rope': 'images/merchant.jpg',
 			'buy_torch': 'images/merchant.jpg',
+			'sell_cargo': 'images/merchant.jpg',
 			'sell_rope': 'images/merchant.jpg',
 			'sell_torch': 'images/merchant.jpg',
-            'sell_cargo': 'images/merchant.jpg', 
 			'sell_potion': 'images/merchant.jpg',
 			'sell_rum': 'images/merchant.jpg',
+
+			// --- ACT 1: LIGHTHOUSE APPROACH ---
 			'lighthouse_split': 'images/lighthouse_far.jpg',
 			'cliff_climb': 'images/cliff.jpg',
-			'climb_fail': 'images/fall_cliff.jpg', 
+			'climb_fail': 'images/fall_cliff.jpg',
 			'dark_caves': 'images/caves.jpg',
-            'dark_caves_illuminated': 'images/caves.jpg', 
-			'dark_fail': 'images/cave_injury.jpg', 
+			'dark_caves_illuminated': 'images/caves.jpg',
+			'dark_fail': 'images/cave_injury.jpg',
 			'lighthouse_arrival': 'images/lighthouse_door.jpg',
 			'ending_order': 'images/guards_win.jpg',
 			'ending_chaos': 'images/smugglers_win.jpg',
-			'ending_neutral_check': 'images/lockpick.jpg', 
-            'ending_neutral_success': 'images/lockpick.jpg',
+			'ending_neutral_check': 'images/lockpick.jpg',
+			'ending_neutral_success': 'images/lockpick.jpg',
+			'ending_neutral_fail': 'images/lighthouse_door.jpg',
 
-			// ACT 1: LIGHTHOUSE HUB
+			// --- ACT 1: LIGHTHOUSE HUB ---
 			'lighthouse_vigil': 'images/dream.jpg',
-			'lighthouse_rest': 'images/dream.jpg',
-            'lighthouse_morning': 'images/lighthouse_morning.jpg',
-            'captain_orders': 'images/lighthouse_vigil.jpg',
-            'town_descent': 'images/town_descent.jpg',
-            'town_square': 'images/town_square.jpg',
-            'alchemist_triage': 'images/plague_doctor.jpg',
-            'blackwater_tavern': 'images/tavern_dark.jpg',
-            'town_docks': 'images/docks.jpg',
-            'docks_work': 'images/docks_work.jpg',
-            'tavern_gambler': 'images/tavern_gambler.jpg',
-            'cliffside_overlook': 'images/cliffside_overlook.jpg',
-            'alchemist_secret_stock': 'images/alchemist_secret.jpg',
-            'tavern_payout': 'images/tavern_gambler.jpg',
+			'captain_orders': 'images/lighthouse_vigil.jpg',
+			'lighthouse_morning': 'images/lighthouse_morning.jpg',
+			'learn_absorb': 'images/lighthouse_morning.jpg',
+			'learn_primeval': 'images/lighthouse_morning.jpg',
+			'cliffside_overlook': 'images/cliffside_overlook.jpg',
+			'overlook_scan_success': 'images/cliffside_overlook.jpg',
+			'overlook_scan_fail': 'images/cliffside_overlook.jpg',
+			'overlook_hasten_fail': 'images/cliffside_overlook.jpg',
+			'meeting_the_stranger': 'images/cliffside_overlook.jpg',
+			'town_descent': 'images/town_descent.jpg',
+			'town_square': 'images/town_square.jpg',
 
-			// ACT 1: SMELTER PATH (FIRE)
-            'smelter_entry': 'images/steam_pipe.jpg',
-            'smelter_workers': 'images/smelter_workers.jpg',
-            'smelter_side_rope': 'images/smelter_workers.jpg',
-            'smelter_foundry': 'images/slag_horror.jpg',
-            'smelter_stage1_start': 'images/slag_horror.jpg', 
-            'smelter_stage2': 'images/slag_horror_close.jpg',
-            'smelter_stage3': 'images/slag_horror_exposed.jpg',
-
-			// ACT 1: CHAPEL PATH (SHADOW)
-            'chapel_entry': 'images/fog_cemetery.jpg',
-            'chapel_vestry': 'images/chapel_vestry.jpg',
-            'chapel_side_torch': 'images/chapel_vestry.jpg',
-            'chapel_crypt': 'images/drowned_spectre.jpg',
-            'chapel_stage1_reveal': 'images/drowned_spectre.jpg', 
-            'chapel_stage2_finish': 'images/drowned_spectre_close.jpg',
-
-			// ACT 1: FINALE & DEATH
-			'finale_completed': 'images/guards_win.jpg',
-            'edward_death': 'images/abyss.jpg',
-            'rift_collapse_punishment': 'images/rift_collapse_red.jpg', 
-
-			// ACT 2: MANOR
-            'act2_arrival': 'images/manor_ethereal.jpg',
-            'manor_foyer': 'images/manor_foyer.jpg',
-            'manor_hall': 'images/manor_hall.jpg',
-            'manor_library': 'images/manor_library.jpg',
-            'manor_automaton_encounter': 'images/brass_automaton.jpg',
-            'manor_ballroom': 'images/manor_ballroom.jpg',
-            'manor_kitchens': 'images/manor_kitchens.jpg',
-            'act2_tether_fail': 'images/rift_collapse_red.jpg',
-            'manor_map_view': 'images/manor_blueprint.jpg',
+			// --- ACT 1: TOWN LOCATIONS ---
+			'alchemist_triage': 'images/plague_doctor.jpg',
+			'alchemist_secret_stock': 'images/alchemist_secret.jpg',
+			'alchemist_sell': 'images/plague_doctor.jpg',
+			'sell_locket_alch': 'images/plague_doctor.jpg',
+			'buy_fire': 'images/plague_doctor.jpg',
+			'buy_water': 'images/plague_doctor.jpg',
+			'buy_tincture': 'images/plague_doctor.jpg',
+			'buy_salts': 'images/plague_doctor.jpg',
+			'buy_powder': 'images/plague_doctor.jpg',
+			'sell_potion_alch': 'images/plague_doctor.jpg',
+			'sell_mushroom_alch': 'images/plague_doctor.jpg',
+			'sell_fire': 'images/plague_doctor.jpg',
+			'sell_water': 'images/plague_doctor.jpg',
+			'sell_tincture': 'images/plague_doctor.jpg',
 			
-			// ACT 2: MANOR SIDE/SAFE
-            'manor_foyer_safe': 'images/manor_foyer.jpg',
-            'manor_hall_safe': 'images/manor_hall.jpg',
-            'manor_library_safe': 'images/manor_library.jpg',
-            'manor_kitchens_safe': 'images/manor_kitchens.jpg',
+			'blackwater_tavern': 'images/tavern_dark.jpg',
+			'eat_gruel_instant': 'images/tavern_dark.jpg',
+			'buy_gruel_to_go': 'images/tavern_dark.jpg',
+			'tavern_gambler': 'images/tavern_gambler.jpg',
+			'tavern_confiscate_dice': 'images/tavern_gambler.jpg',
+			'tavern_payout': 'images/tavern_gambler.jpg',
+			'tavern_expose_success': 'images/tavern_gambler.jpg',
+			'tavern_expose_fail': 'images/tavern_gambler.jpg',
+			'tavern_rest_success': 'images/tavern_dark.jpg',
+			
+			'town_docks': 'images/docks.jpg',
+			'docks_sell_cargo': 'images/docks.jpg',
+			'docks_work': 'images/docks_work.jpg',
+			'docks_dive_success': 'images/docks_treasure.jpg',
+			'docks_dive_fail': 'images/docks_work.jpg',
+			'docks_smuggler_success': 'images/docks.jpg',
+			'docks_smuggler_fail': 'images/docks.jpg',
+			'gather_info_smelter': 'images/tavern_dark.jpg',
+			'gather_info_chapel': 'images/tavern_dark.jpg',
 
+			// --- ACT 1: FIRE PATH (Smelter) ---
+			'smelter_entry': 'images/steam_pipe.jpg',
+			'smelter_side_rope': 'images/smelter_workers.jpg',
+			'smelter_safe': 'images/steam_pipe.jpg',
+			'smelter_damage': 'images/steam_pipe.jpg',
+			'smelter_workers': 'images/smelter_workers.jpg',
+			'smelter_containment_success': 'images/smelter_workers.jpg',
+			'smelter_save_workers_success': 'images/smelter_workers.jpg',
+			'smelter_save_workers_fail': 'images/smelter_workers.jpg',
+			'smelter_stage1_start': 'images/slag_horror.jpg',
+			'smelter_stage2_clean': 'images/slag_horror_close.jpg',
+			'smelter_stage2_damaged': 'images/slag_horror_close.jpg',
+			'smelter_victory_lubricant': 'images/slag_horror_exposed.jpg',
+			'smelter_victory_ring': 'images/slag_horror_exposed.jpg',
+			'smelter_victory_item': 'images/slag_horror_exposed.jpg',
+			'smelter_victory_skill': 'images/slag_horror_exposed.jpg',
+			'smelter_victory_brute': 'images/slag_horror_exposed.jpg',
 
-			// ACT 3: OPEN SEA
-            'act3_intro_ship': 'images/pirate_ship_at_sea.jpg',
-            'sea_map_hub': 'images/map_compass.jpg',
-            'bleak_dogtooth': 'images/bleak_coast.jpg',
-            'sanguine_spire_entry': 'images/gothic_sea_spire.jpg',
-            'sea_event_fog': 'images/fog_at_sea.jpg',
+			// --- ACT 1: SHADOW PATH (Chapel) ---
+			'chapel_entry': 'images/fog_cemetery.jpg',
+			'chapel_side_torch': 'images/chapel_vestry.jpg',
+			'chapel_safe': 'images/fog_cemetery.jpg',
+			'chapel_damage': 'images/fog_cemetery.jpg',
+			'chapel_vestry': 'images/chapel_vestry.jpg',
+			'chapel_rescue_success': 'images/chapel_vestry.jpg',
+			'chapel_rescue_fail': 'images/chapel_vestry.jpg',
+			'chapel_ignore_drowning': 'images/chapel_vestry.jpg',
+			'chapel_stage1_reveal': 'images/drowned_spectre.jpg',
+			'chapel_stage2_finish': 'images/drowned_spectre_close.jpg',
+			'chapel_stage2_hit_damaged': 'images/drowned_spectre_close.jpg',
+			'chapel_stage2_miss_damaged': 'images/drowned_spectre_close.jpg',
+			'chapel_victory_water': 'images/drowned_spectre_close.jpg',
+			'chapel_victory_sword': 'images/drowned_spectre_close.jpg',
+			'chapel_victory_item': 'images/drowned_spectre_close.jpg',
+			'chapel_victory_skill': 'images/drowned_spectre_close.jpg',
+			'chapel_victory_brute': 'images/drowned_spectre_close.jpg',
+
+			// --- ACT 1 FINALE ---
+			'rift_collapse_punishment': 'images/rift_collapse_red.jpg',
+			'finale_ritual_start': 'images/town_square.jpg',
+			'edward_death': 'images/abyss.jpg',
+
+			// --- ACT 2: MANOR ---
+			'act2_arrival': 'images/manor_ethereal.jpg',
+			'act2_tether_fail': 'images/rift_collapse_red.jpg',
+			'manor_foyer': 'images/manor_foyer.jpg',
+			'manor_map_view': 'images/manor_blueprint.jpg',
+			'manor_library': 'images/manor_library.jpg',
+			'library_success': 'images/manor_library.jpg',
+			'library_fail': 'images/manor_library.jpg',
+			'manor_servants_passage': 'images/manor_library.jpg',
+			'manor_crawlspace': 'images/manor_hall.jpg',
+			'cub_encounter': 'images/displacer_cub.jpg',
+			'cub_tame_success': 'images/displacer_cub.jpg',
+			'cub_tame_fail': 'images/displacer_cub.jpg',
+			'manor_kitchens': 'images/manor_kitchens.jpg',
+			'manor_ballroom_encounter': 'images/manor_ballroom.jpg',
+			'manor_ballroom_safe': 'images/manor_ballroom.jpg',
+			'gareth_spar_success': 'images/manor_ballroom.jpg',
+			'gareth_spar_fail': 'images/manor_ballroom.jpg',
+			'beast_blink_distract': 'images/manor_ballroom.jpg',
+			'beast_true_sight': 'images/manor_ballroom.jpg',
+			'beast_fail': 'images/manor_ballroom.jpg',
+			'manor_hall': 'images/manor_hall.jpg',
+			'manor_mimic_reveal': 'images/mimic.jpg',
+			'manor_mimic_trap': 'images/mimic.jpg',
+			'manor_mimic_victory': 'images/manor_hall.jpg',
+			'manor_mimic_victory_combat': 'images/manor_hall.jpg',
+			'manor_automaton_encounter': 'images/brass_automaton.jpg',
+			'automaton_sunder_fail': 'images/brass_automaton.jpg',
+			'automaton_blink_bypass': 'images/brass_automaton.jpg',
+			'automaton_brute_force': 'images/brass_automaton.jpg',
+			'automaton_victory_sword': 'images/brass_automaton.jpg',
+			'automaton_disable_success': 'images/brass_automaton.jpg',
+			'automaton_disable_fail': 'images/brass_automaton.jpg',
+			'manor_staircase': 'images/manor_staircase.jpg',
+			'staircase_fail': 'images/manor_staircase.jpg',
+			'manor_anchor_door': 'images/manor_staircase.jpg',
+			'act2_finale_resolution': 'images/manor_staircase.jpg',
+			'manor_forge': 'images/manor_kitchens.jpg',
+			'manor_forge_combine': 'images/manor_kitchens.jpg',
+			'manor_foyer_safe': 'images/manor_foyer.jpg',
+			'manor_library_safe': 'images/manor_library.jpg',
+			'library_research_success': 'images/manor_library.jpg',
+			'library_research_fail': 'images/manor_library.jpg',
+			'manor_crawlspace_safe': 'images/manor_hall.jpg',
+			'talon_scavenge_gears': 'images/manor_hall.jpg',
+			'talon_scavenge_rare': 'images/manor_hall.jpg',
+			'talon_scavenge_food': 'images/manor_hall.jpg',
+			'manor_cellar_puzzle': 'images/circuit_puzzle.jpg',
+			'manor_cellar_success': 'images/circuit_puzzle.jpg',
+			'manor_hall_safe': 'images/manor_hall.jpg',
+			'manor_kitchens_safe': 'images/manor_kitchens.jpg',
+			'act3_long_rest': 'images/manor_foyer.jpg',
+			'wolf_estate_safe': 'images/manor_foyer.jpg',
+			'anchor_decision_point': 'images/manor_staircase.jpg',
+			
+			// --- ACT 3: OPEN SEA ---
+			'act3_name_ship': 'images/pirate_ship_at_sea.jpg',
+			'act3_intro_ship': 'images/pirate_ship_at_sea.jpg',
+			'port_provisioner': 'images/town_docks.jpg',
+			'port_provisioner_sell': 'images/town_docks.jpg',
+			'sea_map_hub': 'images/map_compass.jpg',
+			'sea_feeding_grounds': 'images/feeding_grounds.jpg',
+			'feeding_success': 'images/feeding_grounds.jpg',
+			'feeding_fail': 'images/feeding_grounds.jpg',
+			'sea_flotsam_event': 'images/pirate_ship_at_sea.jpg',
+			'flotsam_success': 'images/pirate_ship_at_sea.jpg',
+			'flotsam_fail': 'images/pirate_ship_at_sea.jpg',
+			'sea_fish_success': 'images/pirate_ship_at_sea.jpg',
+			'sea_fish_fail': 'images/pirate_ship_at_sea.jpg',
+			'sea_event_fog': 'images/fog_at_sea.jpg',
+			'sea_fog_puzzle': 'images/fog_at_sea.jpg',
+			'sea_fog_success': 'images/fog_at_sea.jpg',
+			'sea_fog_partial': 'images/fog_at_sea.jpg',
+			'sea_fog_fail': 'images/fog_at_sea.jpg',
+			'sea_navy_encounter': 'images/navy_ship.jpg',
+			'sea_navy_clean': 'images/navy_ship.jpg',
+			'sea_navy_caught': 'images/navy_ship.jpg',
+			'sea_navy_jettison': 'images/navy_ship.jpg',
+			'sea_navy_combat': 'images/navy_ship.jpg',
+			'sea_sanguine_tithe_event': 'images/navy_ship.jpg',
+			'silas_reckoning_logic': 'images/navy_ship.jpg',
+			'silas_reckoning_success': 'images/navy_ship.jpg',
+			'silas_reckoning_combat': 'images/navy_ship.jpg',
+			'tithe_combat': 'images/navy_ship.jpg',
+			'tithe_loot_success': 'images/navy_ship.jpg',
+			'post_spire_rest': 'images/pirate_ship_at_sea.jpg',
+			'citadel_reaction_logic': 'images/iron_citadel.jpg',
+			'silas_final_words': 'images/pirate_ship_at_sea.jpg',
+			'sea_scavenger_encounter': 'images/pirate_ship_at_sea.jpg',
+
+			// --- ACT 3: LOCATIONS ---
+			'bleak_dogtooth': 'images/bleak_coast.jpg',
+			'dogtooth_intimidate_success': 'images/bleak_coast.jpg',
+			'dogtooth_intimidate_fail': 'images/bleak_coast.jpg',
+			'dogtooth_lore_success': 'images/bleak_coast.jpg',
+			'dogtooth_lore_fail': 'images/bleak_coast.jpg',
+			'dogtooth_cliff_wall': 'images/dogtooth_cliff_wall.jpg',
 			'silas_sanctuary': 'images/dogtooth_cliff_wall.jpg',
-			'iron_citadel': 'images/iron_citadel.jpg',
-			'titans_molt': 'images/titans_molt.jpg',
-			'coral_hulk': 'images/coral_hulk.jpg',
-			'hyper_coral_breach': 'images/hyper_coral_breach.jpg',
+			'silas_recruit_success': 'images/dogtooth_cliff_wall.jpg',
+			'dogtooth_envoy': 'images/bleak_coast.jpg',
+			'envoy_mercy_kill': 'images/bleak_coast.jpg',
+			'envoy_turn': 'images/bleak_coast.jpg',
+			'dogtooth_lab_ruins': 'images/bleak_coast.jpg',
+			
+			'hub_order': 'images/iron_citadel.jpg',
+			'order_quartermaster': 'images/iron_citadel.jpg',
+			'barracks_clue_found': 'images/iron_citadel.jpg',
+			'barracks_clue_fail': 'images/iron_citadel.jpg',
+			'order_petrified_ward': 'images/iron_citadel.jpg',
+			'ward_medicine_success': 'images/iron_citadel.jpg',
+			'ward_medicine_fail': 'images/iron_citadel.jpg',
+			'ward_donate_rum': 'images/iron_citadel.jpg',
+			'ward_bloom_event': 'images/coral_hulk.jpg',
+			'ward_bloom_combat': 'images/coral_hulk.jpg',
+			'ward_bloom_success': 'images/coral_hulk.jpg',
+			'ward_bloom_fail': 'images/coral_hulk.jpg',
+			'order_quest_fence_start': 'images/iron_citadel.jpg',
+			'order_quest_start': 'images/iron_citadel.jpg',
+			'coral_hulk_intro': 'images/coral_hulk.jpg',
+			'coral_hulk_combat': 'images/coral_hulk.jpg',
+			'coral_hulk_victory': 'images/coral_hulk.jpg',
+			
+			'hub_chaos': 'images/titans_molt.jpg',
+			'chaos_market': 'images/titans_molt.jpg',
+			'chaos_secret_shop_check': 'images/titans_molt.jpg',
+			'chaos_secret_success': 'images/titans_molt.jpg',
+			'chaos_secret_fail': 'images/titans_molt.jpg',
+			'molt_traitor_confront': 'images/titans_molt.jpg',
+			'traitor_execute': 'images/titans_molt.jpg',
+			'traitor_mercy': 'images/titans_molt.jpg',
+			'traitor_blackmail': 'images/titans_molt.jpg',
+			'chaos_fence_confrontation': 'images/titans_molt.jpg',
+			'fence_resolution_order': 'images/titans_molt.jpg',
+			'fence_resolution_chaos': 'images/titans_molt.jpg',
+			'fence_resolution_neutral': 'images/titans_molt.jpg',
+			'chaos_quest_start': 'images/titans_molt.jpg',
 
-			'default': 'https://placehold.co/600x400/0f172a/1e293b?text=The+Void' 
+			'sanguine_spire_entry': 'images/gothic_sea_spire.jpg',
+			'sanguine_spire_combat': 'images/gothic_sea_spire.jpg',
+			'spire_combat_loop': 'images/gothic_sea_spire.jpg',
+			'spire_victory': 'images/gothic_sea_spire.jpg',
+			
+			'ending_champion': 'images/abyss.jpg',
+			'ending_protector': 'images/lighthouse_morning.jpg',
+
+			// Default Fallback
+			'default': 'https://placehold.co/600x400/0f172a/1e293b?text=The+Void'
 		};
         
         // --- GAME DATA FACTORY ---
@@ -2095,7 +2330,7 @@
             // --- ACT 1: WRECKAGE & INITIAL JOURNEY ---
 			'start': {
                 title: "The Wreckage",
-				text: "You gasp, lungs burning, and retch salt water onto the grey sand. The storm has passed, but the silence of the beach is a lie. Inside your mind, the scream of the dying ship continues. They don't realize they are dead.<br><br>You find your hand cramping, clutching the <span class='text-item'>Captain's Tricorn Hat</span> with a death grip. Beside you, the <span class='text-item'>Compass</span> hums with a <span class='text-void'>violet vibration</span>. You are alive, but you have become a life raft for the damned.",
+				text: "You gasp, lungs burning, and retch salt water onto the grey sand. The storm has taken a break, but the silence of the beach is a lie. Inside your mind, the scream of the dying ship continues. They don't realize they are dead.<br><br>You find your hand cramping, clutching the <span class='text-item'>Captain's Tricorn Hat</span> with a death grip. Beside you, the <span class='text-item'>Compass</span> hums with a <span class='text-void'>violet vibration</span>. You are alive, but you have become a life raft for the damned.",
 				journal: "Woke up choking on sand. Gareth's hat is in my hand—I can't let go of it. The Compass is screaming, and the crew... they are loud. So loud. They don't know they're ghosts.",
 				banter: {
 					'quinn': "The manifest! The logs! We can't be erased, Edward. Find the records or we never existed!"
@@ -3825,7 +4060,18 @@
                         skill: 'Athletics',
                         doomCost: 1
                     },
-                    { text: "Throw Flash Powder and Flee", nextScene: 'town_square', type: 'action', reqItem: 'Flash Powder', consume: true, doomCost: 1 }
+                    { 
+						text: "Throw Flash Powder and Flee", 
+						nextScene: 'town_square', 
+						type: 'action', 
+						reqItem: 'Flash Powder', 
+						consume: true, 
+						doomCost: 1,
+						action: (state) => {
+							state.isBossCombat = false;
+							return "Escaped the Slag Horror.";
+						}
+					}
                 ]
             },
             'smelter_dodge_logic': {
@@ -4245,7 +4491,18 @@
                         skill: 'Perception',
                         doomCost: 1
                     },
-                    { text: "Throw Flash Powder and Flee", nextScene: 'town_square', type: 'action', reqItem: 'Flash Powder', consume: true, doomCost: 1 }
+                    { 
+						text: "Throw Flash Powder and Flee", 
+						nextScene: 'town_square', 
+						type: 'action', 
+						reqItem: 'Flash Powder', 
+						consume: true, 
+						doomCost: 1,
+						action: (state) => {
+							state.isBossCombat = false;
+							return "Escaped the Drowned Spectre.";
+						}
+					}
                 ]
             },
             'chapel_attack_logic': {
@@ -7697,7 +7954,14 @@
                     }
                 }
 
-                addToHistory(`${logMsg} = ${roll}`, 'roll');
+                // Determine Success or Fail based on the DC stored in state
+                const dcToCheck = gameState.lastDC || 10;
+                const isSuccess = roll >= dcToCheck;
+                
+                // Use !text-color to override the parent .spectral-text-glow !important rule
+                const colorClass = isSuccess ? '!text-emerald-400' : '!text-red-400';
+                
+                addToHistory(`${logMsg} <span class="${colorClass}">= ${roll}</span>`, 'roll');
                 
                 const nextId = scene.resolve(roll, gameState); 
                 saveGame();
@@ -8183,10 +8447,28 @@
                         let fxDuration = 0;
 
                         if (choice.customClass) {
-                            if (choice.customClass.includes('btn-fire-glow')) { fxClass = 'fx-burn-active'; fxDuration = 1800; }
-                            else if (choice.customClass.includes('btn-shadow-glow')) { fxClass = 'fx-mist-active'; fxDuration = 1800; }
-                            else if (choice.customClass.includes('btn-hero')) { fxClass = 'fx-hero-active'; fxDuration = 1200; }
-                            else if (choice.customClass.includes('btn-planewalk-reveal')) { fxClass = 'fx-glitch-active'; fxDuration = 1800; }
+                            if (choice.customClass.includes('btn-fire-glow')) { 
+                                fxClass = 'fx-burn-active'; 
+                                fxDuration = 1800; 
+                            }
+                            else if (choice.customClass.includes('btn-shadow-glow')) { 
+                                fxClass = 'fx-mist-active'; 
+                                fxDuration = 1800; 
+                            }
+                            else if (choice.customClass.includes('btn-hero')) { 
+                                fxClass = 'fx-hero-active'; 
+                                fxDuration = 1200; 
+                            }
+                            // UPDATED: Planewalk Logic (Clean Glitch)
+                            else if (choice.customClass.includes('btn-planewalk-reveal')) { 
+                                fxClass = 'fx-glitch-active'; 
+                                fxDuration = 1200; // Updated from 1800 to match new animation speed
+                            }
+                            // NEW: Set Sail Logic
+                            else if (choice.customClass.includes('btn-anchor')) { 
+                                fxClass = 'fx-sail-active'; 
+                                fxDuration = 1500; 
+                            }
                         }
 
                         const executeAction = () => {
