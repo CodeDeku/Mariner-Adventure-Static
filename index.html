@@ -473,7 +473,7 @@
 					</div>
 				</div>
 
-				<div class="radial-container">
+				<div class="radial-container mt-2">
 					<div id="tether-gareth" class="spectral-tether tether-nw"></div>
 					<div id="tether-quinn" class="spectral-tether tether-ne"></div>
 					<div id="tether-talon" class="spectral-tether tether-sw"></div>
@@ -8984,23 +8984,21 @@
 			}
 		});
 
-		// 2. Render the Radial Crew Menu (FIXED MATCHING)
+		// 2. Render the Radial Crew Menu (FIXED: Dynamic State Lookup)
 		function renderRadialCrew() {
 			const container = document.querySelector('.radial-container');
 			if (!container) return; 
 
-			// We use the simple KEYS (gareth, quinn) to ensure IDs match the HTML
 			const crewKeys = ['gareth', 'quinn', 'talon', 'bones']; 
 			
 			// 1. Initial Build: Create buttons if they don't exist
-			// We check for 'node-gareth' (simple ID)
 			if (!document.getElementById('node-gareth')) { 
 				
 				crewKeys.forEach((key, idx) => {
-					const c = gameState.crew[key];
-					const btn = document.createElement('div');
+					// We do NOT capture 'const c = gameState.crew[key]' here for the logic.
+					// We only capture the 'key' (string) which is safe.
 					
-					// Assign ID using the simple key, NOT the name
+					const btn = document.createElement('div');
 					btn.id = `node-${key}`; 
 					btn.className = 'crew-node';
 					
@@ -9011,14 +9009,19 @@
 					else if (idx === 3) btn.classList.add('node-se');
 					
 					btn.onclick = () => {
-						if (c.used && !gameState.crewUseFree) return;
+						// --- FIX STARTS HERE ---
+						// Look up the crew member from the CURRENT global state right now
+						const currentCrew = gameState.crew[key];
+						
+						if (currentCrew.used && !gameState.crewUseFree) return;
 						toggleCrewSelection(key); 
+						// --- FIX ENDS HERE ---
 					};
 					container.appendChild(btn);
 				});
 			}
 
-			// 2. State Updates: Update visual status of buttons and tethers
+			// 2. State Updates: Update visuals (This part was fine, but relies on fresh lookups)
 			const hub = document.getElementById('radial-hub');
 			const isAnyActive = activeCrewMember !== null;
 
@@ -9028,9 +9031,9 @@
 			}
 
 			crewKeys.forEach(key => {
-				const c = gameState.crew[key];
+				// Always get fresh state for visuals
+				const c = gameState.crew[key]; 
 				
-				// Grab elements using the simple keys to match HTML
 				const btn = document.getElementById(`node-${key}`);
 				const tether = document.getElementById(`tether-${key}`);
 				
@@ -9041,8 +9044,8 @@
 
 				// Content - Handle "Captain" splitting for display
 				let displayName = c.name;
-				if(c.name.includes(' ')) displayName = c.name.split(' ')[0]; // Shows "Captain"
-				if(key === 'gareth') displayName = "Gareth"; // Specific override for Gareth
+				if(c.name.includes(' ')) displayName = c.name.split(' ')[0]; 
+				if(key === 'gareth') displayName = "Gareth"; 
 				
 				let content = `<span class="crew-node-name">${displayName}</span><span class="crew-node-skill">${c.skill.replace('&', '<br>&')}</span>`;
 				
@@ -9052,7 +9055,7 @@
 				
 				btn.innerHTML = content;
 
-				// Active State (Selected)
+				// Active State
 				if (isActive) {
 					btn.classList.add('charged');
 					tether.classList.add('flowing');
@@ -9061,7 +9064,7 @@
 					tether.classList.remove('flowing');
 				}
 
-				// Used State (Disabled)
+				// Used State
 				if (isUsed && !gameState.crewUseFree) {
 					btn.classList.add('used');
 				} else {
