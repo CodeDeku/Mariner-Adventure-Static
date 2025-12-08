@@ -21,6 +21,106 @@
 		
 		/* FIX #3: Force Spectral Text Color */
 		.spectral-text-glow { color: #93c5fd !important; text-shadow: 0 0 5px rgba(59, 130, 246, 0.6); font-weight: 700; }
+		
+		/* --- NEW UI: RADIAL MENU & BACKPACK --- */
+		/* RADIAL CONTAINER */
+		.radial-container { 
+			position: relative; width: 100%; height: 160px; 
+			display: flex; align-items: center; justify-content: center;
+		}
+
+		/* HUB: Central Status */
+		.radial-hub { 
+			position: absolute; 
+			top: calc(50% - 40px); left: calc(50% - 40px); 
+			width: 80px; height: 80px; 
+			border-radius: 50%; 
+			background: radial-gradient(circle, #1e293b 30%, #0f172a 100%); 
+			border: 2px solid #22d3ee; 
+			z-index: 20; 
+			display: flex; flex-direction: column; align-items: center; justify-content: center; 
+			transform: translateZ(0); 
+			box-shadow: 0 0 15px rgba(34, 211, 238, 0.4), inset 0 0 20px rgba(34, 211, 238, 0.2); 
+			transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+		}
+		.radial-hub.drained { 
+			border-color: #475569; box-shadow: none; 
+			background: radial-gradient(circle, #0f172a 30%, #020617 100%); 
+			color: #64748b;
+		}
+		.radial-hub.drained div { opacity: 0.5; filter: grayscale(1); }
+
+		/* TETHERS: Connection Lines */
+		.spectral-tether { 
+			position: absolute; height: 3px; width: 42%; 
+			top: 50%; left: 50%; z-index: 5; 
+			transform-origin: left center; 
+			background: linear-gradient(90deg, #334155 0%, #0f172a 100%);
+			border-radius: 2px; overflow: hidden; 
+		}
+		.spectral-tether::after {
+			content: ''; position: absolute; top: 0; left: 0; bottom: 0; width: 0%; 
+			background: linear-gradient(90deg, #22d3ee, #cffafe); 
+			box-shadow: 0 0 10px #22d3ee;
+			transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+		}
+		.spectral-tether.flowing::after { width: 100%; }
+		.tether-nw { transform: rotate(200deg); } .tether-ne { transform: rotate(340deg); } 
+		.tether-sw { transform: rotate(160deg); } .tether-se { transform: rotate(20deg); }
+
+		/* CREW NODES */
+		.crew-node { 
+			position: absolute; width: 120px; height: 55px; 
+			background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+			border: 1px solid #374151; border-radius: 4px; 
+			display: flex; flex-direction: column; align-items: center; justify-content: center; 
+			z-index: 10; cursor: pointer; transition: all 0.3s ease-out; 
+			transform: translateZ(0); 
+		}
+		.node-nw { top: 0%; left: 0%; } .node-ne { top: 0%; right: 0%; } 
+		.node-sw { bottom: 0%; left: 0%; } .node-se { bottom: 0%; right: 0%; }
+
+		.crew-node:hover { border-color: #94a3b8; transform: translateY(-1px); }
+		.crew-node.charged { 
+			border-color: #22d3ee; 
+			box-shadow: 0 0 15px rgba(34, 211, 238, 0.4), inset 0 0 10px rgba(34, 211, 238, 0.1); 
+			transform: scale(1.05); z-index: 30; 
+		}
+		.crew-node.charged .crew-node-name { color: #fff; text-shadow: 0 0 5px #22d3ee; }
+		.crew-node.charged .crew-node-skill { color: #22d3ee; }
+		.crew-node.used { 
+			background: linear-gradient(180deg, #0f172a 0%, #020617 100%) !important; 
+			border-color: #374151 !important; color: #334155 !important; 
+			opacity: 1 !important; box-shadow: inset 0 0 5px rgba(0,0,0,0.8); 
+			cursor: not-allowed; transform: scale(0.98); pointer-events: none; 
+		}
+		.crew-node-name { font-size: 0.875rem; font-weight: 700; color: #94a3b8; transition: color 0.3s; }
+		.crew-node-skill { font-size: 0.75rem; color: #64748b; line-height: 1; text-align: center; }
+
+		/* BACKPACK MODAL */
+		#inventory-combined-container { position: relative; z-index: 50; }
+
+		#backpack-modal { 
+			position: absolute; 
+			bottom: 0; 
+			left: 105%; /* Pushes it to the right side of the button */
+			width: 250px; 
+			background-color: rgba(15, 23, 42, 0.98); 
+			border: 1px solid #475569; 
+			backdrop-filter: blur(8px); 
+			z-index: 100; 
+			box-shadow: 0 5px 20px rgba(0,0,0,0.8); 
+			border-radius: 0.5rem;
+		}
+
+		/* Mobile Adjustments: Pop UP instead of RIGHT */
+		@media (max-width: 768px) {
+			#backpack-modal {
+				left: 0;
+				bottom: 110%; /* Above button */
+				width: 100%;
+			}
+		}
 
 		/* --- BUTTON BASE --- */
 		.btn-game { 
@@ -266,11 +366,35 @@
 		#compass-target { position: absolute; width: 80px; height: 80px; border-radius: 50%; background: rgba(16, 185, 129, 0.2); border: 2px solid #10b981; top: 68px; left: 68px; transform-origin: center center; pointer-events: none; }
 		#compass-needle.aligned #needle-head { background-color: #34d399; box-shadow: 0 0 15px #10b981; }
 		#compass-needle:not(.aligned) { transition: transform 0.05s linear; }
+		/* --- 1. THE CYAN CREW STYLE (Base State) --- */
+		/* Applies the blue look ONLY when no animation is playing */
+		.btn-game.border-cyan-500:not(.fx-skill-success):not(.fx-skill-fail):not(.fx-skill-active) {
+			border-color: #22d3ee !important; 
+			box-shadow: 0 0 10px rgba(34, 211, 238, 0.3), inset 0 0 10px rgba(34, 211, 238, 0.1) !important;
+			background: linear-gradient(90deg, rgba(8, 51, 68, 0.9) 0%, #1f2937 100%) !important;
+			transition: all 0.2s ease-out; /* Smooth hover effects */
+		}
+
+		/* --- 2. THE CREW HOVER (Lift & Lighten) --- */
+		.btn-game.border-cyan-500:not(.fx-skill-success):not(.fx-skill-fail):not(.fx-skill-active):hover {
+			border-color: #67e8f9 !important;
+			background: linear-gradient(90deg, rgba(22, 78, 99, 0.95) 0%, #374151 100%) !important;
+			box-shadow: 0 0 15px rgba(34, 211, 238, 0.5) !important;
+			transform: translateY(-2px);
+		}
+
+		/* --- 3. THE ANIMATION FIX (Critical) --- */
+		/* When shaking, we must DISABLE transitions so the button moves instantly */
+		.btn-game.border-cyan-500.fx-skill-active {
+			transition: none !important; /* Stop trying to smooth the shake */
+			border-color: #fbbf24 !important; /* Revert to Amber "Rolling" color */
+			/* Do NOT set transform: none here, or it will freeze! */
+		}
     </style>
 </head>
 <body>
 
-    <div id="app-loading" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black text-white">
+    <div id="app-loading" class="fixed inset-0 z-[200] flex flex-col items-center justify-center bg-black text-white">
         <div class="text-4xl cinzel text-blue-500 mb-4 animate-pulse text-center px-4">Edward Jones:<br>The Mariner of the Damned</div>
         <div class="text-gray-400 cinzel text-sm">Summoning the Crew...</div>
     </div>
@@ -283,7 +407,7 @@
 
     <div class="grid grid-cols-1 md:flex md:flex-row max-w-7xl mx-auto w-full p-2 md:p-4 gap-4 mb-8">
         
-        <div class="contents md:flex md:flex-col md:w-1/3 gap-3 shrink-0">
+        <div class="contents md:flex md:flex-col md:w-1/3 gap-3 shrink-0 relative z-50">
             
             <div class="order-1 md:order-none relative w-full aspect-square md:aspect-[4/3] bg-gray-900 rounded border border-gray-700 overflow-hidden shadow-2xl shrink-0 group">
                 <button id="reset-game-btn" onclick="confirmReset()" class="absolute top-2 left-2 z-30 text-[10px] border border-red-900/50 text-red-400 bg-black/60 hover:text-red-200 hover:bg-red-900/80 px-2 py-1 rounded transition-all cinzel font-bold backdrop-blur-sm">
@@ -307,111 +431,108 @@
             </div>
 
             <div id="stats-panel" class="order-4 md:order-none bg-gray-800/80 rounded border border-gray-700 p-3 flex flex-col gap-3 shadow-lg backdrop-blur-sm relative transition-all duration-1000">
-                
                 <div>
-                    <div class="flex justify-between text-sm cinzel text-gray-400 mb-1">
-                        <span>Edward Jones</span>
-                        <span id="hp-text">20/20</span>
-                    </div>
-                    <div class="w-full bg-gray-900 h-2 rounded-full overflow-hidden border border-gray-700">
-                        <div id="hp-bar" class="bg-red-800 h-full w-full transition-all duration-500"></div>
-                    </div>
-                </div>
+					<div class="flex justify-between text-sm cinzel text-gray-400 mb-1">
+						<span>Edward Jones</span>
+						<span id="hp-text">20/20</span>
+					</div>
+					<div class="w-full bg-gray-900 h-2 rounded-full overflow-hidden border border-gray-700">
+						<div id="hp-bar" class="bg-red-800 h-full w-full transition-all duration-500"></div>
+					</div>
+				</div>
+
+				<div id="doom-counter-display" class="bg-gray-900 p-2 rounded border border-gray-700 flex flex-col text-[10px] gap-2 relative hidden mt-2">
+					<div class="flex justify-between items-center cinzel text-xs uppercase tracking-wider font-bold">
+						<span class="text-purple-400"><i class="fas fa-bolt mr-1"></i>Rift Stability</span>
+						<span id="doom-timer-text"></span>
+					</div>
+					<div class="relative w-full h-1 bg-gray-800 rounded-full border border-gray-600 overflow-hidden">
+						<div id="doom-bar" class="absolute inset-0 bg-purple-600 transition-all duration-500"></div>
+					</div>
+				</div>
+
+				<div id="tether-display" class="bg-gray-900 p-2 rounded border border-cyan-700 flex flex-col text-[10px] gap-2 relative hidden mt-2 transition-all duration-500">
+					<div class="flex justify-between items-center cinzel text-xs uppercase tracking-wider font-bold">
+						<span class="text-cyan-400"><i class="fas fa-link mr-1"></i>Spectral Tether</span>
+						<span id="tether-text" class="text-cyan-100">20 Turns</span>
+					</div>
+					<div class="relative w-full h-1 bg-gray-800 rounded-full border border-cyan-900 overflow-hidden">
+						<div id="tether-bar" class="absolute inset-0 bg-tether transition-all duration-500 w-full"></div>
+					</div>
+				</div>
+
+				<div class="bg-gray-900 p-2 pb-3 rounded border border-gray-700 flex flex-col text-[10px] gap-2 relative mt-2">
+					<div class="flex justify-between items-center cinzel text-[10px] uppercase tracking-wider font-bold">
+						<span class="text-blue-400"><i class="fas fa-shield-alt mr-1"></i>Order</span>
+						<span id="inf-status-text" class="text-gray-500 text-[9px] truncate max-w-[140px] text-center">Unknown</span>
+						<span class="text-emerald-400">Chaos<i class="fas fa-skull-crossbones ml-1"></i></span>
+					</div>
+					<div class="relative w-full h-3 bg-gray-800 rounded-full border border-gray-600 overflow-hidden">
+						<div class="absolute inset-0 bg-gradient-to-r from-blue-900 via-gray-800 to-emerald-900 opacity-60"></div>
+						<div id="inf-marker" class="absolute top-0 bottom-0 w-1.5 bg-white shadow-[0_0_10px_rgba(255,255,255,0.8)] z-10 rounded-full transform -translate-x-1/2" style="left: 50%;"></div>
+					</div>
+				</div>
+
+				<div class="radial-container">
+					<div id="tether-gareth" class="spectral-tether tether-nw"></div>
+					<div id="tether-quinn" class="spectral-tether tether-ne"></div>
+					<div id="tether-talon" class="spectral-tether tether-sw"></div>
+					<div id="tether-bones" class="spectral-tether tether-se"></div>
+					<div id="radial-hub" class="radial-hub">
+						<div class="cinzel font-bold text-cyan-200 text-xs leading-tight text-center mt-2">GUIDING<br>VOICE</div>
+						<div class="text-cyan-400 text-xs mt-0.5 font-bold animate-pulse tracking-widest">+1d4</div>
+					</div>
+				</div>
+
+				<div id="abilities-combined-container" class="grid grid-cols-2 gap-2 mt-2">
+					<div id="planar-skills-container" class="hidden h-full flex flex-col">
+						<div class="text-xs cinzel font-bold uppercase tracking-wider text-cyan-400 border-b border-cyan-900/50 mb-1 pb-1">Skills</div>
+						<button onclick="window.gameFunctions.togglePlaneWalk()" class="flex-1 p-2 rounded border border-cyan-800 bg-gray-900/60 text-cyan-100 flex items-center justify-center gap-2 hover:bg-cyan-900/20 transition-all">
+							<span class="text-[10px] cinzel font-bold uppercase">Plane Walk</span>
+							<i class="fas fa-shoe-prints text-sm text-cyan-400"></i>
+						</button>
+					</div>
+					<div id="companion-panel" class="hidden h-full flex flex-col">
+						<div class="text-xs cinzel font-bold uppercase tracking-wider text-emerald-400 border-b border-emerald-900/50 mb-1 pb-1">Allies</div>
+						<div id="companions-list" class="flex-1 flex flex-col gap-1 justify-center"></div>
+					</div>
+				</div>
+
+				<div id="inventory-combined-container" class="mt-auto relative z-50"> 
+					<div id="backpack-modal" class="hidden p-4 rounded-lg gap-2 flex flex-col transition-all duration-300">
+						<div class="text-center cinzel text-amber-500 font-bold border-b border-gray-700 pb-2 mb-2">Captain's Pack</div>
+						
+						<div class="flex justify-between items-center border-b border-gray-700 pb-2 mb-2">
+							<div class="flex items-center gap-2">
+								<i class="fas fa-coins text-[20px] text-amber-500"></i>
+								<div class="flex flex-col leading-none">
+									<span class="text-[10px] text-gray-500 uppercase tracking-wider">Shillings</span>
+									<span id="shillings-display" class="text-amber-100 font-mono">0</span>
+								</div>
+							</div>
+							<div id="supplies-display" class="flex items-center gap-2 hidden">
+								<div class="flex flex-col leading-none items-end">
+									<span class="text-[10px] text-gray-500 uppercase tracking-wider">Supplies</span>
+									<span id="supplies-count" class="text-indigo-100 font-mono">0</span>
+								</div>
+								<i class="fas fa-anchor text-[20px] text-indigo-400"></i>
+							</div>
+						</div>
+						
+						<div id="item-desc-area" class="text-xs text-gray-400 h-8 italic mb-2 text-center leading-tight flex items-center justify-center bg-gray-800/50 border border-gray-600/50 rounded px-1 shrink-0">
+							Hover to inspect.
+						</div>
+						<div id="inventory-panel" class="flex flex-col gap-1 max-h-[250px] overflow-y-auto pr-1"></div>
+					</div>
+					
+					<button id="btn-combined-pack" onclick="window.gameFunctions.toggleBackpack()" class="w-full p-2 rounded bg-gray-900 border border-amber-700/50 hover:border-amber-500 hover:bg-gray-800 text-amber-500 hover:text-amber-100 transition-all shadow-md relative z-50 mt-2">
+						<div class="flex items-center gap-3 w-full">
+							<span class="cinzel font-bold tracking-wider text-sm">Captain's Pack</span>
+							<div id="pack-resources-display" class="ml-auto flex items-center gap-3 font-bold text-sm"></div>
+						</div>
+					</button>
+				</div>
                 
-                <div id="doom-counter-display" class="bg-gray-900 p-2 rounded border border-gray-700 flex flex-col text-[10px] gap-2 relative hidden">
-                    <div class="flex justify-between items-center cinzel text-xs uppercase tracking-wider font-bold">
-                        <span class="text-purple-400"><i class="fas fa-bolt mr-1"></i>Rift Stability</span>
-                        <span id="doom-timer-text"></span>
-                    </div>
-                    <div class="relative w-full h-1 bg-gray-800 rounded-full border border-gray-600 overflow-hidden">
-                        <div id="doom-bar" class="absolute inset-0 bg-purple-600 transition-all duration-500"></div>
-                    </div>
-                </div>
-                
-                <div id="tether-display" class="bg-gray-900 p-2 rounded border border-cyan-700 flex flex-col text-[10px] gap-2 relative hidden mb-2 transition-all duration-500">
-                    <div class="flex justify-between items-center cinzel text-xs uppercase tracking-wider font-bold">
-                        <span class="text-cyan-400"><i class="fas fa-link mr-1"></i>Spectral Tether</span>
-                        <span id="tether-text" class="text-cyan-100">20 Turns</span>
-                    </div>
-                    <div class="relative w-full h-1 bg-gray-800 rounded-full border border-cyan-900 overflow-hidden">
-                        <div id="tether-bar" class="absolute inset-0 bg-tether transition-all duration-500 w-full"></div>
-                    </div>
-                </div>
-                <div class="flex flex-col gap-2 text-xs">
-                    
-                    <div class="flex gap-2">
-                        <div class="bg-gray-900 p-2 rounded border border-gray-700 flex items-center justify-between flex-1 transition-all">
-                            <span class="text-amber-500 cinzel"><i class="fas fa-coins mr-1"></i>Shillings</span>
-                            <span id="shillings-display" class="font-bold text-gray-200">0</span>
-                        </div>
-
-                        <div id="supplies-display" class="bg-gray-900 p-2 rounded border border-gray-700 flex items-center justify-between flex-1 hidden fade-in">
-                            <span class="text-indigo-400 cinzel"><i class="fas fa-anchor mr-1"></i>Supplies</span>
-                            <span id="supplies-count" class="font-bold text-gray-200">0</span>
-                        </div>
-                    </div>
-
-                    <div class="bg-gray-900 p-2 pb-3 rounded border border-gray-700 flex flex-col text-[10px] gap-2 relative">
-                        <div class="flex justify-between items-center cinzel text-[10px] uppercase tracking-wider font-bold">
-                            <span class="text-blue-400"><i class="fas fa-shield-alt mr-1"></i>Order</span>
-                            
-                            <span id="inf-status-text" class="text-gray-500 text-[9px] truncate max-w-[140px] text-center">Unknown</span>
-                            
-                            <span class="text-emerald-400">Chaos<i class="fas fa-skull-crossbones ml-1"></i></span>
-                        </div>
-                        
-                        <div class="relative w-full h-3 bg-gray-800 rounded-full border border-gray-600 overflow-hidden">
-                            <div class="absolute inset-0 bg-gradient-to-r from-blue-900 via-gray-800 to-emerald-900 opacity-60"></div>
-                            
-                            <div id="inf-marker" class="absolute top-0 bottom-0 w-1.5 bg-white shadow-[0_0_10px_rgba(255,255,255,0.8)] z-10 rounded-full transform -translate-x-1/2" style="left: 50%;"></div>
-                        </div>
-                        </div>
-                </div>
-
-                <div>
-                    <div class="flex justify-between items-end border-b border-gray-700 pb-1 mb-2 clean-spectral-title">
-                        <span class="text-xs cinzel text-gray-400">Guiding Voice (+1d4)</span>
-                        <span class="text-[10px] text-gray-600 italic">Resets on Long Rest</span>
-                    </div>
-                    <div class="grid grid-cols-2 gap-2" id="crew-panel">
-                        </div>
-                </div>
-
-                <div id="abilities-wrapper" class="flex flex-col gap-2 transition-all duration-300">
-                    
-                    <div id="planar-skills-container" class="hidden pb-2 fade-in clean-spectral-title h-full">
-                        <div class="flex justify-between items-end mb-1 clean-spectral-title">
-                            <span class="text-xs cinzel text-cyan-400"><i class="fas fa-bolt mr-1"></i> Horizon Walker</span>
-                        </div>
-                        <div class="grid grid-cols-1 gap-2"> <button id="btn-plane-walk" onclick="window.gameFunctions.togglePlaneWalk()" class="p-2 rounded border border-cyan-700 bg-gray-900/80 text-cyan-100 hover:bg-cyan-900/50 hover:border-cyan-400 transition-all flex items-center justify-between group shadow-lg">
-                                <span class="text-[10px] cinzel font-bold">Plane Walk</span>
-                                <i class="fas fa-shoe-prints text-cyan-400 group-hover:text-white transition-colors"></i>
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <div id="companion-panel" class="hidden pb-2 fade-in clean-spectral-title h-full">
-                        <div class="flex justify-between items-end mb-1 clean-spectral-title">
-                            <span class="text-xs cinzel text-emerald-400"><i class="fas fa-users mr-1"></i> Allies</span>
-                        </div>
-                        <div id="companions-list" class="flex flex-col gap-2">
-                            </div>
-                    </div>
-
-                </div>
-				
-                <div class="flex-1 flex flex-col">
-                    <div class="flex justify-between items-end border-b border-gray-700 pb-1 mb-2 clean-spectral-title">
-                        <span class="text-xs cinzel text-gray-400"><i class="fas fa-briefcase mr-1"></i> Inventory</span>
-                    </div>
-
-                    <div id="item-desc-area" class="text-[12px] text-gray-400 h-8 italic mb-2 text-center leading-tight flex items-center justify-center bg-gray-900/50 border border-gray-700/50 rounded px-2 transition-all duration-300">
-                        Hover over an item to inspect it.
-                    </div>
-
-                    <div id="inventory-panel" class="flex flex-col gap-1">
-                        </div>
-                </div>
             </div>
         </div>
 
@@ -422,9 +543,6 @@
             </div>
 
             <div class="order-3 md:order-none shrink-0 flex flex-col gap-2">
-                 <div id="active-crew-indicator" class="hidden text-center text-blue-400 text-xs cinzel animate-pulse mb-1">
-                    <i class="fas fa-ghost mr-1"></i> <span id="active-crew-name"></span> is guiding your next move...
-                </div>
                 <div id="choices-area" class="grid grid-cols-1 gap-2">
                     </div>
             </div>
@@ -8331,10 +8449,24 @@
                     supplementalText += " <span class='text-emerald-400 text-[10px] uppercase font-bold animate-pulse ml-2'>[Phase Strike Ready]</span>";
                 }
                 if (isSkillCheck) {
+                    // 1. First, add the Difficulty Class (DC) Text
                     const displayDC = gameState.isRiftCollapse ? choice.dc + 2 : choice.dc;
                     supplementalText += ` <span class="spectral-text-glow text-sm uppercase tracking-wider ml-2 mr-4">[${choice.skill} DC ${displayDC}]</span>`;
+                    
+                    // 2. Then, check for Crew Bonus and add it AFTER the DC
+                    if (activeCrewMember) {
+                        const hasBonus = getBonusForSkill(activeCrewMember, choice.skill);
+                        if (hasBonus) {
+                            btnClass += " border-cyan-500 ring-1 ring-cyan-400"; 
+                            
+                            const dieType = gameState.isEthereal ? '8' : '4';
+                            // Added space before the + for cleaner layout
+                            supplementalText += ` <span class="text-cyan-300 text-[10px] font-bold animate-pulse">+ 1d${dieType} (${activeCrewMember.name})</span>`;
+                        }
+                    }
+
                     icon = '<i class="fas fa-dice-d20 spectral-text-glow"></i>';
-                } 
+                }
 
                 btn.className = btnClass;
 
@@ -8628,434 +8760,330 @@
             });
         }
 		
+		function updateUI() {
+			const statsPanel = document.getElementById('stats-panel');
+			const journalContainer = document.getElementById('journal-container');
+			const sceneId = gameState.currentSceneId;
+			
+			const suppliesDisplay = document.getElementById('supplies-display');
+			const companionPanel = document.getElementById('companion-panel');
+			
+			// 1. Render Companions
+			const isSilasJoined = gameState.companions.silas.joined;
+			const isBlinkJoined = gameState.companions.blink.joined;
+			
+			if (isSilasJoined || isBlinkJoined) { 
+				companionPanel.classList.remove('hidden');
+				renderCompanions(isSilasJoined, isBlinkJoined);
+			} else {
+				companionPanel.classList.add('hidden');
+			}
+			
+			// 2. Render Ability Grid Layout
+			const abilitiesWrapper = document.getElementById('abilities-combined-container'); // Correct ID
+			const hasPlaneWalk = gameState.skills.includes("Plane Walking");
+			const planarContainer = document.getElementById('planar-skills-container');
+			
+			if (hasPlaneWalk) planarContainer.classList.remove('hidden');
+			else planarContainer.classList.add('hidden');
+
+			// 3. Prologue/Journal Visibility
+			if (sceneId && sceneId.startsWith('prologue')) {
+				statsPanel.classList.add('prologue-blur');
+				journalContainer.classList.add('log-hidden');
+				journalContainer.classList.remove('log-visible');
+			} else {
+				statsPanel.classList.remove('prologue-blur');
+				statsPanel.classList.add('prologue-active');
+				
+				if(gameState.inventory.includes("Ship's Log")) {
+					journalContainer.classList.remove('log-hidden');
+					journalContainer.classList.add('log-visible');
+				} else {
+					journalContainer.classList.add('log-hidden');
+					journalContainer.classList.remove('log-visible');
+				}
+			}
+
+			// 4. HP Bar
+			const displayMaxHP = gameState.maxHP;
+			const hpToDisplay = gameState.currentHP;
+			const hpPct = (hpToDisplay / displayMaxHP) * 100;
+			const bar = document.getElementById('hp-bar');
+			
+			bar.style.width = `${Math.min(100, hpPct)}%`;
+			bar.className = `h-full transition-all duration-500 ${hpToDisplay < (displayMaxHP * 0.3) ? 'bg-red-600 animate-pulse' : 'bg-red-800'}`;
+			document.getElementById('hp-text').innerText = `${hpToDisplay}/${displayMaxHP}`; 
+			audioManager.checkVulnerable(gameState.currentHP, gameState.maxHP);
+			
+			// 5. Doom/Tether Meters
+			const doomDisplay = document.getElementById('doom-counter-display');
+			const tetherDisplay = document.getElementById('tether-display');
+
+			if (gameState.act1Started && !gameState.act2Started && !gameState.act3Started) {
+				doomDisplay.classList.remove('hidden');
+				document.getElementById('doom-timer-text').textContent = `${gameState.doomTimer} Turns`;
+				document.getElementById('doom-bar').style.width = `${(gameState.doomTimer / 20) * 100}%`;
+			} else {
+				doomDisplay.classList.add('hidden');
+			}
+			
+			if (gameState.act2Started) {
+				tetherDisplay.classList.remove('hidden');
+				document.getElementById('tether-text').textContent = `${gameState.tetherTimer} Turns`;
+				document.getElementById('tether-bar').style.width = `${(gameState.tetherTimer / 20) * 100}%`;
+			} else {
+				tetherDisplay.classList.add('hidden');
+			}
+
+			// 6. Influence Marker
+			const inf = gameState.influence || 0;
+			const pct = ((inf + 50) / 100) * 100;
+			const marker = document.getElementById('inf-marker');
+			if (marker) marker.style.left = `${Math.max(0, Math.min(100, pct))}%`;
+			
+			const infText = document.getElementById('inf-status-text');
+			if (infText) {
+				if (inf <= -30) infText.textContent = "Sworn to the Crown";
+				else if (inf <= -15) infText.textContent = "Watchman";
+				else if (inf >= 30) infText.textContent = "Pirate Lord";
+				else if (inf >= 15) infText.textContent = "Privateer";
+				else infText.textContent = "Neutral";
+			}
+
+			// --- NEW UI UPDATES ---
+			
+			// 7. Render Radial Menu
+			renderRadialCrew();
+
+			// 8. Update Backpack Button & Modal
+			document.getElementById('shillings-display').innerText = gameState.shillings;
+			
+			const packDisplay = document.getElementById('pack-resources-display');
+			if (packDisplay) {
+				let html = `<span class="text-amber-500">${gameState.shillings} <i class="fas fa-coins text-[10px]"></i></span>`;
+				if (gameState.act3Started) { 
+					 html += `<span class="text-indigo-400 ml-2">${gameState.supplies} <i class="fas fa-anchor text-[10px]"></i></span>`;
+				}
+				packDisplay.innerHTML = html;
+			}
+
+			if (gameState.act3Started) {
+				suppliesDisplay.classList.remove('hidden');
+				document.getElementById('supplies-count').innerText = gameState.supplies;
+			} else {
+				suppliesDisplay.classList.add('hidden');
+			}
+
+			// 9. Update Inventory List
+			renderInventoryList();
+		}
+
+		// Helper to render inventory list (Needed for the backpack modal)
+		function renderInventoryList() {
+			const invContainer = document.getElementById('inventory-panel');
+			invContainer.innerHTML = '';
+			
+			if (gameState.inventory.length === 0) {
+				invContainer.innerHTML = '<div class="text-center text-[10px] text-gray-600 italic py-2">Inventory Empty</div>';
+				return;
+			}
+
+			const descArea = document.getElementById('item-desc-area');
+			const defaultText = "Hover to inspect.";
+
+			gameState.inventory.forEach(itemName => {
+				const itemDef = itemRegistry[itemName] || { icon: 'fa-box', color: 'text-gray-500', desc: "Unknown item." };
+				const el = document.createElement('div');
+				el.className = "group w-full flex items-center justify-between p-2 rounded border border-gray-700/50 bg-gray-900/60 hover:bg-gray-800 transition-all cursor-default relative shrink-0";
+				
+				el.innerHTML = `
+					<div class="flex items-center gap-3">
+						<div class="text-lg w-5 text-center ${itemDef.color}"><i class="fas ${itemDef.icon}"></i></div>
+						<span class="text-xs cinzel text-gray-300 group-hover:text-gray-100">${itemName.split('(')[0]}</span>
+					</div>
+				`;
+				
+				// Add Use Button if Consumable
+				if(itemDef.type === 'consumable' && itemDef.btnText) {
+					 const btn = document.createElement('button');
+					 btn.className = "px-2 py-1 bg-emerald-900/40 border border-emerald-600/30 text-emerald-500 text-[9px] font-bold rounded hover:bg-emerald-600 hover:text-white transition-all tracking-wider";
+					 btn.innerText = itemDef.btnText;
+					 btn.onclick = (e) => {
+						 e.stopPropagation();
+						 audioManager.playClick();
+						 const res = itemDef.action(gameState);
+						 addToHistory(res, 'system');
+						 updateUI();
+					 };
+					 el.appendChild(btn);
+				}
+
+				el.onmouseenter = () => {
+					descArea.innerText = itemDef.desc || defaultText;
+					descArea.classList.add('text-amber-400');
+				};
+				el.onmouseleave = () => {
+					descArea.innerText = defaultText;
+					descArea.classList.remove('text-amber-400');
+				};
+				invContainer.appendChild(el);
+			});
+		}
+
+		function renderCompanions(silas, blink) {
+			const list = document.getElementById('companions-list');
+			list.innerHTML = '';
+			
+			// Helper to create companion row
+			const createRow = (name, role, icon, color, btnText, clickFn) => {
+				const div = document.createElement('div');
+				div.className = "p-2 bg-gray-800 border border-gray-700 rounded flex items-center justify-between";
+				div.innerHTML = `
+					<div class="flex items-center gap-2">
+						<i class="fas ${icon} text-lg ${color}"></i>
+						<div>
+							<span class="font-bold text-xs cinzel ${color.replace('text-','text-')}-200 block">${name}</span>
+							<span class="text-[9px] text-gray-500 uppercase tracking-wider block">${role}</span>
+						</div>
+					</div>
+				`;
+				// Only show button if we are in relevant mode (e.g. boss combat or free roam)
+				// For simplicity in this fix, we just show the nameplate as the button logic is handled in renderChoices mostly.
+				return div;
+			};
+
+			if(silas) list.appendChild(createRow('Silas', 'Seneschal', 'fa-moon', 'text-emerald-400', 'INTERCEPT'));
+			if(blink) list.appendChild(createRow('Blink', 'Phase-Cub', 'fa-paw', 'text-purple-400', 'PHASE'));
+		}
 		
+		// --- NEW FUNCTIONS FOR UI v2 ---
 
-        function updateUI() {
-            const statsPanel = document.getElementById('stats-panel');
-            const journalContainer = document.getElementById('journal-container');
-            const sceneId = gameState.currentSceneId;
-            
-            const suppliesDisplay = document.getElementById('supplies-display');
-            const companionPanel = document.getElementById('companion-panel');
-            
-            if (gameState.act3Started) {
-                suppliesDisplay.classList.remove('hidden');
-                document.getElementById('supplies-count').innerText = gameState.supplies;
-            } else {
-                suppliesDisplay.classList.add('hidden');
-            }
-            
-            const isSilasJoined = gameState.companions.silas.joined;
-            const isBlinkJoined = gameState.companions.blink.joined;
-            
-            if (isSilasJoined || isBlinkJoined) { 
-                companionPanel.classList.remove('hidden');
-                renderCompanions(isSilasJoined, isBlinkJoined);
-            } else {
-                companionPanel.classList.add('hidden');
-            }
-            
-            const abilitiesWrapper = document.getElementById('abilities-wrapper');
-            const hasPlaneWalk = gameState.skills.includes("Plane Walking");
-            
-            const planarContainer = document.getElementById('planar-skills-container');
-            const companionContainer = document.getElementById('companion-panel');
-            
-            let allyCount = 0;
-            if (isSilasJoined) allyCount++;
-            if (isBlinkJoined) allyCount++;
+		// 1. Toggle the Backpack Modal
+		window.gameFunctions.toggleBackpack = function() {
+			const modal = document.getElementById('backpack-modal');
+			const btn = document.getElementById('btn-combined-pack');
+			if (!modal || !btn) return;
 
-            planarContainer.classList.remove('h-full');
-            companionContainer.classList.remove('h-full');
+			if (modal.classList.contains('hidden')) {
+				modal.classList.remove('hidden');
+				audioManager.playClick();
+			} else {
+				modal.classList.add('hidden');
+			}
+		};
 
-            if (hasPlaneWalk && allyCount === 1) {
-                abilitiesWrapper.classList.remove('flex', 'flex-col');
-                abilitiesWrapper.classList.add('grid', 'grid-cols-2', 'items-stretch', 'gap-2');
-                planarContainer.classList.add('h-full');
-                companionContainer.classList.add('h-full');
-                document.getElementById('companions-list').className = "flex flex-col gap-2 h-full justify-center"; 
-            } else {
-                abilitiesWrapper.classList.remove('grid', 'grid-cols-2', 'items-stretch', 'gap-2');
-                abilitiesWrapper.classList.add('flex', 'flex-col');
-                
-                if (allyCount > 1) {
-                     document.getElementById('companions-list').className = "grid grid-cols-2 gap-2";
-                } else {
-                     document.getElementById('companions-list').className = "flex flex-col gap-2";
-                }
-            }
-            
-            const tetherDisplay = document.getElementById('tether-display');
-            const planarSkills = document.getElementById('planar-skills-container');
+		// Close backpack when clicking outside
+		document.addEventListener('click', function(event) {
+			const modal = document.getElementById('backpack-modal');
+			const btn = document.getElementById('btn-combined-pack');
+			if (modal && !modal.classList.contains('hidden')) {
+				if (!modal.contains(event.target) && !btn.contains(event.target)) {
+					modal.classList.add('hidden');
+				}
+			}
+		});
 
-            if (gameState.act2Started) {
-                tetherDisplay.classList.remove('hidden');
-            } else {
-                tetherDisplay.classList.add('hidden');
-            }
+		// 2. Render the Radial Crew Menu (FIXED MATCHING)
+		function renderRadialCrew() {
+			const container = document.querySelector('.radial-container');
+			if (!container) return; 
 
-            if (gameState.skills.includes("Plane Walking")) {
-                planarSkills.classList.remove('hidden');
-            } else {
-                planarSkills.classList.add('hidden');
-            }
-            
-            if (sceneId && sceneId.startsWith('prologue')) {
-                statsPanel.classList.add('prologue-blur');
-                journalContainer.classList.add('log-hidden');
-                journalContainer.classList.remove('log-visible');
-            } else {
-                statsPanel.classList.remove('prologue-blur');
-                statsPanel.classList.add('prologue-active');
-                
-                if(gameState.inventory.includes("Ship's Log")) {
-                    journalContainer.classList.remove('log-hidden');
-                    journalContainer.classList.add('log-visible');
-                } else {
-                    journalContainer.classList.add('log-hidden');
-                    journalContainer.classList.remove('log-visible');
-                }
-            }
+			// We use the simple KEYS (gareth, quinn) to ensure IDs match the HTML
+			const crewKeys = ['gareth', 'quinn', 'talon', 'bones']; 
+			
+			// 1. Initial Build: Create buttons if they don't exist
+			// We check for 'node-gareth' (simple ID)
+			if (!document.getElementById('node-gareth')) { 
+				
+				crewKeys.forEach((key, idx) => {
+					const c = gameState.crew[key];
+					const btn = document.createElement('div');
+					
+					// Assign ID using the simple key, NOT the name
+					btn.id = `node-${key}`; 
+					btn.className = 'crew-node';
+					
+					// Positioning classes
+					if (idx === 0) btn.classList.add('node-nw'); 
+					else if (idx === 1) btn.classList.add('node-ne');
+					else if (idx === 2) btn.classList.add('node-sw'); 
+					else if (idx === 3) btn.classList.add('node-se');
+					
+					btn.onclick = () => {
+						if (c.used && !gameState.crewUseFree) return;
+						toggleCrewSelection(key); 
+					};
+					container.appendChild(btn);
+				});
+			}
 
-            const displayMaxHP = gameState.maxHP;
-            const hpToDisplay = gameState.currentHP;
+			// 2. State Updates: Update visual status of buttons and tethers
+			const hub = document.getElementById('radial-hub');
+			const isAnyActive = activeCrewMember !== null;
 
-            const hpPct = (hpToDisplay / displayMaxHP) * 100;
-            const bar = document.getElementById('hp-bar');
-            
-            bar.style.width = `${Math.min(100, hpPct)}%`;
-            bar.className = `h-full transition-all duration-500 ${hpToDisplay < (displayMaxHP * 0.3) ? 'bg-red-600 animate-pulse' : 'bg-red-800'}`;
-            
-            document.getElementById('hp-text').innerText = `${hpToDisplay}/${displayMaxHP}`; 
+			if(hub) {
+				if(isAnyActive) hub.classList.add('drained');
+				else hub.classList.remove('drained');
+			}
 
-            audioManager.checkVulnerable(gameState.currentHP, gameState.maxHP);
-            
-            const doomDisplay = document.getElementById('doom-counter-display');
-            const doomText = document.getElementById('doom-timer-text');
-            const doomBar = document.getElementById('doom-bar');
-            const maxDoom = 20; 
+			crewKeys.forEach(key => {
+				const c = gameState.crew[key];
+				
+				// Grab elements using the simple keys to match HTML
+				const btn = document.getElementById(`node-${key}`);
+				const tether = document.getElementById(`tether-${key}`);
+				
+				if (!btn || !tether) return;
 
-            if (gameState.act1Started && !gameState.act2Started && !gameState.act3Started) {
-                doomDisplay.classList.remove('hidden');
-                doomText.textContent = `${gameState.doomTimer} Turns`;
-                const doomPct = (gameState.doomTimer / maxDoom) * 100;
-                doomBar.style.width = `${doomPct}%`;
-                
-                doomBar.classList.remove('bg-purple-600', 'bg-red-700', 'bg-yellow-600', 'animate-pulse');
-                doomText.classList.remove('text-red-500', 'text-yellow-500');
-                
-                if (!gameState.isRiftCollapse) {
-                    document.getElementById('fx-overlay').classList.remove('fx-rift-collapsed');
-                }
+				const isUsed = c.used;
+				const isActive = activeCrewMember && activeCrewMember.id === c.id;
 
-                if (gameState.isRiftCollapse) {
-                    doomBar.classList.add('bg-red-700', 'animate-pulse');
-                    doomText.textContent = `COLLAPSED!`;
-                    doomText.classList.add('text-red-500');
-                    document.getElementById('fx-overlay').classList.add('fx-rift-collapsed');
-                } 
-                else if (gameState.doomTimer <= 5) {
-                    doomBar.classList.add('bg-yellow-600', 'animate-pulse');
-                    doomBar.classList.remove('bg-purple-600');
-                    doomText.classList.add('text-yellow-500');
-                } 
-                else {
-                    doomBar.classList.add('bg-purple-600');
-                }
-            } else {
-                doomDisplay.classList.add('hidden');
-                document.getElementById('fx-overlay').classList.remove('fx-rift-collapsed');
-            }
-            
-            const tetherText = document.getElementById('tether-text');
-            const tetherBar = document.getElementById('tether-bar');
-            const maxTether = 20; 
+				// Content - Handle "Captain" splitting for display
+				let displayName = c.name;
+				if(c.name.includes(' ')) displayName = c.name.split(' ')[0]; // Shows "Captain"
+				if(key === 'gareth') displayName = "Gareth"; // Specific override for Gareth
+				
+				let content = `<span class="crew-node-name">${displayName}</span><span class="crew-node-skill">${c.skill.replace('&', '<br>&')}</span>`;
+				
+				// Icons
+				if(isUsed && !gameState.crewUseFree) content += `<i class="fas fa-lock absolute top-1 right-1 text-xs text-gray-500"></i>`;
+				if(gameState.crewUseFree && !isUsed) content += `<i class="fas fa-star absolute top-1 right-1 text-xs text-purple-400 animate-pulse"></i>`;
+				
+				btn.innerHTML = content;
 
-            if (gameState.act2Started) {
-                tetherText.textContent = `${gameState.tetherTimer} Turns`;
-                const tetherPct = (gameState.tetherTimer / maxTether) * 100;
-                tetherBar.style.width = `${tetherPct}%`;
-                
-                if (gameState.tetherTimer <= 5) {
-                    tetherBar.style.boxShadow = '0 0 15px rgba(255, 69, 0, 0.8)';
-                    tetherText.classList.add('text-red-400');
-                } else {
-                    tetherBar.style.boxShadow = '0 0 10px rgba(34, 211, 238, 0.6)';
-                    tetherText.classList.remove('text-red-400');
-                }
-            }
+				// Active State (Selected)
+				if (isActive) {
+					btn.classList.add('charged');
+					tether.classList.add('flowing');
+				} else {
+					btn.classList.remove('charged');
+					tether.classList.remove('flowing');
+				}
 
-            document.getElementById('shillings-display').innerText = gameState.shillings;
-            
-            const inf = gameState.influence || 0;
-            const pct = ((inf + 50) / 100) * 100;
-            const marker = document.getElementById('inf-marker');
-            if (marker) marker.style.left = `${Math.max(0, Math.min(100, pct))}%`;
-            
-            const infText = document.getElementById('inf-status-text');
-            if (infText) {
-                if (inf <= -30) infText.textContent = "Sworn to the Crown (Max Order)";
-                else if (inf <= -15) infText.textContent = "Watchman (Spyglass Active)";
-                else if (inf >= 30) infText.textContent = "Pirate Lord (Max Chaos)";
-                else if (inf >= 15) infText.textContent = "Privateer (Spyglass Active)";
-                else infText.textContent = "Neutral / Growing";
-            }
+				// Used State (Disabled)
+				if (isUsed && !gameState.crewUseFree) {
+					btn.classList.add('used');
+				} else {
+					btn.classList.remove('used');
+				}
+			});
+		}
 
-            const ind = document.getElementById('active-crew-indicator');
-            const nameSpan = document.getElementById('active-crew-name');
-            if (activeCrewMember) {
-                ind.classList.remove('hidden');
-                nameSpan.innerText = activeCrewMember.name;
-            } else {
-                ind.classList.add('hidden');
-            }
-
-            const crewContainer = document.getElementById('crew-panel');
-            crewContainer.innerHTML = '';
-            
-            const crewOrder = ['gareth', 'quinn', 'talon', 'bones'];
-            
-            crewOrder.forEach(key => {
-                const c = gameState.crew[key];
-                if (!c) return;
-
-                const btn = document.createElement('button');
-                const isSelected = activeCrewMember && activeCrewMember.name === c.name;
-                const isAvailableForFreeUse = gameState.crewUseFree && !c.used;
-
-                let baseClass = "p-2 rounded border text-left transition-all relative overflow-hidden ";
-                
-                if (c.used) { 
-                    baseClass += "bg-black/50 border-gray-800 text-gray-700 cursor-not-allowed opacity-50";
-                } else if (gameState.crewUseFree && isSelected) {
-                     baseClass += "crew-free-use-glow";
-                } else if (gameState.crewUseFree && !isSelected) {
-                    if (!activeCrewMember) {
-                        baseClass += "crew-free-use-glow";
-                    } else {
-                         baseClass += "bg-gray-800 border-gray-600 text-gray-300 hover:border-gray-400 hover:bg-gray-700";
-                    }
-                } else if (isSelected) {
-                    baseClass += "spectral-active text-blue-100 ring-1 ring-blue-400";
-                } else {
-                    baseClass += "bg-gray-800 border-gray-600 text-gray-300 hover:border-gray-400 hover:bg-gray-700";
-                }
-
-                if (gameState.currentSceneId === 'start' && !c.used && !activeCrewMember) {
-                    if (c.name === 'Quinn' || c.name === 'Bones') {
-                        baseClass += " tutorial-pulse";
-                    }
-                }
-
-                btn.className = baseClass;
-                btn.disabled = c.used; 
-                btn.innerHTML = `
-                    <div class="font-bold text-[12px] cinzel leading-tight">${c.name}</div>
-                    <div class="text-[10px] ${isSelected || isAvailableForFreeUse ? 'text-white' : 'text-gray-500'}">${c.skill}</div>
-                    ${c.used ? '<i class="fas fa-lock absolute top-1 right-1 text-[10px]"></i>' : ''}
-                    ${isAvailableForFreeUse ? '<i class="fas fa-star absolute top-1 right-1 text-[10px] text-purple-300"></i>' : ''}
-                `;
-                btn.onclick = () => {
-                    audioManager.playClick();
-                    
-                    if (isSelected) {
-                        activeCrewMember = null;
-                    } else {
-                        activeCrewMember = c;
-                        audioManager.playGhost();
-                    }
-                    updateUI();
-                };
-                crewContainer.appendChild(btn);
-            });
-            
-            function renderCompanions(isSilasJoined, isBlinkJoined) { 
-                const companionList = document.getElementById('companions-list');
-                companionList.innerHTML = ''; 
-                companionList.className = "grid grid-cols-2 gap-2";
-
-                if (isSilasJoined) {
-                    const silasDiv = document.createElement('div');
-                    const isCooldown = gameState.allyCooldowns.silas > 0;
-                    
-                    silasDiv.className = `p-2 bg-gray-800 border rounded flex items-center justify-between ${
-                        isCooldown ? 'border-gray-900 opacity-60' : 'border-emerald-600/50'
-                    }`;
-                    
-                    silasDiv.innerHTML = `
-                        <div class="flex items-center gap-2">
-                            <i class="fas fa-moon text-lg text-emerald-400"></i>
-                            <div class="text-left">
-                                <span class="font-bold text-xs cinzel text-emerald-300 block">Silas</span>
-                                <span class="text-[10px] text-gray-500 italic block">Seneschal (Pack Tactics)</span>
-                            </div>
-                        </div>
-                        ${gameState.isBossCombat ? `
-                            <button onclick="allyCommand('silas')" 
-                                    class="btn-game px-2 py-1 text-xs rounded transition-all 
-                                    ${isCooldown ? 'btn-disabled-cost' : 'bg-red-900/40 text-red-300 hover:bg-red-800/60'}"
-                                    ${isCooldown ? 'disabled' : ''}>
-                                INTERCEPT! (${isCooldown ? gameState.allyCooldowns.silas : 'Ready'})
-                            </button>
-                        ` : ''}
-                    `;
-                    companionList.appendChild(silasDiv);
-                };
-                
-                if (isBlinkJoined) {
-                    const blinkDiv = document.createElement('div');
-                    const isCooldown = gameState.allyCooldowns.blink > 0;
-                    
-                    blinkDiv.className = `p-2 bg-gray-800 border rounded flex items-center justify-between ${
-                        isCooldown ? 'border-gray-900 opacity-60' : 'border-emerald-600/50'
-                    }`;
-                    
-                    let actionButtonHTML = '';
-                    if (gameState.isBossCombat) {
-                        actionButtonHTML = `
-                            <button onclick="allyCommand('blink')" 
-                                    class="btn-game px-2 py-1 text-xs rounded transition-all 
-                                    ${isCooldown ? 'btn-disabled-cost' : 'bg-red-900/40 text-red-300 hover:bg-red-800/60'}"
-                                    ${isCooldown ? 'disabled' : ''}>
-                                PHASE SHIFT (${isCooldown ? gameState.allyCooldowns.blink : 'Ready'})
-                            </button>
-                        `;
-                    } else {
-                        actionButtonHTML = `
-                            <button onclick="window.gameFunctions.triggerBlink()"
-                                    class="px-2 py-1 text-xs rounded transition-all bg-emerald-900/40 text-emerald-300 hover:bg-emerald-800/60 font-bold border border-emerald-900">
-                                PHASE
-                            </button>
-                        `;
-                    }
-                    
-                    blinkDiv.innerHTML = `
-                        <div class="flex items-center gap-2">
-                            <i class="fas fa-paw text-lg text-emerald-400"></i>
-                            <div class="text-left">
-                                <span class="font-bold text-xs cinzel text-emerald-300 block">Blink</span>
-                                <span class="text-[10px] text-gray-500 italic block">Phase-Cub</span>
-                            </div>
-                        </div>
-                        ${actionButtonHTML}
-                    `;
-                    companionList.appendChild(blinkDiv);
-                }
-            }
-
-            const invContainer = document.getElementById('inventory-panel');
-            invContainer.innerHTML = '';
-
-            invContainer.className = "flex flex-col gap-1 max-h-[220px] overflow-y-auto pr-1";
-
-            const descArea = document.getElementById('item-desc-area');
-            const defaultText = "Hover over an item to inspect it.";
-
-            descArea.innerText = defaultText;
-            descArea.classList.remove('text-amber-400');
-            descArea.classList.add('text-gray-400'); 
-
-            if (gameState.inventory.length === 0) {
-                invContainer.innerHTML = '<div class="text-center text-[10px] text-gray-600 italic py-2">Inventory Empty</div>';
-            } else {
-                const tempInventory = Array.from(gameState.inventory);
-
-                const sortedInventory = tempInventory.sort((aName, bName) => {
-                    const itemA = itemRegistry[aName] || { type: 'misc' };
-                    const itemB = itemRegistry[bName] || { type: 'misc' };
-                    
-                    const indexA = gameState.inventory.indexOf(aName);
-                    const indexB = gameState.inventory.indexOf(bName);
-                    
-                    const isAConsumable = itemA.type === 'consumable';
-                    const isBConsumable = itemB.type === 'consumable';
-
-                    if (isAConsumable && !isBConsumable) return -1;
-                    if (!isAConsumable && isBConsumable) return 1;
-                    
-                    const typeOrder = { 'weapon': 1, 'gear': 2, 'passive': 3, 'key': 4, 'ingredient': 5, 'misc': 6 };
-                    const orderA = typeOrder[itemA.type] || 99;
-                    const orderB = typeOrder[itemB.type] || 99;
-                    
-                    if (orderA !== orderB) return orderA - orderB;
-
-                    return indexB - indexA;
-                });
-
-                sortedInventory.forEach(itemName => {
-                    let itemDef = itemRegistry[itemName] || { type: 'misc', icon: 'fa-box', color: 'text-gray-500', desc: "A strange item." };
-                    
-                    if (itemName === "Salt-Warped Spyglass") {
-                        itemDef = { ...itemDef };
-                        if (gameState.influence <= -15) {
-                            itemDef.name = "Watchman's Spyglass (Order)";
-                            itemDef.color = "text-blue-400";
-                            itemDef.desc = "Passive: The lens aligns with Order. Damage taken reduced by 1.";
-                        } else if (gameState.influence >= 15) {
-                            itemDef.name = "Privateer's Spyglass (Chaos)";
-                            itemDef.color = "text-emerald-400";
-                            itemDef.desc = "Passive: The lens aligns with Chaos. Gain +1 coin on all earnings.";
-                        } else {
-                            itemDef.name = "Salt-Warped Spyglass";
-                            itemDef.color = "text-cyan-400";
-                            itemDef.desc = "Key: The lens seems to shift focus on its own. (Awaiting Alignment)";
-                        }
-                    }
-                    
-                    const isConsumable = itemDef.type === 'consumable';
-                    
-                    const itemRow = document.createElement('div');
-                    itemRow.className = `group w-full flex items-center justify-between p-2 rounded border transition-all cursor-default relative shrink-0 ${
-                        isConsumable 
-                        ? 'bg-gray-900/80 border-emerald-900/50 hover:border-emerald-500 hover:bg-gray-800 item-consumable' 
-                        : 'bg-gray-900/60 border-gray-800 hover:border-gray-600'
-                    }`;
-
-                    const leftSide = document.createElement('div');
-                    leftSide.className = 'flex items-center gap-3';
-                    leftSide.innerHTML = `
-                        <div class="text-lg w-5 text-center ${itemDef.color}"><i class="fas ${itemDef.icon}"></i></div>
-                        <span class="text-xs cinzel text-gray-300 group-hover:text-gray-100 transition-colors">${itemDef.name || itemName.split('(')[0].trim()}</span>
-                    `;
-                    itemRow.appendChild(leftSide);
-
-                    const rightSide = document.createElement('div');
-                    if (isConsumable && itemDef.btnText && itemDef.btnText !== 'PASSIVE' && itemDef.btnText !== 'SELL' && itemDef.btnText !== 'INSPECT' && itemDef.btnText !== 'THROW') { 
-                        const actionBtn = document.createElement('button');
-                        actionBtn.className = "px-2 py-1 bg-emerald-900/40 border border-emerald-600/30 text-emerald-500 text-[9px] font-bold rounded hover:bg-emerald-600 hover:text-white transition-all tracking-wider";
-                        actionBtn.innerText = itemDef.btnText || "USE";
-                        actionBtn.onclick = (e) => {
-                            e.stopPropagation();
-                            audioManager.playClick();
-                            const result = itemDef.action(gameState);
-                            addToHistory(result, 'system');
-                            saveGame();
-                            updateUI();
-                        };
-                        rightSide.appendChild(actionBtn);
-                    } else {
-                        const tag = document.createElement('span');
-                        tag.className = "text-[9px] text-gray-600 uppercase tracking-wider font-bold opacity-50 group-hover:opacity-100 transition-opacity";
-                        tag.innerText = itemDef.btnText || "PASSIVE";
-                        rightSide.appendChild(tag);
-                    }
-                    itemRow.appendChild(rightSide);
-
-                    itemRow.onmouseenter = () => {
-                        descArea.innerText = itemDef.desc || defaultText;
-                        descArea.classList.add('text-amber-400');
-                        descArea.classList.remove('text-gray-400');
-                    };
-                    itemRow.onmouseleave = () => {
-                        descArea.innerText = defaultText;
-                        descArea.classList.remove('text-amber-400');
-                        descArea.classList.add('text-gray-400');
-                    };
-
-                    invContainer.appendChild(itemRow);
-                });
-            }
-        }
+		// 3. Updated Crew Toggle Logic
+		function toggleCrewSelection(crewKey) {
+			const c = gameState.crew[crewKey];
+			if (activeCrewMember && activeCrewMember.id === c.id) {
+				activeCrewMember = null; // Deselect
+				audioManager.playClick();
+			} else {
+				activeCrewMember = c; // Select
+				audioManager.playGhost();
+			}
+			updateUI();
+			// Re-render choices to update button borders/text
+			renderChoices(scenes[gameState.currentSceneId].choices, false); 
+		}
 
         init();
     </script>
