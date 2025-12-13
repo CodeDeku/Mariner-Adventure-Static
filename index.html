@@ -34,21 +34,63 @@
 			position: absolute; 
 			top: calc(50% - 40px); left: calc(50% - 40px); 
 			width: 80px; height: 80px; 
-			border-radius: 50%; 
-			background: radial-gradient(circle, #1e293b 30%, #0f172a 100%); 
-			border: 2px solid #22d3ee; 
+			border-radius: 50% !important;
+			background-color: #0f172a !important; 
+			background-image: radial-gradient(circle at 30% 30%, #164e63 0%, #1e293b 50%, #0f172a 100%) !important;
+			border: 1px solid #22d3ee !important;
 			z-index: 20; 
 			display: flex; flex-direction: column; align-items: center; justify-content: center; 
-			transform: translateZ(0); 
-			box-shadow: 0 0 15px rgba(34, 211, 238, 0.4), inset 0 0 20px rgba(34, 211, 238, 0.2); 
 			transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+			box-shadow: 
+				inset 0 0 20px rgba(34, 211, 238, 0.1),
+				inset 4px 4px 10px rgba(255, 255, 255, 0.1),
+				0 0 15px rgba(34, 211, 238, 0.4) !important;
 		}
+
+		/* Drained State */
 		.radial-hub.drained { 
-			border-color: #475569; box-shadow: none; 
-			background: radial-gradient(circle, #0f172a 30%, #020617 100%); 
+			border-color: #475569 !important; 
+			box-shadow: none !important; 
+			background-color: #0f172a !important; 
+			background-image: radial-gradient(circle, #0f172a 30%, #020617 100%) !important;
 			color: #64748b;
 		}
 		.radial-hub.drained div { opacity: 0.5; filter: grayscale(1); }
+		
+		.radial-hub:not(.drained) {
+			border: 1px solid #22d3ee !important; 
+			box-shadow: 
+				inset 0 0 20px rgba(34, 211, 238, 0.1),
+				inset 4px 4px 10px rgba(255, 255, 255, 0.1),
+				0 0 15px rgba(34, 211, 238, 0.4) !important; 
+		}
+		/* RADIAL GRID MASK */
+		.radial-grid-mask {
+			position: absolute;
+			inset: 0;
+			width: 100%;
+			height: 100%;
+			overflow: hidden;
+			border-radius: 0.25rem;
+			perspective: 600px;
+			z-index: 0;
+		}
+		.radial-planar-grid {
+			position: absolute;
+			inset: -50%;
+			width: 200%;
+			height: 200%;
+			z-index: 0;
+			background-image: 
+				linear-gradient(rgba(34, 211, 238, 0.15) 1px, transparent 1px),
+				linear-gradient(90deg, rgba(34, 211, 238, 0.15) 1px, transparent 1px);
+			background-size: 40px 40px;
+			transform: rotateX(60deg) translateY(-50px) translateZ(-60px);
+			transform-origin: center center;
+			-webkit-mask-image: linear-gradient(to top, transparent 0%, black 40%, black 80%, transparent 100%);
+			mask-image: linear-gradient(to top, transparent 0%, black 40%, black 80%, transparent 100%);
+			pointer-events: none;
+		}
 
 		/* TETHERS: Connection Lines */
 		.spectral-tether { 
@@ -70,13 +112,36 @@
 
 		/* CREW NODES */
 		.crew-node { 
-			position: absolute; width: 120px; height: 55px; 
-			background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
-			border: 1px solid #374151; border-radius: 4px; 
+			position: absolute; 
+			width: 120px; 
+			height: 55px; 
+			background-color: #0f172a !important;
+			background-image: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+			border: 1px solid #374151; 
+			border-radius: 4px; 
 			display: flex; flex-direction: column; align-items: center; justify-content: center; 
-			z-index: 10; cursor: pointer; transition: all 0.3s ease-out; 
-			transform: translateZ(0); 
+			z-index: 10; 
+			cursor: pointer; 
+			transition: all 0.3s ease-out; 
 		}
+		
+		/* CREW ACTIVE STATE (Directional Gradients) */
+		.crew-node.charged {
+			border: 1px solid #22d3ee !important; 
+			box-shadow: 
+				inset 0 0 20px rgba(34, 211, 238, 0.1),
+				inset 4px 4px 10px rgba(255, 255, 255, 0.1),
+				0 0 15px rgba(34, 211, 238, 0.4) !important; 
+			background-color: #1e293b !important;
+			transition: all 0.2s ease-out; 
+			z-index: 20;
+		}
+
+		/* Directional Gradients */
+		#node-gareth.charged { background-image: radial-gradient(circle at 100% 100%, rgba(34, 211, 238, 0.25) 0%, #1e293b 50%, #0f172a 100%) !important; }
+		#node-quinn.charged { background-image: radial-gradient(circle at 0% 100%, rgba(34, 211, 238, 0.25) 0%, #1e293b 50%, #0f172a 100%) !important; }
+		#node-talon.charged { background-image: radial-gradient(circle at 100% 0%, rgba(34, 211, 238, 0.25) 0%, #1e293b 50%, #0f172a 100%) !important; }
+		#node-bones.charged { background-image: radial-gradient(circle at 0% 0%, rgba(34, 211, 238, 0.25) 0%, #1e293b 50%, #0f172a 100%) !important; }
 		.node-nw { top: 0%; left: 0%; } .node-ne { top: 0%; right: 0%; } 
 		.node-sw { bottom: 0%; left: 0%; } .node-se { bottom: 0%; right: 0%; }
 
@@ -84,15 +149,26 @@
 		.crew-node.charged { 
 			border-color: #22d3ee; 
 			box-shadow: 0 0 15px rgba(34, 211, 238, 0.4), inset 0 0 10px rgba(34, 211, 238, 0.1); 
-			transform: scale(1.05); z-index: 30; 
+			z-index: 30; 
+		}
+		.crew-node.charged:hover {
+			border-color: #67e8f9 !important;
+			box-shadow: 0 0 20px rgba(34, 211, 238, 0.6) !important;
+			transform: translateY(-1px);
 		}
 		.crew-node.charged .crew-node-name { color: #fff; text-shadow: 0 0 5px #22d3ee; }
 		.crew-node.charged .crew-node-skill { color: #22d3ee; }
 		.crew-node.used { 
-			background: linear-gradient(180deg, #0f172a 0%, #020617 100%) !important; 
-			border-color: #374151 !important; color: #334155 !important; 
-			opacity: 1 !important; box-shadow: inset 0 0 5px rgba(0,0,0,0.8); 
-			cursor: not-allowed; transform: scale(0.98); pointer-events: none; 
+			background-color: #0f172a !important; 
+			background-image: radial-gradient(circle, #0f172a 30%, #020617 100%) !important;
+			border-color: #374151 !important; 
+			color: #334155 !important; 
+			opacity: 1 !important; 
+			z-index: 5; 
+			box-shadow: inset 0 0 5px rgba(0,0,0,0.8); 
+			cursor: not-allowed; 
+			transform: scale(0.98);
+			pointer-events: none; 
 		}
 		.crew-node-name { font-size: 0.875rem; font-weight: 700; color: #94a3b8; transition: color 0.3s; }
 		.crew-node-skill { font-size: 0.75rem; color: #64748b; line-height: 1; text-align: center; }
@@ -366,13 +442,13 @@
 		#compass-target { position: absolute; width: 80px; height: 80px; border-radius: 50%; background: rgba(16, 185, 129, 0.2); border: 2px solid #10b981; top: 68px; left: 68px; transform-origin: center center; pointer-events: none; }
 		#compass-needle.aligned #needle-head { background-color: #34d399; box-shadow: 0 0 15px #10b981; }
 		#compass-needle:not(.aligned) { transition: transform 0.05s linear; }
-		/* --- 1. THE CYAN CREW STYLE (Base State) --- */
-		/* Applies the blue look ONLY when no animation is playing */
+		/* --- SKILL CHECK BUTTON (Active) --- */
 		.btn-game.border-cyan-500:not(.fx-skill-success):not(.fx-skill-fail):not(.fx-skill-active) {
-			border-color: #22d3ee !important; 
+			border: 1px solid #22d3ee !important; 
 			box-shadow: 0 0 10px rgba(34, 211, 238, 0.3), inset 0 0 10px rgba(34, 211, 238, 0.1) !important;
-			background: linear-gradient(90deg, rgba(8, 51, 68, 0.9) 0%, #1f2937 100%) !important;
-			transition: all 0.2s ease-out; /* Smooth hover effects */
+			background: linear-gradient(90deg, rgba(34, 211, 238, 0.2) 0%, #1e293b 50%, #0f172a 100%) !important; 
+			transition: all 0.2s ease-out; 
+			z-index: 20;
 		}
 
 		/* --- 2. THE CREW HOVER (Lift & Lighten) --- */
@@ -1061,10 +1137,10 @@
 				crewUseFree: false, 
 				lastCrewUsedId: null, 
 				crew: {
-					gareth: { id: 'gareth', name: 'Captain Gareth', skill: 'Insight & Intimidation', used: false, desc: 'Add +1d4 to Insight & Intimidation' },
+					gareth: { id: 'gareth', name: 'Captain Gareth', skill: 'Intimidation & Insight', used: false, desc: 'Add +1d4 to Intimidation & Insight' },
 					quinn: { id: 'quinn', name: 'Quinn', skill: 'Investigation & History', used: false, desc: 'Add +1d4 to Investigation & History' },
 					talon: { id: 'talon', name: 'Talon', skill: 'Survival & Perception', used: false, desc: 'Add +1d4 to Survival & Perception' },
-					bones: { id: 'bones', name: 'Bones', skill: 'Nature & Medicine', used: false, desc: 'Add +1d4 to Nature & Medicine' }
+					bones: { id: 'bones', name: 'Bones', skill: 'Medicine & Nature', used: false, desc: 'Add +1d4 to Medicine & Nature' }
 				},
 				history: [],
 				companions: {
@@ -8461,7 +8537,7 @@
                             
                             const dieType = gameState.isEthereal ? '8' : '4';
                             // Added space before the + for cleaner layout
-                            supplementalText += ` <span class="text-cyan-300 text-[10px] font-bold animate-pulse">+ 1d${dieType} (${activeCrewMember.name})</span>`;
+                            supplementalText += ` <span class="text-cyan-300 text-[12px] font-bold animate-pulse">+ 1d${dieType} (${activeCrewMember.name})</span>`;
                         }
                     }
 
@@ -8766,11 +8842,11 @@
 			const sceneId = gameState.currentSceneId;
 			
 			const suppliesDisplay = document.getElementById('supplies-display');
-			const companionPanel = document.getElementById('companion-panel');
 			
 			// 1. Render Companions
 			const isSilasJoined = gameState.companions.silas.joined;
 			const isBlinkJoined = gameState.companions.blink.joined;
+			const companionPanel = document.getElementById('companion-panel');
 			
 			if (isSilasJoined || isBlinkJoined) { 
 				companionPanel.classList.remove('hidden');
@@ -8780,12 +8856,20 @@
 			}
 			
 			// 2. Render Ability Grid Layout
-			const abilitiesWrapper = document.getElementById('abilities-combined-container'); // Correct ID
+			const abilitiesWrapper = document.getElementById('abilities-combined-container'); 
 			const hasPlaneWalk = gameState.skills.includes("Plane Walking");
 			const planarContainer = document.getElementById('planar-skills-container');
 			
 			if (hasPlaneWalk) planarContainer.classList.remove('hidden');
 			else planarContainer.classList.add('hidden');
+
+			if ((isSilasJoined || isBlinkJoined) || hasPlaneWalk) {
+				abilitiesWrapper.classList.remove('hidden');
+				abilitiesWrapper.classList.add('grid'); // Restore grid layout
+			} else {
+				abilitiesWrapper.classList.add('hidden');
+				abilitiesWrapper.classList.remove('grid');
+			}
 
 			// 3. Prologue/Journal Visibility
 			if (sceneId && sceneId.startsWith('prologue')) {
@@ -8984,44 +9068,49 @@
 			}
 		});
 
-		// 2. Render the Radial Crew Menu (FIXED: Dynamic State Lookup)
 		function renderRadialCrew() {
 			const container = document.querySelector('.radial-container');
 			if (!container) return; 
 
 			const crewKeys = ['gareth', 'quinn', 'talon', 'bones']; 
 			
-			// 1. Initial Build: Create buttons if they don't exist
+			// 1. INITIAL BUILD
 			if (!document.getElementById('node-gareth')) { 
+				// NEW: Add the Grid Mask Layers here
+				container.innerHTML = `
+					<div class="radial-grid-mask">
+						<div class="radial-planar-grid"></div>
+					</div>
+					<div id="tether-gareth" class="spectral-tether tether-nw"></div>
+					<div id="tether-quinn" class="spectral-tether tether-ne"></div>
+					<div id="tether-talon" class="spectral-tether tether-sw"></div>
+					<div id="tether-bones" class="spectral-tether tether-se"></div>
+					<div id="radial-hub" class="radial-hub">
+						<div class="cinzel font-bold text-cyan-200 text-xs leading-tight text-center mt-2">GUIDING<br>VOICE</div>
+						<div class="text-cyan-400 text-xs mt-0.5 font-bold animate-pulse tracking-widest">+1d4</div>
+					</div>
+				`;
 				
 				crewKeys.forEach((key, idx) => {
-					// We do NOT capture 'const c = gameState.crew[key]' here for the logic.
-					// We only capture the 'key' (string) which is safe.
-					
 					const btn = document.createElement('div');
 					btn.id = `node-${key}`; 
 					btn.className = 'crew-node';
 					
-					// Positioning classes
 					if (idx === 0) btn.classList.add('node-nw'); 
 					else if (idx === 1) btn.classList.add('node-ne');
 					else if (idx === 2) btn.classList.add('node-sw'); 
 					else if (idx === 3) btn.classList.add('node-se');
 					
 					btn.onclick = () => {
-						// --- FIX STARTS HERE ---
-						// Look up the crew member from the CURRENT global state right now
 						const currentCrew = gameState.crew[key];
-						
 						if (currentCrew.used && !gameState.crewUseFree) return;
 						toggleCrewSelection(key); 
-						// --- FIX ENDS HERE ---
 					};
 					container.appendChild(btn);
 				});
 			}
 
-			// 2. State Updates: Update visuals (This part was fine, but relies on fresh lookups)
+			// 2. STATE UPDATE (Rest of logic remains the same)
 			const hub = document.getElementById('radial-hub');
 			const isAnyActive = activeCrewMember !== null;
 
@@ -9031,9 +9120,7 @@
 			}
 
 			crewKeys.forEach(key => {
-				// Always get fresh state for visuals
 				const c = gameState.crew[key]; 
-				
 				const btn = document.getElementById(`node-${key}`);
 				const tether = document.getElementById(`tether-${key}`);
 				
@@ -9042,20 +9129,17 @@
 				const isUsed = c.used;
 				const isActive = activeCrewMember && activeCrewMember.id === c.id;
 
-				// Content - Handle "Captain" splitting for display
 				let displayName = c.name;
 				if(c.name.includes(' ')) displayName = c.name.split(' ')[0]; 
 				if(key === 'gareth') displayName = "Gareth"; 
 				
 				let content = `<span class="crew-node-name">${displayName}</span><span class="crew-node-skill">${c.skill.replace('&', '<br>&')}</span>`;
 				
-				// Icons
 				if(isUsed && !gameState.crewUseFree) content += `<i class="fas fa-lock absolute top-1 right-1 text-xs text-gray-500"></i>`;
 				if(gameState.crewUseFree && !isUsed) content += `<i class="fas fa-star absolute top-1 right-1 text-xs text-purple-400 animate-pulse"></i>`;
 				
 				btn.innerHTML = content;
 
-				// Active State
 				if (isActive) {
 					btn.classList.add('charged');
 					tether.classList.add('flowing');
@@ -9064,7 +9148,6 @@
 					tether.classList.remove('flowing');
 				}
 
-				// Used State
 				if (isUsed && !gameState.crewUseFree) {
 					btn.classList.add('used');
 				} else {
