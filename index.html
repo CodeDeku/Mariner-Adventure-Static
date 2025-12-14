@@ -57,6 +57,7 @@
 						<div id="hp-bar" class="bg-red-800 h-full w-full transition-all duration-500"></div>
 					</div>
 				</div>
+				<div id="enemy-status-effects" class="flex gap-2 mt-2 flex-wrap"></div>
 
 				<div id="doom-counter-display" class="bg-gray-900 p-2 rounded border border-gray-700 flex flex-col text-[10px] gap-2 relative hidden mt-2">
 					<div class="flex justify-between items-center cinzel text-xs uppercase tracking-wider font-bold">
@@ -220,11 +221,12 @@
         import { getFirestore, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 		
 		// --- IMPORT NEW MODULES ---
-		import { sceneImages, itemRegistry } from './assets.js';
+		import { sceneImages, itemRegistry, STATUS_EFFECTS } from './assets.js';
 
 		// --- ATTACH TO WINDOW (Bridge for legacy code & assets.js) ---
 		window.sceneImages = sceneImages;
 		window.itemRegistry = itemRegistry;
+		window.STATUS_EFFECTS = STATUS_EFFECTS;
 
         const firebaseConfig = {
 			apiKey: "AIzaSyDlg5dETZJpbJ9GzMV01pUYA06XbFmySbw",
@@ -448,6 +450,25 @@
 						desc: "Displacer Cub (Active: Phase Shift)",
 						active: false
 					}
+				},
+				player: {
+					specialization: null, // 'AE' or 'PA' (Set this when they choose in Act 1)
+				},
+				combat: {
+					enemy: null,
+					enemyHP: 0,
+					enemyMaxHP: 0,
+					enemyDamage: '1d6',
+					damageType: 'physical',
+					enemyStatus: [], // Array of { name: 'vulnerable', duration: 1 }
+					isPlayerTurn: true,
+					
+					// Combo Flags
+					ae_primed: null, // e.g., { type: 'fire', bonusDmg: '1d8' }
+					blade_enhanced_active: false,
+					blink_used_this_turn: false,
+					hunters_mark_used_this_turn: false,
+					silas_used_this_turn: false
 				},
 				isBossCombat: false,
 				enemyHP: 0,
@@ -878,6 +899,17 @@
 			let log = "";
 			let eldersKilled = 0;
 
+			// --- FIX: CHECK STATUS EFFECTS (PRONE/VULNERABLE) ---
+			// Check for Prone (Stun) or Vulnerable globally
+			const isProne = state.combat.enemyStatus.find(s => s.name === 'prone');
+			const isVulnerable = state.combat.enemyStatus.find(s => s.name === 'vulnerable');
+			
+			// Consume Prone immediately if it exists (It skips the enemy turn later)
+			if (isProne) {
+				state.combat.enemyStatus = state.combat.enemyStatus.filter(s => s.name !== 'prone');
+			}
+			// ----------------------------------------------------
+
 			// --- 1. CALCULATE PLAYER DAMAGE ---
 			const levelBonus = (state.baseDamage || 0); 
 			
@@ -908,27 +940,25 @@
 			playerDmg = baseDamage;
 			
 			// BOON: Talon's Ghost Hunter (Act 2)
-			// Applies to Ethereal enemies or specific ghostly foes
 			if (state.activeBoons.includes('ghost_hunter')) {
-				const ghostlyEnemies = ['Displacer Beast', 'Drowned Spectre', 'Mimic', 'Brass Sentinel']; // Sentinel is arguably spectral-powered
+				const ghostlyEnemies = ['Displacer Beast', 'Drowned Spectre', 'Mimic', 'Brass Sentinel']; 
 				if (state.isEthereal || ghostlyEnemies.includes(state.currentEnemy)) {
 					playerDmg += 2;
 					log += " <span class='text-purple-300 font-bold'>(Ghost Hunter +2)</span>";
 				}
 			}
 			
-			// Apply Planar Vulnerability (Phase 3 Pivot: Last Elder standing)
+			// Apply Planar Vulnerability
 			if (isForceDamage && state.activeEnemies.length === 1 && playerDmg > 0) {
-				playerDmg += 2; // +2 Force Damage bonus
+				playerDmg += 2; 
 				log += `<span class='text-spectral-d8'>Planar Focus: Force Damage +2.</span> `;
 			}
 			
-			// Simulate a "Crit" roll (10% chance) if the boon is active
+			// Simulate "Crit" roll (10% chance)
 			if (state.activeBoons.includes('hunters_mark') && Math.random() > 0.90) {
 				state.nextAttackCrit = true; 
 				log += "<span class='text-purple-400 font-bold'>Hunter's Precision! (Crit Ready)</span> ";
 			}
-
 
 			// BLINK CRIT MODIFIER
 			if (state.nextAttackCrit && playerDmg > 0) {
@@ -941,12 +971,19 @@
 			if (gameState.battleRhythm && playerDmg > 0) {
 				playerDmg = playerDmg * 2;
 				gameState.battleRhythm = false; 
-				
 				const buffIdx = gameState.inventory.indexOf("Battle Rhythm");
 				if (buffIdx > -1) gameState.inventory.splice(buffIdx, 1);
-
 				log += "<span class='text-red-500 font-bold'>BATTLE RHYTHM! (Double Damage)</span> ";
 			}
+
+			// --- FIX: APPLY VULNERABLE MULTIPLIER ---
+			if (isVulnerable && playerDmg > 0) {
+				playerDmg = Math.floor(playerDmg * 1.5);
+				log += " <span class='text-red-500 font-bold'>(Vulnerable! x1.5)</span>";
+				// Consume Vulnerable
+				state.combat.enemyStatus = state.combat.enemyStatus.filter(s => s.name !== 'vulnerable');
+			}
+			// ----------------------------------------
 			
 			// --- 2. APPLY DAMAGE TO BOSSES ---
 			let targetsHit = [];
@@ -958,9 +995,9 @@
 				let currentDmg = playerDmg;
 				let evasionCheck = false;
 
-				// PHASE 1/2 EVASION CHECK (2+ targets remaining, single target, and not Ethereal)
+				// PHASE 1/2 EVASION CHECK
 				if (!isAOE && !isStun && state.activeEnemies.length >= 2 && !state.isEthereal && attackType !== 'none') {
-					if (Math.random() < 0.3) { // 30% evasion chance
+					if (Math.random() < 0.3) { 
 						currentDmg = 0;
 						evasionCheck = true;
 						targetsHit.push(`${elderName}: Evaded`);
@@ -986,12 +1023,10 @@
 			state.activeEnemies = state.activeEnemies.filter(name => state.enemies[name] > 0);
 			state.enemyHP = state.activeEnemies.reduce((total, name) => total + state.enemies[name], 0);
 
-			// Format damage log
 			if (targetsHit.length > 0 && attackType !== 'none') {
 				log += `You struck for ${targetsHit.join(', ')}. `;
 				if (isForceDamage) log = log.replace(/struck for Elder/g, 'struck for <span class="text-spectral-d8">Force Damage</span> Elder');
 			}
-
 
 			// --- 3. CHECK VICTORY ---
 			if (state.activeEnemies.length === 0) {
@@ -1005,15 +1040,12 @@
 
 			// --- 4. ENEMY LOGIC (RETALIATION & PIVOTS) ---
 			
-			// Phase 1 Pivot: First Elder Defeated (The Warning)
 			if (eldersKilled === 1 && state.activeEnemies.length === 2) {
 				state.allyCooldowns.silas = Math.max(state.allyCooldowns.silas, 1);
 				state.allyCooldowns.blink = Math.max(state.allyCooldowns.blink, 1);
 				log += `<span class='text-danger'>The remaining Elders shriek, briefly stunning your allies (Cooldown +1).</span> `;
 			}
-			// Phase 2 Pivot: Second Elder Defeated (The Desperation)
 			if (eldersKilled === 2 && state.activeEnemies.length === 1) {
-				 // Heal the final Elder
 				const finalElderName = state.activeEnemies[0];
 				const healAmount = 20; 
 				state.enemies[finalElderName] = Math.min(state.maxElderHP, state.enemies[finalElderName] + healAmount);
@@ -1021,8 +1053,9 @@
 				log += `<span class='text-blood'>Desperation! The last Elder absorbs its kin's power (+${healAmount} HP).</span> `;
 			}
 			
-			// Retaliation: Only run if not stunned
-			let enemySkipped = isStun; 
+			// --- FIX: UPDATE RETALIATION LOGIC ---
+			// Retaliation: Only run if not stunned by Item OR Prone status
+			let enemySkipped = isStun || isProne; 
 
 			if (!enemySkipped) {
 				let totalEnemyDmg = 0;
@@ -1030,13 +1063,14 @@
 				
 				// Each active Elder attacks
 				state.activeEnemies.forEach(elderName => {
-					const dmg = Math.floor(Math.random() * (state.enemyDamageRange[1] - state.enemyDamageRange[0] + 1)) + state.enemyDamageRange[0];
+					const range = state.enemyDamageRange || [4, 7];
+					const dmg = Math.floor(Math.random() * (range[1] - range[0] + 1)) + range[0];
 					totalEnemyDmg += dmg;
 					attacksLaunched++;
 				});
 
 				// Apply mitigation
-				if (state.inventory.includes("Mirror Shield")) totalEnemyDmg = Math.max(0, totalEnemyDmg - attacksLaunched); // -1 per attack
+				if (state.inventory.includes("Mirror Shield")) totalEnemyDmg = Math.max(0, totalEnemyDmg - attacksLaunched); 
 				if (state.inventory.includes("Salt-Warped Spyglass") && state.influence <= -15) totalEnemyDmg = Math.max(0, totalEnemyDmg - attacksLaunched);
 
 				// SILAS TANK MODIFIER
@@ -1056,6 +1090,8 @@
 						log += ` Your defenses absorbed the blow.`;
 					}
 				}
+			} else if (isProne) {
+				 log += `<span class='text-amber-400'>The Elders are Prone and struggle to recover! (Turn Skipped)</span> `;
 			} else if (isStun) {
 				 log += `<span class='text-yellow-400'>The Elders are stunned and skip their turn!</span> `;
 			}
@@ -1068,6 +1104,61 @@
 			updateUI(); 
 			renderScene(state.currentSceneId); 
 		}
+		
+		// --- BRIDGE: Maps Legacy Combat Calls to New Logic ---
+		window.resolveCombatRound = function(attackType) {
+			const state = window.gameState;
+
+			// 1. If in Horde Mode (Spire), route to Horde Logic automatically
+			if (state.activeEnemies && state.activeEnemies.length > 0) {
+				// Default to targeting the first enemy if no target specified
+				const target = state.activeEnemies[0]; 
+				window.resolveHordeRound(attackType, target);
+				return;
+			}
+
+			// 2. Standard Boss Logic (Coral Hulk, etc.)
+			let damage = 0;
+			let log = "";
+			
+			// Map attackType to damage manually
+			if (attackType === 'valor_strike') damage = window.rollDice('1d8+2'); 
+			else if (attackType === 'heavy_strike') damage = window.rollDice('1d6+1');
+			else if (attackType === 'item_holy_water') damage = 25;
+			else if (attackType === 'item_fire') damage = 20;
+			else if (attackType === 'item_stake_driver') { 
+				damage = 15; 
+				window.applyStatusEffect(state, 'prone', 1); // Stun effect
+				log += " **STUNNED!**";
+			}
+			else if (attackType === 'reflect_stance') { 
+				state.negateNextDamage = true; 
+				log = "Mirror Shield raised. Next attack reflected.";
+			}
+
+			// Apply Damage
+			if (damage > 0) {
+				state.combat.enemyHP = Math.max(0, state.combat.enemyHP - damage);
+				state.enemyHP = state.combat.enemyHP; // Sync legacy variable
+				log = `Attacked with ${attackType}! Dealt ${damage} damage.${log}`;
+			}
+
+			addToHistory(log, 'combat');
+			window.fxManager.flashRed();
+
+			// Check Victory
+			if (state.combat.enemyHP <= 0) {
+				// Let renderScene handle the victory transition based on currentSceneId
+				// But for safety, we trigger UI update
+				updateUI();
+				if (state.currentSceneId === 'coral_hulk_combat') renderScene('coral_hulk_victory');
+				return;
+			}
+
+			// Trigger Enemy Turn
+			setTimeout(window.enemyTurn, 1000);
+		};
+
 
 		// Updated to be a FREE ACTION (Does not trigger enemy turn)
 		window.allyCommand = function(allyId) {
@@ -1114,150 +1205,266 @@
 		
 		
 		
-		// Standard Combat (Kept for Coral Hulk)
-        window.resolveCombatRound = function(attackType) {
-			const state = gameState;
-			let playerDmg = 0;
-			let log = "";
-            let preventRegen = false; 
-            let isStun = false;       
-			
-			// --- 1. CALCULATE PLAYER DAMAGE ---
-			const levelBonus = (state.baseDamage || 0);
+		window.attackEnemy = (comboType = 'standard') => {
+			const state = window.gameState;
+			// Safety check
+			if (!state.combat.enemyHP && state.enemyHP > 0) {
+				// Sync legacy HP to new object if needed
+				state.combat.enemyHP = state.enemyHP;
+				state.combat.enemy = { name: state.currentEnemy };
+			}
 
-			if (attackType === 'valor_strike') {
-				playerDmg = Math.floor(Math.random() * 8) + 6 + levelBonus; 
-				log += "The Sword of Valor flares with white fire! ";
+			if (!state.combat.isPlayerTurn || state.combat.enemyHP <= 0) return;
+
+			// Base damage logic
+			let weaponDmg = state.inventory.includes("Sword of Valor") ? '1d8+1' : '1d6';
+			let baseDamage = window.rollDice(weaponDmg);
+			let damageType = 'physical';
+			let bonusDamage = 0;
+			let attackLog = `Edward attacks the ${state.combat.enemy.name || 'enemy'}.`;
+
+			// Combat State
+			const { blade_enhanced_active, blink_used_this_turn, ae_primed } = state.combat;
+			const aeBonusDie = ae_primed ? window.rollDice(ae_primed.bonusDmg) : 0;
+
+			// 1. COMBO MODIFIERS
+			switch (comboType) {
+				case 'zephyrStrike': // T2
+					damageType = 'force';
+					bonusDamage += window.rollDice('1d8');
+					attackLog = `Edward executes the **Zephyr Strike**, piercing the guard.`;
+					break;
+				case 'surgicalStrike': // T3 (PA)
+					damageType = 'force';
+					bonusDamage += window.rollDice('1d8');
+					window.applyStatusEffect(state, 'vulnerable', 1);
+					attackLog = `**Surgical Strike**! Weakness exposed (Vulnerable applied).`;
+					break;
+				case 'planarStrike': // T3 (AE)
+					damageType = 'force';
+					bonusDamage += window.rollDice('1d8') + aeBonusDie;
+					attackLog = `Planar energy surges! **Howling Planar Strike**!`;
+					break;
+				case 'tripAttack': // T4 (Blink)
+					damageType = 'force';
+					bonusDamage += window.rollDice('1d10');
+					window.applyStatusEffect(state, 'prone', 1);
+					attackLog = `**Dire Wolf Trip Attack**! Enemy is Prone!`;
+					break;
+				case 'huntersEdge': // T4 (Silas + PA)
+					damageType = 'force';
+					bonusDamage += window.rollDice('1d10');
+					window.applyStatusEffect(state, 'vulnerable', 1);
+					attackLog = `Silas and Edward execute **Hunter's Edge**!`;
+					break;
+				case 'elementalStrike': // T2 (AE Only)
+					if (ae_primed) {
+						damageType = ae_primed.type;
+						bonusDamage += aeBonusDie;
+						attackLog = `Edward retaliates with a **${ae_primed.type} Strike**.`;
+					}
+					break;
+				case 'standard':
+				default:
+					if (ae_primed) {
+						damageType = ae_primed.type;
+						bonusDamage += aeBonusDie;
+						attackLog = `Edward strikes, releasing stored energy.`;
+					}
+					break;
+			}
+
+			// 2. CRIT LOGIC
+			let isCrit = blink_used_this_turn || state.inventory.includes('Battle Rhythm');
+			if (isCrit) {
+				baseDamage *= 2;
+				attackLog += " **CRITICAL HIT!**";
+				state.combat.blink_used_this_turn = false;
+				// Remove Battle Rhythm if present
+				const brIdx = state.inventory.indexOf('Battle Rhythm');
+				if (brIdx > -1) state.inventory.splice(brIdx, 1);
+			}
+
+			let totalDamage = baseDamage + bonusDamage;
+			
+			
+
+			// 3. VULNERABLE CHECK
+			const isVulnerable = state.combat.enemyStatus.find(s => s.name === 'vulnerable');
+			if (isVulnerable) {
+				totalDamage = Math.floor(totalDamage * 1.5);
+				attackLog += " *(Vulnerable!)*";
+				state.combat.enemyStatus = state.combat.enemyStatus.filter(s => s.name !== 'vulnerable');
+			}
+
+			// --- FIX: HANDLE HORDE MODE (Act 3 Elders) vs SINGLE BOSS ---
+			if (state.activeEnemies && state.activeEnemies.length > 0) {
+				// HORDE LOGIC: Hit the first available target in the array
+				const targetName = state.activeEnemies[0];
+				state.enemies[targetName] = Math.max(0, state.enemies[targetName] - totalDamage);
+				
+				attackLog += ` You struck ${targetName} for ${totalDamage} damage!`;
+				
+				// Check death of specific unit
+				if (state.enemies[targetName] <= 0) {
+					attackLog += ` <span class='text-blood'>${targetName} is destroyed!</span>`;
+					state.activeEnemies.shift(); // Remove from active list
+				}
+				
+				// Sync global HP for UI bar
+				state.combat.enemyHP = state.activeEnemies.reduce((sum, name) => sum + state.enemies[name], 0);
+				state.enemyHP = state.combat.enemyHP; // Sync legacy
 			} 
-			else if (attackType === 'heavy_strike') {
-				playerDmg = Math.floor(Math.random() * 6) + 2 + levelBonus; 
-			}
-			else if (attackType === 'item_holy_water') {
-				playerDmg = 25; 
-				log += "The Holy Water burns their flesh like acid! ";
-			}
-			else if (attackType === 'item_fire') {
-				playerDmg = 20; 
-                preventRegen = true;
-				log += "The Alchemical Fire cauterizes the wounds! ";
-			}
-			else if (attackType === 'item_flash') {
-				playerDmg = 0;
-                isStun = true;
-				log += "Flash Powder blinds them! They cannot strike back this turn. ";
-			}
-			// SUN-STAR GRENADE
-			else if (attackType === 'item_sun_star') {
-				playerDmg = 30; 
-                isStun = true;      
-                preventRegen = true;
-				log += "<b>THE SUN-STAR DETONATES!</b> 30 Radiant Damage! The enemy is blinded and cauterized! ";
-			}
-			// CHAOS WEAPON (STAKE DRIVER) 
-			else if (attackType === 'item_stake_driver') {
-				playerDmg = Math.floor(Math.random() * 8) + 4 + levelBonus;
-                isStun = true;
-				log += "<b>THWACK!</b> The bone bolt pins the enemy! (Stunned). ";
-			}
+			else {
+				// STANDARD BOSS LOGIC
+				state.combat.enemyHP = Math.max(0, state.combat.enemyHP - totalDamage);
+				state.enemyHP = state.combat.enemyHP; // Sync legacy
+				attackLog += ` Dealt ${totalDamage} ${damageType} damage.`;
+			}		
 			
-			// BATTLE RHYTHM CHECK
-			if (gameState.battleRhythm && playerDmg > 0) {
-				playerDmg = playerDmg * 2;
-				gameState.battleRhythm = false; 
-				const buffIdx = gameState.inventory.indexOf("Battle Rhythm");
-				if (buffIdx > -1) gameState.inventory.splice(buffIdx, 1);
-				log += "<span class='text-red-500 font-bold'>BATTLE RHYTHM! (Double Damage)</span> ";
+			
+			addToHistory(attackLog + ` Dealt ${totalDamage} ${damageType} damage.`, 'combat');
+			window.fxManager.flashRed(); // Visual feedback for hit
+
+			// Cleanup
+			state.combat.blade_enhanced_active = false;
+			state.combat.ae_primed = null;
+			state.combat.hunters_mark_used_this_turn = false;
+
+			renderStatusEffects();
+			updateUI();
+
+			if (state.combat.enemyHP <= 0) {
+				// --- DYNAMIC VICTORY ROUTING ---
+				const enemy = state.combat.enemy.name || "";
+				
+				// 1. Fire Path Victory (Act 1)
+				if (enemy === "Slag Elemental") {
+					addToHistory("The elemental shrieks as its core shatters!", 'combat');
+					renderScene('smelter_victory_generic'); 
+					return;
+				}
+				// 2. Shadow Path Victory (Act 1)
+				else if (enemy === "Drowned Spectre") {
+					addToHistory("The spectre dissolves into harmless mist.", 'combat');
+					renderScene('chapel_victory_generic');
+					return;
+				}
+				// 3. Coral Hulk (Act 3)
+				else if (enemy.includes("Coral")) {
+					renderScene('coral_hulk_victory');
+					return;
+				}
+				// 4. Default / Spire (Act 3)
+				else {
+					renderScene('spire_victory');
+					return;
+				}
+			} else {
+				setTimeout(window.enemyTurn, 1000);
 			}
+		};
+		
+		window.enemyTurn = () => {
+			const state = window.gameState;
+			// Safety check for victory overlap
+			if (state.combat.enemyHP <= 0 && (!state.activeEnemies || state.activeEnemies.length === 0)) return;
 
-			// BLINK CRIT MODIFIER
-			if (state.nextAttackCrit && playerDmg > 0) {
-				playerDmg = Math.floor(playerDmg * 2.5); 
-				state.nextAttackCrit = false;
-				log += "<span class='text-emerald-400 font-bold'>PHASE STRIKE! (Crit)</span> ";
-			}
-
-			// APPLY DAMAGE TO BOSS
-			state.enemyHP -= playerDmg;
-			if (playerDmg > 0) log += `You dealt <b>${playerDmg}</b> damage to the ${state.currentEnemy}. `;
-
-			// --- 2. CHECK VICTORY ---
-			if (state.enemyHP <= 0) {
-				state.enemyHP = 0;
-				state.isBossCombat = false;
-				audioManager.playClash();
-				addToHistory(log + ` The ${state.currentEnemy} falls!`, 'combat');
-				if (state.currentEnemy === 'Coral-Hulk') renderScene('coral_hulk_victory');
-				else renderScene('spire_victory');
+			// 1. CHECK PRONE (CC)
+			const isProne = state.combat.enemyStatus.find(s => s.name === 'prone');
+			if (isProne) {
+				addToHistory(`${state.combat.enemy ? state.combat.enemy.name : 'Enemy'} is Prone and cannot act!`, 'combat');
+				state.combat.enemyStatus = state.combat.enemyStatus.filter(s => s.name !== 'prone');
+				state.combat.isPlayerTurn = true;
+				updateUI();
+				window.renderStatusEffects();
 				return;
 			}
 
-			// --- 3. ENEMY LOGIC (RETALIATION) ---
-			let enemySkipped = isStun; 
+			// --- FIX: CALCULATE DAMAGE (Single vs Horde) ---
+			let damage = 0;
+			let damageType = state.combat.damageType || 'physical';
+			const enemyName = state.combat.enemy ? state.combat.enemy.name : (state.currentEnemy || "Enemy");
 
-			if (!enemySkipped) {
-				let enemyDmg = Math.floor(Math.random() * (state.enemyDamageRange[1] - state.enemyDamageRange[0] + 1)) + state.enemyDamageRange[0];
-
-				// MIRROR SHIELD REFLECTION 
-				if (attackType === 'reflect_stance') {
-					log += ` <span class='text-blue-300 font-bold'>Mirror Shield reflects the attack!</span> You take 0 damage. The enemy takes ${enemyDmg}.`;
-					state.enemyHP -= enemyDmg; 
-					enemyDmg = 0; 
-					 if (state.enemyHP <= 0) {
-						state.enemyHP = 0;
-						state.isBossCombat = false;
-						audioManager.playClash();
-						renderScene('coral_hulk_victory');
-						return;
-					}
+			// A. HORDE LOGIC (Act 3 Elders)
+			if (state.activeEnemies && state.activeEnemies.length > 0) {
+				let attacks = 0;
+				state.activeEnemies.forEach(elder => {
+					// Use stored damage range or default 4-7
+					const range = state.enemyDamageRange || [4, 7];
+					const hit = Math.floor(Math.random() * (range[1] - range[0] + 1)) + range[0];
+					damage += hit;
+					attacks++;
+				});
+				
+				// Apply Silas/Shield Mitigation per attack
+				if (state.inventory.includes("Mirror Shield")) damage = Math.max(0, damage - attacks);
+			} 
+			// B. SINGLE BOSS LOGIC
+			else {
+				// Handle string '1d6' or array [6, 12]
+				if (state.enemyDamageRange && Array.isArray(state.enemyDamageRange)) {
+					 const r = state.enemyDamageRange;
+					 damage = Math.floor(Math.random() * (r[1] - r[0] + 1)) + r[0];
+				} else {
+					 damage = window.rollDice(state.combat.enemyDamage || '1d6');
 				}
-				// PASSIVE MITIGATION 
-				else {
-					if (state.inventory.includes("Mirror Shield")) enemyDmg = Math.max(0, enemyDmg - 1);
-					if (state.inventory.includes("Salt-Warped Spyglass") && state.influence <= -15) enemyDmg = Math.max(0, enemyDmg - 1);
+			}
+			// ------------------------------------------------
 
-					// SILAS TANK MODIFIER
-					if (state.negateNextDamage) {
-						enemyDmg = 0;
-						state.negateNextDamage = false; 
-						log += ` <span class='text-emerald-400 font-bold'>Silas blocked the strike!</span>`;
-					} else {
-						const oldHP = state.currentHP;
-						state.currentHP = applyDamage(state.currentHP, enemyDmg);
-						const actualTaken = oldHP - state.currentHP;
-						
-						if (actualTaken > 0) {
-							log += ` The ${state.currentEnemy} hits for <b>${actualTaken}</b> damage!`;
-							fxManager.flashRed();
-						} else {
-							log += ` Your armor absorbed the blow.`;
-						}
-					}
+			// --- BOSS SPECIFIC FLAVOR ---
+			if (enemyName.includes("Slag")) { 
+				damageType = 'fire';
+				if (Math.random() > 0.7) {
+					addToHistory(`<span class="text-fire">The molten slag clings to you! (Burning)</span>`, 'danger');
+					damage += 2; 
 				}
+			} else if (enemyName.includes("Spectre")) {
+				damageType = 'psychic';
+			} else if (enemyName.includes("Vampire") || enemyName.includes("Hulk")) {
+				damageType = 'physical';
+				if (damage > 10) {
+					 addToHistory(`<span class="text-red-600">Deep wound! You are bleeding.</span>`, 'danger');
+					 damage += 1;
+				}
+				if (enemyName.includes("Hulk") && state.combat.enemyHP < state.maxEnemyHP) {
+					const heal = 3;
+					state.combat.enemyHP = Math.min(state.maxEnemyHP, state.combat.enemyHP + heal);
+					state.enemyHP = state.combat.enemyHP; // Sync legacy
+					addToHistory(`<span class="text-emerald-400 font-bold">The Coral-Hulk regenerates! (+${heal} HP)</span>`, 'danger');
+				}
+			}
+
+			// 3. ABSORB ELEMENTS REACTION (Player Mitigation)
+			if (state.player.specialization === 'AE' && damageType !== 'physical') {
+				addToHistory(`Edward reacts! **Absorb Elements** active.`, 'system');
+				damage = Math.floor(damage / 2);
+				state.combat.ae_primed = { type: damageType, bonusDmg: '1d8' };
+				addToHistory(`Damage halved. Blade is now **${damageType.toUpperCase()} PRIMED**.`, 'system');
+			}
+
+			// 4. APPLY DAMAGE
+			// Check Silas Intercept
+			if (state.negateNextDamage) {
+				damage = 0;
+				state.negateNextDamage = false;
+				addToHistory(`<span class='text-emerald-400 font-bold'>Silas Intercepted the attack!</span>`, 'system');
+			}
+
+			const oldHP = state.currentHP;
+			state.currentHP = window.applyDamage(state.currentHP, damage, damageType);
+			const actualTaken = oldHP - state.currentHP;
+
+			if (actualTaken > 0) {
+				addToHistory(`${enemyName} hits for ${actualTaken} ${damageType} damage.`, 'danger');
+				window.fxManager.flashRed();
 			} else {
-                log += " <span class='text-yellow-400 font-bold'>Enemy Stunned! Attack Skipped.</span>";
-            }
+				addToHistory(`${enemyName} attacks, but deals no damage.`, 'system');
+			}
 
-			// --- 4. REGENERATION (CORAL-HULK SPECIFIC) ---
-            // Only regenerate if NOT prevented by Fire/Sun-Star
-			if (state.currentEnemy === 'Coral-Hulk' && state.enemyHP > 0 && !preventRegen) {
-				const regenAmount = 3; 
-				state.enemyHP = Math.min(state.maxEnemyHP, state.enemyHP + regenAmount);
-				log += ` <span class='text-red-400 font-bold animate-pulse'>The Hyper-Coral knits flesh together (+${regenAmount} HP Regen).</span>`;
-			} else if (state.currentEnemy === 'Coral-Hulk' && preventRegen) {
-                log += ` <span class='text-orange-400 font-bold'>Cauterized! Regeneration halted.</span>`;
-            }
-
-			// 5. COOLDOWN TICK
-			if (state.allyCooldowns.silas > 0) state.allyCooldowns.silas--;
-			if (state.allyCooldowns.blink > 0) state.allyCooldowns.blink--;
-
-			addToHistory(log, 'combat');
-			updateUI(); 
-			renderScene(state.currentSceneId); 
+			state.combat.isPlayerTurn = true;
+			updateUI();
 		};
-		
-		
-		
 		
 		
 
@@ -2226,17 +2433,19 @@
                 text: "Gareth grips your shoulder. 'Fire burns only if you let it in. Capture it.' You feel a cold resilience settle in your veins. You understand now how to turn the elements against themselves.",
                 journal: "I learned Absorb Elements. I am ready for the fire.",
                 onEnter: (state) => {
-                    if (!state.skills.includes("Absorb Elements")) {
-                        state.skills.push("Absorb Elements");
-                    }
-                    if (state.currentHP > state.maxHP) {
-                        
-                    } else {
-                         state.currentHP = state.maxHP;
-                    }
-                    state.act1Started = true;
-                    return "Unlocked: Absorb Elements. HP checked. Act 1 Commencing.";
-                },
+					state.player.specialization = 'AE'; 
+
+					if (!state.skills.includes("Absorb Elements")) {
+						state.skills.push("Absorb Elements");
+					}
+					if (state.currentHP > state.maxHP) {
+						
+					} else {
+						 state.currentHP = state.maxHP;
+					}
+					state.act1Started = true;
+					return "Unlocked: Absorb Elements. HP checked. Act 1 Commencing.";
+				},
                 choices: [{ text: "Descend to the Town", nextScene: 'cliffside_overlook', type: 'travel' }]
             },
             'learn_primeval': {
@@ -2244,17 +2453,19 @@
                 text: "Talon covers your eyes. 'The dead leave a wake in the ether. Look with your mind.' When you open your eyes, the world hums with hidden outlines. The unseen is now visible to you.",
                 journal: "I learned Primeval Awareness. The undead cannot hide from me.",
                 onEnter: (state) => {
-                    if (!state.skills.includes("Primeval Awareness")) {
-                        state.skills.push("Primeval Awareness");
-                    }
-                    if (state.currentHP > state.maxHP) {
-                        
-                    } else {
-                        state.currentHP = state.maxHP;
-                    }
-                    state.act1Started = true;
-                    return "Unlocked: Primeval Awareness. HP checked. Act 1 Commencing.";
-                },
+					state.player.specialization = 'PA';
+
+					if (!state.skills.includes("Primeval Awareness")) {
+						state.skills.push("Primeval Awareness");
+					}
+					if (state.currentHP > state.maxHP) {
+						
+					} else {
+						state.currentHP = state.maxHP;
+					}
+					state.act1Started = true;
+					return "Unlocked: Primeval Awareness. HP checked. Act 1 Commencing.";
+				},
                 choices: [{ text: "Descend to the Town", nextScene: 'cliffside_overlook', type: 'travel' }]
             },
             'cliffside_overlook': {
@@ -3181,274 +3392,83 @@
 				},
             },
             
-            // --- MULTI-STAGE BOSS FIGHT: SLAG HORROR ---
+            // --- BOSS: SLAG ELEMENTAL (FIRE PATH) ---
             'smelter_stage1_start': {
-                title: "Slag Horror: Stage 1 - The Heat Wave",
-                text: "The <span class='text-danger'>Slag Horror</span> rises from the molten iron, its core glowing. It prepares to spew a <span class='text-fire'>wave of magma</span>. You must find a way to mitigate the heat to get close enough to strike. You spot the hilt of the <span class='text-item'>Sword of Valor</span> suspended in its chest.",
-				journal: "The beast rose from the slag, dripping liquid iron. It didn't look like a monster; it looked like an industrial accident given hate and form.",
-				banter: {
-					'gareth': "It's winding up! Don't stand there—move!"
-				},
+                title: "Boss: Slag Elemental",
+                text: "The magma pool erupts. A <span class='text-danger'>Slag Elemental</span> rises—a towering construct of molten iron and hate. It roars, spraying liquid fire.<br><br><span class='text-fire'>Warning: Enemy deals Fire Damage. Absorb Elements is highly effective.</span>",
+                isBoss: true, 
+                onEnter: (state) => {
+                    // Init Combat: 35 HP (approx 3-4 rounds), 4-8 Dmg
+                    // Fire Damage Type triggers Absorb Elements reaction
+                    initCombat("Slag Elemental", 35, [4, 8]); 
+                    state.combat.damageType = 'fire'; 
+                    return "Combat Started! The heat is intense.";
+                },
+                choices: [
+                    { text: "Engage the Elemental", nextScene: 'smelter_combat_loop', type: 'travel', doomCost: 0 }
+                ]
+            },
+
+            'smelter_combat_loop': {
+                title: "Battle: Slag Elemental",
+                text: "The Elemental surges with heat. If you have <b>Absorb Elements</b>, wait for it to attack to charge your blade. If you have <b>Primeval Awareness</b>, strike now to expose its core.",
                 isBoss: true,
                 choices: [
                     { 
+                        text: "Strike with Weapon", 
+                        action: () => window.attackEnemy('standard'),
+                        type: 'action'
+                    },
+                    // Narrative Counter: Lubricant deals massive damage
+                    { 
+                        text: "Throw Industrial Lubricant (Critical Dmg)", 
+                        action: () => {
+                            window.gameState.combat.enemyHP -= 20; 
+                            addToHistory("The lubricant boils instantly, cracking the Elemental's shell! **20 Damage!**", 'combat');
+                            window.attackEnemy('standard'); // Update UI/Check Death
+                        },
+                        type: 'action', 
+                        reqItem: 'Industrial Lubricant',
+                        consume: true,
+                        customClass: 'btn-success-glow'
+                    },
+                    // Narrative Counter: Holy Water
+                    { 
                         text: "Throw Holy Water", 
-                        nextScene: 'smelter_victory_item',
+                        action: () => {
+                            window.gameState.combat.enemyHP -= 15;
+                            addToHistory("The water flashes to steam, scalding the beast! **15 Damage!**", 'combat');
+                            window.attackEnemy('standard');
+                        },
                         type: 'action', 
                         reqItem: 'Holy Water',
                         consume: true,
                         customClass: 'btn-success-glow'
-                    },
-                    { 
-                        text: "Channel Absorb Elements (Absorb Heat)", 
-                        nextScene: 'smelter_boss_absorb_bridge',
-                        type: 'action', 
-                        reqSkill: 'Absorb Elements', 
-                        doomCost: 0,
-                        customClass: 'btn-fire-glow' 
-                    },
-                    { 
-                        text: "Dodge the Magma Wave", 
-                        nextScene: 'smelter_dodge_logic', 
-                        type: 'skill', 
-                        dc: 14, 
-                        skill: 'Athletics',
-                        doomCost: 1
-                    },
-                    { 
-						text: "Throw Flash Powder and Flee", 
-						nextScene: 'town_square', 
-						type: 'action', 
-						reqItem: 'Flash Powder', 
-						consume: true, 
-						doomCost: 1,
-						action: (state) => {
-							state.isBossCombat = false;
-							return "Escaped the Slag Horror.";
-						}
-					}
+                    }
                 ]
             },
-            'smelter_dodge_logic': {
-                isLogic: true,
-                resolve: (roll, state) => {
-                    if (roll >= 14) {
-                         state.pendingDamage = 4;
-                         return 'smelter_stage2_damaged';
-                    } else {
-                         state.pendingDamage = 8;
-                         return 'smelter_stage2_damaged';
-                    }
-                }
-            },
-            'smelter_boss_absorb_bridge': {
-				isLogic: true,
-				resolve: (roll, state) => {
-					state.isAbsorbCharged = true;
-					return 'smelter_stage2_clean';
-				}
-			},
-            'smelter_stage2_clean': {
-                title: "Slag Horror: Stage 2 - The Shell",
-                text: "The magma wave was negated. The Horror's molten shell is now soft but thick, making a direct attack difficult. It's preparing a solidifying strike.",
-                isBoss: true,
-                choices: [
-                    { 
-                        text: "Douse with Industrial Lubricant",
-                        nextScene: 'smelter_victory_lubricant', 
-                        type: 'action',
-                        reqItem: 'Industrial Lubricant',
-                        consume: true,
-                        customClass: 'btn-success-glow'
-                    },
-                    { 
-                        text: "Activate Ring of Brass", 
-                        nextScene: 'smelter_victory_ring', 
-                        type: 'action', 
-                        reqItem: 'Ring of Brass',
-                        customClass: 'btn-hero'
-                    },
-                    {
-                        text: "Strike with Absorb-Charged Blade",
-                        nextScene: 'smelter_victory_skill', 
-                        type: 'combat',
-                        reqFlag: 'isAbsorbCharged',
-                        customClass: 'btn-fire-glow'
-                    },
-                    { text: "Hack at the Shell (Brute Force)", nextScene: 'smelter_victory_brute', type: 'combat' }
-                ]
-            },
-            'smelter_stage2_damaged': {
-                title: "Slag Horror: Stage 2 - Scorched and Striking",
-                text: "You are scorched and bleeding from the magma wave, but you are close. The Horror's molten shell is thick. You must finish this now.",
-                isBoss: true,
-                choices: [
-                    { 
-                        text: "Douse with Industrial Lubricant",
-                        nextScene: 'smelter_victory_lubricant', 
-                        type: 'action',
-                        reqItem: 'Industrial Lubricant',
-                        consume: true,
-                        customClass: 'btn-success-glow'
-                    },
-                    { 
-                        text: "Activate Ring of Brass", 
-                        nextScene: 'smelter_victory_ring', 
-                        type: 'action', 
-                        reqItem: 'Ring of Brass',
-                        customClass: 'btn-hero' 
-                    },
-                    {
-                        text: "Strike with Absorb-Charged Blade",
-                        nextScene: 'smelter_victory_skill', 
-                        type: 'combat',
-                        reqFlag: 'isAbsorbCharged',
-                        customClass: 'btn-fire-glow'
-                    },
-                    { text: "Hack at the Shell", nextScene: 'smelter_victory_brute', type: 'combat' }
-                ],
-                onEnter: (state) => {
-					state.currentHP = applyDamage(state.currentHP, state.pendingDamage || 0, 'fire');
-					fxManager.flashRed();
-					return `Took ${state.pendingDamage} Fire Damage approaching the boss.`;
-				},
-            },
-            'smelter_victory_lubricant': {
-                title: "Slag Horror Defeated",
-                text: "The Slag Horror is shattered. The **Sword of Valor** is yours.",
-                journal: "Defeated the Slag Horror and claimed the Sword of Valor.",
-                choices: [{ text: "Return to Town Square", nextScene: 'town_square', type: 'travel', }],
-                onEnter: (state) => {
-                    state.isAbsorbCharged = false; 
-                    let logMsg = "Acquired Sword of Valor.";
 
+            'smelter_victory_generic': {
+                title: "Victory: The Fire Dies",
+                text: "The Elemental cools into a statue of twisted slag, then crumbles. In the wreckage of its chest, you find the **Sword of Valor**, untouched by the heat.",
+                journal: "Defeated the Slag Elemental. Claimed the Sword of Valor.",
+                onEnter: (state) => {
+                    // Logic to swap Cutlass for Sword
                     if (state.inventory.includes("Rusted Cutlass")) {
-                        const cutlassIdx = state.inventory.indexOf("Rusted Cutlass");
-                        if (cutlassIdx > -1) state.inventory.splice(cutlassIdx, 1);
-                        
-                        addToHistory("Your Rusted Cutlass shattered against the Slag Horror's hide—useless iron against a god of fire. You dropped the burning hilt and grasped the Sword of Valor. Finally, a weapon worthy of the mission.", 'entry');
-                        logMsg = "Cutlass destroyed. Acquired Sword of Valor.";
-                    } else {
-                         addToHistory("You grasped the Sword of Valor from the beast's chest. The steel hummed with the Wolf King's memory.", 'entry');
+                        const idx = state.inventory.indexOf("Rusted Cutlass");
+                        if (idx > -1) state.inventory.splice(idx, 1);
+                        addToHistory("Your Rusted Cutlass shattered in the final blow.", 'system');
                     }
-
                     if (!state.inventory.includes("Sword of Valor")) {
                         state.inventory.push("Sword of Valor");
                     }
-                    
-                    return logMsg;
-                },
-            },
-            'smelter_victory_ring': {
-                title: "Slag Horror Defeated",
-                text: "The Slag Horror is shattered. The **Sword of Valor** is yours.",
-                journal: "Flawless victory over the Slag Horror using the Ring's power. Claimed the Sword of Valor.",
-                choices: [{ text: "Return to Town Square", nextScene: 'town_square', type: 'travel' }],
-                onEnter: (state) => {
-                    state.isAbsorbCharged = false; 
-                    let logMsg = "Acquired Sword of Valor.";
-
-                    if (state.inventory.includes("Rusted Cutlass")) {
-                        const cutlassIdx = state.inventory.indexOf("Rusted Cutlass");
-                        if (cutlassIdx > -1) state.inventory.splice(cutlassIdx, 1);
-                        
-                        addToHistory("Your Rusted Cutlass shattered against the Slag Horror's hide—useless iron against a god of fire. You dropped the burning hilt and grasped the Sword of Valor. Finally, a weapon worthy of the mission.", 'entry');
-                        logMsg = "Cutlass destroyed. Acquired Sword of Valor.";
-                    } else {
-                         addToHistory("You grasped the Sword of Valor from the beast's chest. The steel hummed with the Wolf King's memory.", 'entry');
-                    }
-
-                    if (!state.inventory.includes("Sword of Valor")) {
-                        state.inventory.push("Sword of Valor");
-                    }
-                    
-                    return logMsg;
-                },
-            },
-            'smelter_victory_item': {
-                title: "Slag Horror Defeated",
-                text: "The Slag Horror is shattered. The **Sword of Valor** is yours.",
-                journal: "Used Holy Water to defeat the Slag Horror. Claimed the Sword of Valor.",
-                choices: [{ text: "Return to Town Square", nextScene: 'town_square', type: 'travel' }],
-                onEnter: (state) => {
-                    state.isAbsorbCharged = false; 
-                    let logMsg = "Acquired Sword of Valor.";
-
-                    if (state.inventory.includes("Rusted Cutlass")) {
-                        const cutlassIdx = state.inventory.indexOf("Rusted Cutlass");
-                        if (cutlassIdx > -1) state.inventory.splice(cutlassIdx, 1);
-                        
-                        addToHistory("Your Rusted Cutlass shattered against the Slag Horror's hide—useless iron against a god of fire. You dropped the burning hilt and grasped the Sword of Valor. Finally, a weapon worthy of the mission.", 'entry');
-                        logMsg = "Cutlass destroyed. Acquired Sword of Valor.";
-                    } else {
-                         addToHistory("You grasped the Sword of Valor from the beast's chest. The steel hummed with the Wolf King's memory.", 'entry');
-                    }
-
-                    if (!state.inventory.includes("Sword of Valor")) {
-                        state.inventory.push("Sword of Valor");
-                    }
-                    
-                    return logMsg;
-                },
-            },
-            'smelter_victory_skill': {
-                title: "Slag Horror Defeated",
-                text: "The Slag Horror is shattered. The **Sword of Valor** is yours. You are scorched by the blast.",
-                journal: "Defeated the Slag Horror with Absorb Elements. Claimed the Sword of Valor.",
-                choices: [{ text: "Return to Town Square", nextScene: 'town_square', type: 'travel' }],
-                onEnter: (state) => {
+                    // Reset combat flags
                     state.isAbsorbCharged = false;
-                    state.currentHP = applyDamage(state.currentHP, 4);
-                    fxManager.flashRed();
-                    
-                    let logMsg = "Acquired Sword of Valor.";
-
-                    if (state.inventory.includes("Rusted Cutlass")) {
-                        const cutlassIdx = state.inventory.indexOf("Rusted Cutlass");
-                        if (cutlassIdx > -1) state.inventory.splice(cutlassIdx, 1);
-                        
-                        addToHistory("Your Rusted Cutlass shattered against the Slag Horror's hide—useless iron against a god of fire. You dropped the burning hilt and grasped the Sword of Valor. Finally, a weapon worthy of the mission.", 'entry');
-                        logMsg = "Cutlass destroyed. Acquired Sword of Valor.";
-                    } else {
-                         addToHistory("You grasped the Sword of Valor from the beast's chest. The steel hummed with the Wolf King's memory.", 'entry');
-                    }
-
-                    if (!state.inventory.includes("Sword of Valor")) {
-                        state.inventory.push("Sword of Valor");
-                    }
-                    
-                    return logMsg;
+                    return "Acquired Sword of Valor.";
                 },
+                choices: [{ text: "Return to Town Square", nextScene: 'town_square', type: 'travel' }]
             },
-            'smelter_victory_brute': {
-                title: "Slag Horror Defeated",
-                text: "The Slag Horror is shattered. The **Sword of Valor** is yours. You are heavily wounded.",
-                journal: "Brute force victory over the Slag Horror, taking heavy damage. Claimed the Sword of Valor.",
-                choices: [{ text: "Limp to Town Square", nextScene: 'town_square', type: 'travel', doomCost: 2 }],
-                onEnter: (state) => {
-                    state.isAbsorbCharged = false;
-                    state.currentHP = applyDamage(state.currentHP, 10);
-                    fxManager.flashRed();
-                    
-                    let logMsg = "Acquired Sword of Valor.";
-
-                    if (state.inventory.includes("Rusted Cutlass")) {
-                        const cutlassIdx = state.inventory.indexOf("Rusted Cutlass");
-                        if (cutlassIdx > -1) state.inventory.splice(cutlassIdx, 1);
-                        
-                        addToHistory("Your Rusted Cutlass shattered against the Slag Horror's hide—useless iron against a god of fire. You dropped the burning hilt and grasped the Sword of Valor. Finally, a weapon worthy of the mission.", 'entry');
-                        logMsg = "Cutlass destroyed. Acquired Sword of Valor.";
-                    } else {
-                         addToHistory("You grasped the Sword of Valor from the beast's chest. The steel hummed with the Wolf King's memory.", 'entry');
-                    }
-
-                    if (!state.inventory.includes("Sword of Valor")) {
-                        state.inventory.push("Sword of Valor");
-                    }
-                    
-                    return logMsg;
-                },
-            },
+            
 
             // --- ACT 1: SHADOW PATH (CHAPEL) ---
             'chapel_entry': {
@@ -3607,209 +3627,59 @@
                     return 'chapel_stage2_finish';
                 }
             },
+            
+			// --- BOSS: DROWNED SPECTRE (SHADOW PATH) ---
             'chapel_stage1_reveal': {
-                title: "Drowned Spectre: Stage 1 - The Ambush",
-                text: "The crypt is flooded. The <span class='text-danger'>Drowned Spectre</span> is present but invisible in the thick, churning <span class='text-void'>black fog</span>. It will strike from the dark unless you can pinpoint its true location. On its skeletal finger glints the <span class='text-item'>Ring of Brass</span>.",
-				journal: "The Spectre was everywhere and nowhere. A cold touch on my neck. A whisper in my ear. Talon told me to stop looking with my eyes.",
-				banter: {
-					'talon': "It's circling us. Stop looking with your eyes. Watch for the displacement in the fog."
-				},
+                title: "Boss: Drowned Spectre",
+                text: "The fog coalesces into a hovering, skeletal figure draped in rotting seaweed. The <span class='text-danger'>Drowned Spectre</span> shrieks—a sound that tears at your mind.<br><br><span class='text-void'>Warning: High Evasion. Use Primeval Awareness to expose weakness.</span>",
+                isBoss: true,
+                onEnter: (state) => {
+                    initCombat("Drowned Spectre", 35, [4, 8]);
+                    state.combat.damageType = 'psychic'; // Flavor text mostly, but fits logic
+                    return "Combat Started! The fog thickens.";
+                },
+                choices: [
+                    { text: "Engage the Spectre", nextScene: 'chapel_combat_loop', type: 'travel', doomCost: 0 }
+                ]
+            },
+
+            'chapel_combat_loop': {
+                title: "Battle: Drowned Spectre",
+                text: "The Spectre phases in and out of reality. Use <b>Primeval Awareness</b> to mark it (Vulnerable) and land a crushing blow.",
                 isBoss: true,
                 choices: [
                     { 
-                        text: "Strike with Sword of Valor", 
-                        nextScene: 'chapel_victory_sword', 
+                        text: "Strike with Weapon", 
+                        action: () => window.attackEnemy('standard'),
+                        type: 'action'
+                    },
+                    // Narrative Counter: Alchemical Fire
+                    { 
+                        text: "Throw Alchemical Fire (Critical Dmg)", 
+                        action: () => {
+                            window.gameState.combat.enemyHP -= 20;
+                            addToHistory("The spectral form burns away! **20 Damage!**", 'combat');
+                            window.attackEnemy('standard');
+                        },
                         type: 'action', 
-                        reqItem: 'Sword of Valor',
-                        customClass: 'btn-hero' 
-                    },
-                    { 
-                        text: "Channel Primeval Awareness", 
-                        nextScene: 'chapel_primeval_bridge',
-                        type: 'action', 
-                        reqSkill: 'Primeval Awareness',
-                        doomCost: 0,
-                        customClass: 'btn-shadow-glow' 
-                    },
-                    { 
-                        text: "Use Ring of Brass", 
-                        nextScene: 'chapel_stage2_finish',
-                        type: 'action', 
-                        reqItem: 'Ring of Brass',
-                        customClass: 'btn-keen-senses' 
-                    },
-                    { 
-                        text: "Swing Wildly into the Fog", 
-                        nextScene: 'chapel_attack_logic', 
-                        type: 'skill', 
-                        dc: 14, 
-                        skill: 'Perception',
-                        doomCost: 1
-                    },
-                    { 
-						text: "Throw Flash Powder and Flee", 
-						nextScene: 'town_square', 
-						type: 'action', 
-						reqItem: 'Flash Powder', 
-						consume: true, 
-						doomCost: 1,
-						action: (state) => {
-							state.isBossCombat = false;
-							return "Escaped the Drowned Spectre.";
-						}
-					}
-                ]
-            },
-            'chapel_attack_logic': {
-                isLogic: true,
-                resolve: (roll, state) => {
-                    if (roll >= 14) {
-                         state.pendingDamage = 4;
-                         return 'chapel_stage2_hit_damaged';
-                    } else {
-                         state.pendingDamage = 8;
-                         return 'chapel_stage2_miss_damaged';
+                        reqItem: 'Alchemical Fire',
+                        consume: true,
+                        customClass: 'btn-fire-glow'
                     }
-                }
-            },
-            'chapel_stage2_finish': {
-                title: "Drowned Spectre: Stage 2 - Banishment",
-                text: "The Spectre is revealed. It knows it's been found and lunges at you, attempting to possess your mind. You must banish it now.",
-                isBoss: true,
-                choices: [
-                    { 
-                        text: "Throw Alchemical Fire", 
-                        nextScene: 'chapel_victory_item', 
-                        type: 'action', 
-                        reqItem: 'Alchemical Fire',
-                        consume: true,
-                        customClass: 'btn-fire-glow'
-                    },
-                    {
-                        text: "Strike with Surprise Advantage",
-                        nextScene: 'chapel_victory_skill', 
-                        type: 'combat',
-                        reqFlag: 'isSurpriseRound',
-                        customClass: 'btn-shadow-glow'
-                    },
-                    { text: "Engage in Psychic Struggle (Brute Force)", nextScene: 'chapel_victory_brute', type: 'combat' }
                 ]
             },
-            'chapel_stage2_hit_damaged': {
-                title: "Drowned Spectre: Stage 2 - Found, But Wounded",
-                text: "Your wild strike grazed the Spectre, but it lashed out, dealing psychic damage. It's now revealed and attempts possession.",
-                isBoss: true,
-                choices: [
-                    { 
-                        text: "Throw Alchemical Fire", 
-                        nextScene: 'chapel_victory_item', 
-                        type: 'action', 
-                        reqItem: 'Alchemical Fire',
-                        consume: true,
-                        customClass: 'btn-fire-glow'
-                    },
-                    {
-                        text: "Strike with Surprise Advantage",
-                        nextScene: 'chapel_victory_skill', 
-                        type: 'combat',
-                        reqFlag: 'isSurpriseRound',
-                        customClass: 'btn-shadow-glow'
-                    },
-                    { text: "Engage in Psychic Struggle (Brute Force)", nextScene: 'chapel_victory_brute', type: 'combat' }
-                ],
+
+            'chapel_victory_generic': {
+                title: "Victory: The Fog Lifts",
+                text: "The Spectre lets out a final, hollow wail and dissolves. On the stone floor, the **Ring of Brass** spins to a halt, glowing with a soft, warm light.",
+                journal: "Banished the Spectre. Claimed the Ring of Brass.",
                 onEnter: (state) => {
-                    state.currentHP = applyDamage(state.currentHP, state.pendingDamage || 0);
-                    fxManager.flashRed();
-                    return `Took ${state.pendingDamage} Psychic Damage. The Spectre is now visible.`;
-                },
-            },
-            'chapel_stage2_miss_damaged': {
-                title: "Drowned Spectre: Stage 2 - Missed and Drained",
-                text: "Your attack missed, and the Spectre drained a huge portion of your life force. It is revealed but you are heavily wounded. Finish this now!",
-                isBoss: true,
-                choices: [
-                    { 
-                        text: "Throw Alchemical Fire", 
-                        nextScene: 'chapel_victory_item', 
-                        type: 'action', 
-                        reqItem: 'Alchemical Fire',
-                        consume: true,
-                        customClass: 'btn-fire-glow'
-                    },
-                    {
-                        text: "Strike with Surprise Advantage",
-                        nextScene: 'chapel_victory_skill', 
-                        type: 'combat',
-                        reqFlag: 'isSurpriseRound',
-                        customClass: 'btn-shadow-glow'
-                    },
-                    { text: "Engage in Psychic Struggle (Brute Force)", nextScene: 'chapel_victory_brute', type: 'combat' },
-                ]
-                ,
-                onEnter: (state) => {
-                    state.currentHP = applyDamage(state.currentHP, state.pendingDamage || 0);
-                    fxManager.flashRed();
-                    return `Took ${state.pendingDamage} Psychic Damage. The Spectre is visible, but you are drained.`;
-                },
-            },
-             'chapel_victory_water': {
-                title: "Drowned Spectre Defeated",
-                text: "The Drowned Spectre is banished. The **Ring of Brass** is yours. You are drenched, but victorious.",
-                journal: "Used Holy Water to defeat the Drowned Spectre. Claimed the Ring of Brass.",
-                choices: [{ text: "Return to Town Square", nextScene: 'town_square', type: 'travel' }],
-                onEnter: (state) => {
-                    state.isSurpriseRound = false;
-                    if (!state.inventory.includes("Ring of Brass")) state.inventory.push("Ring of Brass");
+                    if (!state.inventory.includes("Ring of Brass")) {
+                        state.inventory.push("Ring of Brass");
+                    }
                     return "Acquired Ring of Brass.";
                 },
-            },
-            'chapel_victory_sword': {
-                title: "Drowned Spectre Defeated",
-                text: "The Drowned Spectre is banished. The **Ring of Brass** is yours. The Sword cuts through the void.",
-                journal: "Flawless victory over the Spectre using the Sword of Valor. Claimed the Ring of Brass.",
-                choices: [{ text: "Return to Town Square", nextScene: 'town_square', type: 'travel' }],
-                onEnter: (state) => {
-                    state.isSurpriseRound = false;
-                    if (!state.inventory.includes("Ring of Brass")) state.inventory.push("Ring of Brass");
-                    return "Acquired Ring of Brass.";
-                },
-            },
-            'chapel_victory_item': {
-                title: "Drowned Spectre Defeated",
-                text: "The Drowned Spectre is banished. The **Ring of Brass** is yours. The Alchemical fire burns away the shadows.",
-                journal: "Used Alchemical Fire to defeat the Drowned Spectre. Claimed the Ring of Brass.",
-                choices: [{ text: "Return to Town Square", nextScene: 'town_square', type: 'travel' }],
-                onEnter: (state) => {
-                    state.isSurpriseRound = false;
-                    if (!state.inventory.includes("Ring of Brass")) state.inventory.push("Ring of Brass");
-                    return "Acquired Ring of Brass.";
-                },
-            },
-            'chapel_victory_skill': {
-                title: "Drowned Spectre Defeated",
-                text: "The Drowned Spectre is banished. The **Ring of Brass** is yours. You are drained but intact.",
-                journal: "Defeated the Spectre with Primeval Awareness. Claimed the Ring of Brass.",
-                choices: [{ text: "Return to Town Square", nextScene: 'town_square', type: 'travel' }],
-                onEnter: (state) => {
-                    state.isSurpriseRound = false;
-                    state.currentHP = applyDamage(state.currentHP, 5);
-                    fxManager.flashRed();
-                    if (!state.inventory.includes("Ring of Brass")) state.inventory.push("Ring of Brass");
-                    return "Took 5 DMG. Acquired Ring of Brass.";
-                },
-            },
-            'chapel_victory_brute': {
-                title: "Drowned Spectre Defeated",
-                text: "The Drowned Spectre is banished. The **Ring of Brass** is yours. Your mind is fractured by the psychic blow.",
-                journal: "Brute force victory over the Spectre, taking heavy sanity damage. Claimed the Ring of Brass.",
-                choices: [{ text: "Limp to Town Square", nextScene: 'town_square', type: 'travel', doomCost: 2 }],
-                onEnter: (state) => {
-					state.isSurpriseRound = false;
-					state.currentHP = applyDamage(state.currentHP, 12, 'psychic');
-					fxManager.flashRed();
-					if (!state.inventory.includes("Ring of Brass")) state.inventory.push("Ring of Brass");
-					return "Took 12 Psychic DMG. Acquired Ring of Brass.";
-				},
+                choices: [{ text: "Return to Town Square", nextScene: 'town_square', type: 'travel' }]
             },
             
             // --- ACT 1: FINALE SCENES ---
@@ -7251,6 +7121,8 @@
 
             generateSceneImage(sceneId);
             renderChoices(scene.choices, isDeathScene);
+			
+			
             
             // --- PUZZLE & BANTER HOOKS ---
             if (sceneId === 'manor_cellar_puzzle') setTimeout(() => puzzleManager.initCircuit(), 100);
@@ -7277,7 +7149,60 @@
 		
 		function renderChoices(choices, isDeathScene = false) {
             const container = document.getElementById('choices-area');
-            container.innerHTML = '';
+			
+			// 1. DYNAMIC COMBAT BUTTONS (BOSS FIGHTS)
+			if (gameState.isBossCombat && gameState.combat.isPlayerTurn) {
+				const { blade_enhanced_active, blink_used_this_turn, ae_primed, hunters_mark_used_this_turn, silas_used_this_turn } = gameState.combat;
+				let comboBtn = null;
+
+				// A. COMBO LOGIC
+				if (blade_enhanced_active) {
+					if (blink_used_this_turn) {
+						// T4: Trip Attack
+						comboBtn = { 
+							text: "Dire Wolf Trip Attack (Crit + Prone)", 
+							action: () => window.attackEnemy('tripAttack'), 
+							type: 'action', 
+							customClass: 'spectral-glow-btn' 
+						};
+					} else if (silas_used_this_turn) {
+						// T4: Ally Finisher
+						if (gameState.player.specialization === 'AE') {
+							comboBtn = { text: "The White Wolf's Bite (Heal)", action: () => window.attackEnemy('wolfBite'), type: 'action', customClass: 'spectral-glow-btn' };
+						} else {
+							comboBtn = { text: "Hunter's Edge (Vulnerable)", action: () => window.attackEnemy('huntersEdge'), type: 'action', customClass: 'spectral-glow-btn' };
+						}
+					} else if (ae_primed) {
+						// T3: Elemental Finisher
+						comboBtn = { text: "Howling Planar Strike", action: () => window.attackEnemy('planarStrike'), type: 'action', customClass: 'spectral-glow-btn' };
+					} else if (hunters_mark_used_this_turn) {
+						// T3: Surgical Strike
+						comboBtn = { text: "Surgical Strike", action: () => window.attackEnemy('surgicalStrike'), type: 'action', customClass: 'spectral-glow-btn' };
+					} else {
+						// T2: Base Enhanced
+						comboBtn = { text: "Zephyr Strike (Force)", action: () => window.attackEnemy('zephyrStrike'), type: 'action', customClass: 'spectral-glow-btn' };
+					}
+				} 
+				// B. AE REACTION COUNTER (No Blade Enhance)
+				else if (ae_primed) {
+					comboBtn = { text: `${ae_primed.type.toUpperCase()} Strike`, action: () => window.attackEnemy('elementalStrike'), type: 'action', customClass: 'spectral-glow-btn' };
+				}
+
+				// Inject the combo button at the top
+				if (comboBtn) {
+					choices.unshift(comboBtn);
+				}
+				
+				// C. SKILL BUTTONS (Inject if owned and not active)
+				if (gameState.inventory.includes("Blade Enhancement") && !blade_enhanced_active) {
+					 choices.unshift({ text: "Blade Enhancement (Free)", action: (s) => { s.combat.blade_enhanced_active = true; return "Blade charged."; }, type: 'action', customClass: 'text-indigo-400 border-indigo-500' });
+				}
+				if (gameState.inventory.includes("Hunter's Mark") && !hunters_mark_used_this_turn) {
+					 choices.unshift({ text: "Hunter's Mark (Free)", action: (s) => { s.combat.hunters_mark_used_this_turn = true; return "Target Marked."; }, type: 'action', customClass: 'text-green-500 border-green-500' });
+				}
+			}
+			
+			container.innerHTML = '';
 
             const currentSceneId = gameState.currentSceneId;
             const currentSceneStock = scenes[currentSceneId] ? scenes[currentSceneId].stock : {};
@@ -7417,8 +7342,9 @@
                  if (processedCargoBtn) processedChoices.unshift(processedCargoBtn);
             }
             else if (currentSceneId === 'spire_combat_loop') {
-                processedChoices = scenes['spire_combat_loop'].choices;
-            }
+				const injectedButtons = choices.filter(c => !scenes[currentSceneId].choices.includes(c));
+				processedChoices = [...injectedButtons, ...scenes['spire_combat_loop'].choices];
+			}
 
             // --- BUTTON GENERATION LOOP ---
             processedChoices.forEach(choice => {
@@ -8288,6 +8214,51 @@
 				`;
 				document.body.appendChild(menu);
 			}
+			
+			// --- COMBAT HELPERS ---
+			window.rollDice = function(diceString) {
+				if (!diceString) return 0;
+				// Handle flat numbers (e.g. "10")
+				if (!isNaN(diceString)) return parseInt(diceString);
+				
+				const parts = diceString.match(/(\d+)d(\d+)([\+\-]\d+)?/);
+				if (!parts) return 0;
+
+				const numDice = parseInt(parts[1]);
+				const dieSize = parseInt(parts[2]);
+				const modifier = parseInt(parts[3]) || 0;
+
+				let total = 0;
+				for (let i = 0; i < numDice; i++) {
+					total += Math.floor(Math.random() * dieSize) + 1;
+				}
+				return total + modifier;
+			};
+
+			window.applyStatusEffect = (state, effectName, duration) => {
+				const existing = state.combat.enemyStatus.find(s => s.name === effectName);
+				if (existing) {
+					existing.duration = duration; // Refresh
+				} else {
+					state.combat.enemyStatus.push({ name: effectName, duration: duration });
+				}
+			};
+
+			window.renderStatusEffects = () => {
+				const container = document.getElementById('enemy-status-effects');
+				if (!container || !gameState.combat.enemyStatus) return;
+				
+				let html = '';
+				gameState.combat.enemyStatus.forEach(status => {
+					const def = window.STATUS_EFFECTS[status.name];
+					if (def) {
+						html += `<div class="status-indicator ${def.color}" title="${def.desc}">
+									<i class="fas ${def.icon}"></i> ${def.name} (${status.duration})
+								 </div>`;
+					}
+				});
+				container.innerHTML = html;
+			};
 
 			window.toggleDevMenu = function() {
 				const m = document.getElementById('dev-menu');
@@ -8399,7 +8370,9 @@
 					window.gameFunctions.startDreamscape('act1_transition');
 				}
 			};
+									
 		})();
+				
 
         init();
     </script>
