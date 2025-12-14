@@ -7139,7 +7139,7 @@
                 }
 			}
 
-            const currentSceneStock = scenes[currentSceneId] ? scenes[currentSceneId].stock : {};
+            const currentSceneStock = scenes[gameState.currentSceneId] ? scenes[gameState.currentSceneId].stock : {};
             
             // --- BUTTON GENERATION LOOP ---
             processedChoices.forEach(choice => {
