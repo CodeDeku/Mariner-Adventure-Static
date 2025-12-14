@@ -1243,7 +1243,13 @@
 			if (!state.combat.isPlayerTurn || state.combat.enemyHP <= 0) return;
 
 			// Base damage logic
-			let weaponDmg = state.inventory.includes("Sword of Valor") ? '1d8+1' : '1d6';
+			let weaponDmg = '1d6'; // Default (Rusted Cutlass / Fists)
+			
+			if (state.inventory.includes("Deep-Forged Cutlass")) weaponDmg = '1d10+2';
+			else if (state.inventory.includes("Acid-Etched Sword of Valor")) weaponDmg = '1d8+1'; // + Acid proc handled in combo
+			else if (state.inventory.includes("Radiant-Washed Sword of Valor")) weaponDmg = '1d8+1'; // + Radiant proc handled in combo
+			else if (state.inventory.includes("Sword of Valor")) weaponDmg = '1d8+1';
+			
 			let baseDamage = window.rollDice(weaponDmg);
 			let damageType = 'physical';
 			let bonusDamage = 0;
@@ -1254,6 +1260,18 @@
 			const aeBonusDie = ae_primed ? window.rollDice(ae_primed.bonusDmg) : 0;
 
 			// 1. COMBO MODIFIERS
+			if (comboType === 'standard' || comboType === 'zephyrStrike') {
+				if (state.inventory.includes("Acid-Etched Sword of Valor")) {
+					bonusDamage += window.rollDice('1d4');
+					attackLog += " <span class='text-green-400'>+Acid Burn</span>";
+					if (!damageType || damageType === 'physical') damageType = 'acid';
+				}
+				if (state.inventory.includes("Radiant-Washed Sword of Valor") && (state.currentEnemy.includes('Spectre') || state.currentEnemy.includes('Vampire'))) {
+					bonusDamage += window.rollDice('1d4');
+					attackLog += " <span class='text-blue-300'>+Radiant Sear</span>";
+					if (!damageType || damageType === 'physical') damageType = 'radiant';
+				}
+			}
 			switch (comboType) {
 				case 'zephyrStrike': // T2
 					damageType = 'force';
@@ -1301,11 +1319,16 @@
 			}
 
 			// 2. CRIT LOGIC
-			let isCrit = blink_used_this_turn || state.inventory.includes('Battle Rhythm');
+			let isCrit = blink_used_this_turn || state.inventory.includes('Battle Rhythm') || state.nextAttackCrit;
+			
 			if (isCrit) {
 				baseDamage *= 2;
 				attackLog += " **CRITICAL HIT!**";
+				
+				// Reset all crit sources
 				state.combat.blink_used_this_turn = false;
+				state.nextAttackCrit = false; // Consume the Ally Button flag
+				
 				// Remove Battle Rhythm if present
 				const brIdx = state.inventory.indexOf('Battle Rhythm');
 				if (brIdx > -1) state.inventory.splice(brIdx, 1);
@@ -2459,18 +2482,10 @@
                 text: "Gareth grips your shoulder. 'Fire burns only if you let it in. Capture it.' You feel a cold resilience settle in your veins. You understand now how to turn the elements against themselves.",
                 journal: "I learned Absorb Elements. I am ready for the fire.",
                 onEnter: (state) => {
-					state.player.specialization = 'AE'; 
-
-					if (!state.skills.includes("Absorb Elements")) {
-						state.skills.push("Absorb Elements");
-					}
-					if (state.currentHP > state.maxHP) {
-						
-					} else {
-						 state.currentHP = state.maxHP;
-					}
+					state.player.specialization = 'AE'; 					
+					state.currentHP = state.maxHP;
 					state.act1Started = true;
-					return "Unlocked: Absorb Elements. HP checked. Act 1 Commencing.";
+					return "Unlocked: Absorb Elements. HP Restored. Act 1 Commencing.";
 				},
                 choices: [{ text: "Descend to the Town", nextScene: 'cliffside_overlook', type: 'travel' }]
             },
@@ -2480,17 +2495,9 @@
                 journal: "I learned Primeval Awareness. The undead cannot hide from me.",
                 onEnter: (state) => {
 					state.player.specialization = 'PA';
-
-					if (!state.skills.includes("Primeval Awareness")) {
-						state.skills.push("Primeval Awareness");
-					}
-					if (state.currentHP > state.maxHP) {
-						
-					} else {
-						state.currentHP = state.maxHP;
-					}
+					state.currentHP = state.maxHP; 
 					state.act1Started = true;
-					return "Unlocked: Primeval Awareness. HP checked. Act 1 Commencing.";
+					return "Unlocked: Primeval Awareness. HP Restored. Act 1 Commencing.";
 				},
                 choices: [{ text: "Descend to the Town", nextScene: 'cliffside_overlook', type: 'travel' }]
             },
@@ -7244,12 +7251,25 @@
 					choices.unshift(comboBtn);
 				}
 				
-				// C. SKILL BUTTONS (Inject if owned and not active)
-				if (gameState.inventory.includes("Blade Enhancement") && !blade_enhanced_active) {
-					 choices.unshift({ text: "Blade Enhancement (Free)", action: (s) => { s.combat.blade_enhanced_active = true; return "Blade charged."; }, type: 'action', customClass: 'text-indigo-400 border-indigo-500' });
-				}
-				if (gameState.inventory.includes("Hunter's Mark") && !hunters_mark_used_this_turn) {
-					 choices.unshift({ text: "Hunter's Mark (Free)", action: (s) => { s.combat.hunters_mark_used_this_turn = true; return "Target Marked."; }, type: 'action', customClass: 'text-green-500 border-green-500' });
+				// C. SKILL BUTTONS (Inject based on Specialization)
+				// AE: Blade Enhancement
+                if (gameState.player.specialization === 'AE' && !blade_enhanced_active) {
+                     choices.unshift({ 
+                        text: "Blade Enhancement (Free)", 
+                        action: (s) => { s.combat.blade_enhanced_active = true; return "Blade charged with planar energy."; }, 
+                        type: 'action', 
+                        customClass: 'text-indigo-400 border-indigo-500' 
+                    });
+                }
+                
+                // PA: Hunter's Mark
+				if (gameState.player.specialization === 'PA' && !hunters_mark_used_this_turn) {
+					 choices.unshift({ 
+                        text: "Hunter's Mark (Free)", 
+                        action: (s) => { s.combat.hunters_mark_used_this_turn = true; return "Target Marked. Weakness exposed."; }, 
+                        type: 'action', 
+                        customClass: 'text-green-500 border-green-500' 
+                    });
 				}
 			}
 			
@@ -7852,60 +7872,142 @@
             });
         }
 		
+		
 		function updateUI() {
 			const statsPanel = document.getElementById('stats-panel');
 			const journalContainer = document.getElementById('journal-container');
 			const sceneId = gameState.currentSceneId;
-			
 			const suppliesDisplay = document.getElementById('supplies-display');
 			
-			// 1. Render Companions
-			const isSilasJoined = gameState.companions.silas.joined;
-			const isBlinkJoined = gameState.companions.blink.joined;
-			const companionPanel = document.getElementById('companion-panel');
-			
-			if (isSilasJoined || isBlinkJoined) { 
-				companionPanel.classList.remove('hidden');
-				renderCompanions(isSilasJoined, isBlinkJoined);
-			} else {
-				companionPanel.classList.add('hidden');
-			}
-			
-			// 2. Render Ability Grid Layout
-			const abilitiesWrapper = document.getElementById('abilities-combined-container'); 
-			const hasPlaneWalk = gameState.skills.includes("Plane Walking");
-			const planarContainer = document.getElementById('planar-skills-container');
-			
-			if (hasPlaneWalk) planarContainer.classList.remove('hidden');
-			else planarContainer.classList.add('hidden');
+			// --- NEW: 2x2 SKILL/ALLY GRID (Replaces old companion panel) ---
+			const abilitiesWrapper = document.getElementById('abilities-combined-container');
+            abilitiesWrapper.innerHTML = ''; // Clear for redraw
+            
+            // --- SLOT 1: PRIMARY SKILL (AE/PA) ---
+            if (gameState.player.specialization) {
+                const skillDiv = document.createElement('div');
+                skillDiv.className = 'ability-card slot-skill-primary';
+                
+                if (gameState.player.specialization === 'AE') {
+                    // ABSORB ELEMENTS LOGIC
+                    if (gameState.combat && gameState.combat.ae_primed) {
+                        const type = gameState.combat.ae_primed.type;
+                        skillDiv.classList.add(`ae-primed-${type === 'fire' ? 'fire' : type === 'cold' ? 'cold' : 'acid'}`);
+                        skillDiv.innerHTML = `
+                            <i class="fas fa-shield-virus text-xl mb-1 text-white"></i>
+                            <span class="text-[10px] font-bold uppercase text-white cinzel">${type} PRIMED</span>
+                            <span class="text-[9px] text-gray-200">Strike to Discharge</span>
+                        `;
+                    } else {
+                        skillDiv.classList.add('ae-passive');
+                        skillDiv.innerHTML = `
+                            <i class="fas fa-shield-halved text-xl mb-1"></i>
+                            <span class="text-[10px] font-bold uppercase cinzel">Absorb Elements</span>
+                            <span class="text-[9px] text-gray-500">Ready</span>
+                        `;
+                    }
+                } else if (gameState.player.specialization === 'PA') {
+                    // PRIMEVAL AWARENESS LOGIC
+                    skillDiv.classList.add('pa-active-btn');
+                    // Check if we are in combat to make it clickable
+                    const inCombat = gameState.isBossCombat && gameState.combat.isPlayerTurn && !gameState.combat.hunters_mark_used_this_turn;
+                    
+                    skillDiv.innerHTML = `
+                        <i class="fas fa-eye text-xl mb-1"></i>
+                        <span class="text-[10px] font-bold uppercase cinzel">Primeval Awareness</span>
+                        <span class="text-[9px] ${inCombat ? 'text-green-400 animate-pulse' : 'text-gray-500'}">
+                            ${inCombat ? 'CLICK TO MARK' : 'Passive'}
+                        </span>
+                    `;
+                    
+                    if (inCombat) {
+                        skillDiv.onclick = () => {
+                            gameState.combat.hunters_mark_used_this_turn = true;
+                            addToHistory("Hunter's Mark applied! Target Vulnerable.", 'combat');
+                            // Apply Vulnerable Effect immediately
+                            window.applyStatusEffect(gameState, 'vulnerable', 1);
+                            renderScene(gameState.currentSceneId, false); // Refresh to update buttons
+                        };
+                    }
+                }
+                abilitiesWrapper.appendChild(skillDiv);
+            } else {
+                // Empty placeholder if no specialization yet
+                const emptyDiv = document.createElement('div');
+                emptyDiv.className = 'ability-card slot-skill-primary opacity-20 border-dashed';
+                emptyDiv.innerHTML = '<i class="fas fa-lock text-gray-600"></i>';
+                abilitiesWrapper.appendChild(emptyDiv);
+            }
 
-			if ((isSilasJoined || isBlinkJoined) || hasPlaneWalk) {
-				abilitiesWrapper.classList.remove('hidden');
-				abilitiesWrapper.classList.add('grid'); // Restore grid layout
-			} else {
-				abilitiesWrapper.classList.add('hidden');
-				abilitiesWrapper.classList.remove('grid');
-			}
+            // --- SLOT 2: ALLY 1 (SILAS) ---
+            if (gameState.companions.silas.joined) {
+                const silasDiv = document.createElement('div');
+                silasDiv.className = 'ability-card slot-ally-1 border-emerald-900 cursor-pointer hover:bg-emerald-900/20';
+                const onCooldown = gameState.allyCooldowns.silas > 0;
+                
+                silasDiv.innerHTML = `
+                    <i class="fas fa-moon text-xl mb-1 text-emerald-500"></i>
+                    <span class="text-[10px] font-bold uppercase text-emerald-400 cinzel">Silas</span>
+                    <span class="text-[9px] text-gray-500">${onCooldown ? `CD: ${gameState.allyCooldowns.silas}` : 'Ready: Intercept'}</span>
+                `;
+                
+                // Only allow clicking if in combat and not on cooldown
+                if (!onCooldown && gameState.isBossCombat) {
+                    silasDiv.onclick = () => window.allyCommand('silas');
+                } else if (onCooldown) {
+                    silasDiv.classList.add('opacity-50', 'cursor-not-allowed');
+                } else if (!gameState.isBossCombat) {
+                    silasDiv.classList.add('cursor-default');
+                }
+                abilitiesWrapper.appendChild(silasDiv);
+            }
 
-			// 3. Prologue/Journal Visibility
-			if (sceneId && sceneId.startsWith('prologue')) {
-				statsPanel.classList.add('prologue-blur');
-				journalContainer.classList.add('log-hidden');
-				journalContainer.classList.remove('log-visible');
-			} else {
-				statsPanel.classList.remove('prologue-blur');
-				statsPanel.classList.add('prologue-active');
-				
-				if(gameState.inventory.includes("Ship's Log")) {
-					journalContainer.classList.remove('log-hidden');
-					journalContainer.classList.add('log-visible');
-				} else {
-					journalContainer.classList.add('log-hidden');
-					journalContainer.classList.remove('log-visible');
-				}
-			}
+            // --- SLOT 3: PLANE WALK (Always present if learned, else empty) ---
+            if (gameState.skills.includes("Plane Walking")) {
+                const planeDiv = document.createElement('button');
+                planeDiv.className = 'ability-card slot-skill-plane cursor-pointer hover:bg-cyan-900/20';
+                planeDiv.onclick = () => window.gameFunctions.togglePlaneWalk();
+                
+                const isActive = gameState.isEthereal;
+                const activeClass = isActive ? 'text-cyan-300 border-cyan-500 shadow-[0_0_10px_rgba(34,211,238,0.2)]' : 'text-gray-400 border-gray-700';
+                
+                planeDiv.className += ` ${activeClass}`;
+                planeDiv.innerHTML = `
+                    <i class="fas fa-shoe-prints text-xl mb-1"></i>
+                    <span class="text-[10px] font-bold uppercase cinzel">Plane Walk</span>
+                    <span class="text-[9px]">${isActive ? 'ACTIVE' : 'Material'}</span>
+                `;
+                abilitiesWrapper.appendChild(planeDiv);
+            } else {
+                 const emptyDiv = document.createElement('div');
+                 emptyDiv.className = 'ability-card slot-skill-plane opacity-20 border-dashed';
+                 emptyDiv.innerHTML = '<span class="text-[9px] text-gray-600">Locked</span>';
+                 abilitiesWrapper.appendChild(emptyDiv);
+            }
 
-			// 4. HP Bar
+            // --- SLOT 4: ALLY 2 (BLINK) ---
+            if (gameState.companions.blink.joined) {
+                const blinkDiv = document.createElement('div');
+                blinkDiv.className = 'ability-card slot-ally-2 border-purple-900 cursor-pointer hover:bg-purple-900/20';
+                const onCooldown = gameState.allyCooldowns.blink > 0;
+                
+                blinkDiv.innerHTML = `
+                    <i class="fas fa-paw text-xl mb-1 text-purple-400"></i>
+                    <span class="text-[10px] font-bold uppercase text-purple-300 cinzel">Blink</span>
+                    <span class="text-[9px] text-gray-500">${onCooldown ? `CD: ${gameState.allyCooldowns.blink}` : 'Ready: Phase'}</span>
+                `;
+                
+                if (!onCooldown && gameState.isBossCombat) {
+                    blinkDiv.onclick = () => window.allyCommand('blink');
+                } else if (onCooldown) {
+                    blinkDiv.classList.add('opacity-50', 'cursor-not-allowed');
+                } else if (!gameState.isBossCombat) {
+                    blinkDiv.classList.add('cursor-default');
+                }
+                abilitiesWrapper.appendChild(blinkDiv);
+            }
+
+			// 3. HP Bar
 			const displayMaxHP = gameState.maxHP;
 			const hpToDisplay = gameState.currentHP;
 			const hpPct = (hpToDisplay / displayMaxHP) * 100;
@@ -7916,7 +8018,7 @@
 			document.getElementById('hp-text').innerText = `${hpToDisplay}/${displayMaxHP}`; 
 			audioManager.checkVulnerable(gameState.currentHP, gameState.maxHP);
 			
-			// 5. Doom/Tether Meters
+			// 4. Doom/Tether Meters
 			const doomDisplay = document.getElementById('doom-counter-display');
 			const tetherDisplay = document.getElementById('tether-display');
 
@@ -7936,7 +8038,7 @@
 				tetherDisplay.classList.add('hidden');
 			}
 
-			// 6. Influence Marker
+			// 5. Influence Marker
 			const inf = gameState.influence || 0;
 			const pct = ((inf + 50) / 100) * 100;
 			const marker = document.getElementById('inf-marker');
@@ -7951,12 +8053,10 @@
 				else infText.textContent = "Neutral";
 			}
 
-			// --- NEW UI UPDATES ---
-			
-			// 7. Render Radial Menu
+			// 6. Render Radial Crew
 			renderRadialCrew();
 
-			// 8. Update Backpack Button & Modal
+			// 7. Update Backpack Button & Modal
 			document.getElementById('shillings-display').innerText = gameState.shillings;
 			
 			const packDisplay = document.getElementById('pack-resources-display');
@@ -7975,9 +8075,12 @@
 				suppliesDisplay.classList.add('hidden');
 			}
 
-			// 9. Update Inventory List
+			// 8. Update Inventory List
 			renderInventoryList();
 		}
+		
+		
+		
 
 		// Helper to render inventory list (Needed for the backpack modal)
 		function renderInventoryList() {

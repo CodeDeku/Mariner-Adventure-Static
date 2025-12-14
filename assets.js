@@ -306,44 +306,7 @@
 			"Compass": { name: "Compass", type: 'key', icon: 'fa-compass', color: 'text-indigo-400', desc: "Passive: Violently hums near planar energy." },
             "Rusted Cutlass": { name: "Rusted Cutlass", type: 'key', icon: 'fa-khanda', color: 'text-gray-400', desc: "Passive: Reduces damage taken in combat events." },
             "Ship's Log": { name: "Ship's Log", type: 'key', icon: 'fa-book-open', color: 'text-amber-700', desc: "Key Item: Records of the damned. Unlocks your history." },
-			// --- NEW COMBAT SKILLS & UTILITIES ---
-			"Blade Enhancement": {
-				name: "Blade Enhancement",
-				type: 'utility',
-				icon: 'fa-sword',
-				color: 'text-indigo-400',
-				desc: "Free Action. Infuses the Sword of Valor, priming for a powerful combo. Lasts until the next attack.",
-				btnText: "BLADE ENHANCE",
-				action: (state) => {
-					state.combat.blade_enhanced_active = true;
-					return `Edward focuses planar energy into the Sword of Valor. Combo ready.`;
-				}
-			},
-			"Blink": {
-				name: "Blink",
-				type: 'utility',
-				icon: 'fa-ghost',
-				color: 'text-cyan-400',
-				desc: "Free Action. Teleports Edward, granting a guaranteed Critical Hit on his next attack.",
-				btnText: "BLINK",
-				action: (state) => {
-					state.combat.blink_used_this_turn = true;
-					return `Edward briefly steps through the planar veil, readying a devastating blow.`;
-				}
-			},
-			"Hunter's Mark": {
-				name: "Hunter's Mark",
-				type: 'utility',
-				icon: 'fa-eye',
-				color: 'text-green-500',
-				desc: "Free Action (Primeval Awareness Skill). Finds a vital spot, applying Vulnerable to the foe.",
-				btnText: "HUNTER'S MARK",
-				action: (state) => {
-					state.combat.hunters_mark_used_this_turn = true;
-					return `Edward locates a critical weakness on the ${state.combat.enemy ? state.combat.enemy.name : 'enemy'}.`;
-				}
-			},
-            
+			            
             // ACT 1: ROADSIDE / SMUGGLERS / MARKET
             "Curious Cargo": {
                 name: "Curious Cargo",
