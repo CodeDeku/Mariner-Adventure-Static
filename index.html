@@ -940,12 +940,22 @@
 				baseDamage = 25; isAOE = true;
 			} else if (attackType === 'item_fire') {
 				baseDamage = 20; isAOE = true;
+                // Add Burn visual if desired, but AOE burn tracking is complex. 
+                // We'll stick to damage for AOE to keep it simple.
 			} else if (attackType === 'item_flash') {
-				baseDamage = 0; isStun = true;
+				baseDamage = 0; 
+                isStun = true; 
+                // FIX: Add Visual Status
+                window.applyStatusEffect(state, 'prone', 1); 
 			} else if (attackType === 'item_sun_star') {
 				baseDamage = 25; isAOE = true; isStun = true;
+                // FIX: Add Visual Status
+                window.applyStatusEffect(state, 'prone', 1);
 			} else if (attackType === 'item_stake_driver') {
-				baseDamage = Math.floor(Math.random() * 8) + 4 + levelBonus; isStun = true;
+				baseDamage = Math.floor(Math.random() * 8) + 4 + levelBonus; 
+                isStun = true;
+                // FIX: Add Visual Status
+                window.applyStatusEffect(state, 'prone', 1);
 			} else if (attackType === 'none') {
 				playerDmg = 0;
 			}
@@ -1121,16 +1131,27 @@
 		// --- BRIDGE: Maps Legacy Combat Calls to New Logic ---
 		window.resolveCombatRound = function(attackType) {
 			const state = window.gameState;
+            
+            // 0. Handle Pure Victory Check (called by special items)
+            if (attackType === 'check_victory') {
+                if (state.combat.enemyHP <= 0) {
+                    const enemy = state.combat.enemy.name || "";
+                    if (enemy === "Slag Elemental") renderScene('smelter_victory_generic'); 
+                    else if (enemy === "Drowned Spectre") renderScene('chapel_victory_generic');
+                    else if (enemy.includes("Coral")) renderScene('coral_hulk_victory');
+                    else renderScene('spire_victory');
+                }
+                return;
+            }
 
-			// 1. If in Horde Mode (Spire), route to Horde Logic automatically
+			// 1. If in Horde Mode (Spire), route to Horde Logic
 			if (state.activeEnemies && state.activeEnemies.length > 0) {
-				// Default to targeting the first enemy if no target specified
 				const target = state.activeEnemies[0]; 
 				window.resolveHordeRound(attackType, target);
 				return;
 			}
 
-			// 2. Standard Boss Logic (Coral Hulk, etc.)
+			// 2. Standard Boss Logic
 			let damage = 0;
 			let log = "";
 			
@@ -1138,12 +1159,24 @@
 			if (attackType === 'valor_strike') damage = window.rollDice('1d8+2'); 
 			else if (attackType === 'heavy_strike') damage = window.rollDice('1d6+1');
 			else if (attackType === 'item_holy_water') damage = 25;
-			else if (attackType === 'item_fire') damage = 20;
+			else if (attackType === 'item_fire') {
+                damage = 20;
+                // Add Flavor for Spectre if needed
+                if (state.combat.enemy.name === "Drowned Spectre") {
+                    window.applyStatusEffect(state, 'vulnerable', 1);
+                    log += " (Spectral form disrupted!)";
+                }
+            }
 			else if (attackType === 'item_stake_driver') { 
 				damage = 15; 
-				window.applyStatusEffect(state, 'prone', 1); // Stun effect
+				window.applyStatusEffect(state, 'prone', 1); 
 				log += " **STUNNED!**";
 			}
+            else if (attackType === 'item_flash') {
+                damage = 0;
+                window.applyStatusEffect(state, 'prone', 1);
+                log += " **BLINDED!**";
+            }
 			else if (attackType === 'reflect_stance') { 
 				state.negateNextDamage = true; 
 				log = "Mirror Shield raised. Next attack reflected.";
@@ -1152,19 +1185,23 @@
 			// Apply Damage
 			if (damage > 0) {
 				state.combat.enemyHP = Math.max(0, state.combat.enemyHP - damage);
-				state.enemyHP = state.combat.enemyHP; // Sync legacy variable
+				state.enemyHP = state.combat.enemyHP; 
 				log = `Attacked with ${attackType}! Dealt ${damage} damage.${log}`;
 			}
 
 			addToHistory(log, 'combat');
 			window.fxManager.flashRed();
 
-			// Check Victory
+			// 3. VICTORY ROUTING (Synced with attackEnemy)
 			if (state.combat.enemyHP <= 0) {
-				// Let renderScene handle the victory transition based on currentSceneId
-				// But for safety, we trigger UI update
 				updateUI();
-				if (state.currentSceneId === 'coral_hulk_combat') renderScene('coral_hulk_victory');
+                const enemy = state.combat.enemy.name || "";
+                
+				if (enemy === "Slag Elemental") renderScene('smelter_victory_generic');
+                else if (enemy === "Drowned Spectre") renderScene('chapel_victory_generic');
+                else if (enemy.includes("Coral")) renderScene('coral_hulk_victory');
+                else renderScene('spire_victory');
+                
 				return;
 			}
 
@@ -3446,64 +3483,13 @@
                 title: "Battle: Slag Elemental",
                 text: "The Elemental surges with heat. If you have <b>Absorb Elements</b>, wait for it to attack to charge your blade. If you have <b>Primeval Awareness</b>, strike now to expose its core.",
                 isBoss: true,
-                choices: [
-                    { 
-                        text: "Strike with Weapon", 
-                        action: () => window.attackEnemy('standard'),
-                        type: 'action'
-                    },
-                    // Narrative Counter: Lubricant
-                    { 
-                        text: "Throw Industrial Lubricant (Critical Dmg)", 
-                        type: 'action', 
-                        reqItem: 'Industrial Lubricant',
-                        consume: true,
-                        customClass: 'btn-success-glow',
-                        action: (state) => {
-                            // 1. Deal Damage
-                            const dmg = 20;
-                            state.combat.enemyHP -= dmg;
-                            state.enemyHP -= dmg; // Sync legacy
-                            
-                            // 2. Log it
-                            addToHistory(`You hurl the Industrial Lubricant! The Slag Elemental's joints scream and seize as the oil boils instantly. <span class="text-xl font-bold text-yellow-400">-${dmg} HP</span>`, 'combat');
-                            window.fxManager.flashRed();
-
-                            // 3. Trigger Victory or Turn
-                            if (state.combat.enemyHP <= 0) {
-                                // Trigger victory logic via attackEnemy's check
-                                window.attackEnemy('check_victory'); 
-                            } else {
-                                // Pass turn to enemy
-                                setTimeout(window.enemyTurn, 1000);
-                            }
-                            return "Item Used: Industrial Lubricant.";
-                        }
-                    },
-                    // Narrative Counter: Holy Water
-                    { 
-                        text: "Throw Holy Water", 
-                        type: 'action', 
-                        reqItem: 'Holy Water',
-                        consume: true,
-                        customClass: 'btn-success-glow',
-                        action: (state) => {
-                            const dmg = 15;
-                            state.combat.enemyHP -= dmg;
-                            state.enemyHP -= dmg;
-                            
-                            addToHistory(`The Holy Water flashes to steam against the molten iron! The Elemental recoils. <span class="text-xl font-bold text-blue-400">-${dmg} HP</span>`, 'combat');
-                            window.fxManager.flashRed();
-
-                            if (state.combat.enemyHP <= 0) {
-                                window.attackEnemy('check_victory');
-                            } else {
-                                setTimeout(window.enemyTurn, 1000);
-                            }
-                            return "Item Used: Holy Water.";
-                        }
-                    }
-                ]
+                choices: [], // Cleared
+                onEnter: (state) => {
+                    // DYNAMICALLY GENERATE BUTTONS
+                    const buttons = window.generateCombatChoices(state);
+                    scenes['smelter_combat_loop'].choices = buttons;
+                    return null;
+                }
             },
 
             'smelter_victory_generic': {
@@ -3705,26 +3691,13 @@
                 title: "Battle: Drowned Spectre",
                 text: "The Spectre phases in and out of reality. Use <b>Primeval Awareness</b> to mark it (Vulnerable) and land a crushing blow.",
                 isBoss: true,
-                choices: [
-                    { 
-                        text: "Strike with Weapon", 
-                        action: () => window.attackEnemy('standard'),
-                        type: 'action'
-                    },
-                    // Narrative Counter: Alchemical Fire
-                    { 
-                        text: "Throw Alchemical Fire (Critical Dmg)", 
-                        action: () => {
-                            window.gameState.combat.enemyHP -= 20;
-                            addToHistory("The spectral form burns away! **20 Damage!**", 'combat');
-                            window.attackEnemy('standard');
-                        },
-                        type: 'action', 
-                        reqItem: 'Alchemical Fire',
-                        consume: true,
-                        customClass: 'btn-fire-glow'
-                    }
-                ]
+                choices: [], // Cleared
+                onEnter: (state) => {
+                    // DYNAMICALLY GENERATE BUTTONS
+                    const buttons = window.generateCombatChoices(state);
+                    scenes['chapel_combat_loop'].choices = buttons;
+                    return null;
+                }
             },
 
             'chapel_victory_generic': {
@@ -5930,72 +5903,13 @@
 				title: "Battle: Coral-Hulk",
 				text: "The Hulk swings a massive, coral-encrusted fist. At the end of every moment, you see its wounds closing. You must out-damage its regeneration!",
 				isBoss: true,
-				choices: [
-					// Standard Attacks
-					{ 
-						text: "Strike with Sword of Valor", 
-						action: () => window.resolveCombatRound('valor_strike'),
-						type: 'action', 
-						reqItem: 'Sword of Valor',
-						customClass: 'btn-hero'
-					},
-					{ 
-						text: "Desperate Strike (Cutlass)", 
-						action: () => window.resolveCombatRound('heavy_strike'),
-						type: 'action', 
-						reqNotItem: 'Sword of Valor'
-					},
-
-					// C. ALLY COMMANDS (Only available if joined)
-					{
-						text: "Command Silas (Intercept)",
-						type: 'action',
-						reqFlag: 'silasJoined',
-						action: () => window.allyCommand('silas'),
-						doomCost: 0
-					},
-					{
-						text: "Command Blink (Phase Shift)",
-						type: 'action',
-						reqFlag: 'hasBlinkSkill',
-						action: () => window.allyCommand('blink'),
-						doomCost: 0
-					},
-					
-					// D. ITEM ACTIONS (Mirror Shield Reflect)
-					{ 
-						text: "Mirror Shield (Reflect Stance)", 
-						action: () => window.resolveCombatRound('reflect_stance'),
-						type: 'action', 
-						reqItem: 'Mirror Shield',
-						customClass: 'btn-success-glow'
-					},
-					{ 
-						text: "Scale-Stake Driver (Stun)", 
-						action: () => window.resolveCombatRound('item_stake_driver'),
-						type: 'action', 
-						reqItem: 'Scale-Stake Driver',
-						customClass: 'btn-fire-glow'
-					},
-					
-					// E. CONSUMABLES (Strategic Nuke Buttons)
-					{ 
-						text: "Throw Alchemical Fire", 
-						action: () => window.resolveCombatRound('item_fire'),
-						type: 'action', 
-						reqItem: 'Alchemical Fire',
-						consume: true,
-						customClass: 'btn-fire-glow'
-					},
-					 { 
-						text: "Throw Holy Water", 
-						action: () => window.resolveCombatRound('item_holy_water'),
-						type: 'action', 
-						reqItem: 'Holy Water',
-						consume: true,
-						customClass: 'btn-success-glow'
-					}
-				]
+				choices: [],
+                onEnter: (state) => {
+                    // DYNAMICALLY GENERATE BUTTONS
+                    const buttons = window.generateCombatChoices(state);
+                    scenes['coral_hulk_combat'].choices = buttons;
+                    return null;
+                }
 			},
 
 			'coral_hulk_victory': {
@@ -8175,6 +8089,114 @@
 				modal.classList.add('hidden');
 			}
 		};
+		
+		
+			
+		// --- GLOBAL COMBAT BUTTON GENERATOR ---
+		window.generateCombatChoices = function(state) {
+			let choices = [];
+
+			// 1. STANDARD WEAPON ATTACK
+			if (state.inventory.includes('Sword of Valor')) {
+				choices.push({ 
+					text: "Strike with Sword of Valor", 
+					action: () => window.attackEnemy('standard'),
+					type: 'action', 
+					customClass: 'btn-hero'
+				});
+			} else {
+				choices.push({ 
+					text: "Strike with Weapon", 
+					action: () => window.attackEnemy('standard'),
+					type: 'action'
+				});
+			}
+
+			// 2. ALLY COMMANDS (If joined)
+			if (state.companions.silas.joined) {
+				choices.push({ text: "Command Silas (Intercept)", type: 'action', action: () => window.allyCommand('silas'), doomCost: 0 });
+			}
+			if (state.companions.blink.joined) {
+				choices.push({ text: "Command Blink (Phase Shift)", type: 'action', action: () => window.allyCommand('blink'), doomCost: 0 });
+			}
+
+			// 3. INVENTORY CONSUMABLES (Dynamic & Context Aware)
+			const combatItems = [
+				{ name: 'Holy Water', action: 'item_holy_water', btnClass: 'btn-success-glow', label: 'Throw Holy Water' },
+				{ name: 'Alchemical Fire', action: 'item_fire', btnClass: 'btn-fire-glow', label: 'Throw Alchemical Fire' },
+				{ name: 'Sun-Star Grenade', action: 'item_sun_star', btnClass: 'btn-fire-glow', label: 'Throw Sun-Star' },
+				{ name: 'Flash Powder', action: 'item_flash', btnClass: '', label: 'Throw Flash Powder (Stun)' },
+				{ name: 'Scale-Stake Driver', action: 'item_stake_driver', btnClass: 'btn-fire-glow', label: 'Fire Stake Driver (Stun)' },
+				{ name: 'Mirror Shield', action: 'reflect_stance', btnClass: 'btn-success-glow', label: 'Mirror Shield (Reflect)' },
+                
+                // CONTEXT SPECIFIC: Only show Lubricant if fighting the Slag Elemental
+                { 
+                    name: 'Industrial Lubricant', 
+                    action: 'item_lubricant', 
+                    btnClass: 'btn-success-glow', 
+                    label: 'Throw Industrial Lubricant',
+                    condition: (s) => s.combat.enemy.name === "Slag Elemental"
+                }
+			];
+
+			combatItems.forEach(item => {
+                // Check Inventory AND Condition (if exists)
+				if (state.inventory.includes(item.name)) {
+                    if (item.condition && !item.condition(state)) return;
+
+					choices.push({
+						text: item.label,
+						type: 'action',
+						reqItem: item.name,
+						consume: item.name !== 'Mirror Shield' && item.name !== 'Scale-Stake Driver',
+						customClass: item.btnClass,
+						action: () => {
+                            // Specialized Logic for Lubricant
+                            if (item.action === 'item_lubricant') {
+                                state.combat.enemyHP -= 20; 
+                                state.enemyHP -= 20;
+                                window.applyStatusEffect(state, 'vulnerable', 1);
+                                addToHistory("The lubricant boils, cracking the shell! **20 Damage** + Vulnerable.", 'combat');
+                                window.fxManager.flashRed(); // Visual feedback
+                                
+                                // FIX: Check victory locally. If alive, pass turn to enemy.
+                                if (state.combat.enemyHP <= 0) {
+                                    window.resolveCombatRound('check_victory'); 
+                                } else {
+                                    setTimeout(window.enemyTurn, 1000);
+                                }
+                            } else {
+                                // Standard Route
+                                if (state.activeEnemies && state.activeEnemies.length > 0) {
+                                    window.resolveHordeRound(item.action, 'none');
+                                } else {
+                                    window.resolveCombatRound(item.action); 
+                                }
+                            }
+                        }
+					});
+				}
+			});
+            
+            // 4. HEALING
+            if (state.inventory.includes('Vitality Tincture')) {
+                choices.push({ 
+                    text: "Drink Vitality Tincture (Heal)", 
+                    type: 'action',
+                    reqItem: 'Vitality Tincture',
+                    consume: true,
+                    action: (state) => {
+                        state.currentHP = Math.min(state.maxHP, state.currentHP + 15); 
+                        addToHistory("Drank Tincture. Healed 15 HP.", 'combat');
+                        setTimeout(window.enemyTurn, 1000);
+                    } 
+                });
+            }
+
+			return choices;
+		};
+		
+		
 
 		// Close backpack when clicking outside
 		document.addEventListener('click', function(event) {

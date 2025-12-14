@@ -509,7 +509,18 @@
                 icon: 'fa-bomb', 
                 color: 'text-yellow-300',
                 btnText: "THROW",
-                desc: "Consumable: Guarantees escape from current combat (if in combat)."
+                desc: "Consumable: Blinds the enemy. Applies 'Prone' status (Skips next turn).",
+                action: (state) => {
+                    if (state.isBossCombat) {
+                        // FIX: Use new Status System
+                        if (window.applyStatusEffect) {
+                            window.applyStatusEffect(state, 'prone', 1);
+                            window.renderStatusEffects();
+                        }
+                        return "<b>FLASH!</b> The enemy is blinded! (Applied Prone: Turn Skipped)";
+                    }
+                    return "Used Flash Powder. A bright flash illuminates the area.";
+                }
             },
             
             // ACT 1: BOSS COUNTERS & FINALE ARTIFACTS
@@ -526,17 +537,42 @@
 				type: 'consumable', 
 				icon: 'fa-cross', 
 				color: 'text-blue-200', 
-				btnText: "COMBINE",
-				desc: "A sealed flask of consecrated water. Too precious to drink, but potent against the wicked."
+				btnText: "THROW", // Changed from COMBINE for consistency
+				desc: "A sealed flask of consecrated water. Deals 25 Damage to supernatural foes.",
+                isCombinable: true,
+                action: (state) => {
+                    if (!state.isBossCombat) return "Save this for the wicked.";
+                    
+                    // Logic allows use from Backpack in Act 3
+                    state.combat.enemyHP -= 25; 
+                    state.enemyHP -= 25;
+                    
+                    window.fxManager.flashRed();
+                    return "<b>SPLASH!</b> The Holy Water burns the corruption! Dealt 25 Damage.";
+                }
             },
             "Alchemical Fire": { 
                 name: "Alchemical Fire",
                 type: 'consumable',
                 icon: 'fa-fire', 
                 color: 'text-orange-600',
-                btnText: "IGNITE",
-                desc: "Counter: Volatile mixture. Critical for Drowned Spectre (Shadow Path).",
-				isCombinable: true
+                btnText: "THROW", // Changed from IGNITE
+                desc: "Counter: Volatile mixture. Deals 20 Fire Damage.",
+				isCombinable: true,
+                action: (state) => {
+                    if (!state.isBossCombat) return "Save this for a target.";
+                    
+                    state.combat.enemyHP -= 20; 
+                    state.enemyHP -= 20;
+                    
+                    // Apply Burn Status if we have the system
+                    if (window.applyStatusEffect) {
+                        window.applyStatusEffect(state, 'burn', 1);
+                    }
+
+                    window.fxManager.flashRed();
+                    return "<b>FOOSH!</b> The flask shatters, engulfing the enemy in flames! Dealt 20 Damage.";
+                }
             },
             "Phoenix Draft": {
                 name: "Phoenix Draft",
@@ -731,16 +767,22 @@
 				icon: 'fa-bomb',
 				color: 'text-orange-400',
 				btnText: "THROW",
-				desc: "A volatile fusion of Flash Powder and Alchemical Fire. Deals 25 Damage AND Stuns the enemy (skips their next turn).",
+				desc: "A volatile fusion of Flash Powder and Alchemical Fire. Deals 25 Damage AND Stuns the enemy.",
 				action: (state) => {
 					if (!state.isBossCombat) return "Save this for a worthy foe.";
 					
-					state.enemyHP -= 25;
-					// Logic for Stun is handled in resolveCombatRound by checking item name, 
-					// but we can simulate it by not triggering enemy turn immediately here if handled manually, 
-					// or by adding a specific flag. For now, we deal massive damage.
-					// We will update resolveCombatRound to handle this specific item name for the Stun effect.
-					return "<b>BOOM!</b> The grenade erupts with the heat of a star! Dealt 25 Damage and blinded the enemy!";
+					// 1. Deal Damage
+                    state.combat.enemyHP -= 25; // Sync new system
+					state.enemyHP -= 25;        // Sync legacy
+                    
+                    // 2. Apply Stun (Prone)
+                    if (window.applyStatusEffect) {
+                        window.applyStatusEffect(state, 'prone', 1);
+                        window.renderStatusEffects();
+                    }
+                    
+                    window.fxManager.flashRed();
+					return "<b>BOOM!</b> The grenade erupts with the heat of a star! Dealt 25 Damage and STUNNED the enemy!";
 				}
 			},
 			"Captain's Reserve": {
