@@ -3426,15 +3426,18 @@
                 title: "Boss: Slag Elemental",
                 text: "The magma pool erupts. A <span class='text-danger'>Slag Elemental</span> rises—a towering construct of molten iron and hate. It roars, spraying liquid fire.<br><br><span class='text-fire'>Warning: Enemy deals Fire Damage. Absorb Elements is highly effective.</span>",
                 isBoss: true, 
-                onEnter: (state) => {
-                    // Init Combat: 35 HP (approx 3-4 rounds), 4-8 Dmg
-                    // Fire Damage Type triggers Absorb Elements reaction
-                    initCombat("Slag Elemental", 35, [4, 8]); 
-                    state.combat.damageType = 'fire'; 
-                    return "Combat Started! The heat is intense.";
-                },
                 choices: [
-                    { text: "Engage the Elemental", nextScene: 'smelter_combat_loop', type: 'travel', doomCost: 0 }
+                    { 
+                        text: "Engage the Elemental", 
+                        nextScene: 'smelter_combat_loop', 
+                        type: 'action', 
+                        action: (state) => {
+                            initCombat("Slag Elemental", 35, [4, 8]); 
+                            state.combat.damageType = 'fire'; 
+                            return "Combat Started! The heat is intense.";
+                        },
+                        doomCost: 0 
+                    }
                 ]
             },
 
@@ -3636,13 +3639,18 @@
                 title: "Boss: Drowned Spectre",
                 text: "The fog coalesces into a hovering, skeletal figure draped in rotting seaweed. The <span class='text-danger'>Drowned Spectre</span> shrieks—a sound that tears at your mind.<br><br><span class='text-void'>Warning: High Evasion. Use Primeval Awareness to expose weakness.</span>",
                 isBoss: true,
-                onEnter: (state) => {
-                    initCombat("Drowned Spectre", 35, [4, 8]);
-                    state.combat.damageType = 'psychic'; // Flavor text mostly, but fits logic
-                    return "Combat Started! The fog thickens.";
-                },
                 choices: [
-                    { text: "Engage the Spectre", nextScene: 'chapel_combat_loop', type: 'travel', doomCost: 0 }
+                    { 
+                        text: "Engage the Spectre", 
+                        nextScene: 'chapel_combat_loop', 
+                        type: 'action', 
+                        action: (state) => {
+                            initCombat("Drowned Spectre", 35, [4, 8]);
+                            state.combat.damageType = 'psychic'; 
+                            return "Combat Started! The fog thickens.";
+                        },
+                        doomCost: 0 
+                    }
                 ]
             },
 
@@ -4219,7 +4227,11 @@
 					{
 						text: "Brute Force",
 						nextScene: 'automaton_brute_force',
-						type: 'combat',
+						type: 'action',
+                        action: (state) => {
+                             initCombat("Brass Sentinel", 40, [6, 10]);
+                             return "Engaging Sentinel.";
+                        },
 						doomCost: 0
 					}
 				]
@@ -5849,12 +5861,17 @@
 				title: "The Coral-Hulk",
 				text: "You step into the corrupted chamber. A Royal Guard Dreadnought—massive steam armor—but it is fused with white coral. The organic matter pulses, knitting metal back together. It roars, a wet, grinding sound.",
 				isBoss: true,
-				onEnter: (state) => {
-					initCombat("Coral-Hulk", 80, [6, 12]); 
-					return "Combat Started! The enemy regenerates 5 HP per round.";
-				},
 				choices: [
-					{ text: "Engage the Monstrosity", nextScene: 'coral_hulk_combat', type: 'travel', doomCost: 0 }
+					{ 
+                        text: "Engage the Monstrosity", 
+                        nextScene: 'coral_hulk_combat', 
+                        type: 'action', 
+                        action: (state) => {
+                            initCombat("Coral-Hulk", 80, [6, 12]); 
+                            return "Combat Started! The enemy regenerates 5 HP per round.";
+                        },
+                        doomCost: 0 
+                    }
 				]
 			},
 
@@ -5917,12 +5934,17 @@
 				text: "You enter the cathedral. Three <span class='text-danger'>Vampire Elders</span> descend from the vaulted ceiling. They move with blurring speed, their claws dripping with ancient rot.<br><br>The <span class='text-item'>Sword of Valor</span> hums violently in your hand—it knows this blood. Silas steps forward, shield raised. Blink growls, phasing in and out. This is the end.",
 				journal: "Confronted the Vampire Elders. The final battle.",
 				isBoss: true,
-				onEnter: (state) => {
-					initHordeCombat("Vampire Elder", 35, [4, 7], 3); 
-					return "Combat Started! Three Elders attack per round.";
-				},
 				choices: [
-					{ text: "Engage the Horde", nextScene: 'spire_combat_loop', type: 'travel', doomCost: 0 }
+					{ 
+                        text: "Engage the Horde", 
+                        nextScene: 'spire_combat_loop', 
+                        type: 'action', 
+                        action: (state) => {
+                            initHordeCombat("Vampire Elder", 35, [4, 7], 3); 
+                            return "Combat Started! Three Elders attack per round.";
+                        },
+                        doomCost: 0 
+                    }
 				]
 			},
 
@@ -7078,60 +7100,52 @@
             updateUI();
         }
 		
+		
+		
 		function renderChoices(choices, isDeathScene = false) {
             const container = document.getElementById('choices-area');
 			
-			// 1. DYNAMIC COMBAT BUTTONS (BOSS FIGHTS)
-			if (gameState.isBossCombat && gameState.combat.isPlayerTurn) {
+			// 1. DYNAMIC COMBAT BUTTONS (Only inject if in a combat loop, not intro)
+			if (gameState.isBossCombat && gameState.combat.isPlayerTurn && (gameState.currentSceneId.includes('combat') || gameState.currentSceneId.includes('loop'))) {
 				const { blade_enhanced_active, blink_used_this_turn, ae_primed, hunters_mark_used_this_turn, silas_used_this_turn } = gameState.combat;
 				let comboBtn = null;
 
 				// A. COMBO LOGIC
 				if (blade_enhanced_active) {
 					if (blink_used_this_turn) {
-						// T4: Trip Attack
-						comboBtn = { 
-							text: "Dire Wolf Trip Attack (Crit + Prone)", 
-							action: () => window.attackEnemy('tripAttack'), 
-							type: 'action', 
-							customClass: 'spectral-glow-btn' 
-						};
+						comboBtn = { text: "Dire Wolf Trip Attack (Crit + Prone)", action: () => window.attackEnemy('tripAttack'), type: 'action', customClass: 'spectral-glow-btn' };
 					} else if (silas_used_this_turn) {
-						// T4: Ally Finisher
 						if (gameState.player.specialization === 'AE') {
 							comboBtn = { text: "The White Wolf's Bite (Heal)", action: () => window.attackEnemy('wolfBite'), type: 'action', customClass: 'spectral-glow-btn' };
 						} else {
 							comboBtn = { text: "Hunter's Edge (Vulnerable)", action: () => window.attackEnemy('huntersEdge'), type: 'action', customClass: 'spectral-glow-btn' };
 						}
 					} else if (ae_primed) {
-						// T3: Elemental Finisher
 						comboBtn = { text: "Howling Planar Strike", action: () => window.attackEnemy('planarStrike'), type: 'action', customClass: 'spectral-glow-btn' };
 					} else if (hunters_mark_used_this_turn) {
-						// T3: Surgical Strike
 						comboBtn = { text: "Surgical Strike", action: () => window.attackEnemy('surgicalStrike'), type: 'action', customClass: 'spectral-glow-btn' };
 					} else {
-						// T2: Base Enhanced
 						comboBtn = { text: "Zephyr Strike (Force)", action: () => window.attackEnemy('zephyrStrike'), type: 'action', customClass: 'spectral-glow-btn' };
 					}
 				} 
-				// B. AE REACTION COUNTER (No Blade Enhance)
 				else if (ae_primed) {
 					comboBtn = { text: `${ae_primed.type.toUpperCase()} Strike`, action: () => window.attackEnemy('elementalStrike'), type: 'action', customClass: 'spectral-glow-btn' };
 				}
 
-				// Inject the combo button at the top
-				if (comboBtn) {
-					choices.unshift(comboBtn);
-				}
+				if (comboBtn) choices.unshift(comboBtn);
 				
-				// C. SKILL BUTTONS (Inject based on Specialization)
+				// C. SKILL BUTTONS (Only if not active)
 				// AE: Blade Enhancement
                 if (gameState.player.specialization === 'AE' && !blade_enhanced_active) {
                      choices.unshift({ 
                         text: "Blade Enhancement (Free)", 
-                        action: (s) => { s.combat.blade_enhanced_active = true; return "Blade charged with planar energy."; }, 
+                        action: (s) => { 
+                            s.combat.blade_enhanced_active = true; 
+                            renderScene(s.currentSceneId, false); 
+                            return "Blade charged with planar energy."; 
+                        }, 
                         type: 'action', 
-                        customClass: 'text-indigo-400 border-indigo-500' 
+                        customClass: 'btn-keen-senses' 
                     });
                 }
                 
@@ -7139,7 +7153,11 @@
 				if (gameState.player.specialization === 'PA' && !hunters_mark_used_this_turn) {
 					 choices.unshift({ 
                         text: "Hunter's Mark (Free)", 
-                        action: (s) => { s.combat.hunters_mark_used_this_turn = true; return "Target Marked. Weakness exposed."; }, 
+                        action: (s) => { 
+                            s.combat.hunters_mark_used_this_turn = true; 
+                            renderScene(s.currentSceneId, false);
+                            return "Target Marked. Weakness exposed."; 
+                        }, 
                         type: 'action', 
                         customClass: 'text-green-500 border-green-500' 
                     });
@@ -7150,7 +7168,6 @@
 
             const currentSceneId = gameState.currentSceneId;
             const currentSceneStock = scenes[currentSceneId] ? scenes[currentSceneId].stock : {};
-            const marketStock = scenes['market_stall'].stock;
             
             let processedChoices = [...choices]; 
             
@@ -7186,7 +7203,7 @@
                 processedChoices = []; 
                 MARKET_SELL_OPTIONS.forEach(sell => {
                     if (gameState.inventory.includes(sell.item)) {
-                        if (sell.item === 'Curious Cargo' && marketStock['Curious Cargo'] === 0 && !gameState.act3Started) return; 
+                        if (sell.item === 'Curious Cargo' && scenes['market_stall'].stock['Curious Cargo'] === 0 && !gameState.act3Started) return; 
                         processedChoices.push({ text: `Sell ${sell.item.split('(')[0].trim()}`, nextScene: sell.nextScene, type: 'action', reqItem: sell.item, value: sell.value, doomCost: sell.doomCost });
                     }
                 });
@@ -7377,22 +7394,17 @@
                     supplementalText += " <span class='text-emerald-400 text-[10px] uppercase font-bold animate-pulse ml-2'>[Phase Strike Ready]</span>";
                 }
                 if (isSkillCheck) {
-                    // 1. First, add the Difficulty Class (DC) Text
                     const displayDC = gameState.isRiftCollapse ? choice.dc + 2 : choice.dc;
                     supplementalText += ` <span class="spectral-text-glow text-sm uppercase tracking-wider ml-2 mr-4">[${choice.skill} DC ${displayDC}]</span>`;
                     
-                    // 2. Then, check for Crew Bonus and add it AFTER the DC
                     if (activeCrewMember) {
                         const hasBonus = getBonusForSkill(activeCrewMember, choice.skill);
                         if (hasBonus) {
                             btnClass += " border-cyan-500 ring-1 ring-cyan-400"; 
-                            
                             const dieType = gameState.isEthereal ? '8' : '4';
-                            // Added space before the + for cleaner layout
                             supplementalText += ` <span class="text-cyan-300 text-[12px] font-bold animate-pulse">+ 1d${dieType} (${activeCrewMember.name})</span>`;
                         }
                     }
-
                     icon = '<i class="fas fa-dice-d20 spectral-text-glow"></i>';
                 }
 
@@ -7412,12 +7424,9 @@
                         holdTimer = setTimeout(async () => {
                             fxManager.setVignette(false); 
                             fxManager.clearEffects();     
-                            
-                            // FIX: Execute action if present (e.g., startDreamscape)
                             if (choice.action) {
                                 choice.action(gameState);
                             }
-                            // Only render nextScene if provided and no action blocked it
                             else if (choice.nextScene) {
                                 if (choice.nextScene === 'act2_arrival') {
                                     gameState.isEthereal = true; 
@@ -7443,15 +7452,13 @@
                     btn.onclick = (e) => {
                         if (btn.disabled) { audioManager.playClick(); return; }
 
-                        // SKILL CHECK LOGIC (ANIMATED)
                         if (choice.type === 'skill') {
                             const allBtns = document.querySelectorAll('.btn-game');
                             allBtns.forEach(b => b.disabled = true);
-                            audioManager.playDice(); // <-- ACTION 1: START DICE SOUND
+                            audioManager.playDice(); 
 
                             btn.classList.add('fx-skill-active'); 
 
-                            // Pre-Calculate Roll
                             let roll = Math.floor(Math.random() * 20) + 1;
                             let logMsg = `Check (DC ${gameState.isRiftCollapse ? choice.dc + 2 : choice.dc}): Rolled d20 (${roll})`;
                             
@@ -7493,10 +7500,10 @@
                             setTimeout(() => {
                                 btn.classList.remove('fx-skill-active');
                                 if (isSuccess) {
-                                    audioManager.playSuccess(); // <-- ACTION 2: PLAY SUCCESS SOUND
+                                    audioManager.playSuccess(); 
                                     btn.classList.add('fx-skill-success');
                                 } else {
-                                    audioManager.playFail(); // <-- ACTION 2: PLAY FAIL SOUND
+                                    audioManager.playFail();
                                     btn.classList.add('fx-skill-fail');
                                 }
 
@@ -7513,28 +7520,11 @@
                         let fxDuration = 0;
 
                         if (choice.customClass) {
-                            if (choice.customClass.includes('btn-fire-glow')) { 
-                                fxClass = 'fx-burn-active'; 
-                                fxDuration = 1800; 
-                            }
-                            else if (choice.customClass.includes('btn-shadow-glow')) { 
-                                fxClass = 'fx-mist-active'; 
-                                fxDuration = 1800; 
-                            }
-                            else if (choice.customClass.includes('btn-hero')) { 
-                                fxClass = 'fx-hero-active'; 
-                                fxDuration = 1200; 
-                            }
-                            // UPDATED: Planewalk Logic (Clean Glitch)
-                            else if (choice.customClass.includes('btn-planewalk-reveal')) { 
-                                fxClass = 'fx-glitch-active'; 
-                                fxDuration = 1200; // Updated from 1800 to match new animation speed
-                            }
-                            // NEW: Set Sail Logic
-                            else if (choice.customClass.includes('btn-anchor')) { 
-                                fxClass = 'fx-sail-active'; 
-                                fxDuration = 1500; 
-                            }
+                            if (choice.customClass.includes('btn-fire-glow')) { fxClass = 'fx-burn-active'; fxDuration = 1800; }
+                            else if (choice.customClass.includes('btn-shadow-glow')) { fxClass = 'fx-mist-active'; fxDuration = 1800; }
+                            else if (choice.customClass.includes('btn-hero')) { fxClass = 'fx-hero-active'; fxDuration = 1200; }
+                            else if (choice.customClass.includes('btn-planewalk-reveal')) { fxClass = 'fx-glitch-active'; fxDuration = 1200; }
+                            else if (choice.customClass.includes('btn-anchor')) { fxClass = 'fx-sail-active'; fxDuration = 1500; }
                         }
 
                         const executeAction = () => {
@@ -7544,13 +7534,41 @@
                                 return;
                             }
                             
-                            // FIX 2: Explicit Coin Sound Check for Transactional Actions
-                            if (choice.cost || choice.value || choice.shillingGain) {
-                                audioManager.playCoins();
-                            } else if (!fxClass) {
-                                // Only play click if it's not a special FX button (which are silent per request) or a coin transaction
-                                audioManager.playClick();
+                            if (choice.cost || choice.value || choice.shillingGain) audioManager.playCoins();
+                            else if (!fxClass) audioManager.playClick();
+                            
+                            // --- CRITICAL FIX: CONSUME ITEMS *BEFORE* ACTION ---
+                            if (choice.consume && choice.reqItem) {
+                                const idx = gameState.inventory.indexOf(choice.reqItem);
+                                if (idx > -1) {
+                                    gameState.inventory.splice(idx, 1);
+                                    addToHistory(`${choice.reqItem} consumed.`, 'system');
+                                }
                             }
+                            if (choice.consumeItems && Array.isArray(choice.consumeItems)) {
+                                choice.consumeItems.forEach(itemToConsume => {
+                                    const idx = gameState.inventory.indexOf(itemToConsume);
+                                    if (idx > -1) {
+                                        gameState.inventory.splice(idx, 1);
+                                        addToHistory(`${itemToConsume} consumed.`, 'system');
+                                    }
+                                });
+                            }
+                            
+                            if (choice.cost) gameState.shillings -= choice.cost;
+                            if (choice.costHP !== undefined) gameState.currentHP = applyDamage(gameState.currentHP, choice.costHP);
+
+                            let extraGold = 0;
+                            if (gameState.inventory.includes("Salt-Warped Spyglass") && gameState.influence >= 15) extraGold = 1;
+                            if (choice.shillingGain || choice.value) {
+								let bonus = extraGold;
+								if (gameState.activeBoons.includes('scavenger')) bonus += 1;
+								if (choice.shillingGain) gameState.shillings += (choice.shillingGain + bonus);
+								if (choice.value) gameState.shillings += (choice.value + bonus);
+							}
+                            
+                            if (choice.chaosGain) gameState.influence = Math.min(50, gameState.influence + choice.chaosGain);
+                            if (choice.orderGain) gameState.influence = Math.max(-50, gameState.influence - choice.orderGain); 
                             
                             if (choice.type === 'combine') {
                                 const result = choice.onSelect(gameState);
@@ -7573,68 +7591,6 @@
                             
                             if (choice.type === 'reset') { resetGame(); return; }
                             
-                            if (gameState.crewUseFree && choice.type !== 'dialogue' && !choice.nextScene.includes('captain_orders')) {
-                                addToHistory(`*Warning: The Pearlescent Mushroom's clarity is best saved for a crucial skill check.*`, 'system');
-                            }
-
-                            if (choice.type === 'action' && (currentSceneId === 'market_stall' || currentSceneId === 'alchemist_triage' || currentSceneId === 'blackwater_tavern') && choice.stockItem) {
-                                 const currentStock = scenes[currentSceneId].stock[choice.stockItem] || 0;
-                                 if (currentStock <= 0) {
-                                    addToHistory(`${choice.stockItem} is out of stock.`, 'system');
-                                    renderScene(currentSceneId); 
-                                    return;
-                                }
-                                scenes[currentSceneId].stock[choice.stockItem] = Math.max(0, scenes[currentSceneId].stock[choice.stockItem] - 1);
-                            }
-                            
-                            if (choice.consume && choice.reqItem) {
-                                const idx = gameState.inventory.indexOf(choice.reqItem);
-                                if (idx > -1) {
-                                    gameState.inventory.splice(idx, 1);
-                                    addToHistory(`${choice.reqItem} consumed.`, 'system');
-                                }
-                            }
-                            if (choice.consumeItems && Array.isArray(choice.consumeItems)) {
-                                choice.consumeItems.forEach(itemToConsume => {
-                                    const idx = gameState.inventory.indexOf(itemToConsume);
-                                    if (idx > -1) {
-                                        gameState.inventory.splice(idx, 1);
-                                        addToHistory(`${itemToConsume} consumed.`, 'system');
-                                    }
-                                });
-                            }
-
-                            const currentScene = scenes[gameState.currentSceneId];
-                            if (currentScene.journal) {
-                                let journalText = currentScene.journal;
-                                if (currentSceneId === 'act3_name_ship') journalText = journalText.replace('[SHIP_NAME]', gameState.shipName);
-                                addToHistory(journalText, 'entry');
-                            }
-
-                            if (choice.cost) gameState.shillings -= choice.cost;
-                            if (choice.costHP !== undefined) gameState.currentHP = applyDamage(gameState.currentHP, choice.costHP);
-
-                            let extraGold = 0;
-                            if (gameState.inventory.includes("Salt-Warped Spyglass") && gameState.influence >= 15) {
-                                 extraGold = 1;
-                                 addToHistory("Passive (Privateer's Lens): Found +1 extra Shilling.", 'system');
-                            }
-                            if (choice.shillingGain || choice.value) {
-								let bonus = extraGold; // From Spyglass
-								
-								// BOON LOGIC: Scavenger's Eye (Talon Act 1)
-								if (gameState.activeBoons.includes('scavenger')) {
-									bonus += 1;
-									addToHistory("Scavenger's Eye: Found +1 extra Shilling.", 'system');
-								}
-								
-								if (choice.shillingGain) gameState.shillings += (choice.shillingGain + bonus);
-								if (choice.value) gameState.shillings += (choice.value + bonus);
-							}
-                            
-                            if (choice.chaosGain) gameState.influence = Math.min(50, gameState.influence + choice.chaosGain);
-                            if (choice.orderGain) gameState.influence = Math.max(-50, gameState.influence - choice.orderGain); 
-                            
                             if (choice.nextScene === 'lighthouse_morning' && currentSceneId === 'captain_orders' && choice.onSelect) {
                                 choice.onSelect(gameState);
                             }
@@ -7647,14 +7603,9 @@
 
                             if (gameState.act2Started) {
 								const hasExplicitCost = choice.tetherCost !== undefined;
-								// Default cost is 1 unless it's a Boss or Rest scene, or explicitly 0
 								let cost = hasExplicitCost ? choice.tetherCost : (scenes[currentSceneId].isBoss || scenes[currentSceneId].isRest ? 0 : 1);
 								
-								// BOON LOGIC: Efficient Pathing (Quinn Act 2)
-								// If we have the boon and it's a standard travel move (cost 1), make it 0
-								if (gameState.activeBoons.includes('efficient_pathing') && cost === 1 && !hasExplicitCost) {
-									cost = 0;
-								}
+								if (gameState.activeBoons.includes('efficient_pathing') && cost === 1 && !hasExplicitCost) cost = 0;
 
 								if (cost >= 0 && choice.type !== 'reset') {
 									if (cost > 0) indicators.push({ text: `-${cost} Turns`, color: 'text-cyan-400' }); 
@@ -7671,10 +7622,6 @@
                             const allBtns = document.querySelectorAll('.btn-game');
                             allBtns.forEach(b => b.disabled = true);
                             btn.classList.add(fxClass);
-                            
-                            // FIX 1: Removed audioManager.playGhost() and playClash() from generic FX block.
-                            // Only playClick is triggered in executeAction now, unless it's a silent FX.
-
                             setTimeout(() => { executeAction(); }, fxDuration);
                         } else {
                             executeAction();
@@ -7688,9 +7635,7 @@
                 else if (choice.shillingGain) indicators.push({ text: `+${choice.shillingGain}s`, color: 'text-amber-500' });
                 if (choice.suppliesCost) {
 					let finalSupplyCost = choice.suppliesCost;
-					if (gameState.activeBoons.includes('master_navigator')) {
-						finalSupplyCost = Math.max(1, finalSupplyCost - 1);
-					}					
+					if (gameState.activeBoons.includes('master_navigator')) finalSupplyCost = Math.max(1, finalSupplyCost - 1);			
 					indicators.push({ text: `-${finalSupplyCost} Supplies`, color: 'text-indigo-400' });
 				}
                 if (choice.costHP !== undefined) indicators.push({ text: `-${choice.costHP} HP`, color: 'text-red-400' });
@@ -7711,23 +7656,18 @@
 				else if (gameState.act2Started) {
 					const hasExplicitCost = choice.tetherCost !== undefined;
 					let cost = hasExplicitCost ? choice.tetherCost : (scenes[currentSceneId].isBoss || scenes[currentSceneId].isRest ? 0 : 1);
-					
-					if (gameState.activeBoons.includes('efficient_pathing') && cost === 1 && !hasExplicitCost) {
-						cost = 0;
-					}
+					if (gameState.activeBoons.includes('efficient_pathing') && cost === 1 && !hasExplicitCost) cost = 0;
 
 					if (cost >= 0 && choice.type !== 'reset') {
 						if (cost > 0) indicators.push({ text: `-${cost} Turns`, color: 'text-cyan-400' }); 
 						else if (cost === 0 && (hasExplicitCost || gameState.activeBoons.includes('efficient_pathing'))) {
 							indicators.push({ text: `0 Turns`, color: 'text-cyan-400' });
 						}
-
+                        // Act 2 Healing Boon Logic
 						if (gameState.activeBoons.includes('spectral_metabolism') && choice.type === 'travel' && choice.nextScene !== currentSceneId) {
 							const originalAction = choice.action; 							
 							choice.action = (state) => {
-								if (state.currentHP < state.maxHP) {
-									state.currentHP += 1;
-								}
+								if (state.currentHP < state.maxHP) state.currentHP += 1;
 								if (originalAction) return originalAction(state);
 							};
 							indicators.push({ text: `+1 HP`, color: 'text-emerald-400' });
@@ -7743,7 +7683,8 @@
 
                 container.appendChild(btn);
             });
-        }
+        }		
+		
 		
 		
 		function updateUI() {
@@ -8156,12 +8097,14 @@
 						customClass: item.btnClass,
 						action: () => {
 							if (item.action === 'item_lubricant') {
+								// Slag Boss Special Logic
 								state.combat.enemyHP -= 20; 
 								state.enemyHP -= 20;
 								window.applyStatusEffect(state, 'vulnerable', 1);
 								addToHistory("The lubricant boils, cracking the shell! **20 Damage** + Vulnerable.", 'combat');
 								window.fxManager.flashRed(); 
 								
+								// CRITICAL FIX: Trigger update/resolution logic
 								if (state.combat.enemyHP <= 0) {
 									window.resolveCombatRound('check_victory'); 
 								} else {
@@ -8200,8 +8143,7 @@
 					text: "Blade Enhancement (Free Action)", 
 					action: (s) => { 
 						s.combat.blade_enhanced_active = true; 
-						// CRITICAL FIX: Force Render to show Combo Button immediately
-						renderScene(s.currentSceneId, false);
+						renderScene(s.currentSceneId, false); // Force re-render to show combo button
 						return "Blade charged with planar energy. Next strike enhanced."; 
 					}, 
 					type: 'action', 
