@@ -1114,13 +1114,13 @@
 		
 		
 		
-		
-
-        // Standard Combat (Kept for Coral Hulk)
+		// Standard Combat (Kept for Coral Hulk)
         window.resolveCombatRound = function(attackType) {
 			const state = gameState;
 			let playerDmg = 0;
 			let log = "";
+            let preventRegen = false; 
+            let isStun = false;       
 			
 			// --- 1. CALCULATE PLAYER DAMAGE ---
 			const levelBonus = (state.baseDamage || 0);
@@ -1138,31 +1138,34 @@
 			}
 			else if (attackType === 'item_fire') {
 				playerDmg = 20; 
-				log += "The Alchemical Fire engulfs them! ";
+                preventRegen = true;
+				log += "The Alchemical Fire cauterizes the wounds! ";
 			}
 			else if (attackType === 'item_flash') {
 				playerDmg = 0;
+                isStun = true;
 				log += "Flash Powder blinds them! They cannot strike back this turn. ";
 			}
-			// FIX: BUFFED SUN-STAR GRENADE
+			// SUN-STAR GRENADE
 			else if (attackType === 'item_sun_star') {
-				playerDmg = 30; // Increased to 30
-				log += "<b>THE SUN-STAR DETONATES!</b> 30 Radiant Damage! The enemy is blinded! ";
+				playerDmg = 30; 
+                isStun = true;      
+                preventRegen = true;
+				log += "<b>THE SUN-STAR DETONATES!</b> 30 Radiant Damage! The enemy is blinded and cauterized! ";
 			}
 			// CHAOS WEAPON (STAKE DRIVER) 
 			else if (attackType === 'item_stake_driver') {
 				playerDmg = Math.floor(Math.random() * 8) + 4 + levelBonus;
+                isStun = true;
 				log += "<b>THWACK!</b> The bone bolt pins the enemy! (Stunned). ";
 			}
 			
 			// BATTLE RHYTHM CHECK
 			if (gameState.battleRhythm && playerDmg > 0) {
 				playerDmg = playerDmg * 2;
-				gameState.battleRhythm = false; // Consume buff
-				
+				gameState.battleRhythm = false; 
 				const buffIdx = gameState.inventory.indexOf("Battle Rhythm");
 				if (buffIdx > -1) gameState.inventory.splice(buffIdx, 1);
-
 				log += "<span class='text-red-500 font-bold'>BATTLE RHYTHM! (Double Damage)</span> ";
 			}
 
@@ -1183,17 +1186,13 @@
 				state.isBossCombat = false;
 				audioManager.playClash();
 				addToHistory(log + ` The ${state.currentEnemy} falls!`, 'combat');
-				
-				// Routing for specific bosses
 				if (state.currentEnemy === 'Coral-Hulk') renderScene('coral_hulk_victory');
 				else renderScene('spire_victory');
 				return;
 			}
 
-			// --- 3. ENEMY LOGIC (RETALIATION & REGEN) ---
-			
-			// Check Stun (Flash Powder or Stake Driver or Sun-Star)
-			let enemySkipped = (attackType === 'item_flash' || attackType === 'item_stake_driver' || attackType === 'item_sun_star');
+			// --- 3. ENEMY LOGIC (RETALIATION) ---
+			let enemySkipped = isStun; 
 
 			if (!enemySkipped) {
 				let enemyDmg = Math.floor(Math.random() * (state.enemyDamageRange[1] - state.enemyDamageRange[0] + 1)) + state.enemyDamageRange[0];
@@ -1201,9 +1200,8 @@
 				// MIRROR SHIELD REFLECTION 
 				if (attackType === 'reflect_stance') {
 					log += ` <span class='text-blue-300 font-bold'>Mirror Shield reflects the attack!</span> You take 0 damage. The enemy takes ${enemyDmg}.`;
-					state.enemyHP -= enemyDmg; // Deal damage back
-					enemyDmg = 0; // Take no damage
-					 // Re-check victory in case reflection killed it
+					state.enemyHP -= enemyDmg; 
+					enemyDmg = 0; 
 					 if (state.enemyHP <= 0) {
 						state.enemyHP = 0;
 						state.isBossCombat = false;
@@ -1212,7 +1210,7 @@
 						return;
 					}
 				}
-				// PASSIVE MITIGATION (Mirror Shield & Spyglass)
+				// PASSIVE MITIGATION 
 				else {
 					if (state.inventory.includes("Mirror Shield")) enemyDmg = Math.max(0, enemyDmg - 1);
 					if (state.inventory.includes("Salt-Warped Spyglass") && state.influence <= -15) enemyDmg = Math.max(0, enemyDmg - 1);
@@ -1240,11 +1238,14 @@
             }
 
 			// --- 4. REGENERATION (CORAL-HULK SPECIFIC) ---
-			if (state.currentEnemy === 'Coral-Hulk' && state.enemyHP > 0) {
-				const regenAmount = 3; // FIX: NERFED FROM 5 TO 3
+            // Only regenerate if NOT prevented by Fire/Sun-Star
+			if (state.currentEnemy === 'Coral-Hulk' && state.enemyHP > 0 && !preventRegen) {
+				const regenAmount = 3; 
 				state.enemyHP = Math.min(state.maxEnemyHP, state.enemyHP + regenAmount);
 				log += ` <span class='text-red-400 font-bold animate-pulse'>The Hyper-Coral knits flesh together (+${regenAmount} HP Regen).</span>`;
-			}
+			} else if (state.currentEnemy === 'Coral-Hulk' && preventRegen) {
+                log += ` <span class='text-orange-400 font-bold'>Cauterized! Regeneration halted.</span>`;
+            }
 
 			// 5. COOLDOWN TICK
 			if (state.allyCooldowns.silas > 0) state.allyCooldowns.silas--;
@@ -1254,7 +1255,6 @@
 			updateUI(); 
 			renderScene(state.currentSceneId); 
 		};
-		
 		
 		
 		
