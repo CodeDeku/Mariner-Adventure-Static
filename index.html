@@ -7041,186 +7041,229 @@
 		
 		
 		function renderChoices(choices, isDeathScene = false) {
-    const container = document.getElementById('choices-area');
-    container.innerHTML = '';
+			const container = document.getElementById('choices-area');
+			container.innerHTML = '';
 
-    // 1. FILTER & COPY (Remove duplicate/dead buttons immediately)
-    let processedChoices = choices.filter(c => {
-        const text = c.text.toLowerCase();
-        if (text.includes("strike with")) return false;
-        if (text.includes("blade enhancement")) return false;
-        if (text.includes("hunter's mark")) return false;
-        return true;
-    });
-    
-    // 2. DYNAMIC COMBAT BUTTONS (Only inject if in a combat loop)
-    // FIX: Define currentId here to prevent ReferenceError
-    const currentId = gameState.currentSceneId; 
-    const isCombatScene = (currentId.includes('combat') || currentId.includes('loop')) 
-                          && !currentId.includes('start') 
-                          && !currentId.includes('intro')
-                          && !currentId.includes('victory');
-    
-    if (gameState.isBossCombat && gameState.combat.isPlayerTurn && isCombatScene) {
-        const { blade_enhanced_active, blink_used_this_turn, ae_primed, hunters_mark_used_this_turn, silas_used_this_turn } = gameState.combat;
-        let comboBtn = null;
+			const currentId = gameState.currentSceneId;
+			
+			// 1. FILTER: Remove generic attacks if we are injecting custom ones
+			let processedChoices = choices.filter(c => {
+				const text = c.text.toLowerCase();
+				if (text.includes("strike with") && gameState.isBossCombat) return false;
+				if (text.includes("blade enhancement")) return false;
+				if (text.includes("hunter's mark")) return false;
+				return true;
+			});
 
-        // A. COMBO LOGIC (Top Priority)
-        if (blade_enhanced_active) {
-            if (blink_used_this_turn) {
-                comboBtn = { text: "Dire Wolf Trip Attack (Crit + Prone)", action: () => window.attackEnemy('tripAttack'), type: 'action', customClass: 'spectral-glow-btn' };
-            } else if (silas_used_this_turn) {
-                if (gameState.player.specialization === 'AE') {
-                    comboBtn = { text: "The White Wolf's Bite (Heal)", action: () => window.attackEnemy('wolfBite'), type: 'action', customClass: 'spectral-glow-btn' };
-                } else {
-                    comboBtn = { text: "Hunter's Edge (Vulnerable)", action: () => window.attackEnemy('huntersEdge'), type: 'action', customClass: 'spectral-glow-btn' };
-                }
-            } else if (ae_primed) {
-                comboBtn = { text: "Howling Planar Strike", action: () => window.attackEnemy('planarStrike'), type: 'action', customClass: 'spectral-glow-btn' };
-            } else if (hunters_mark_used_this_turn) {
-                comboBtn = { text: "Surgical Strike", action: () => window.attackEnemy('surgicalStrike'), type: 'action', customClass: 'spectral-glow-btn' };
-            } else {
-                comboBtn = { text: "Zephyr Strike (Force)", action: () => window.attackEnemy('zephyrStrike'), type: 'action', customClass: 'spectral-glow-btn' };
-            }
-        } 
-        else if (ae_primed) {
-            comboBtn = { text: `${ae_primed.type.toUpperCase()} Strike`, action: () => window.attackEnemy('elementalStrike'), type: 'action', customClass: 'spectral-glow-btn' };
-        }
+			// 2. COMBAT INJECTION: Add the New Combo Buttons (from your update)
+			const isCombatScene = (currentId.includes('combat') || currentId.includes('loop')) 
+								  && !currentId.includes('start') && !currentId.includes('intro') && !currentId.includes('victory');
+			
+			if (gameState.isBossCombat && gameState.combat.isPlayerTurn && isCombatScene) {
+				const { blade_enhanced_active, blink_used_this_turn, ae_primed, hunters_mark_used_this_turn, silas_used_this_turn } = gameState.combat;
+				let comboBtn = null;
 
-        if (comboBtn) processedChoices.unshift(comboBtn);
-        
-        // B. SKILL BUTTONS (Inject only if NOT already active)
-        if (gameState.player.specialization === 'AE' && !blade_enhanced_active) {
-             processedChoices.unshift({ 
-                text: "Blade Enhancement (Free Action)", 
-                action: (s) => { 
-                    s.combat.blade_enhanced_active = true; 
-                    renderScene(s.currentSceneId, false); 
-                    return "Blade charged with planar energy."; 
-                }, 
-                type: 'action', 
-                customClass: 'btn-keen-senses' 
-            });
-        }
-        
-        if (gameState.player.specialization === 'PA' && !hunters_mark_used_this_turn) {
-             processedChoices.unshift({ 
-                text: "Hunter's Mark (Free Action)", 
-                action: (s) => { 
-                    s.combat.hunters_mark_used_this_turn = true; 
-                    renderScene(s.currentSceneId, false);
-                    return "Target Marked. Weakness exposed."; 
-                }, 
-                type: 'action', 
-                customClass: 'text-green-500 border-green-500' 
-            });
-        }
-        
-        // C. STANDARD ATTACKS (Re-inject them cleanly here)
-        if (gameState.inventory.includes('Sword of Valor')) {
-            processedChoices.push({ 
-                text: "Strike with Sword of Valor", 
-                action: () => window.attackEnemy('standard'),
-                type: 'action', 
-                customClass: 'btn-hero'
-            });
-        } else {
-            processedChoices.push({ 
-                text: "Strike with Weapon", 
-                action: () => window.attackEnemy('standard'),
-                type: 'action'
-            });
-        }
-    }
+				// A. COMBO LOGIC
+				if (blade_enhanced_active) {
+					if (blink_used_this_turn) {
+						comboBtn = { text: "Dire Wolf Trip Attack (Crit + Prone)", action: () => window.attackEnemy('tripAttack'), type: 'action', customClass: 'spectral-glow-btn' };
+					} else if (silas_used_this_turn) {
+						if (gameState.player.specialization === 'AE') {
+							comboBtn = { text: "The White Wolf's Bite (Heal)", action: () => window.attackEnemy('wolfBite'), type: 'action', customClass: 'spectral-glow-btn' };
+						} else {
+							comboBtn = { text: "Hunter's Edge (Vulnerable)", action: () => window.attackEnemy('huntersEdge'), type: 'action', customClass: 'spectral-glow-btn' };
+						}
+					} else if (ae_primed) {
+						comboBtn = { text: "Howling Planar Strike", action: () => window.attackEnemy('planarStrike'), type: 'action', customClass: 'spectral-glow-btn' };
+					} else if (hunters_mark_used_this_turn) {
+						comboBtn = { text: "Surgical Strike", action: () => window.attackEnemy('surgicalStrike'), type: 'action', customClass: 'spectral-glow-btn' };
+					} else {
+						comboBtn = { text: "Zephyr Strike (Force)", action: () => window.attackEnemy('zephyrStrike'), type: 'action', customClass: 'spectral-glow-btn' };
+					}
+				} 
+				else if (ae_primed) {
+					comboBtn = { text: `${ae_primed.type.toUpperCase()} Strike`, action: () => window.attackEnemy('elementalStrike'), type: 'action', customClass: 'spectral-glow-btn' };
+				}
 
-    // FIX: Use the safely defined currentId variable
-    const currentSceneStock = scenes[currentId] ? scenes[currentId].stock : {};
-    
-    // --- BUTTON GENERATION LOOP ---
-    processedChoices.forEach(choice => {
-        // Requirements
-        if (choice.reqItem && !gameState.inventory.includes(choice.reqItem)) return;
-        if (choice.reqItems && Array.isArray(choice.reqItems)) {
-            if (!choice.reqItems.some(item => gameState.inventory.includes(item))) return;
-        }
-        if (choice.reqSmuggler && gameState.influence < choice.reqSmuggler) return;
-        if (choice.reqGuard && gameState.influence > -choice.reqGuard) return;
-        if (choice.reqNotItem && gameState.inventory.includes(choice.reqNotItem)) return; 
-        if (choice.reqFlag && !gameState[choice.reqFlag]) return;
-        if (choice.reqNotFlag && gameState[choice.reqNotFlag]) return; 
-        if (choice.reqSkill && !gameState.skills.includes(choice.reqSkill) && choice.type !== 'skill') return;
+				if (comboBtn) processedChoices.unshift(comboBtn);
+				
+				// B. SKILL BUTTONS (Inject only if NOT already active)
+				if (gameState.player.specialization === 'AE' && !blade_enhanced_active) {
+					 processedChoices.unshift({ 
+						text: "Blade Enhancement (Free Action)", 
+						action: (s) => { 
+							s.combat.blade_enhanced_active = true; 
+							renderScene(s.currentSceneId, false); 
+							return "Blade charged with planar energy."; 
+						}, 
+						type: 'action', 
+						customClass: 'btn-keen-senses' 
+					});
+				}
+				
+				if (gameState.player.specialization === 'PA' && !hunters_mark_used_this_turn) {
+					 processedChoices.unshift({ 
+						text: "Hunter's Mark (Free Action)", 
+						action: (s) => { 
+							s.combat.hunters_mark_used_this_turn = true; 
+							renderScene(s.currentSceneId, false);
+							return "Target Marked. Weakness exposed."; 
+						}, 
+						type: 'action', 
+						customClass: 'text-green-500 border-green-500' 
+					});
+				}
+				
+				// C. STANDARD ATTACKS (Re-inject them cleanly here)
+				if (gameState.inventory.includes('Sword of Valor')) {
+					processedChoices.push({ text: "Strike with Sword of Valor", action: () => window.attackEnemy('standard'), type: 'action', customClass: 'btn-hero' });
+				} else {
+					processedChoices.push({ text: "Strike with Weapon", action: () => window.attackEnemy('standard'), type: 'action' });
+				}
+			}
 
-        // --- FIX: RESTORE METADATA TEXT ---
-        let rawText = choice.text;
-        let subText = "";
+			// --- 3. RENDER LOOP (Restored from Stable Version) ---
+			processedChoices.forEach(choice => {
+				// Requirements Checks
+				if (choice.reqItem && !gameState.inventory.includes(choice.reqItem)) return;
+				if (choice.reqItems && Array.isArray(choice.reqItems)) { if (!choice.reqItems.some(item => gameState.inventory.includes(item))) return; }
+				if (choice.reqSmuggler && gameState.influence < choice.reqSmuggler) return;
+				if (choice.reqGuard && gameState.influence > -choice.reqGuard) return;
+				if (choice.reqNotItem && gameState.inventory.includes(choice.reqNotItem)) return; 
+				if (choice.reqFlag && !gameState[choice.reqFlag]) return;
+				if (choice.reqNotFlag && gameState[choice.reqNotFlag]) return; 
+				if (choice.reqSkill && !gameState.skills.includes(choice.reqSkill) && choice.type !== 'skill') return;
 
-        if (choice.type === 'skill') {
-            subText += `<span class="text-[10px] text-cyan-400 ml-2 font-mono tracking-wider opacity-80">[${choice.skill} DC ${choice.dc}]</span>`;
-        }
-        if (choice.cost) {
-            const color = gameState.shillings >= choice.cost ? "text-amber-500" : "text-red-500";
-            subText += `<span class="text-[10px] ${color} ml-2 font-mono">(-${choice.cost}s)</span>`;
-        }
-        if (choice.suppliesCost) {
-            const color = gameState.supplies >= choice.suppliesCost ? "text-indigo-400" : "text-red-500";
-            subText += `<span class="text-[10px] ${color} ml-2 font-mono">(-${choice.suppliesCost} Supplies)</span>`;
-        }
-        if (choice.costHP) {
-            subText += `<span class="text-[10px] text-red-400 ml-2 font-mono">(-${choice.costHP} HP)</span>`;
-        }
-        if (choice.consume) {
-             subText += `<span class="text-[10px] text-gray-500 italic ml-2">(Consume)</span>`;
-        }
+				// VISUAL PREP
+				let rawText = choice.text;
+				let subText = ""; // Restored Metadata logic
+				let isDisabled = false;
+				let disabledClass = '';
 
-        // Icon Logic
-        let icon = '<i class="fas fa-chevron-right text-gray-500 group-hover:text-amber-100 transition-colors"></i>';
-        if (choice.type === 'combat') icon = '<i class="fas fa-skull text-gray-500 group-hover:text-red-400"></i>';
-        if (choice.type === 'skill') icon = '<i class="fas fa-dice-d20 text-cyan-600 group-hover:text-cyan-300"></i>';
-        
-        let content = `<span class="cinzel font-bold text-gray-300 group-hover:text-amber-100 transition-colors">${rawText}${subText}</span>`;
-        
-        // Disabled Logic
-        let isDisabled = false;
-        let disabledClass = '';
-        
-        if (choice.cost && gameState.shillings < choice.cost) { isDisabled = true; disabledClass = 'btn-disabled-cost'; }
-        if (choice.suppliesCost && gameState.supplies < choice.suppliesCost) { isDisabled = true; disabledClass = 'btn-disabled-cost'; }
-        
-        const btn = document.createElement('button');
-        
-        let btnClass = choice.customClass 
-            ? `btn-game w-full text-left rounded shadow flex items-center justify-between cinzel font-bold mb-2 ${choice.customClass}`
-            : `btn-game w-full text-left rounded shadow flex items-center justify-between cinzel font-bold bg-gray-800 border-gray-600 hover:border-amber-500 hover:bg-gray-750 text-gray-300 group`;
+				if (choice.cost && gameState.shillings < choice.cost) { isDisabled = true; disabledClass = 'btn-disabled-cost'; }
+				if (choice.suppliesCost && gameState.supplies < choice.suppliesCost) { isDisabled = true; disabledClass = 'btn-disabled-cost'; }
+				if (choice.costHP !== undefined && gameState.currentHP <= choice.costHP) { isDisabled = true; disabledClass = 'btn-disabled-cost'; }
+				if (choice.isDisabled && typeof choice.isDisabled === 'function' && choice.isDisabled(gameState)) { isDisabled = true; disabledClass = 'btn-disabled-cost'; }
 
-        if (isDisabled) {
-            btnClass += ` ${disabledClass}`;
-            btn.disabled = true;
-        }
-        btn.className = btnClass;
+				// Generate Subtext (Costs/DC)
+				if (choice.type === 'skill') {
+					const displayDC = gameState.isRiftCollapse ? choice.dc + 2 : choice.dc;
+					subText += `<span class="text-[10px] text-cyan-400 ml-2 font-mono tracking-wider opacity-80">[${choice.skill} DC ${displayDC}]</span>`;
+				}
+				if (choice.cost) subText += `<span class="text-[10px] ${gameState.shillings >= choice.cost ? "text-amber-500" : "text-red-500"} ml-2 font-mono">(-${choice.cost}s)</span>`;
+				if (choice.suppliesCost) subText += `<span class="text-[10px] ${gameState.supplies >= choice.suppliesCost ? "text-indigo-400" : "text-red-500"} ml-2 font-mono">(-${choice.suppliesCost} Supply)</span>`;
+				if (choice.costHP) subText += `<span class="text-[10px] text-red-400 ml-2 font-mono">(-${choice.costHP} HP)</span>`;
+				if (choice.consume) subText += `<span class="text-[10px] text-gray-500 italic ml-2">(Consume)</span>`;
 
-        btn.onclick = (e) => {
-            if (btn.disabled) { audioManager.playClick(); return; }
+				// Icon Logic
+				let icon = '<i class="fas fa-chevron-right text-gray-500 group-hover:text-amber-100 transition-colors"></i>';
+				if (choice.type === 'combat') icon = '<i class="fas fa-skull text-gray-500 group-hover:text-red-400"></i>';
+				if (choice.type === 'skill') icon = '<i class="fas fa-dice-d20 text-cyan-600 group-hover:text-cyan-300"></i>';
+				if (choice.text.includes("Strike")) icon = '<i class="fas fa-khanda text-gray-400"></i>';
 
-            if (choice.action) {
-                const result = choice.action(gameState);
-                if (result) addToHistory(result, 'system');
-                
-                // Force re-render if no scene change (allows Skill toggles to update UI)
-                if (!choice.nextScene) {
-                    renderScene(gameState.currentSceneId, false);
-                } else {
-                    renderScene(choice.nextScene);
-                }
-            } else if (choice.nextScene) {
-                renderScene(choice.nextScene);
-            }
-        };
+				let content = `<span class="cinzel font-bold text-gray-300 group-hover:text-amber-100 transition-colors">${rawText}${subText}</span>`;
 
-        btn.innerHTML = `${content} <span class="ml-auto">${icon}</span>`;
-        container.appendChild(btn);
-    });
-}
-		
+				// CLASS ASSIGNMENT (Restored Alignment Logic)
+				const isSkillCheck = choice.type === 'skill';
+				const alignmentClass = (isSkillCheck || choice.cost || choice.value || choice.shillingGain) ? 'justify-start' : 'justify-between';
+				
+				let btnClass = choice.customClass 
+					? `btn-game w-full text-left rounded shadow flex items-center ${alignmentClass} cinzel font-bold mb-2 ${choice.customClass}`
+					: `btn-game w-full text-left rounded shadow flex items-center ${alignmentClass} cinzel font-bold bg-gray-800 border-gray-600 hover:border-amber-500 hover:bg-gray-750 text-gray-300 group`;
+
+				if (isDisabled) {
+					btnClass += ` ${disabledClass}`;
+				}
+				if (isSkillCheck && activeCrewMember) {
+					const hasBonus = getBonusForSkill(activeCrewMember, choice.skill);
+					if (hasBonus) btnClass += " border-cyan-500 ring-1 ring-cyan-400"; 
+				}
+
+				const btn = document.createElement('button');
+				btn.className = btnClass;
+				btn.disabled = isDisabled;
+
+				// --- CLICK HANDLER (Restored Animation Logic) ---
+				btn.onclick = (e) => {
+					if (btn.disabled) { window.audioManager.playClick(); return; }
+
+					// ANIMATED SKILL CHECK
+					if (choice.type === 'skill') {
+						const allBtns = document.querySelectorAll('.btn-game');
+						allBtns.forEach(b => b.disabled = true);
+						
+						window.audioManager.playDice();
+						btn.classList.add('fx-skill-active'); 
+
+						// Logic
+						let roll = Math.floor(Math.random() * 20) + 1;
+						let logMsg = `Check (DC ${gameState.isRiftCollapse ? choice.dc + 2 : choice.dc}): Rolled d20 (${roll})`;
+						
+						gameState.lastSkillType = choice.skill;
+						gameState.lastDC = gameState.isRiftCollapse ? choice.dc + 2 : choice.dc;
+						gameState.lastCrewUsedId = null;
+
+						// Crew Bonus Calculation
+						if (activeCrewMember) {
+							const isSkilled = getBonusForSkill(activeCrewMember, choice.skill);
+							const crewKey = activeCrewMember.id;
+							if (isSkilled) { 
+								const dieSize = gameState.isEthereal ? 8 : (gameState.guidingDieSize || 4); 
+								const bonus = Math.floor(Math.random() * dieSize) + 1;
+								roll += bonus;
+								const dieLabel = gameState.isEthereal ? `(Spectral D8!)` : `(${activeCrewMember.name})`;
+								logMsg += ` + <span class="${gameState.isEthereal ? 'text-spectral-d8' : ''}">${bonus}</span> ${dieLabel}`; 
+								
+								if (gameState.crewUseFree) {
+									addToHistory(`*Pearlescent Mushroom consumed for FREE GUIDANCE.*`, 'system');
+									gameState.crewUseFree = false;
+								} else {
+									gameState.crew[crewKey].used = true;
+								}
+								if (roll >= gameState.lastDC) gameState.lastCrewUsedId = crewKey;
+							}
+							activeCrewMember = null;
+						}
+
+						const isSuccess = roll >= gameState.lastDC;
+
+						setTimeout(() => {
+							btn.classList.remove('fx-skill-active');
+							if (isSuccess) {
+								window.audioManager.playSuccess();
+								btn.classList.add('fx-skill-success');
+							} else {
+								window.audioManager.playFail();
+								btn.classList.add('fx-skill-fail');
+							}
+
+							setTimeout(() => {
+								gameState.pendingRoll = { total: roll, log: logMsg };
+								renderScene(choice.nextScene);
+							}, 600);
+						}, 800);
+						return; 
+					}
+
+					// STANDARD ACTIONS
+					window.audioManager.playClick();
+					
+					if (choice.action) {
+						const result = choice.action(gameState);
+						if (result) addToHistory(result, 'system');
+						
+						if (!choice.nextScene) renderScene(gameState.currentSceneId, false);
+						else renderScene(choice.nextScene);
+					} 
+					else if (choice.nextScene) {
+						renderScene(choice.nextScene);
+					}
+				};
+
+				btn.innerHTML = `${content} <span class="ml-auto">${icon}</span>`;
+				container.appendChild(btn);
+			});
+		}
 		
 		
 		function updateUI() {
@@ -7595,6 +7638,7 @@
 				});
 			}
 
+			// Add Items
 			const combatItems = [
 				{ id: 'Holy Water', func: 'item_holy_water', style: 'btn-success-glow' },
 				{ id: 'Alchemical Fire', func: 'item_fire', style: 'btn-fire-glow' },
@@ -7617,7 +7661,7 @@
 			});
 
 			return choices;
-		};		
+		};	
 		
 
 		// Close backpack when clicking outside
