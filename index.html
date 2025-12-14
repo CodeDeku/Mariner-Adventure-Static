@@ -675,7 +675,7 @@
 			},
 			'act3_transition': {
 				nextScene: 'act3_name_ship',
-				narrative: "The Rift is closed, but the open sea is a battlefield. The factions are moving, and the water turns red with the Sanguine Tithe. <span class='text-cyan-400'>Choose your strength for the final war.</span>",
+				narrative: "The Rift is closed, but the open sea is a battlefield. The factions are moving, and the water turns red with the Sanguine Tithe.",
 				boons: {
 					gareth: { title: "Hold the Line", effect: "Death Defiance", desc: "Survive a lethal blow at 1 HP (Once per rest)." },
 					quinn: { title: "Master Navigator", effect: "-1 Supply Cost", desc: "Sea travel costs 1 less Supply." },
@@ -1069,52 +1069,47 @@
 			renderScene(state.currentSceneId); 
 		}
 
-		// Update the global allyCommand to correctly call the Horde Resolution
+		// Updated to be a FREE ACTION (Does not trigger enemy turn)
 		window.allyCommand = function(allyId) {
 			const state = gameState;
-			if (state.isBossCombat && state.allyCooldowns[allyId] === 0) {
-				
-				if (allyId === 'silas') {
-					state.negateNextDamage = true;
-					
-					// --- CRITICAL FIX: Silas Vengeance Check (Only for Vampire Elders fight) ---
-					let baseCooldown = 2;
-					if (state.silasVengeanceActive && state.currentEnemy.includes('Vampire')) {
-						 baseCooldown = 1; 
-						 addToHistory("Vengeance Status: Silas Intercept Cooldown reduced to 1!", 'system');
-					}
-					state.allyCooldowns.silas = baseCooldown;
-					// --------------------------------------------------------------------------
-					
-					addToHistory(`<span class="text-emerald-400 font-bold">Silas: Intercept!</span> Silas materializes, shield raised.`, 'system');
-				} else if (allyId === 'blink') {
-					gameState.nextAttackCrit = true;
-					gameState.allyCooldowns.blink = 3;
-					addToHistory(`<span class="text-emerald-400 font-bold">Blink: Phase Shift!</span> The cub blurs and you feel the tether momentarily shift.`, 'system');
-				}
-				
-				// Tick down the OTHER ally's cooldown
-				Object.keys(state.allyCooldowns).forEach(key => {
-					if (key !== allyId) {
-						state.allyCooldowns[key] = Math.max(0, state.allyCooldowns[key] - 1);
-					}
-				});
-				
-				addToHistory("The turn passes as you command your companion, triggering the enemy's attack.", 'system');
-				
-				// Trigger enemy attack if in Horde Combat, otherwise use old single-target method
-				if (state.activeEnemies && state.activeEnemies.length > 0) {
-					 window.resolveHordeRound('none', 'none'); 
-				} else {
-					window.resolveCombatRound('none');
-				}
-				
-			} else {
-				addToHistory(`Ally ${allyId.charAt(0).toUpperCase() + allyId.slice(1)} is on cooldown or you are not in combat!`, 'system');
-			}
 			
+            // Basic validation
+            if (!state.isBossCombat) {
+                 addToHistory("Allies can only be commanded during boss combat!", 'system');
+                 return;
+            }
+            if (state.allyCooldowns[allyId] > 0) {
+                 addToHistory(`Ally ${allyId} is on cooldown!`, 'system');
+                 return;
+            }
+
+            // APPLY EFFECTS
+            if (allyId === 'silas') {
+                state.negateNextDamage = true;
+                
+                // Silas Vengeance Logic
+                let baseCooldown = 3; // Increased base slightly to balance free action
+                if (state.silasVengeanceActive && state.currentEnemy.includes('Vampire')) {
+                        baseCooldown = 1; 
+                        addToHistory("Vengeance Status: Silas Intercept Cooldown reduced!", 'system');
+                }
+                state.allyCooldowns.silas = baseCooldown;
+                addToHistory(`<span class="text-emerald-400 font-bold">Silas: Intercept!</span> Silas raises his shield. Next enemy attack negated.`, 'system');
+                audioManager.playClash(); // Sound effect
+            } 
+            else if (allyId === 'blink') {
+                gameState.nextAttackCrit = true;
+                gameState.allyCooldowns.blink = 3;
+                addToHistory(`<span class="text-emerald-400 font-bold">Blink: Phase Shift!</span> The cub exposes a weakness. Next attack deals massive damage.`, 'system');
+                audioManager.playGhost(); // Sound effect
+            }
+            
+            // SAVE & REFRESH
 			saveGame();
 			updateUI();
+            
+            // Re-render scene to update button states (disable the ally button)
+            renderScene(state.currentSceneId, false); 
 		}
 		
 		
@@ -1128,7 +1123,6 @@
 			let log = "";
 			
 			// --- 1. CALCULATE PLAYER DAMAGE ---
-			// UPDATED: Use the dynamic baseDamage from Dreamscape
 			const levelBonus = (state.baseDamage || 0);
 
 			if (attackType === 'valor_strike') {
@@ -1150,12 +1144,12 @@
 				playerDmg = 0;
 				log += "Flash Powder blinds them! They cannot strike back this turn. ";
 			}
-			// NEW: Sun-Star Grenade Logic
+			// FIX: BUFFED SUN-STAR GRENADE
 			else if (attackType === 'item_sun_star') {
-				playerDmg = 25;
-				log += "<b>The Sun-Star detonates!</b> 25 Damage! The enemy is blinded by the flare! ";
+				playerDmg = 30; // Increased to 30
+				log += "<b>THE SUN-STAR DETONATES!</b> 30 Radiant Damage! The enemy is blinded! ";
 			}
-			// NEW: CHAOS WEAPON (STAKE DRIVER) 
+			// CHAOS WEAPON (STAKE DRIVER) 
 			else if (attackType === 'item_stake_driver') {
 				playerDmg = Math.floor(Math.random() * 8) + 4 + levelBonus;
 				log += "<b>THWACK!</b> The bone bolt pins the enemy! (Stunned). ";
@@ -1166,7 +1160,6 @@
 				playerDmg = playerDmg * 2;
 				gameState.battleRhythm = false; // Consume buff
 				
-				// Remove icon from inventory if you're using it as a marker
 				const buffIdx = gameState.inventory.indexOf("Battle Rhythm");
 				if (buffIdx > -1) gameState.inventory.splice(buffIdx, 1);
 
@@ -1199,13 +1192,13 @@
 
 			// --- 3. ENEMY LOGIC (RETALIATION & REGEN) ---
 			
-			// Check Stun (Flash Powder or Stake Driver)
+			// Check Stun (Flash Powder or Stake Driver or Sun-Star)
 			let enemySkipped = (attackType === 'item_flash' || attackType === 'item_stake_driver' || attackType === 'item_sun_star');
 
 			if (!enemySkipped) {
 				let enemyDmg = Math.floor(Math.random() * (state.enemyDamageRange[1] - state.enemyDamageRange[0] + 1)) + state.enemyDamageRange[0];
 
-				// NEW: MIRROR SHIELD REFLECTION 
+				// MIRROR SHIELD REFLECTION 
 				if (attackType === 'reflect_stance') {
 					log += ` <span class='text-blue-300 font-bold'>Mirror Shield reflects the attack!</span> You take 0 damage. The enemy takes ${enemyDmg}.`;
 					state.enemyHP -= enemyDmg; // Deal damage back
@@ -1242,11 +1235,13 @@
 						}
 					}
 				}
-			}
+			} else {
+                log += " <span class='text-yellow-400 font-bold'>Enemy Stunned! Attack Skipped.</span>";
+            }
 
 			// --- 4. REGENERATION (CORAL-HULK SPECIFIC) ---
 			if (state.currentEnemy === 'Coral-Hulk' && state.enemyHP > 0) {
-				const regenAmount = 5;
+				const regenAmount = 3; // FIX: NERFED FROM 5 TO 3
 				state.enemyHP = Math.min(state.maxEnemyHP, state.enemyHP + regenAmount);
 				log += ` <span class='text-red-400 font-bold animate-pulse'>The Hyper-Coral knits flesh together (+${regenAmount} HP Regen).</span>`;
 			}
@@ -1259,6 +1254,11 @@
 			updateUI(); 
 			renderScene(state.currentSceneId); 
 		};
+		
+		
+		
+		
+		
 		
 
         // 1. PLANE WALK LOGIC
@@ -6273,7 +6273,7 @@
 			
 			'manor_foyer_safe': {
                 title: "The Grand Foyer",
-                text: "The Grand Foyer is silent. The floating staircase hangs motionless in the void, and dust motes dance in the light of your Spectral Lantern. The threats of the past are gone, leaving only the architecture.",
+                text: "The Grand Foyer is silent. The floating staircase hangs motionless in the void, and dust motes dance in the light of your Spectral Lantern.",
                 onEnter: (state) => {
                     state.tetherTimer = 0;
                     return "Exploring the Manor.";
@@ -6281,7 +6281,7 @@
                 choices: [
                     { text: "Enter Library (West)", nextScene: 'manor_library_safe', type: 'travel', doomCost: 0 },
                     { text: "Enter Kitchens (East)", nextScene: 'manor_kitchens_safe', type: 'travel', doomCost: 0 },
-                    { text: "Enter Grand Hall (North)", nextScene: 'manor_hall_safe', type: 'travel', doomCost: 0 },
+                    { text: "Enter Grand Hall (North)", nextScene: 'manor_hall_safe', type: 'travel', doomCost: 0 }, // Ensure this is _safe
                     { text: "Return to Safe House", nextScene: 'wolf_estate_safe', type: 'travel', doomCost: 0 }
                 ]
             },
@@ -6439,7 +6439,7 @@
 
             'manor_hall_safe': {
 				title: "The Grand Hall",
-				text: "The wreckage of the Brass Sentinel lies in a heap. The Penrose Staircase spins slowly in the distance, but the door at the top is sealed shut. The Rift is closed.",
+				text: "The wreckage of the Brass Sentinel lies in a heap. The Penrose Staircase spins slowly in the distance.",
 				choices: [
 					{ 
 						text: "Scavenge the Mimic Carcass (Mimic's Bile)", 
@@ -6452,7 +6452,7 @@
 							return "You find the dead Mimic. You extract the Bile from its gland.";
 						}
 					},
-					{ text: "Return to Foyer", nextScene: 'manor_foyer_safe', type: 'travel', doomCost: 0 }
+					{ text: "Return to Foyer", nextScene: 'manor_foyer_safe', type: 'travel', doomCost: 0 } // Point to _safe
 				]
 			},
 
@@ -6473,15 +6473,18 @@
 			
             'act3_long_rest': {
 				title: "A Deep Respite",
-				text: "You collapse into a spectral hammock. The Manor resets itself around you. Talon returns from the walls, and Quinn organizes his fresh notes.",
+				text: "You collapse into a spectral hammock. The Manor resets itself around you.",
 				isRest: true,
 				onEnter: (state) => {
 					state.currentHP = state.maxHP;
-					Object.keys(state.crew).forEach(k => k.used = false);
+					Object.keys(state.crew).forEach(k => state.crew[k].used = false);
 					
 					// RESET DAILY FLAGS
 					state.talonScavenged = false;
 					state.quinnResearched = false;
+                    
+                    // FORCE REFRESH
+                    setTimeout(() => updateUI(), 50);
 					
 					return "HP Restored. Crew Rested. Manor Activities Reset.";
 				},
@@ -7525,7 +7528,7 @@
                 btn.className = btnClass;
 
                 // --- CLICK HANDLERS ---
-                if (choice.type === 'hold') {
+				if (choice.type === 'hold') {
                     let holdTimer = null;
                     const duration = 3000;
                     btn.style.setProperty('--channel-duration', `${duration}ms`);
@@ -7534,18 +7537,24 @@
                         if (e.type === 'touchstart') e.preventDefault(); 
                         if (btn.disabled) return;
                         btn.classList.add('channeling');
-                        // FIX 1: Removed audioManager.playGhost() here
 
                         holdTimer = setTimeout(async () => {
-                            // FIX 1: Removed audioManager.playClash() here
                             fxManager.setVignette(false); 
                             fxManager.clearEffects();     
-                            if (choice.nextScene === 'act2_arrival') {
-                                gameState.isEthereal = true; 
-                                document.body.classList.add('plane-ethereal'); 
-                                await saveGame(); 
+                            
+                            // FIX: Execute action if present (e.g., startDreamscape)
+                            if (choice.action) {
+                                choice.action(gameState);
                             }
-                            renderScene(choice.nextScene);
+                            // Only render nextScene if provided and no action blocked it
+                            else if (choice.nextScene) {
+                                if (choice.nextScene === 'act2_arrival') {
+                                    gameState.isEthereal = true; 
+                                    document.body.classList.add('plane-ethereal'); 
+                                    await saveGame(); 
+                                }
+                                renderScene(choice.nextScene);
+                            }
                         }, duration);
                     };
                     const cancelChannel = (e) => {
