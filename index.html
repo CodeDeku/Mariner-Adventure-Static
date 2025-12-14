@@ -787,6 +787,8 @@
         window.resolveHordeRound = null;
         window.allyCommand = null;
         window.getBonusForSkill = null; // Defined later, used in renderChoices/skill checks
+		
+		window.renderScene = () => {};
 
 
         // 2. FIREBASE CONFIG
@@ -805,6 +807,92 @@
         const appId = "edward-jones-standalone";
         let user;
         const MAX_OVERHEAL_CAP = 25;
+		
+		// --- GLOBAL DATA STRUCTURES (Used by renderChoices) ---
+		const MARKET_BUY_OPTIONS = [
+			{ item: "Healing Potion", nextScene: 'buy_potion', cost: 5 },
+			{ item: "Rope", nextScene: 'buy_rope', cost: 3 },
+			{ item: "Torch", nextScene: 'buy_torch', cost: 2 },
+			{ item: "Rum", nextScene: 'buy_rum', cost: 4 }
+		];
+		
+		const ALCHEMIST_BUY_OPTIONS = [
+			{ item: "Vitality Tincture", nextScene: 'buy_tincture', cost: 15, doomCost: 0 },
+			{ item: "Smelling Salts", nextScene: 'buy_salts', cost: 8, doomCost: 0 },
+			{ item: "Flash Powder", nextScene: 'buy_powder', cost: 10, doomCost: 0 },
+			{ item: "Alchemical Fire", nextScene: 'buy_fire', cost: 12, doomCost: 0 },
+			{ item: "Holy Water", nextScene: 'buy_water', cost: 12, doomCost: 0 }
+		];
+		
+		const SHIP_SUPPLIES_OPTIONS = [
+			 { item: "Supplies", cost: 10, amount: 5 },
+			 { item: "Supplies", cost: 18, amount: 10 }
+		];
+
+		const MARKET_SELL_OPTIONS = [
+			{ item: "Curious Cargo", nextScene: 'sell_cargo', value: 10, doomCost: 1 }, 
+			{ item: "Rope", nextScene: 'sell_rope', value: 2, doomCost: 0 },
+			{ item: "Torch", nextScene: 'sell_torch', value: 1, doomCost: 0 },
+			{ item: "Healing Potion", nextScene: 'sell_potion', value: 3, doomCost: 0 },
+			{ item: "Rum", nextScene: 'sell_rum', value: 2, doomCost: 0 }
+		];
+		
+		const ALCHEMIST_SELL_OPTIONS = [
+			{ item: "Silver Locket", nextScene: 'sell_locket_alch', value: 10, doomCost: 0 },
+			{ item: "Alchemical Fire", nextScene: 'sell_fire', value: 20, doomCost: 0 },
+			{ item: "Holy Water", nextScene: 'sell_water', value: 20, doomCost: 0 },
+			{ item: "Vitality Tincture", nextScene: 'sell_tincture', value: 7, doomCost: 0 },
+			{ item: "Healing Potion", nextScene: 'sell_potion_alch', value: 4, doomCost: 0 }, 
+			{ item: "Pearlescent Mushroom", nextScene: 'sell_mushroom_alch', value: 12, doomCost: 0 }
+		];
+		
+		// --- DYNAMIC BANTER DATA (Re-defined for engine) ---
+		const dynamicBanter = {
+			'gareth': [
+				"Keep your feet moving, Mariner. A dead ship needs a fast Captain.",
+				"The storm is behind us, but the fog ahead is thicker. Stay alert.",
+				"Do you feel that? The planar veil is thinning again. Hurry.",
+				"There is no easy port in this chaos. Pick a heading and hold it true."
+			],
+			'quinn': [
+				"I've checked the manifest twice; we're running low on luck, Edward.",
+				"Keep track of the shillings! Coin is the only stable metric left in this world.",
+				"This path is inefficient, Captain. Logically, we should have gone the other way.",
+				"Hmph. More wreckage. Always more wreckage."
+			],
+			'talon': [
+				"Watch the ground, Edward. The dead leave tracks too.",
+				"Something smells wrong. Not rot—*new* wrong. Be ready.",
+				"The shadows here are deeper than they should be. It's a good place to hide, or be hunted.",
+				"Rustling in the brush. Just wind... or something that hunts in the wind."
+			],
+			'bones': [
+				"I could use a long rest, Edward. My bones are cold and tired.",
+				"Are you eating enough? You can't run on sea-water and guilt, Captain.",
+				"This town is sick. I can taste the fever in the air.",
+				"Keep the cutlass sharp. I don't like the look of these locals."
+			]
+		};
+		
+		function getDynamicBanter() {
+			if (Math.random() > 0.80) {
+				const availableCrew = Object.keys(window.gameState.crew).filter(id => !window.gameState.crew[id].used);
+				
+				if (availableCrew.length === 0) return null;
+
+				const randomCrewId = availableCrew[Math.floor(Math.random() * availableCrew.length)];
+				const crewName = window.gameState.crew[randomCrewId].name;
+				const lines = dynamicBanter[randomCrewId];
+				
+				if (lines && lines.length > 0) {
+					const randomLine = lines[Math.floor(Math.random() * lines.length)];
+					return { name: crewName, line: randomLine };
+				}
+			}
+			return null;
+		}
+		// Expose dynamic banter function to window for renderScene (which is later defined in this file)
+		window.getDynamicBanter = getDynamicBanter;
 
         // --- AUDIO MANAGER ---
         class AudioManager {
@@ -1520,15 +1608,6 @@
         renderScene(config.nextScene);
         saveGame();
     };
-
-
-    // --- MARKET BLUEPRINTS (Global Definitions for all merchants) ---
-    const MARKET_BUY_OPTIONS = [ { item: "Healing Potion", nextScene: 'buy_potion', cost: 5 }, { item: "Rope", nextScene: 'buy_rope', cost: 3 }, { item: "Torch", nextScene: 'buy_torch', cost: 2 }, { item: "Rum", nextScene: 'buy_rum', cost: 4 } ];
-    const ALCHEMIST_BUY_OPTIONS = [ { item: "Vitality Tincture", nextScene: 'buy_tincture', cost: 15, doomCost: 0 }, { item: "Smelling Salts", nextScene: 'buy_salts', cost: 8, doomCost: 0 }, { item: "Flash Powder", nextScene: 'buy_powder', cost: 10, doomCost: 0 }, { item: "Alchemical Fire", nextScene: 'buy_fire', cost: 12, doomCost: 0 }, { item: "Holy Water", nextScene: 'buy_water', cost: 12, doomCost: 0 } ];
-    const TAVERN_BUY_OPTIONS = [ { item: "Gruel", nextScene: 'buy_gruel_to_go', cost: 1 } ];
-    const SHIP_SUPPLIES_OPTIONS = [ { item: "Supplies", cost: 10, amount: 5 }, { item: "Supplies", cost: 18, amount: 10 } ];
-    const MARKET_SELL_OPTIONS = [ { item: "Curious Cargo", nextScene: 'sell_cargo', value: 10, doomCost: 1 }, { item: "Rope", nextScene: 'sell_rope', value: 2, doomCost: 0 }, { item: "Torch", nextScene: 'sell_torch', value: 1, doomCost: 0 }, { item: "Healing Potion", nextScene: 'sell_potion', value: 3, doomCost: 0 }, { item: "Rum", nextScene: 'sell_rum', value: 2, doomCost: 0 } ];
-    const ALCHEMIST_SELL_OPTIONS = [ { item: "Silver Locket", nextScene: 'sell_locket_alch', value: 10, doomCost: 0 }, { item: "Alchemical Fire", nextScene: 'sell_fire', value: 20, doomCost: 0 }, { item: "Holy Water", nextScene: 'sell_water', value: 20, doomCost: 0 }, { item: "Vitality Tincture", nextScene: 'sell_tincture', value: 7, doomCost: 0 }, { item: "Healing Potion", nextScene: 'sell_potion_alch', value: 4, doomCost: 0 }, { item: "Pearlescent Mushroom", nextScene: 'sell_mushroom_alch', value: 12, doomCost: 0 } ];
 
     function combineItems(baseItem, ingredient, resultItem) {
         if (!gameState.inventory.includes(baseItem) || !gameState.inventory.includes(ingredient)) return "Error: Missing ingredients.";
