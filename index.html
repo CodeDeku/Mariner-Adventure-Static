@@ -7793,6 +7793,11 @@
 			const sceneId = gameState.currentSceneId;
 			const suppliesDisplay = document.getElementById('supplies-display');
 			
+			if (sceneId.startsWith('prologue')) {
+				statsPanel.classList.add('prologue-blur');
+			} else {
+				statsPanel.classList.remove('prologue-blur');
+			}
 			
 			// 2. Render 2x2 Skill/Ally Grid
 			const abilitiesWrapper = document.getElementById('abilities-combined-container');
