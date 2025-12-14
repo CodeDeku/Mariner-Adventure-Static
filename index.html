@@ -2157,58 +2157,89 @@
         const state = window.gameState || gameState;
         const statsPanel = document.getElementById('stats-panel');
         const journalContainer = document.getElementById('journal-container');
-		
-		// 1. Prologue/Journal Visibility FIX
-		const sceneId = gameState.currentSceneId;
-
-		// DEFINITION: Only scenes starting with 'prologue' are blurred. 
-		// 'start' (The Wreckage) will now trigger the reveal.
-		const isPrologueScene = sceneId && sceneId.startsWith('prologue');
-
-		if (isPrologueScene) {
-			// Apply the darkness/blur
-			statsPanel.classList.add('prologue-blur');
-			statsPanel.classList.remove('prologue-active');
-			
-			// Hide Journal
-			journalContainer.classList.add('log-hidden');
-			journalContainer.classList.remove('log-visible');
-		} else {
-			// Reveal the UI (happens at 'start' and persists on refresh)
-			statsPanel.classList.remove('prologue-blur');
-			statsPanel.classList.add('prologue-active');
-			
-			// Reveal Journal if item is owned
-			if(gameState.inventory.includes("Ship's Log")) {
-				journalContainer.classList.remove('log-hidden');
-				journalContainer.classList.add('log-visible');
-			} else {
-				journalContainer.classList.add('log-hidden');
-				journalContainer.classList.remove('log-visible');
-			}
-		}
         
-        // 2. HP Bar
+        // --- 1. PROLOGUE MASK & JOURNAL LOGIC ---
+        const sceneId = gameState.currentSceneId;
+        
+        // Debugging: This will tell us if the game actually thinks it's in 'start'
+        console.log("UI Update | Current Scene:", sceneId);
+
+        // Strict check: Only scenes explicitly named 'prologue_...' keep the blur
+        const isPrologueScene = sceneId && String(sceneId).startsWith('prologue');
+
+        if (isPrologueScene) {
+            // Active Blur (Mask On)
+            if (!statsPanel.classList.contains('prologue-blur')) {
+                statsPanel.classList.add('prologue-blur');
+                statsPanel.classList.remove('prologue-active');
+            }
+            // Hide Journal in Prologue
+            journalContainer.classList.add('log-hidden');
+            journalContainer.classList.remove('log-visible');
+        } else {
+            // Remove Blur (Mask Off) - Forced removal for ANY non-prologue scene
+            statsPanel.classList.remove('prologue-blur');
+            statsPanel.classList.add('prologue-active');
+            
+            // Separate Logic: Journal Visibility
+            if(gameState.inventory.includes("Ship's Log")) {
+                journalContainer.classList.remove('log-hidden');
+                journalContainer.classList.add('log-visible');
+            } else {
+                journalContainer.classList.add('log-hidden');
+                journalContainer.classList.remove('log-visible');
+            }
+        }
+        
+        // --- 2. HP Bar ---
         const displayMaxHP = gameState.maxHP;
         const hpToDisplay = gameState.currentHP;
         const hpPct = (hpToDisplay / displayMaxHP) * 100;
         const bar = document.getElementById('hp-bar');
-        bar.style.width = `${Math.min(100, hpPct)}%`;
-        bar.className = `h-full transition-all duration-500 ${hpToDisplay < (displayMaxHP * 0.3) ? 'bg-red-600 animate-pulse' : 'bg-red-800'}`;
-        document.getElementById('hp-text').innerText = `${hpToDisplay}/${displayMaxHP}`; 
-        audioManager.checkVulnerable(gameState.currentHP, gameState.maxHP);
+        if(bar) {
+            bar.style.width = `${Math.min(100, hpPct)}%`;
+            bar.className = `h-full transition-all duration-500 ${hpToDisplay < (displayMaxHP * 0.3) ? 'bg-red-600 animate-pulse' : 'bg-red-800'}`;
+        }
+        const hpText = document.getElementById('hp-text');
+        if(hpText) hpText.innerText = `${hpToDisplay}/${displayMaxHP}`; 
+        
+        // Safety check for audioManager before accessing
+        if(window.audioManager) window.audioManager.checkVulnerable(gameState.currentHP, gameState.maxHP);
 
-        // 3. Meters (Doom/Tether)
+        // --- 3. Meters (Doom/Tether) ---
         const doomDisplay = document.getElementById('doom-counter-display');
         const tetherDisplay = document.getElementById('tether-display');
-        if (gameState.act1Started && !gameState.act2Started && !gameState.act3Started) { doomDisplay.classList.remove('hidden'); document.getElementById('doom-timer-text').textContent = `${gameState.doomTimer} Turns`; document.getElementById('doom-bar').style.width = `${(gameState.doomTimer / 20) * 100}%`; } else { doomDisplay.classList.add('hidden'); }
-        if (gameState.act2Started) { tetherDisplay.classList.remove('hidden'); document.getElementById('tether-text').textContent = `${gameState.tetherTimer} Turns`; document.getElementById('tether-bar').style.width = `${(gameState.tetherTimer / 20) * 100}%`; } else { tetherDisplay.classList.add('hidden'); }
         
-        // 4. Influence Marker
+        if (doomDisplay) {
+            if (gameState.act1Started && !gameState.act2Started && !gameState.act3Started) { 
+                doomDisplay.classList.remove('hidden'); 
+                const doomText = document.getElementById('doom-timer-text');
+                const doomBar = document.getElementById('doom-bar');
+                if(doomText) doomText.textContent = `${gameState.doomTimer} Turns`; 
+                if(doomBar) doomBar.style.width = `${(gameState.doomTimer / 20) * 100}%`; 
+            } else { 
+                doomDisplay.classList.add('hidden'); 
+            }
+        }
+
+        if (tetherDisplay) {
+            if (gameState.act2Started) { 
+                tetherDisplay.classList.remove('hidden'); 
+                const tetherText = document.getElementById('tether-text');
+                const tetherBar = document.getElementById('tether-bar');
+                if(tetherText) tetherText.textContent = `${gameState.tetherTimer} Turns`; 
+                if(tetherBar) tetherBar.style.width = `${(gameState.tetherTimer / 20) * 100}%`; 
+            } else { 
+                tetherDisplay.classList.add('hidden'); 
+            }
+        }
+        
+        // --- 4. Influence Marker ---
         const inf = gameState.influence || 0;
         const pct = ((inf + 50) / 100) * 100;
         const marker = document.getElementById('inf-marker');
         if (marker) marker.style.left = `${Math.max(0, Math.min(100, pct))}%`;
+        
         const infText = document.getElementById('inf-status-text');
         if (infText) {
             if (inf <= -30) infText.textContent = "Sworn to the Crown";
@@ -2218,35 +2249,46 @@
             else infText.textContent = "Neutral";
         }
 
-        // 5. Radial Crew (FIX: Ensures crew names/skills use breaks for proper layout)
+        // --- 5. Radial Crew ---
         renderRadialCrew();
         
-        // 6. Companion and Planar Skill Visibility
-        const isSilasJoined = gameState.companions.silas.joined;
-        const isBlinkJoined = gameState.companions.blink.joined;
+        // --- 6. Companion and Planar Skill Visibility ---
+        const isSilasJoined = gameState.companions?.silas?.joined;
+        const isBlinkJoined = gameState.companions?.blink?.joined;
         const hasPlaneWalk = gameState.skills.includes("Plane Walking");
+        
         const companionPanel = document.getElementById('companion-panel');
         const planarContainer = document.getElementById('planar-skills-container');
         const abilitiesWrapper = document.getElementById('abilities-combined-container'); 
         
-        if (isSilasJoined || isBlinkJoined) { 
-            companionPanel.classList.remove('hidden');
-            renderCompanions(isSilasJoined, isBlinkJoined);
-        } else { companionPanel.classList.add('hidden'); }
-
-        if (hasPlaneWalk) planarContainer.classList.remove('hidden');
-        else planarContainer.classList.add('hidden');
-
-        if ((isSilasJoined || isBlinkJoined) || hasPlaneWalk) {
-            abilitiesWrapper.classList.remove('hidden');
-            abilitiesWrapper.classList.add('grid');
-        } else {
-            abilitiesWrapper.classList.add('hidden');
-            abilitiesWrapper.classList.remove('grid');
+        if (companionPanel) {
+            if (isSilasJoined || isBlinkJoined) { 
+                companionPanel.classList.remove('hidden');
+                renderCompanions(isSilasJoined, isBlinkJoined);
+            } else { 
+                companionPanel.classList.add('hidden'); 
+            }
         }
 
-        // 7. Backpack & Supplies
-        document.getElementById('shillings-display').innerText = gameState.shillings;
+        if (planarContainer) {
+            if (hasPlaneWalk) planarContainer.classList.remove('hidden');
+            else planarContainer.classList.add('hidden');
+        }
+
+        if (abilitiesWrapper) {
+            if ((isSilasJoined || isBlinkJoined) || hasPlaneWalk) {
+                abilitiesWrapper.classList.remove('hidden');
+                abilitiesWrapper.classList.add('grid');
+            } else {
+                abilitiesWrapper.classList.add('hidden');
+                abilitiesWrapper.classList.remove('grid');
+            }
+        }
+
+        // --- 7. Backpack & Supplies ---
+        const shillingDisplay = document.getElementById('shillings-display');
+        if(shillingDisplay) shillingDisplay.innerText = gameState.shillings;
+        
         const packDisplay = document.getElementById('pack-resources-display');
         if (packDisplay) {
             let html = `<span class="text-amber-500">${gameState.shillings} <i class="fas fa-coins text-[10px]"></i></span>`;
@@ -2257,10 +2299,15 @@
         }
 
         const suppliesDisplay = document.getElementById('supplies-display');
-        if (gameState.act3Started) {
-            suppliesDisplay.classList.remove('hidden');
-            document.getElementById('supplies-count').innerText = gameState.supplies;
-        } else { suppliesDisplay.classList.add('hidden'); }
+        if (suppliesDisplay) {
+            if (gameState.act3Started) {
+                suppliesDisplay.classList.remove('hidden');
+                const supCount = document.getElementById('supplies-count');
+                if(supCount) supCount.innerText = gameState.supplies;
+            } else { 
+                suppliesDisplay.classList.add('hidden'); 
+            }
+        }
 
         renderInventoryList();
     }
