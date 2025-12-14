@@ -1785,14 +1785,13 @@
         
         let processedChoices = [...choices]; 
         
-        // Dynamic Injections (Restored full logic)
+        // Dynamic Injections
         if (currentSceneId === 'alchemist_triage' && gameState.inventory.includes('Strange Coin') && !gameState.inventory.includes('Phoenix Draft')) {
             const sellIndex = processedChoices.findIndex(c => c.nextScene === 'alchemist_sell');
             const newChoice = { text: "Offer Strange Coin (Trade for Phoenix Draft)", nextScene: 'alchemist_secret_stock', type: 'action', reqItem: 'Strange Coin', consume: true, doomCost: 0, customClass: 'btn-hero' };
             if (sellIndex !== -1) processedChoices.splice(sellIndex, 0, newChoice);
             else processedChoices.push(newChoice); 
         }
-        // Market logic (simplified but kept dynamic)
         else if (currentSceneId === 'market_stall') {
             const sellWaresNav = choices.find(c => c.nextScene === 'market_sell');
             const isMainGame = gameState.act1Started || gameState.act2Started || gameState.act3Started;
@@ -1810,7 +1809,6 @@
             if (sellWaresNav) processedChoices.push(sellWaresNav);
             processedChoices.push(leaveNav);
         }
-        // Selling logic
         else if (currentSceneId === 'market_sell') {
             const backToBuyNav = choices.find(c => c.nextScene === 'market_stall');
             const isMainGame = gameState.act1Started || gameState.act2Started || gameState.act3Started;
@@ -1826,7 +1824,6 @@
             if (backToBuyNav) processedChoices.push(backToBuyNav);
             processedChoices.push(leaveNav);
         } 
-        // Alchemist Selling logic (needs to be full, as previous simplification was wrong)
         else if (currentSceneId === 'alchemist_sell') {
              const backToBuyNav = choices.find(c => c.nextScene === 'alchemist_triage');
              const returnNav = choices.find(c => c.nextScene === 'town_square');
@@ -1834,12 +1831,10 @@
              ALCHEMIST_SELL_OPTIONS.forEach(sell => {
                  if (gameState.inventory.includes(sell.item)) {
                      let isDisabled = false;
-                     // Prevent selling unique artifacts once set on a path
                      const isArtifactSell = sell.nextScene === 'sell_fire' || sell.nextScene === 'sell_water';
                      const hasRing = gameState.inventory.includes("Ring of Brass");
                      const hasSword = gameState.inventory.includes("Sword of Valor");
                      if (isArtifactSell && (hasRing || hasSword)) isDisabled = true;
-                     
                      processedChoices.push({ text: `Sell ${sell.item.split('(')[0].trim()}`, nextScene: sell.nextScene, type: 'action', reqItem: sell.item, value: sell.value, doomCost: sell.doomCost, isDisabled: isDisabled });
                  }
              });
@@ -1969,7 +1964,7 @@
             if (indicatorString) btn.innerHTML = `<div class="btn-content-wrapper ${alignmentClass}">${content} ${indicatorString} <span class="ml-auto">${icon}</span></div>`;
             else btn.innerHTML = `${content} <span class="ml-auto">${icon}</span>`;
 
-            // --- CLICK HANDLERS (Same as stable version) ---
+            // --- CLICK HANDLERS ---
             if (c.type === 'hold') {
                 let holdTimer = null;
                 const duration = 3000;
@@ -2081,6 +2076,17 @@
                     }
 
                     const executeAction = () => {
+                        // --- FIX: IMMEDIATE REVEAL ---
+                        // Forces the blur off the instant the 'Wake Up' (Gasp for air) button is clicked.
+                        if (c.nextScene === 'start') {
+                            const panel = document.getElementById('stats-panel');
+                            if (panel) {
+                                panel.classList.remove('prologue-blur');
+                                panel.classList.add('prologue-active');
+                            }
+                        }
+                        // --- END FIX ---
+
                         if (c.nextScene === 'manor_map_view') {
                             gameState.returnSceneId = gameState.currentSceneId; 
                             renderScene('manor_map_view');
