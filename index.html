@@ -1254,25 +1254,22 @@
 		}
 		
 		
-		
 		window.attackEnemy = (comboType = 'standard') => {
 			const state = window.gameState;
 			
-            if (comboType === 'check_victory') {
-                if (state.combat.enemyHP <= 0) {
-                    // Route to victory immediately
-                    const enemy = state.combat.enemy.name || "";
-                    if (enemy === "Slag Elemental") renderScene('smelter_victory_generic'); 
-                    else if (enemy === "Drowned Spectre") renderScene('chapel_victory_generic');
-                    else if (enemy.includes("Coral")) renderScene('coral_hulk_victory');
-                    else renderScene('spire_victory');
-                }
-                return;
-            }
+			if (comboType === 'check_victory') {
+				if (state.combat.enemyHP <= 0) {
+					const enemy = state.combat.enemy.name || "";
+					if (enemy === "Slag Elemental") renderScene('smelter_victory_generic'); 
+					else if (enemy === "Drowned Spectre") renderScene('chapel_victory_generic');
+					else if (enemy.includes("Coral")) renderScene('coral_hulk_victory');
+					else renderScene('spire_victory');
+				}
+				return;
+			}
 			
 			// Safety check
 			if (!state.combat.enemyHP && state.enemyHP > 0) {
-				// Sync legacy HP to new object if needed
 				state.combat.enemyHP = state.enemyHP;
 				state.combat.enemy = { name: state.currentEnemy };
 			}
@@ -1280,11 +1277,10 @@
 			if (!state.combat.isPlayerTurn || state.combat.enemyHP <= 0) return;
 
 			// Base damage logic
-			let weaponDmg = '1d6'; // Default (Rusted Cutlass / Fists)
-			
+			let weaponDmg = '1d6';
 			if (state.inventory.includes("Deep-Forged Cutlass")) weaponDmg = '1d10+2';
-			else if (state.inventory.includes("Acid-Etched Sword of Valor")) weaponDmg = '1d8+1'; // + Acid proc handled in combo
-			else if (state.inventory.includes("Radiant-Washed Sword of Valor")) weaponDmg = '1d8+1'; // + Radiant proc handled in combo
+			else if (state.inventory.includes("Acid-Etched Sword of Valor")) weaponDmg = '1d8+1';
+			else if (state.inventory.includes("Radiant-Washed Sword of Valor")) weaponDmg = '1d8+1';
 			else if (state.inventory.includes("Sword of Valor")) weaponDmg = '1d8+1';
 			
 			let baseDamage = window.rollDice(weaponDmg);
@@ -1292,11 +1288,10 @@
 			let bonusDamage = 0;
 			let attackLog = `Edward attacks the ${state.combat.enemy.name || 'enemy'}.`;
 
-			// Combat State
 			const { blade_enhanced_active, blink_used_this_turn, ae_primed } = state.combat;
 			const aeBonusDie = ae_primed ? window.rollDice(ae_primed.bonusDmg) : 0;
 
-			// 1. COMBO MODIFIERS
+			// COMBO MODIFIERS
 			if (comboType === 'standard' || comboType === 'zephyrStrike') {
 				if (state.inventory.includes("Acid-Etched Sword of Valor")) {
 					bonusDamage += window.rollDice('1d4');
@@ -1310,42 +1305,41 @@
 				}
 			}
 			switch (comboType) {
-				case 'zephyrStrike': // T2
+				case 'zephyrStrike':
 					damageType = 'force';
 					bonusDamage += window.rollDice('1d8');
 					attackLog = `Edward executes the **Zephyr Strike**, piercing the guard.`;
 					break;
-				case 'surgicalStrike': // T3 (PA)
+				case 'surgicalStrike':
 					damageType = 'force';
 					bonusDamage += window.rollDice('1d8');
 					window.applyStatusEffect(state, 'vulnerable', 1);
 					attackLog = `**Surgical Strike**! Weakness exposed (Vulnerable applied).`;
 					break;
-				case 'planarStrike': // T3 (AE)
+				case 'planarStrike':
 					damageType = 'force';
 					bonusDamage += window.rollDice('1d8') + aeBonusDie;
 					attackLog = `Planar energy surges! **Howling Planar Strike**!`;
 					break;
-				case 'tripAttack': // T4 (Blink)
+				case 'tripAttack':
 					damageType = 'force';
 					bonusDamage += window.rollDice('1d10');
 					window.applyStatusEffect(state, 'prone', 1);
 					attackLog = `**Dire Wolf Trip Attack**! Enemy is Prone!`;
 					break;
-				case 'huntersEdge': // T4 (Silas + PA)
+				case 'huntersEdge':
 					damageType = 'force';
 					bonusDamage += window.rollDice('1d10');
 					window.applyStatusEffect(state, 'vulnerable', 1);
 					attackLog = `Silas and Edward execute **Hunter's Edge**!`;
 					break;
-				case 'elementalStrike': // T2 (AE Only)
+				case 'elementalStrike':
 					if (ae_primed) {
 						damageType = ae_primed.type;
 						bonusDamage += aeBonusDie;
 						attackLog = `Edward retaliates with a **${ae_primed.type} Strike**.`;
 					}
 					break;
-				case 'standard':
 				default:
 					if (ae_primed) {
 						damageType = ae_primed.type;
@@ -1355,27 +1349,19 @@
 					break;
 			}
 
-			// 2. CRIT LOGIC
+			// CRIT LOGIC
 			let isCrit = blink_used_this_turn || state.inventory.includes('Battle Rhythm') || state.nextAttackCrit;
-			
 			if (isCrit) {
 				baseDamage *= 2;
 				attackLog += " **CRITICAL HIT!**";
-				
-				// Reset all crit sources
 				state.combat.blink_used_this_turn = false;
-				state.nextAttackCrit = false; // Consume the Ally Button flag
-				
-				// Remove Battle Rhythm if present
+				state.nextAttackCrit = false;
 				const brIdx = state.inventory.indexOf('Battle Rhythm');
 				if (brIdx > -1) state.inventory.splice(brIdx, 1);
 			}
 
 			let totalDamage = baseDamage + bonusDamage;
-			
-			
 
-			// 3. VULNERABLE CHECK
 			const isVulnerable = state.combat.enemyStatus.find(s => s.name === 'vulnerable');
 			if (isVulnerable) {
 				totalDamage = Math.floor(totalDamage * 1.5);
@@ -1383,73 +1369,46 @@
 				state.combat.enemyStatus = state.combat.enemyStatus.filter(s => s.name !== 'vulnerable');
 			}
 
-			// --- FIX: HANDLE HORDE MODE (Act 3 Elders) vs SINGLE BOSS ---
 			if (state.activeEnemies && state.activeEnemies.length > 0) {
-				// HORDE LOGIC: Hit the first available target in the array
 				const targetName = state.activeEnemies[0];
 				state.enemies[targetName] = Math.max(0, state.enemies[targetName] - totalDamage);
-				
 				attackLog += ` You struck ${targetName} for ${totalDamage} damage!`;
-				
-				// Check death of specific unit
 				if (state.enemies[targetName] <= 0) {
 					attackLog += ` <span class='text-blood'>${targetName} is destroyed!</span>`;
-					state.activeEnemies.shift(); // Remove from active list
+					state.activeEnemies.shift();
 				}
-				
-				// Sync global HP for UI bar
 				state.combat.enemyHP = state.activeEnemies.reduce((sum, name) => sum + state.enemies[name], 0);
-				state.enemyHP = state.combat.enemyHP; // Sync legacy
+				state.enemyHP = state.combat.enemyHP;
 			} 
 			else {
-				// STANDARD BOSS LOGIC
 				state.combat.enemyHP = Math.max(0, state.combat.enemyHP - totalDamage);
-				state.enemyHP = state.combat.enemyHP; // Sync legacy
+				state.enemyHP = state.combat.enemyHP; 
 				attackLog += ` Dealt ${totalDamage} ${damageType} damage.`;
 			}		
 			
-			
-			addToHistory(attackLog + ` Dealt ${totalDamage} ${damageType} damage.`, 'combat');
-			window.fxManager.flashRed(); // Visual feedback for hit
+			addToHistory(attackLog, 'combat');
+			window.fxManager.flashRed(); 
 
-			// Cleanup
+			// Cleanup Flags
 			state.combat.blade_enhanced_active = false;
 			state.combat.ae_primed = null;
 			state.combat.hunters_mark_used_this_turn = false;
 
-			renderStatusEffects();
+			// CRITICAL FIX: Force re-render to update UI immediately
+			renderScene(state.currentSceneId, false); 
 			updateUI();
 
 			if (state.combat.enemyHP <= 0) {
-				// --- DYNAMIC VICTORY ROUTING ---
 				const enemy = state.combat.enemy.name || "";
-				
-				// 1. Fire Path Victory (Act 1)
-				if (enemy === "Slag Elemental") {
-					addToHistory("The elemental shrieks as its core shatters!", 'combat');
-					renderScene('smelter_victory_generic'); 
-					return;
-				}
-				// 2. Shadow Path Victory (Act 1)
-				else if (enemy === "Drowned Spectre") {
-					addToHistory("The spectre dissolves into harmless mist.", 'combat');
-					renderScene('chapel_victory_generic');
-					return;
-				}
-				// 3. Coral Hulk (Act 3)
-				else if (enemy.includes("Coral")) {
-					renderScene('coral_hulk_victory');
-					return;
-				}
-				// 4. Default / Spire (Act 3)
-				else {
-					renderScene('spire_victory');
-					return;
-				}
+				if (enemy === "Slag Elemental") renderScene('smelter_victory_generic'); 
+				else if (enemy === "Drowned Spectre") renderScene('chapel_victory_generic');
+				else if (enemy.includes("Coral")) renderScene('coral_hulk_victory');
+				else renderScene('spire_victory');
 			} else {
 				setTimeout(window.enemyTurn, 1000);
 			}
 		};
+		
 		
 		window.enemyTurn = () => {
 			const state = window.gameState;
@@ -7910,14 +7869,17 @@
 				const onCooldown = gameState.allyCooldowns.silas > 0;
 				const clickable = !onCooldown && gameState.isBossCombat;
 				
-				btn.className = `w-full p-2 rounded border flex items-center justify-between bg-gray-900/60 border-emerald-900/50 ${clickable ? 'cursor-pointer hover:bg-emerald-900/20' : 'opacity-70'}`;
+				const activeStyle = "bg-emerald-900/40 border-emerald-500 text-emerald-100 shadow-[0_0_10px_rgba(16,185,129,0.2)] hover:bg-emerald-800 cursor-pointer";
+				const cooldownStyle = "bg-gray-900/60 border-gray-700 text-gray-500 opacity-70 cursor-not-allowed";
+				
+				btn.className = `w-full p-2 rounded border flex items-center justify-between transition-all ${clickable ? activeStyle : cooldownStyle}`;
 				
 				btn.innerHTML = `
 					<div class="flex items-center gap-2">
-						<i class="fas fa-moon text-emerald-500"></i>
+						<i class="fas fa-shield-alt ${clickable ? 'text-emerald-400' : 'text-gray-600'}"></i>
 						<div class="flex flex-col leading-none">
-							<span class="text-[10px] cinzel font-bold text-emerald-100">Silas</span>
-							<span class="text-[9px] text-gray-500 uppercase tracking-wider">${onCooldown ? `CD: ${gameState.allyCooldowns.silas}` : 'Ready: Intercept'}</span>
+							<span class="text-[10px] cinzel font-bold">Silas</span>
+							<span class="text-[9px] uppercase tracking-wider font-bold">${onCooldown ? `CD: ${gameState.allyCooldowns.silas}` : 'READY'}</span>
 						</div>
 					</div>
 				`;
@@ -7933,14 +7895,17 @@
 				const onCooldown = gameState.allyCooldowns.blink > 0;
 				const clickable = !onCooldown && gameState.isBossCombat;
 				
-				btn.className = `w-full p-2 rounded border flex items-center justify-between bg-gray-900/60 border-purple-900/50 ${clickable ? 'cursor-pointer hover:bg-purple-900/20' : 'opacity-70'}`;
+				const activeStyle = "bg-purple-900/40 border-purple-500 text-purple-100 shadow-[0_0_10px_rgba(168,85,247,0.2)] hover:bg-purple-800 cursor-pointer";
+				const cooldownStyle = "bg-gray-900/60 border-gray-700 text-gray-500 opacity-70 cursor-not-allowed";
+				
+				btn.className = `w-full p-2 rounded border flex items-center justify-between transition-all ${clickable ? activeStyle : cooldownStyle}`;
 				
 				btn.innerHTML = `
 					<div class="flex items-center gap-2">
-						<i class="fas fa-paw text-purple-400"></i>
+						<i class="fas fa-paw ${clickable ? 'text-purple-400' : 'text-gray-600'}"></i>
 						<div class="flex flex-col leading-none">
-							<span class="text-[10px] cinzel font-bold text-purple-200">Blink</span>
-							<span class="text-[9px] text-gray-500 uppercase tracking-wider">${onCooldown ? `CD: ${gameState.allyCooldowns.blink}` : 'Ready: Phase'}</span>
+							<span class="text-[10px] cinzel font-bold">Blink</span>
+							<span class="text-[9px] uppercase tracking-wider font-bold">${onCooldown ? `CD: ${gameState.allyCooldowns.blink}` : 'READY'}</span>
 						</div>
 					</div>
 				`;
@@ -8134,7 +8099,7 @@
 		};
 		
 		
-			
+		
 		// --- GLOBAL COMBAT BUTTON GENERATOR ---
 		window.generateCombatChoices = function(state) {
 			let choices = [];
@@ -8143,27 +8108,26 @@
 			if (state.inventory.includes('Sword of Valor')) {
 				choices.push({ 
 					text: "Strike with Sword of Valor", 
-					action: () => window.attackEnemy('standard'),
+					action: () => {
+						window.attackEnemy('standard');
+						// FORCE RENDER: Update UI to show damage immediately
+						renderScene(state.currentSceneId, false); 
+					},
 					type: 'action', 
 					customClass: 'btn-hero'
 				});
 			} else {
 				choices.push({ 
 					text: "Strike with Weapon", 
-					action: () => window.attackEnemy('standard'),
+					action: () => {
+						window.attackEnemy('standard');
+						renderScene(state.currentSceneId, false);
+					},
 					type: 'action'
 				});
 			}
 
-			// 2. ALLY COMMANDS (If joined)
-			if (state.companions.silas.joined) {
-				choices.push({ text: "Command Silas (Intercept)", type: 'action', action: () => window.allyCommand('silas'), doomCost: 0 });
-			}
-			if (state.companions.blink.joined) {
-				choices.push({ text: "Command Blink (Phase Shift)", type: 'action', action: () => window.allyCommand('blink'), doomCost: 0 });
-			}
-
-			// 3. INVENTORY CONSUMABLES (Dynamic & Context Aware)
+			// 2. INVENTORY CONSUMABLES
 			const combatItems = [
 				{ name: 'Holy Water', action: 'item_holy_water', btnClass: 'btn-success-glow', label: 'Throw Holy Water' },
 				{ name: 'Alchemical Fire', action: 'item_fire', btnClass: 'btn-fire-glow', label: 'Throw Alchemical Fire' },
@@ -8171,21 +8135,18 @@
 				{ name: 'Flash Powder', action: 'item_flash', btnClass: '', label: 'Throw Flash Powder (Stun)' },
 				{ name: 'Scale-Stake Driver', action: 'item_stake_driver', btnClass: 'btn-fire-glow', label: 'Fire Stake Driver (Stun)' },
 				{ name: 'Mirror Shield', action: 'reflect_stance', btnClass: 'btn-success-glow', label: 'Mirror Shield (Reflect)' },
-                
-                // CONTEXT SPECIFIC: Only show Lubricant if fighting the Slag Elemental
-                { 
-                    name: 'Industrial Lubricant', 
-                    action: 'item_lubricant', 
-                    btnClass: 'btn-success-glow', 
-                    label: 'Throw Industrial Lubricant',
-                    condition: (s) => s.combat.enemy.name === "Slag Elemental"
-                }
+				{ 
+					name: 'Industrial Lubricant', 
+					action: 'item_lubricant', 
+					btnClass: 'btn-success-glow', 
+					label: 'Throw Industrial Lubricant',
+					condition: (s) => s.combat.enemy.name === "Slag Elemental"
+				}
 			];
 
 			combatItems.forEach(item => {
-                // Check Inventory AND Condition (if exists)
 				if (state.inventory.includes(item.name)) {
-                    if (item.condition && !item.condition(state)) return;
+					if (item.condition && !item.condition(state)) return;
 
 					choices.push({
 						text: item.label,
@@ -8194,47 +8155,73 @@
 						consume: item.name !== 'Mirror Shield' && item.name !== 'Scale-Stake Driver',
 						customClass: item.btnClass,
 						action: () => {
-                            // Specialized Logic for Lubricant
-                            if (item.action === 'item_lubricant') {
-                                state.combat.enemyHP -= 20; 
-                                state.enemyHP -= 20;
-                                window.applyStatusEffect(state, 'vulnerable', 1);
-                                addToHistory("The lubricant boils, cracking the shell! **20 Damage** + Vulnerable.", 'combat');
-                                window.fxManager.flashRed(); // Visual feedback
-                                
-                                // FIX: Check victory locally. If alive, pass turn to enemy.
-                                if (state.combat.enemyHP <= 0) {
-                                    window.resolveCombatRound('check_victory'); 
-                                } else {
-                                    setTimeout(window.enemyTurn, 1000);
-                                }
-                            } else {
-                                // Standard Route
-                                if (state.activeEnemies && state.activeEnemies.length > 0) {
-                                    window.resolveHordeRound(item.action, 'none');
-                                } else {
-                                    window.resolveCombatRound(item.action); 
-                                }
-                            }
-                        }
+							if (item.action === 'item_lubricant') {
+								state.combat.enemyHP -= 20; 
+								state.enemyHP -= 20;
+								window.applyStatusEffect(state, 'vulnerable', 1);
+								addToHistory("The lubricant boils, cracking the shell! **20 Damage** + Vulnerable.", 'combat');
+								window.fxManager.flashRed(); 
+								
+								if (state.combat.enemyHP <= 0) {
+									window.resolveCombatRound('check_victory'); 
+								} else {
+									setTimeout(window.enemyTurn, 1000);
+								}
+							} else {
+								if (state.activeEnemies && state.activeEnemies.length > 0) {
+									window.resolveHordeRound(item.action, 'none');
+								} else {
+									window.resolveCombatRound(item.action); 
+								}
+							}
+						}
 					});
 				}
 			});
-            
-            // 4. HEALING
-            if (state.inventory.includes('Vitality Tincture')) {
-                choices.push({ 
-                    text: "Drink Vitality Tincture (Heal)", 
-                    type: 'action',
-                    reqItem: 'Vitality Tincture',
-                    consume: true,
-                    action: (state) => {
-                        state.currentHP = Math.min(state.maxHP, state.currentHP + 15); 
-                        addToHistory("Drank Tincture. Healed 15 HP.", 'combat');
-                        setTimeout(window.enemyTurn, 1000);
-                    } 
-                });
-            }
+			
+			if (state.inventory.includes('Vitality Tincture')) {
+				choices.push({ 
+					text: "Drink Vitality Tincture (Heal)", 
+					type: 'action',
+					reqItem: 'Vitality Tincture',
+					consume: true,
+					action: (state) => {
+						state.currentHP = Math.min(state.maxHP, state.currentHP + 15); 
+						addToHistory("Drank Tincture. Healed 15 HP.", 'combat');
+						setTimeout(window.enemyTurn, 1000);
+					} 
+				});
+			}
+
+			// 3. SKILL BUTTONS (Fixed Styling & Re-render)
+			// AE: Blade Enhancement
+			if (state.player.specialization === 'AE' && !state.combat.blade_enhanced_active) {
+					choices.unshift({ 
+					text: "Blade Enhancement (Free Action)", 
+					action: (s) => { 
+						s.combat.blade_enhanced_active = true; 
+						// CRITICAL FIX: Force Render to show Combo Button immediately
+						renderScene(s.currentSceneId, false);
+						return "Blade charged with planar energy. Next strike enhanced."; 
+					}, 
+					type: 'action', 
+					customClass: 'btn-keen-senses' 
+				});
+			}
+			
+			// PA: Hunter's Mark
+			if (state.player.specialization === 'PA' && !state.combat.hunters_mark_used_this_turn) {
+					choices.unshift({ 
+					text: "Hunter's Mark (Free Action)", 
+					action: (s) => { 
+						s.combat.hunters_mark_used_this_turn = true; 
+						renderScene(s.currentSceneId, false);
+						return "Target Marked. Weakness exposed."; 
+					}, 
+					type: 'action', 
+					customClass: 'text-green-500 border-green-500' 
+				});
+			}
 
 			return choices;
 		};
