@@ -348,6 +348,17 @@
 		.btn-channel::before { content: ''; position: absolute; top: 0; left: 0; height: 100%; width: 0%; background: rgba(139, 92, 246, 0.6); z-index: 0; transition: width 0s; }
 		.btn-channel.channeling::before { width: 100%; transition: width var(--channel-duration, 3000ms) linear; }
 		.btn-content-wrapper { position: relative; z-index: 10; display: flex; width: 100%; align-items: center; }
+		.btn-danger { 
+			background: linear-gradient(90deg, rgba(153, 27, 27, 0.4) 0%, rgba(69, 10, 10, 0.6) 100%); 
+			border: 1px solid #ef4444; 
+			color: #fecaca; 
+			box-shadow: 0 0 5px rgba(239, 68, 68, 0.2); 
+		}
+		.btn-danger:hover { 
+			border-color: #f87171 !important; 
+			background: linear-gradient(90deg, rgba(185, 28, 28, 0.6) 0%, rgba(127, 29, 29, 0.8) 100%) !important; 
+			box-shadow: 0 0 15px rgba(239, 68, 68, 0.4) !important; 
+		}
 
 		/* --- FX ANIMATIONS --- */
 		/* 1. Fire Wipe */
@@ -367,13 +378,23 @@
 		/* Icon Spin for Skill Checks */
 		@keyframes icon-spin { 0% { transform: rotate(0deg) scale(1); } 50% { transform: rotate(180deg) scale(1.4); color: #fbbf24; } 100% { transform: rotate(360deg) scale(1); color: #cdd5e0; } }
 
-		/* Success Pulse (Green) */
-		@keyframes success-pulse { 0% { border-color: #10b981; background-color: #064e3b; transform: scale(1); } 30% { box-shadow: 0 0 20px rgba(16, 185, 129, 0.6); border-color: #34d399; transform: scale(1.02); } 100% { border-color: #475569; background-color: #1f2937; transform: scale(1); } }
+		/* Success Pulse (Green) - Added !important to override Ethereal theme */
+		@keyframes success-pulse { 
+            0% { border-color: #10b981 !important; background-color: #064e3b !important; transform: scale(1); } 
+            30% { box-shadow: 0 0 20px rgba(16, 185, 129, 0.6); border-color: #34d399 !important; transform: scale(1.02); } 
+            100% { border-color: #475569; background-color: #1f2937; transform: scale(1); } 
+        }
 		.fx-skill-success { pointer-events: none; animation: success-pulse 0.6s ease-out forwards; }
 		.fx-skill-success i { color: #34d399 !important; transition: color 0.2s; }
 
-		/* Failure Shake (Red) - NOW WITH GLOW */
-		@keyframes fail-shake { 0% { border-color: #ef4444; background-color: #450a0a; transform: translateX(0); box-shadow: 0 0 0 rgba(239, 68, 68, 0); } 20% { transform: translateX(-4px); box-shadow: 0 0 15px rgba(239, 68, 68, 0.6); } 40% { transform: translateX(4px); box-shadow: 0 0 30px rgba(239, 68, 68, 0.8); } 60% { transform: translateX(-2px); box-shadow: 0 0 10px rgba(239, 68, 68, 0.4); } 80% { transform: translateX(2px); } 100% { border-color: #475569; background-color: #1f2937; transform: translateX(0); box-shadow: 0 0 0 rgba(239, 68, 68, 0); } 
+		/* Failure Shake (Red) - Added !important */
+		@keyframes fail-shake { 
+            0% { border-color: #ef4444 !important; background-color: #450a0a !important; transform: translateX(0); box-shadow: 0 0 0 rgba(239, 68, 68, 0); } 
+            20% { transform: translateX(-4px); box-shadow: 0 0 15px rgba(239, 68, 68, 0.6); } 
+            40% { transform: translateX(4px); box-shadow: 0 0 30px rgba(239, 68, 68, 0.8); } 
+            60% { transform: translateX(-2px); box-shadow: 0 0 10px rgba(239, 68, 68, 0.4); } 
+            80% { transform: translateX(2px); } 
+            100% { border-color: #475569; background-color: #1f2937; transform: translateX(0); box-shadow: 0 0 0 rgba(239, 68, 68, 0); } 
 		}
 		.fx-skill-fail { pointer-events: none; animation: fail-shake 0.5s ease-out forwards; }
 		.fx-skill-fail i { color: #f87171 !important; transition: color 0.2s; }
