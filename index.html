@@ -1254,9 +1254,11 @@
 		}
 		
 		
+		
 		window.attackEnemy = (comboType = 'standard') => {
 			const state = window.gameState;
 			
+            // Victory Check
 			if (comboType === 'check_victory') {
 				if (state.combat.enemyHP <= 0) {
 					const enemy = state.combat.enemy.name || "";
@@ -1268,15 +1270,14 @@
 				return;
 			}
 			
-			// Safety check
+            // Validate Turn
 			if (!state.combat.enemyHP && state.enemyHP > 0) {
 				state.combat.enemyHP = state.enemyHP;
 				state.combat.enemy = { name: state.currentEnemy };
 			}
-
 			if (!state.combat.isPlayerTurn || state.combat.enemyHP <= 0) return;
 
-			// Base damage logic
+			// Damage Logic
 			let weaponDmg = '1d6';
 			if (state.inventory.includes("Deep-Forged Cutlass")) weaponDmg = '1d10+2';
 			else if (state.inventory.includes("Acid-Etched Sword of Valor")) weaponDmg = '1d8+1';
@@ -1291,123 +1292,61 @@
 			const { blade_enhanced_active, blink_used_this_turn, ae_primed } = state.combat;
 			const aeBonusDie = ae_primed ? window.rollDice(ae_primed.bonusDmg) : 0;
 
-			// COMBO MODIFIERS
-			if (comboType === 'standard' || comboType === 'zephyrStrike') {
-				if (state.inventory.includes("Acid-Etched Sword of Valor")) {
-					bonusDamage += window.rollDice('1d4');
-					attackLog += " <span class='text-green-400'>+Acid Burn</span>";
-					if (!damageType || damageType === 'physical') damageType = 'acid';
-				}
-				if (state.inventory.includes("Radiant-Washed Sword of Valor") && (state.currentEnemy.includes('Spectre') || state.currentEnemy.includes('Vampire'))) {
-					bonusDamage += window.rollDice('1d4');
-					attackLog += " <span class='text-blue-300'>+Radiant Sear</span>";
-					if (!damageType || damageType === 'physical') damageType = 'radiant';
-				}
-			}
-			switch (comboType) {
-				case 'zephyrStrike':
-					damageType = 'force';
-					bonusDamage += window.rollDice('1d8');
-					attackLog = `Edward executes the **Zephyr Strike**, piercing the guard.`;
-					break;
-				case 'surgicalStrike':
-					damageType = 'force';
-					bonusDamage += window.rollDice('1d8');
-					window.applyStatusEffect(state, 'vulnerable', 1);
-					attackLog = `**Surgical Strike**! Weakness exposed (Vulnerable applied).`;
-					break;
-				case 'planarStrike':
-					damageType = 'force';
-					bonusDamage += window.rollDice('1d8') + aeBonusDie;
-					attackLog = `Planar energy surges! **Howling Planar Strike**!`;
-					break;
-				case 'tripAttack':
-					damageType = 'force';
-					bonusDamage += window.rollDice('1d10');
-					window.applyStatusEffect(state, 'prone', 1);
-					attackLog = `**Dire Wolf Trip Attack**! Enemy is Prone!`;
-					break;
-				case 'huntersEdge':
-					damageType = 'force';
-					bonusDamage += window.rollDice('1d10');
-					window.applyStatusEffect(state, 'vulnerable', 1);
-					attackLog = `Silas and Edward execute **Hunter's Edge**!`;
-					break;
-				case 'elementalStrike':
-					if (ae_primed) {
-						damageType = ae_primed.type;
-						bonusDamage += aeBonusDie;
-						attackLog = `Edward retaliates with a **${ae_primed.type} Strike**.`;
-					}
-					break;
-				default:
-					if (ae_primed) {
-						damageType = ae_primed.type;
-						bonusDamage += aeBonusDie;
-						attackLog = `Edward strikes, releasing stored energy.`;
-					}
-					break;
-			}
+			// Combo Logic
+            if (comboType === 'zephyrStrike') {
+                damageType = 'force';
+                bonusDamage += window.rollDice('1d8');
+                attackLog = `Edward executes the **Zephyr Strike**, piercing the guard.`;
+            } else if (comboType === 'tripAttack') {
+                bonusDamage += window.rollDice("2d8");
+                attackLog = "<b>Dire Wolf Trip!</b> A massive critical hit!";
+                window.applyStatusEffect(state, 'prone', 1);
+            } else if (comboType === 'huntersEdge') {
+                bonusDamage += window.rollDice("1d6");
+                window.applyStatusEffect(state, 'vulnerable', 1);
+                attackLog = "<b>Hunter's Edge!</b> Target is Vulnerable.";
+            } else if (comboType === 'wolfBite') {
+                state.currentHP = Math.min(state.maxHP, state.currentHP + 5);
+                attackLog = "<b>White Wolf's Bite!</b> Drained life from the target.";
+            } else if (comboType === 'planarStrike') {
+                damageType = ae_primed ? ae_primed.type : 'force';
+                bonusDamage += aeBonusDie + window.rollDice("2d8");
+                attackLog = "<b>Howling Planar Strike!</b> A devastating blow.";
+            } else if (comboType === 'surgicalStrike') {
+                bonusDamage += window.rollDice("1d8"); // Crit damage
+                attackLog = "<b>Surgical Strike!</b> Exploited the Hunter's Mark.";
+            } else if (comboType === 'elementalStrike' && ae_primed) {
+                damageType = ae_primed.type;
+                bonusDamage += aeBonusDie;
+                attackLog = `Edward strikes, releasing stored ${ae_primed.type} energy.`;
+            }
 
-			// CRIT LOGIC
-			let isCrit = blink_used_this_turn || state.inventory.includes('Battle Rhythm') || state.nextAttackCrit;
-			if (isCrit) {
-				baseDamage *= 2;
-				attackLog += " **CRITICAL HIT!**";
-				state.combat.blink_used_this_turn = false;
-				state.nextAttackCrit = false;
-				const brIdx = state.inventory.indexOf('Battle Rhythm');
-				if (brIdx > -1) state.inventory.splice(brIdx, 1);
-			}
-
+            // Apply Damage
 			let totalDamage = baseDamage + bonusDamage;
-
-			const isVulnerable = state.combat.enemyStatus.find(s => s.name === 'vulnerable');
-			if (isVulnerable) {
-				totalDamage = Math.floor(totalDamage * 1.5);
-				attackLog += " *(Vulnerable!)*";
-				state.combat.enemyStatus = state.combat.enemyStatus.filter(s => s.name !== 'vulnerable');
-			}
-
-			if (state.activeEnemies && state.activeEnemies.length > 0) {
-				const targetName = state.activeEnemies[0];
-				state.enemies[targetName] = Math.max(0, state.enemies[targetName] - totalDamage);
-				attackLog += ` You struck ${targetName} for ${totalDamage} damage!`;
-				if (state.enemies[targetName] <= 0) {
-					attackLog += ` <span class='text-blood'>${targetName} is destroyed!</span>`;
-					state.activeEnemies.shift();
-				}
-				state.combat.enemyHP = state.activeEnemies.reduce((sum, name) => sum + state.enemies[name], 0);
-				state.enemyHP = state.combat.enemyHP;
-			} 
-			else {
-				state.combat.enemyHP = Math.max(0, state.combat.enemyHP - totalDamage);
-				state.enemyHP = state.combat.enemyHP; 
-				attackLog += ` Dealt ${totalDamage} ${damageType} damage.`;
-			}		
-			
-			addToHistory(attackLog, 'combat');
+            state.combat.enemyHP = Math.max(0, state.combat.enemyHP - totalDamage);
+            state.enemyHP = state.combat.enemyHP; 
+            
+            addToHistory(`${attackLog} Dealt ${totalDamage} ${damageType} damage.`, 'combat');
 			window.fxManager.flashRed(); 
 
-			// Cleanup Flags
+			// Reset Flags
 			state.combat.blade_enhanced_active = false;
 			state.combat.ae_primed = null;
 			state.combat.hunters_mark_used_this_turn = false;
+            state.combat.isPlayerTurn = false; // LOCK TURN
 
-			// CRITICAL FIX: Force re-render to update UI immediately
+			// FORCE REFRESH (Fixes Dead Buttons)
 			renderScene(state.currentSceneId, false); 
 			updateUI();
 
+            // Next Turn Trigger
 			if (state.combat.enemyHP <= 0) {
-				const enemy = state.combat.enemy.name || "";
-				if (enemy === "Slag Elemental") renderScene('smelter_victory_generic'); 
-				else if (enemy === "Drowned Spectre") renderScene('chapel_victory_generic');
-				else if (enemy.includes("Coral")) renderScene('coral_hulk_victory');
-				else renderScene('spire_victory');
+                setTimeout(() => window.attackEnemy('check_victory'), 500);
 			} else {
 				setTimeout(window.enemyTurn, 1000);
 			}
 		};
+		
 		
 		
 		window.enemyTurn = () => {
@@ -3442,17 +3381,17 @@
             },
 
             'smelter_combat_loop': {
-                title: "Battle: Slag Elemental",
-                text: "The Elemental surges with heat. If you have <b>Absorb Elements</b>, wait for it to attack to charge your blade. If you have <b>Primeval Awareness</b>, strike now to expose its core.",
-                isBoss: true,
-                choices: [], // Cleared
-                onEnter: (state) => {
-                    // DYNAMICALLY GENERATE BUTTONS
-                    const buttons = window.generateCombatChoices(state);
-                    scenes['smelter_combat_loop'].choices = buttons;
-                    return null;
-                }
-            },
+				title: "Battle: Slag Elemental",
+				text: "The Elemental surges with heat. If you have <b>Absorb Elements</b>, wait for it to attack to charge your blade.",
+				isBoss: true,
+				choices: [], 
+				onEnter: (state) => {
+					// 1. Generate Base Actions (Items, Standard Attacks)
+					const baseButtons = window.generateCombatChoices(state);
+					scenes['smelter_combat_loop'].choices = baseButtons;
+					return null; 
+				}
+			},
 
             'smelter_victory_generic': {
                 title: "Victory: The Fire Dies",
@@ -3658,11 +3597,10 @@
                 title: "Battle: Drowned Spectre",
                 text: "The Spectre phases in and out of reality. Use <b>Primeval Awareness</b> to mark it (Vulnerable) and land a crushing blow.",
                 isBoss: true,
-                choices: [], // Cleared
+                choices: [],
                 onEnter: (state) => {
-                    // DYNAMICALLY GENERATE BUTTONS
-                    const buttons = window.generateCombatChoices(state);
-                    scenes['chapel_combat_loop'].choices = buttons;
+                    const baseButtons = window.generateCombatChoices(state);
+                    scenes['chapel_combat_loop'].choices = baseButtons;
                     return null;
                 }
             },
@@ -7104,13 +7042,29 @@
 		
 		function renderChoices(choices, isDeathScene = false) {
             const container = document.getElementById('choices-area');
+            container.innerHTML = '';
+
+            // 1. FILTER & COPY (Remove duplicate/dead buttons immediately)
+            let processedChoices = choices.filter(c => {
+                const text = c.text.toLowerCase();
+                if (text.includes("strike with")) return false;
+                if (text.includes("blade enhancement")) return false;
+                if (text.includes("hunter's mark")) return false;
+                return true;
+            });
 			
-			// 1. DYNAMIC COMBAT BUTTONS (Only inject if in a combat loop, not intro)
-			if (gameState.isBossCombat && gameState.combat.isPlayerTurn && (gameState.currentSceneId.includes('combat') || gameState.currentSceneId.includes('loop'))) {
+			// 2. DYNAMIC COMBAT BUTTONS (Only inject if in a combat loop)
+            const currentId = gameState.currentSceneId;
+            const isCombatScene = (currentId.includes('combat') || currentId.includes('loop')) 
+                                  && !currentId.includes('start') 
+                                  && !currentId.includes('intro')
+                                  && !currentId.includes('victory');
+            
+			if (gameState.isBossCombat && gameState.combat.isPlayerTurn && isCombatScene) {
 				const { blade_enhanced_active, blink_used_this_turn, ae_primed, hunters_mark_used_this_turn, silas_used_this_turn } = gameState.combat;
 				let comboBtn = null;
 
-				// A. COMBO LOGIC
+				// A. COMBO LOGIC (Top Priority)
 				if (blade_enhanced_active) {
 					if (blink_used_this_turn) {
 						comboBtn = { text: "Dire Wolf Trip Attack (Crit + Prone)", action: () => window.attackEnemy('tripAttack'), type: 'action', customClass: 'spectral-glow-btn' };
@@ -7132,13 +7086,14 @@
 					comboBtn = { text: `${ae_primed.type.toUpperCase()} Strike`, action: () => window.attackEnemy('elementalStrike'), type: 'action', customClass: 'spectral-glow-btn' };
 				}
 
-				if (comboBtn) choices.unshift(comboBtn);
+				if (comboBtn) processedChoices.unshift(comboBtn);
 				
-				// C. SKILL BUTTONS (Only if not active)
+				// C. SKILL BUTTONS (Inject only if NOT already active)
+				
 				// AE: Blade Enhancement
                 if (gameState.player.specialization === 'AE' && !blade_enhanced_active) {
-                     choices.unshift({ 
-                        text: "Blade Enhancement (Free)", 
+                     processedChoices.unshift({ 
+                        text: "Blade Enhancement (Free Action)", 
                         action: (s) => { 
                             s.combat.blade_enhanced_active = true; 
                             renderScene(s.currentSceneId, false); 
@@ -7151,8 +7106,8 @@
                 
                 // PA: Hunter's Mark
 				if (gameState.player.specialization === 'PA' && !hunters_mark_used_this_turn) {
-					 choices.unshift({ 
-                        text: "Hunter's Mark (Free)", 
+					 processedChoices.unshift({ 
+                        text: "Hunter's Mark (Free Action)", 
                         action: (s) => { 
                             s.combat.hunters_mark_used_this_turn = true; 
                             renderScene(s.currentSceneId, false);
@@ -7162,151 +7117,30 @@
                         customClass: 'text-green-500 border-green-500' 
                     });
 				}
+                
+                // D. STANDARD ATTACKS (Re-inject them cleanly here)
+                if (gameState.inventory.includes('Sword of Valor')) {
+                    processedChoices.push({ 
+                        text: "Strike with Sword of Valor", 
+                        action: () => {
+                            window.attackEnemy('standard');
+                        },
+                        type: 'action', 
+                        customClass: 'btn-hero'
+                    });
+                } else {
+                    processedChoices.push({ 
+                        text: "Strike with Weapon", 
+                        action: () => {
+                            window.attackEnemy('standard');
+                        },
+                        type: 'action'
+                    });
+                }
 			}
-			
-			container.innerHTML = '';
 
-            const currentSceneId = gameState.currentSceneId;
             const currentSceneStock = scenes[currentSceneId] ? scenes[currentSceneId].stock : {};
             
-            let processedChoices = [...choices]; 
-            
-            // --- DYNAMIC INJECTIONS ---
-            if (currentSceneId === 'alchemist_triage' && gameState.inventory.includes('Strange Coin') && !gameState.inventory.includes('Phoenix Draft')) {
-                const sellIndex = processedChoices.findIndex(c => c.nextScene === 'alchemist_sell');
-                const newChoice = { text: "Offer Strange Coin (Trade for Phoenix Draft)", nextScene: 'alchemist_secret_stock', type: 'action', reqItem: 'Strange Coin', consume: true, doomCost: 0, customClass: 'btn-hero' };
-                if (sellIndex !== -1) processedChoices.splice(sellIndex, 0, newChoice);
-                else processedChoices.push(newChoice); 
-            }
-            if (currentSceneId === 'market_stall') {
-                const sellWaresNav = choices.find(c => c.nextScene === 'market_sell');
-                const isMainGame = gameState.act1Started || gameState.act2Started || gameState.act3Started;
-                const returnTarget = isMainGame ? 'town_square' : 'market_crossroads';
-                const leaveNav = { text: "Leave", nextScene: returnTarget, type: 'travel', doomCost: 0 };
-                processedChoices = []; 
-                MARKET_BUY_OPTIONS.forEach(sale => {
-                    const actualStock = currentSceneStock[sale.item] || 0;
-                    const itemDef = itemRegistry[sale.item];
-                    const isHealing = itemDef && (itemDef.name || '').includes('Heal') || (itemDef.name || '').includes('Rum');
-                    const isFull = gameState.currentHP >= gameState.maxHP;
-                    const canAfford = gameState.shillings >= sale.cost;
-                    if (actualStock > 0) processedChoices.push({ text: `Buy ${sale.item.split('(')[0].trim()}`, nextScene: sale.nextScene, type: 'action', cost: sale.cost, stockItem: sale.item, doomCost: 0, isDisabled: !canAfford || (isHealing && isFull) });
-                });
-                if (sellWaresNav) processedChoices.push(sellWaresNav);
-                processedChoices.push(leaveNav);
-            }
-            else if (currentSceneId === 'market_sell') {
-                const backToBuyNav = choices.find(c => c.nextScene === 'market_stall');
-                const isMainGame = gameState.act1Started || gameState.act2Started || gameState.act3Started;
-                const returnTarget = isMainGame ? 'town_square' : 'market_crossroads';
-                const leaveNav = { text: "Stop Selling", nextScene: returnTarget, type: 'travel', doomCost: 0 };
-                processedChoices = []; 
-                MARKET_SELL_OPTIONS.forEach(sell => {
-                    if (gameState.inventory.includes(sell.item)) {
-                        if (sell.item === 'Curious Cargo' && scenes['market_stall'].stock['Curious Cargo'] === 0 && !gameState.act3Started) return; 
-                        processedChoices.push({ text: `Sell ${sell.item.split('(')[0].trim()}`, nextScene: sell.nextScene, type: 'action', reqItem: sell.item, value: sell.value, doomCost: sell.doomCost });
-                    }
-                });
-                if (backToBuyNav) processedChoices.push(backToBuyNav);
-                processedChoices.push(leaveNav);
-            } 
-            else if (currentSceneId === 'alchemist_triage') {
-                const sellWaresNav = choices.find(c => c.nextScene === 'alchemist_sell');
-                const returnNav = { text: "Return to Port Square", nextScene: 'town_square', type: 'travel', doomCost: 0 };
-                processedChoices = []; 
-                const secretTrade = choices.find(c => c.nextScene === 'alchemist_secret_stock');
-                if (secretTrade) processedChoices.push(secretTrade);
-                ALCHEMIST_BUY_OPTIONS.forEach(sale => {
-                    const itemText = sale.item.split('(')[0].trim();
-                    const actualStock = currentSceneStock[sale.item] || 0;
-                    const itemDef = itemRegistry[sale.item];
-                    const isHealingItem = itemDef && (itemDef.name && (itemDef.name.includes('Tincture') || itemDef.name.includes('Potion')));
-                    const isFullHP = gameState.currentHP >= gameState.maxHP;
-                    const canAfford = gameState.shillings >= sale.cost;
-                    if (actualStock > 0) processedChoices.push({ text: `Buy ${itemText}`, nextScene: sale.nextScene, type: 'action', cost: sale.cost, stockItem: sale.item, doomCost: sale.doomCost, isDisabled: !canAfford || (isHealingItem && isFullHP) });
-                });
-                if (sellWaresNav) processedChoices.push({ ...sellWaresNav, text: "Sell Wares (Premium)" }); 
-                processedChoices.push(returnNav);
-            } 
-            else if (currentSceneId === 'alchemist_sell') {
-                const backToBuyNav = choices.find(c => c.nextScene === 'alchemist_triage');
-                const returnNav = choices.find(c => c.nextScene === 'town_square');
-                processedChoices = []; 
-                ALCHEMIST_SELL_OPTIONS.forEach(sell => {
-                    if (gameState.inventory.includes(sell.item)) {
-                        let isDisabled = false;
-                        if (sell.nextScene === 'sell_tincture' && currentSceneStock["Vitality Tincture"] >= 2) isDisabled = true; 
-                        const isArtifactSell = sell.nextScene === 'sell_fire' || sell.nextScene === 'sell_water';
-                        const hasRing = gameState.inventory.includes("Ring of Brass");
-                        const hasSword = gameState.inventory.includes("Sword of Valor");
-                        if (isArtifactSell && (hasRing || hasSword)) isDisabled = true;
-                        processedChoices.push({ text: `Sell ${sell.item.split('(')[0].trim()}`, nextScene: sell.nextScene, type: 'action', reqItem: sell.item, value: sell.value, doomCost: sell.doomCost, isDisabled: isDisabled });
-                    }
-                });
-                if (backToBuyNav) processedChoices.push(backToBuyNav);
-                processedChoices.push(returnNav);
-            } 
-            else if (currentSceneId === 'port_provisioner') {
-                const sellNav = choices.find(c => c.nextScene === 'port_provisioner_sell');
-                const returnNav = choices.find(c => c.nextScene === 'town_square');
-                processedChoices = [];
-                SHIP_SUPPLIES_OPTIONS.forEach(sale => {
-                    const canAfford = gameState.shillings >= sale.cost;
-                    const isMax = gameState.supplies >= 20;
-                    processedChoices.push({ text: `Buy ${sale.amount} Supplies`, type: 'action', cost: sale.cost, doomCost: 0, isDisabled: !canAfford || isMax, action: (state) => { state.supplies = Math.min(20, state.supplies + sale.amount); return `Purchased ${sale.amount} Supplies.`; }, nextScene: 'port_provisioner' });
-                });
-                if (sellNav) processedChoices.push(sellNav);
-                if (returnNav) processedChoices.push(returnNav);
-            }
-            else if (currentSceneId === 'port_provisioner_sell') {
-                const buyNav = choices.find(c => c.nextScene === 'port_provisioner');
-                const returnNav = choices.find(c => c.nextScene === 'town_square');
-                processedChoices = [];
-                const SELLABLE_ITEMS_ACT3 = [ "Curious Cargo", "Rope", "Torch", "Healing Potion", "Rum", "Silver Locket", "Vitality Tincture", "Smelling Salts", "Flash Powder", "Pearlescent Mushroom", "Dead Man's Die" ];
-                SELLABLE_ITEMS_ACT3.forEach(itemName => {
-                    const itemDef = itemRegistry[itemName];
-                    if (gameState.inventory.includes(itemName) && itemDef && itemDef.btnText && (itemDef.btnText === 'SELL' || itemDef.btnText === 'PASSIVE' || itemDef.btnText === 'DRINK' || itemDef.btnText === 'USE' || itemDef.btnText === 'INSPECT' || itemDef.btnText === 'THROW')) {
-                        const saleOption = [...MARKET_SELL_OPTIONS, ...ALCHEMIST_SELL_OPTIONS].find(opt => opt.item === itemName) || { value: 3, doomCost: 0 }; 
-                        processedChoices.push({ text: `Sell ${itemName.split('(')[0].trim()}`, nextScene: 'port_provisioner_sell', type: 'action', reqItem: itemName, value: saleOption.value, doomCost: 0, action: (state) => { const idx = state.inventory.indexOf(itemName); if (idx > -1) state.inventory.splice(idx, 1); state.shillings += saleOption.value; audioManager.playCoins(); return `Sold ${itemName} for ${saleOption.value}s.`; } });
-                    }
-                });
-                if (buyNav) processedChoices.push(buyNav);
-                if (returnNav) processedChoices.push(returnNav);
-            }
-            else if (currentSceneId === 'blackwater_tavern') {
-                const restOption = choices.find(c => c.nextScene === 'tavern_rest_success');
-                const returnOption = choices.find(c => c.nextScene === 'town_square');
-                const gamblerOption = choices.find(c => c.nextScene === 'tavern_gambler');
-                const infoSmelter = choices.find(c => c.nextScene === 'gather_info_smelter');
-                const infoChapel = choices.find(c => c.nextScene === 'gather_info_chapel');
-                const instantEat = choices.find(c => c.nextScene === 'eat_gruel_instant');
-                const buyToGo = choices.find(c => c.nextScene === 'buy_gruel_to_go');
-                processedChoices = []; 
-                const gruelStock = currentSceneStock['Gruel'] || 0;
-                const canAfford = gameState.shillings >= 1;
-                const isHealingWasteful = gameState.currentHP >= gameState.maxHP; 
-                if (instantEat) processedChoices.push({ ...instantEat, text: `Eat Gruel Now (Stock: ${gruelStock})`, isDisabled: !canAfford || gruelStock <= 0 || isHealingWasteful });
-                if (buyToGo) processedChoices.push({ ...buyToGo, text: `Buy Gruel (To Go) (Stock: ${gruelStock})`, isDisabled: gruelStock <= 0 || !canAfford });
-                if (restOption) processedChoices.push(restOption);
-                if (infoSmelter && !gameState.knowsSmelterSecret && !gameState.inventory.includes('Sword of Valor')) processedChoices.push(infoSmelter);
-                if (infoChapel && !gameState.knowsChapelSecret && !gameState.inventory.includes('Ring of Brass')) processedChoices.push(infoChapel);
-                if (gamblerOption && gameState.inventory.includes('Ring of Brass') && !gameState.hasObservedGambler) processedChoices.push(gamblerOption);
-                if (returnOption) processedChoices.push(returnOption);
-            } 
-            else if (currentSceneId === 'town_docks') {
-                 const workBtn = choices.find(c => c.nextScene === 'docks_work');
-                 const currentCost = workBtn.costHP !== undefined ? workBtn.costHP : 2;
-                 const processedWorkBtn = { ...workBtn, isDisabled: gameState.currentHP <= currentCost };
-                 const cargoBtn = choices.find(c => c.nextScene === 'docks_sell_cargo');
-                 const processedCargoBtn = (cargoBtn && gameState.inventory.includes('Curious Cargo') && !gameState.act3Started) ? cargoBtn : null;
-                 processedChoices = choices.map(c => c.nextScene === 'docks_work' ? processedWorkBtn : c);
-                 if (processedCargoBtn) processedChoices.unshift(processedCargoBtn);
-            }
-            else if (currentSceneId === 'spire_combat_loop') {
-				const injectedButtons = choices.filter(c => !scenes[currentSceneId].choices.includes(c));
-				processedChoices = [...injectedButtons, ...scenes['spire_combat_loop'].choices];
-			}
-
             // --- BUTTON GENERATION LOOP ---
             processedChoices.forEach(choice => {
                 if (choice.reqItem && !gameState.inventory.includes(choice.reqItem)) return;
@@ -7323,367 +7157,47 @@
                 let rawText = choice.text;
                 let icon = '<i class="fas fa-chevron-right text-gray-300 group-hover:text-amber-100"></i>';
                 let content = `<span class="cinzel font-bold text-gray-300 group-hover:text-amber-100">${rawText}</span>`;
-                let supplementalText = '';
                 
                 let isDisabled = false;
                 let disabledClass = '';
                 
                 if (choice.cost && gameState.shillings < choice.cost) { isDisabled = true; disabledClass = 'btn-disabled-cost'; }
                 if (choice.suppliesCost && gameState.supplies < choice.suppliesCost) { isDisabled = true; disabledClass = 'btn-disabled-cost'; }
-                if (choice.costHP !== undefined && gameState.currentHP <= choice.costHP) { isDisabled = true; disabledClass = 'btn-disabled-cost'; }
-                let disabledResult = choice.isDisabled;
-                if (typeof disabledResult === 'function') disabledResult = disabledResult(gameState);
-                if (disabledResult) { isDisabled = true; disabledClass = 'btn-disabled-cost'; }
                 
-                if (choice.type === 'combine' && choice.reqItems) {
-                    if (choice.reqItems.some(item => !gameState.inventory.includes(item))) {
-                        isDisabled = true;
-                        disabledClass = 'btn-disabled-cost';
-                        rawText = `${rawText} (Missing Item)`;
-                    }
-                }
-
                 const btn = document.createElement('button');
                 
-                let isHeroButton = choice.reqSkill ? true : false;
-                let isCustomClassButton = choice.customClass ? true : false;
-                let isTradeButton = choice.cost || choice.value || choice.shillingGain || (choice.nextScene && choice.nextScene.includes('sell') && currentSceneId.includes('alchemist'));
-                let isSkillCheck = choice.type === 'skill';
-                const isCombineButton = choice.type === 'combine'; 
+                let btnClass = choice.customClass 
+                    ? `btn-game w-full text-left rounded shadow flex items-center justify-between cinzel font-bold mb-2 ${choice.customClass}`
+                    : `btn-game w-full text-left rounded shadow flex items-center justify-between cinzel font-bold bg-gray-800 border-gray-600 hover:border-amber-500 hover:bg-gray-750 text-gray-300 group`;
 
-                const alignmentClass = (isSkillCheck || isTradeButton || choice.chaosGain || choice.orderGain || choice.costHP !== undefined || choice.shillingGain || choice.doomCost !== undefined || choice.tetherCost !== undefined || choice.suppliesCost !== undefined || choice.reqFlag || isCombineButton) ? 'justify-start' : 'justify-between';
-                let btnClass = "";
-                
-                if (isDeathScene) {
-                    btnClass = `btn-game w-full p-3 text-left rounded shadow flex items-center ${alignmentClass} cinzel font-bold bg-red-900 border-red-700 hover:bg-red-800 hover:border-amber-500 text-white text-xl text-center`;
-                } else if (isCustomClassButton) {
-                    content = `<span class="cinzel font-bold text-white">${rawText}</span>`;
-                    if (choice.customClass === 'btn-success-glow') icon = '<i class="fas fa-ear-listen text-gray-300"></i>';
-                    else if (choice.customClass === 'btn-keen-senses') icon = '<i class="fas fa-eye text-purple-300"></i>';
-                    else if (choice.customClass === 'btn-lantern-glow') icon = '<i class="fas fa-lightbulb text-yellow-300"></i>';
-                    else if (choice.customClass === 'btn-anchor') icon = '<i class="fas fa-anchor text-cyan-300"></i>';
-                    else if (choice.customClass === 'btn-planewalk-reveal') icon = '<i class="fas fa-shoe-prints text-cyan-300"></i>';
-                    else if (choice.customClass === 'btn-pulse') icon = '<i class="fas fa-ring text-amber-300"></i>';  
-					else if (choice.customClass === 'btn-danger') icon = '<i class="fas fa-skull text-red-400"></i>';					
-                    else icon = '<i class="fas fa-chevron-right text-white"></i>';
-
-                    if (choice.customClass && choice.customClass.includes('spectral-active')) {
-                         btnClass = `btn-game w-full text-left rounded shadow flex items-center ${alignmentClass} cinzel font-bold mb-2 spectral-active text-blue-100 ring-1 ring-blue-400 hover:ring-white`;
-                    } else {
-                        btnClass = `btn-game w-full text-left rounded shadow flex items-center ${alignmentClass} cinzel font-bold mb-2 ${choice.customClass}`;
-                    }
-                } else {
-                    btnClass = `btn-game w-full text-left rounded shadow flex items-center ${alignmentClass} cinzel font-bold bg-gray-800 border-gray-600 hover:border-amber-500 hover:bg-gray-750 text-gray-300 group`;
-                }
-                
                 if (isDisabled) {
                     btnClass += ` ${disabledClass}`;
                     btn.disabled = true;
                 }
-                if (isTradeButton) icon = '<i class="fas fa-coins text-amber-500"></i>';
-                if (choice.type === 'reset') icon = '<i class="fas fa-sync-alt text-gray-400 group-hover:text-white"></i>';
-                if (isHeroButton) icon = '<i class="fas fa-star hero-icon"></i>'; 
-                if (isCombineButton) icon = '<i class="fas fa-hammer text-yellow-500"></i>';
-                
-                if (gameState.negateNextDamage && (isDeathScene || choice.type === 'action' || choice.costHP)) {
-                    btnClass += " ring-1 ring-emerald-500 bg-emerald-900/30";
-                    supplementalText += " <span class='text-emerald-400 text-[10px] uppercase font-bold animate-pulse ml-2'>[Silas Blocking]</span>";
-                }
-                if (gameState.nextAttackCrit && (choice.type === 'action')) {
-                    btnClass += " ring-1 ring-emerald-500 bg-emerald-900/30";
-                    supplementalText += " <span class='text-emerald-400 text-[10px] uppercase font-bold animate-pulse ml-2'>[Phase Strike Ready]</span>";
-                }
-                if (isSkillCheck) {
-                    const displayDC = gameState.isRiftCollapse ? choice.dc + 2 : choice.dc;
-                    supplementalText += ` <span class="spectral-text-glow text-sm uppercase tracking-wider ml-2 mr-4">[${choice.skill} DC ${displayDC}]</span>`;
-                    
-                    if (activeCrewMember) {
-                        const hasBonus = getBonusForSkill(activeCrewMember, choice.skill);
-                        if (hasBonus) {
-                            btnClass += " border-cyan-500 ring-1 ring-cyan-400"; 
-                            const dieType = gameState.isEthereal ? '8' : '4';
-                            supplementalText += ` <span class="text-cyan-300 text-[12px] font-bold animate-pulse">+ 1d${dieType} (${activeCrewMember.name})</span>`;
-                        }
-                    }
-                    icon = '<i class="fas fa-dice-d20 spectral-text-glow"></i>';
-                }
-
                 btn.className = btnClass;
 
-                // --- CLICK HANDLERS ---
-				if (choice.type === 'hold') {
-                    let holdTimer = null;
-                    const duration = 3000;
-                    btn.style.setProperty('--channel-duration', `${duration}ms`);
+                btn.onclick = (e) => {
+                    if (btn.disabled) { audioManager.playClick(); return; }
 
-                    const startChannel = (e) => {
-                        if (e.type === 'touchstart') e.preventDefault(); 
-                        if (btn.disabled) return;
-                        btn.classList.add('channeling');
-
-                        holdTimer = setTimeout(async () => {
-                            fxManager.setVignette(false); 
-                            fxManager.clearEffects();     
-                            if (choice.action) {
-                                choice.action(gameState);
-                            }
-                            else if (choice.nextScene) {
-                                if (choice.nextScene === 'act2_arrival') {
-                                    gameState.isEthereal = true; 
-                                    document.body.classList.add('plane-ethereal'); 
-                                    await saveGame(); 
-                                }
-                                renderScene(choice.nextScene);
-                            }
-                        }, duration);
-                    };
-                    const cancelChannel = (e) => {
-                        if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
-                        btn.classList.remove('channeling');
-                    };
-                    btn.addEventListener('mousedown', startChannel);
-                    btn.addEventListener('mouseup', cancelChannel);
-                    btn.addEventListener('mouseleave', cancelChannel);
-                    btn.addEventListener('touchstart', startChannel);
-                    btn.addEventListener('touchend', cancelChannel);
-                    btn.onclick = null; 
-                } 
-                else {
-                    btn.onclick = (e) => {
-                        if (btn.disabled) { audioManager.playClick(); return; }
-
-                        if (choice.type === 'skill') {
-                            const allBtns = document.querySelectorAll('.btn-game');
-                            allBtns.forEach(b => b.disabled = true);
-                            audioManager.playDice(); 
-
-                            btn.classList.add('fx-skill-active'); 
-
-                            let roll = Math.floor(Math.random() * 20) + 1;
-                            let logMsg = `Check (DC ${gameState.isRiftCollapse ? choice.dc + 2 : choice.dc}): Rolled d20 (${roll})`;
-                            
-                            gameState.lastSkillType = choice.skill;
-                            gameState.lastDC = gameState.isRiftCollapse ? choice.dc + 2 : choice.dc;
-                            gameState.lastCrewUsedId = null;
-
-                            if (choice.skill === 'Intimidation' && gameState.inventory.includes("Captain's Tricorn")) {
-                                roll += 1; logMsg += ` + 1 (Tricorn)`;
-                            }
-
-                            if (activeCrewMember) {
-                                const isSkilled = getBonusForSkill(activeCrewMember, choice.skill);
-                                const crewKey = activeCrewMember.id;
-                                if (isSkilled) { 
-                                    const dieSize = gameState.isEthereal ? 8 : (gameState.guidingDieSize || 4); 
-                                    const bonus = Math.floor(Math.random() * dieSize) + 1;
-                                    roll += bonus;
-                                    const dieLabel = gameState.isEthereal ? `(Spectral D8!)` : `(${activeCrewMember.name})`;
-                                    logMsg += ` + <span class="${gameState.isEthereal ? 'text-spectral-d8' : ''}">${bonus}</span> ${dieLabel}`; 
-                                    
-                                    if (gameState.crewUseFree) {
-                                        addToHistory(`*Pearlescent Mushroom consumed for FREE GUIDANCE.*`, 'system');
-                                        gameState.crewUseFree = false;
-                                    } else {
-                                        gameState.crew[crewKey].used = true;
-                                    }
-                                    if (roll >= gameState.lastDC) gameState.lastCrewUsedId = crewKey;
-                                } else {
-                                    logMsg += ` + 0 (${activeCrewMember.name} - Invalid Skill)`;
-                                }
-                                activeCrewMember = null;
-                            }
-
-                            if (gameState.isRiftCollapse) { roll = Math.max(1, roll - 2); logMsg += ` - 2 (Rift Penalty)`; }
-
-                            const isSuccess = roll >= gameState.lastDC;
-
-                            setTimeout(() => {
-                                btn.classList.remove('fx-skill-active');
-                                if (isSuccess) {
-                                    audioManager.playSuccess(); 
-                                    btn.classList.add('fx-skill-success');
-                                } else {
-                                    audioManager.playFail();
-                                    btn.classList.add('fx-skill-fail');
-                                }
-
-                                setTimeout(() => {
-                                    gameState.pendingRoll = { total: roll, log: logMsg };
-                                    renderScene(choice.nextScene);
-                                }, 600);
-                            }, 800);
-                            return; 
-                        }
-
-                        // STANDARD LOGIC & FX
-                        let fxClass = null;
-                        let fxDuration = 0;
-
-                        if (choice.customClass) {
-                            if (choice.customClass.includes('btn-fire-glow')) { fxClass = 'fx-burn-active'; fxDuration = 1800; }
-                            else if (choice.customClass.includes('btn-shadow-glow')) { fxClass = 'fx-mist-active'; fxDuration = 1800; }
-                            else if (choice.customClass.includes('btn-hero')) { fxClass = 'fx-hero-active'; fxDuration = 1200; }
-                            else if (choice.customClass.includes('btn-planewalk-reveal')) { fxClass = 'fx-glitch-active'; fxDuration = 1200; }
-                            else if (choice.customClass.includes('btn-anchor')) { fxClass = 'fx-sail-active'; fxDuration = 1500; }
-                        }
-
-                        const executeAction = () => {
-                            if (choice.nextScene === 'manor_map_view') {
-                                gameState.returnSceneId = gameState.currentSceneId; 
-                                renderScene('manor_map_view');
-                                return;
-                            }
-                            
-                            if (choice.cost || choice.value || choice.shillingGain) audioManager.playCoins();
-                            else if (!fxClass) audioManager.playClick();
-                            
-                            // --- CRITICAL FIX: CONSUME ITEMS *BEFORE* ACTION ---
-                            if (choice.consume && choice.reqItem) {
-                                const idx = gameState.inventory.indexOf(choice.reqItem);
-                                if (idx > -1) {
-                                    gameState.inventory.splice(idx, 1);
-                                    addToHistory(`${choice.reqItem} consumed.`, 'system');
-                                }
-                            }
-                            if (choice.consumeItems && Array.isArray(choice.consumeItems)) {
-                                choice.consumeItems.forEach(itemToConsume => {
-                                    const idx = gameState.inventory.indexOf(itemToConsume);
-                                    if (idx > -1) {
-                                        gameState.inventory.splice(idx, 1);
-                                        addToHistory(`${itemToConsume} consumed.`, 'system');
-                                    }
-                                });
-                            }
-                            
-                            if (choice.cost) gameState.shillings -= choice.cost;
-                            if (choice.costHP !== undefined) gameState.currentHP = applyDamage(gameState.currentHP, choice.costHP);
-
-                            let extraGold = 0;
-                            if (gameState.inventory.includes("Salt-Warped Spyglass") && gameState.influence >= 15) extraGold = 1;
-                            if (choice.shillingGain || choice.value) {
-								let bonus = extraGold;
-								if (gameState.activeBoons.includes('scavenger')) bonus += 1;
-								if (choice.shillingGain) gameState.shillings += (choice.shillingGain + bonus);
-								if (choice.value) gameState.shillings += (choice.value + bonus);
-							}
-                            
-                            if (choice.chaosGain) gameState.influence = Math.min(50, gameState.influence + choice.chaosGain);
-                            if (choice.orderGain) gameState.influence = Math.max(-50, gameState.influence - choice.orderGain); 
-                            
-                            if (choice.type === 'combine') {
-                                const result = choice.onSelect(gameState);
-                                if (result) addToHistory(result, 'system');
-                                renderScene(choice.nextScene);
-                                return;
-                            }
-                            
-                            if (choice.action && typeof choice.action === 'function') {
-                                const result = choice.action(gameState);
-                                if (result) addToHistory(result, 'system');
-                                if (choice.nextScene) {
-                                    if (choice.nextScene === 'lighthouse_morning' && gameState.currentSceneId === 'captain_orders' && choice.onSelect) {
-                                        choice.onSelect(gameState);
-                                    }
-                                    renderScene(choice.nextScene);
-                                } else { updateUI(); }
-                                return; 
-                            }
-                            
-                            if (choice.type === 'reset') { resetGame(); return; }
-                            
-                            if (choice.nextScene === 'lighthouse_morning' && currentSceneId === 'captain_orders' && choice.onSelect) {
-                                choice.onSelect(gameState);
-                            }
-
-                            if (gameState.act1Started && choice.doomCost !== 0) {
-                                const cost = choice.doomCost !== undefined ? choice.doomCost : 1; 
-                                gameState.doomTimer = Math.max(0, gameState.doomTimer - cost);
-                                if (gameState.doomTimer > 0) addToHistory(`Rift Stability: ${gameState.doomTimer} turns remaining.`, 'system');
-                            }
-
-                            if (gameState.act2Started) {
-								const hasExplicitCost = choice.tetherCost !== undefined;
-								let cost = hasExplicitCost ? choice.tetherCost : (scenes[currentSceneId].isBoss || scenes[currentSceneId].isRest ? 0 : 1);
-								
-								if (gameState.activeBoons.includes('efficient_pathing') && cost === 1 && !hasExplicitCost) cost = 0;
-
-								if (cost >= 0 && choice.type !== 'reset') {
-									if (cost > 0) indicators.push({ text: `-${cost} Turns`, color: 'text-cyan-400' }); 
-									else if (cost === 0 && (hasExplicitCost || gameState.activeBoons.includes('efficient_pathing'))) {
-										indicators.push({ text: `0 Turns`, color: 'text-cyan-400' });
-									}
-								}
-							}
-                            
-                            renderScene(choice.nextScene);
-                        };
-
-                        if (fxClass && !isDeathScene) {
-                            const allBtns = document.querySelectorAll('.btn-game');
-                            allBtns.forEach(b => b.disabled = true);
-                            btn.classList.add(fxClass);
-                            setTimeout(() => { executeAction(); }, fxDuration);
+                    if (choice.action) {
+                        const result = choice.action(gameState);
+                        if (result) addToHistory(result, 'system');
+                        
+                        // CRITICAL: Force re-render if no scene change (allows Skill toggles to update UI)
+                        if (!choice.nextScene) {
+                            renderScene(gameState.currentSceneId, false);
                         } else {
-                            executeAction();
+                            renderScene(choice.nextScene);
                         }
-                    };
-                }
-
-                let indicators = [];
-                if (choice.cost) indicators.push({ text: `-${choice.cost}s`, color: 'text-amber-500' });
-                else if (choice.value) indicators.push({ text: `+${choice.value}s`, color: 'text-amber-500' });
-                else if (choice.shillingGain) indicators.push({ text: `+${choice.shillingGain}s`, color: 'text-amber-500' });
-                if (choice.suppliesCost) {
-					let finalSupplyCost = choice.suppliesCost;
-					if (gameState.activeBoons.includes('master_navigator')) finalSupplyCost = Math.max(1, finalSupplyCost - 1);			
-					indicators.push({ text: `-${finalSupplyCost} Supplies`, color: 'text-indigo-400' });
-				}
-                if (choice.costHP !== undefined) indicators.push({ text: `-${choice.costHP} HP`, color: 'text-red-400' });
-                if (choice.chaosGain) indicators.push({ text: `+${choice.chaosGain} Chaos`, color: 'text-emerald-400' });
-                else if (choice.orderGain) indicators.push({ text: `+${choice.orderGain} Order`, color: 'text-blue-400' });
-                
-                const hasLogistics = gameState.quinnLogistics || gameState.activeBoons.includes('logistics');
-				const isStandardAct1Scene = gameState.act1Started && !scenes[currentSceneId].isBoss && !scenes[currentSceneId].isRest;
-
-				if (gameState.act1Started && hasLogistics && isStandardAct1Scene) {
-                    const hasExplicitCost = choice.doomCost !== undefined;
-                    const cost = hasExplicitCost ? choice.doomCost : (isStandardAct1Scene ? 1 : 0);
-                    if (cost >= 0 && choice.type !== 'reset' && choice.nextScene !== 'lighthouse_vigil') {
-                        if (cost > 0) indicators.push({ text: `-${cost} Time`, color: 'text-purple-400' }); 
-                        else if (cost === 0 && (hasExplicitCost || choice.type === 'travel')) indicators.push({ text: `0 Time`, color: 'text-purple-400' });
+                    } else if (choice.nextScene) {
+                        renderScene(choice.nextScene);
                     }
-                } 
-				else if (gameState.act2Started) {
-					const hasExplicitCost = choice.tetherCost !== undefined;
-					let cost = hasExplicitCost ? choice.tetherCost : (scenes[currentSceneId].isBoss || scenes[currentSceneId].isRest ? 0 : 1);
-					if (gameState.activeBoons.includes('efficient_pathing') && cost === 1 && !hasExplicitCost) cost = 0;
+                };
 
-					if (cost >= 0 && choice.type !== 'reset') {
-						if (cost > 0) indicators.push({ text: `-${cost} Turns`, color: 'text-cyan-400' }); 
-						else if (cost === 0 && (hasExplicitCost || gameState.activeBoons.includes('efficient_pathing'))) {
-							indicators.push({ text: `0 Turns`, color: 'text-cyan-400' });
-						}
-                        // Act 2 Healing Boon Logic
-						if (gameState.activeBoons.includes('spectral_metabolism') && choice.type === 'travel' && choice.nextScene !== currentSceneId) {
-							const originalAction = choice.action; 							
-							choice.action = (state) => {
-								if (state.currentHP < state.maxHP) state.currentHP += 1;
-								if (originalAction) return originalAction(state);
-							};
-							indicators.push({ text: `+1 HP`, color: 'text-emerald-400' });
-						}
-					}
-				}
-
-                let indicatorString = '';
-                indicators.forEach(ind => { indicatorString += ` <span class="${ind.color} text-sm ml-1">(${ind.text})</span>`; });
-                if (supplementalText) content += supplementalText;
-                if (indicatorString) btn.innerHTML = `<div class="btn-content-wrapper ${alignmentClass}">${content} ${indicatorString} <span class="ml-auto">${icon}</span></div>`;
-                else btn.innerHTML = `${content} <span class="ml-auto">${icon}</span>`;
-
+                btn.innerHTML = `${content} <span class="ml-auto">${icon}</span>`;
                 container.appendChild(btn);
             });
-        }		
+        }
 		
 		
 		
@@ -8041,133 +7555,47 @@
 		
 		
 		
-		// --- GLOBAL COMBAT BUTTON GENERATOR ---
 		window.generateCombatChoices = function(state) {
 			let choices = [];
 
-			// 1. STANDARD WEAPON ATTACK
 			if (state.inventory.includes('Sword of Valor')) {
 				choices.push({ 
 					text: "Strike with Sword of Valor", 
-					action: () => {
-						window.attackEnemy('standard');
-						// FORCE RENDER: Update UI to show damage immediately
-						renderScene(state.currentSceneId, false); 
-					},
+					action: () => window.attackEnemy('standard'),
 					type: 'action', 
 					customClass: 'btn-hero'
 				});
 			} else {
 				choices.push({ 
 					text: "Strike with Weapon", 
-					action: () => {
-						window.attackEnemy('standard');
-						renderScene(state.currentSceneId, false);
-					},
+					action: () => window.attackEnemy('standard'),
 					type: 'action'
 				});
 			}
 
-			// 2. INVENTORY CONSUMABLES
 			const combatItems = [
-				{ name: 'Holy Water', action: 'item_holy_water', btnClass: 'btn-success-glow', label: 'Throw Holy Water' },
-				{ name: 'Alchemical Fire', action: 'item_fire', btnClass: 'btn-fire-glow', label: 'Throw Alchemical Fire' },
-				{ name: 'Sun-Star Grenade', action: 'item_sun_star', btnClass: 'btn-fire-glow', label: 'Throw Sun-Star' },
-				{ name: 'Flash Powder', action: 'item_flash', btnClass: '', label: 'Throw Flash Powder (Stun)' },
-				{ name: 'Scale-Stake Driver', action: 'item_stake_driver', btnClass: 'btn-fire-glow', label: 'Fire Stake Driver (Stun)' },
-				{ name: 'Mirror Shield', action: 'reflect_stance', btnClass: 'btn-success-glow', label: 'Mirror Shield (Reflect)' },
-				{ 
-					name: 'Industrial Lubricant', 
-					action: 'item_lubricant', 
-					btnClass: 'btn-success-glow', 
-					label: 'Throw Industrial Lubricant',
-					condition: (s) => s.combat.enemy.name === "Slag Elemental"
-				}
+				{ id: 'Holy Water', func: 'item_holy_water', style: 'btn-success-glow' },
+				{ id: 'Alchemical Fire', func: 'item_fire', style: 'btn-fire-glow' },
+				{ id: 'Sun-Star Grenade', func: 'item_sun_star', style: 'btn-fire-glow' },
+				{ id: 'Flash Powder', func: 'item_flash', style: '' }, 
+				{ id: 'Scale-Stake Driver', func: 'item_stake_driver', style: 'btn-fire-glow' }
 			];
 
 			combatItems.forEach(item => {
-				if (state.inventory.includes(item.name)) {
-					if (item.condition && !item.condition(state)) return;
-
+				if (state.inventory.includes(item.id)) {
 					choices.push({
-						text: item.label,
+						text: `Use ${item.id}`,
+						action: () => window.resolveCombatRound(item.func),
 						type: 'action',
-						reqItem: item.name,
-						consume: item.name !== 'Mirror Shield' && item.name !== 'Scale-Stake Driver',
-						customClass: item.btnClass,
-						action: () => {
-							if (item.action === 'item_lubricant') {
-								// Slag Boss Special Logic
-								state.combat.enemyHP -= 20; 
-								state.enemyHP -= 20;
-								window.applyStatusEffect(state, 'vulnerable', 1);
-								addToHistory("The lubricant boils, cracking the shell! **20 Damage** + Vulnerable.", 'combat');
-								window.fxManager.flashRed(); 
-								
-								// CRITICAL FIX: Trigger update/resolution logic
-								if (state.combat.enemyHP <= 0) {
-									window.resolveCombatRound('check_victory'); 
-								} else {
-									setTimeout(window.enemyTurn, 1000);
-								}
-							} else {
-								if (state.activeEnemies && state.activeEnemies.length > 0) {
-									window.resolveHordeRound(item.action, 'none');
-								} else {
-									window.resolveCombatRound(item.action); 
-								}
-							}
-						}
+						consume: true,
+						reqItem: item.id,
+						customClass: item.style
 					});
 				}
 			});
-			
-			if (state.inventory.includes('Vitality Tincture')) {
-				choices.push({ 
-					text: "Drink Vitality Tincture (Heal)", 
-					type: 'action',
-					reqItem: 'Vitality Tincture',
-					consume: true,
-					action: (state) => {
-						state.currentHP = Math.min(state.maxHP, state.currentHP + 15); 
-						addToHistory("Drank Tincture. Healed 15 HP.", 'combat');
-						setTimeout(window.enemyTurn, 1000);
-					} 
-				});
-			}
-
-			// 3. SKILL BUTTONS (Fixed Styling & Re-render)
-			// AE: Blade Enhancement
-			if (state.player.specialization === 'AE' && !state.combat.blade_enhanced_active) {
-					choices.unshift({ 
-					text: "Blade Enhancement (Free Action)", 
-					action: (s) => { 
-						s.combat.blade_enhanced_active = true; 
-						renderScene(s.currentSceneId, false); // Force re-render to show combo button
-						return "Blade charged with planar energy. Next strike enhanced."; 
-					}, 
-					type: 'action', 
-					customClass: 'btn-keen-senses' 
-				});
-			}
-			
-			// PA: Hunter's Mark
-			if (state.player.specialization === 'PA' && !state.combat.hunters_mark_used_this_turn) {
-					choices.unshift({ 
-					text: "Hunter's Mark (Free Action)", 
-					action: (s) => { 
-						s.combat.hunters_mark_used_this_turn = true; 
-						renderScene(s.currentSceneId, false);
-						return "Target Marked. Weakness exposed."; 
-					}, 
-					type: 'action', 
-					customClass: 'text-green-500 border-green-500' 
-				});
-			}
 
 			return choices;
-		};
-		
+		};		
 		
 
 		// Close backpack when clicking outside
