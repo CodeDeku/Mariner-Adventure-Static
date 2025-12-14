@@ -776,6 +776,18 @@
         // --- CRITICAL IMPORT: BRING IN THE SCENES ---
         import { scenes } from './scenes.js';
 
+        // --- GLOBAL GLUE ---
+        // Expose scenes object globally for non-module script access and debugging
+        window.scenes = scenes;
+        window.gameFunctions = {}; 
+        window.itemRegistry = {}; // Defined later, but globally accessible
+        window.applyDamage = null; // Defined later, but globally callable
+        window.resolveCombatRound = null;
+        window.resolveHordeRound = null;
+        window.allyCommand = null;
+        window.getBonusForSkill = null; // Defined later, used in renderChoices/skill checks
+
+
         // 2. FIREBASE CONFIG
         const firebaseConfig = {
             apiKey: "AIzaSyDlg5dETZJpbJ9GzMV01pUYA06XbFmySbw",
@@ -792,10 +804,6 @@
         const appId = "edward-jones-standalone";
         let user;
         const MAX_OVERHEAL_CAP = 25;
-
-        // 3. ATTACH SCENES TO WINDOW (Glue for scenes.js to work)
-        window.scenes = scenes;
-        window.gameFunctions = {}; 
 
         // --- AUDIO MANAGER ---
         class AudioManager {
@@ -899,7 +907,7 @@
         const fxManager = new FXManager();
         window.fxManager = fxManager;
 
-        // --- STATIC IMAGE MAPPING (RESTORED FOR FULL LIST) ---
+        // --- STATIC IMAGE MAPPING ---
 		const sceneImages = {
 			'prologue_storm': 'images/storm.jpg', 'prologue_abyss': 'images/abyss.jpg', 'start': 'images/wreckage.jpg',
 			'start_medicine_success': 'images/wreckage.jpg', 'start_medicine_fail': 'images/wreckage.jpg', 'wreckage_success': 'images/chest.jpg',
@@ -1021,6 +1029,20 @@
     let gameState = createInitialState();
     let activeCrewMember = null;
 
+    // --- UTILITY: CREW SKILL CHECKER ---
+    function getBonusForSkill(crewMember, skillType) {
+        const expertise = {
+            'Captain Gareth': ['Insight', 'Intimidation'],
+            'Quinn': ['Investigation', 'History'],
+            'Talon': ['Survival', 'Perception'],
+            'Bones': ['Nature', 'Medicine']
+        };
+        const allowedSkills = expertise[crewMember.name] || [];
+        return allowedSkills.includes(skillType);
+    }
+    window.getBonusForSkill = getBonusForSkill;
+
+
     // --- PUZZLE MANAGER ---
     const puzzleManager = {
         typeBanter: function(elementId, text, speed = 25) {
@@ -1086,7 +1108,7 @@
                 if (!isDragging || this.isCompassAligned) return;
                 e.preventDefault();
                 const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                const clientY = e.touches ? e.touches[0].clientY : e.touches[0].clientY; // Fix touch Y coordinate
                 const currAngle = getAngle(clientX, clientY);
                 let delta = currAngle - lastRawAngle;
                 if (delta > 180) delta -= 360; if (delta < -180) delta += 360;
@@ -1111,16 +1133,20 @@
     // --- GAME FUNCTIONS ---
     window.gameFunctions.checkForContraband = function() { return gameState.inventory.some(itemName => { const item = itemRegistry[itemName]; return item && item.isContraband; }); };
     
+    // --- CORE GAME ENGINE FUNCTIONS (Must be accessible from scenes.js via window) ---
     function initCombat(enemyName, hp, damageRange) {
         gameState.isBossCombat = true; gameState.currentEnemy = enemyName; gameState.enemyHP = hp; gameState.maxEnemyHP = hp; gameState.enemyDamageRange = damageRange;
         gameState.enemies = {}; gameState.activeEnemies = []; gameState.allyCooldowns.silas = 0; gameState.allyCooldowns.blink = 0;
     }
+    window.initCombat = initCombat;
+
     function initHordeCombat(baseName, hpPerEnemy, damageRange, count) {
         gameState.isBossCombat = true; gameState.currentEnemy = baseName; gameState.enemies = {}; gameState.activeEnemies = []; gameState.maxElderHP = hpPerEnemy; gameState.enemyDamageRange = damageRange;
         let totalHP = 0;
         for (let i = 0; i < count; i++) { const name = `${baseName} ${String.fromCharCode(65 + i)}`; gameState.enemies[name] = hpPerEnemy; gameState.activeEnemies.push(name); totalHP += hpPerEnemy; }
         gameState.enemyHP = totalHP; gameState.maxEnemyHP = totalHP; gameState.allyCooldowns.silas = 0; gameState.allyCooldowns.blink = 0;
     }
+    window.initHordeCombat = initHordeCombat;
 
     // --- COMBAT RESOLVERS ---
     window.resolveCombatRound = function(attackType) {
@@ -1135,9 +1161,11 @@
         else if (attackType === 'item_flash') { playerDmg = 0; log += "Flash Powder blinded them! "; }
         else if (attackType === 'item_sun_star') { playerDmg = 25; log += "Sun-Star Grenade! "; }
         else if (attackType === 'item_stake_driver') { playerDmg = Math.floor(Math.random() * 8) + 4 + levelBonus; log += "Stake Driver fired! "; }
+        else if (attackType === 'reflect_stance') { playerDmg = 0; } // Damage is dealt back on reflection check
 
         if (state.battleRhythm && playerDmg > 0) { playerDmg *= 2; state.battleRhythm = false; const idx = state.inventory.indexOf("Battle Rhythm"); if (idx > -1) state.inventory.splice(idx, 1); log += "(Battle Rhythm x2) "; }
         if (state.nextAttackCrit && playerDmg > 0) { playerDmg = Math.floor(playerDmg * 2.5); state.nextAttackCrit = false; log += "(Phase Strike Crit) "; }
+        if (state.activeBoons.includes('ghost_hunter') && state.isEthereal && playerDmg > 0) { playerDmg += 2; log += "(Ghost Hunter +2) "; }
 
         state.enemyHP -= playerDmg;
         if (playerDmg > 0) log += `Dealt <b>${playerDmg}</b> damage. `;
@@ -1172,6 +1200,7 @@
         if (state.allyCooldowns.blink > 0) state.allyCooldowns.blink--;
         addToHistory(log, 'combat'); updateUI(); renderScene(state.currentSceneId);
     };
+    window.resolveCombatRound = resolveCombatRound;
 
     window.resolveHordeRound = function(attackType, targetElder) {
         const state = window.gameState || gameState;
@@ -1188,9 +1217,11 @@
         let isStun = (attackType === 'item_flash' || attackType === 'item_sun_star' || attackType === 'item_stake_driver');
         let isForce = state.isEthereal && state.currentEnemy.includes('Vampire');
 
-        if (state.activeBoons.includes('ghost_hunter') && state.isEthereal) playerDmg += 2;
+        if (state.activeBoons.includes('ghost_hunter') && state.isEthereal && playerDmg > 0) playerDmg += 2;
         if (isForce && state.activeEnemies.length === 1 && playerDmg > 0) playerDmg += 2;
         if (state.nextAttackCrit && playerDmg > 0) { playerDmg = Math.floor(playerDmg * 2.5); state.nextAttackCrit = false; log += "(Crit) "; }
+        if (gameState.battleRhythm && playerDmg > 0) { playerDmg = playerDmg * 2; gameState.battleRhythm = false; const idx = gameState.inventory.indexOf("Battle Rhythm"); if (idx > -1) gameState.inventory.splice(idx, 1); log += "(Battle Rhythm x2) "; }
+
 
         const targets = isAOE ? [...state.activeEnemies] : [targetElder];
         targets.forEach(elder => {
@@ -1231,6 +1262,7 @@
         if (state.allyCooldowns.blink > 0) state.allyCooldowns.blink--;
         addToHistory(log, 'combat'); updateUI(); renderScene(state.currentSceneId);
     };
+    window.resolveHordeRound = resolveHordeRound;
 
     window.allyCommand = function(allyId) {
         const state = window.gameState || gameState;
@@ -1247,6 +1279,7 @@
         } else { addToHistory("Ally unavailable.", 'system'); }
         saveGame(); updateUI();
     };
+    window.allyCommand = allyCommand;
 
     window.gameFunctions.togglePlaneWalk = function() {
         if (!gameState.skills.includes("Plane Walking")) { addToHistory("You do not know how to walk the planes yet.", "system"); return; }
@@ -1265,12 +1298,12 @@
         if (modal && !modal.classList.contains('hidden')) { if (!modal.contains(event.target) && !btn.contains(event.target)) { modal.classList.add('hidden'); } }
     });
 
-    // --- ITEM REGISTRY & DAMAGE ---
+    // --- DAMAGE APPLICATION (Must be globally accessible for onEnter logic in scenes.js) ---
     function applyDamage(currentHP, damageAmount, damageType = 'physical') {
         let finalDamage = damageAmount;
         if (damageType === 'psychic' && gameState.activeBoons.includes('iron_will')) finalDamage = Math.max(0, finalDamage - 2);
         if ((damageType === 'poison' || damageType === 'acid') && gameState.activeBoons.includes('chemical_resist')) finalDamage = Math.floor(finalDamage / 2);
-        if (gameState.inventory.includes("Salt-Warped Spyglass") && gameState.influence <= -15 && finalDamage > 0) finalDamage = Math.max(0, finalDamage - 1);
+        if (gameState.inventory.includes("Salt-Warped Spyglass") && gameState.influence <= -15) finalDamage = Math.max(0, finalDamage - 1);
         if (gameState.negateNextDamage) { finalDamage = 0; gameState.negateNextDamage = false; addToHistory("Silas intercepted!", 'system'); }
         let finalHP = Math.max(0, currentHP - finalDamage);
         if (finalHP === 0 && gameState.activeBoons.includes('hold_the_line') && !gameState.holdTheLineUsed) { finalHP = 1; gameState.holdTheLineUsed = true; addToHistory("HOLD THE LINE! (1 HP)", 'danger'); }
@@ -1279,7 +1312,7 @@
     }
     window.applyDamage = applyDamage;
 
-    // --- RESTORED FULL ITEM REGISTRY FROM INDEX-STABLE.HTML ---
+    // --- ITEM REGISTRY ---
     const itemRegistry = {
         "Captain's Tricorn": { name: "Captain's Tricorn", type: 'key', icon: 'fa-hat-cowboy', color: 'text-blue-500', desc: "Passive: A symbol of authority. +1 to Intimidation checks." },
         "Compass": { name: "Compass", type: 'key', icon: 'fa-compass', color: 'text-indigo-400', desc: "Passive: Violently hums near planar energy." },
@@ -1336,7 +1369,7 @@
     window.itemRegistry = itemRegistry;
 
 
-    // --- DREAMSCAPE & LEVEL UP LOGIC (RESTORED) ---
+    // --- DREAMSCAPE & LEVEL UP LOGIC ---
     const dreamscapeConfig = {
         'act1_transition': {
             nextScene: 'lighthouse_morning',
@@ -1670,7 +1703,6 @@
         activeCrewMember = null; 
 
         // RENDER IMAGE
-        // Note: The original logic in the HTML head handles the fade-in of the image via CSS
         const imgKey = sceneId || 'default';
         const imgUrl = sceneImages[imgKey] || sceneImages['default'];
         document.getElementById('scene-image').src = imgUrl; 
@@ -1859,7 +1891,7 @@
                     const hasBonus = getBonusForSkill(activeCrewMember, c.skill);
                     if (hasBonus) {
                         btnClass = btnClass.replace('border-gray-600', 'border-cyan-500 ring-1 ring-cyan-400');
-                        const dieType = gameState.isEthereal ? '8' : '4';
+                        const dieType = gameState.isEthereal ? '8' : (gameState.guidingDieSize || '4');
                         supplementalText += ` <span class="text-cyan-300 text-[12px] font-bold animate-pulse">+ 1d${dieType} (${activeCrewMember.name})</span>`;
                     }
                 }
@@ -2025,7 +2057,7 @@
 
                         if (c.cost || c.value || c.shillingGain) audioManager.playCoins();
                         
-                        if (c.type === 'combine') { const result = c.onSelect(gameState); if (result) addToHistory(result, 'system'); renderScene(c.nextScene); return; }
+                        if (c.type === 'combine') { const result = combineItems(c.reqItems[0], c.reqItems[1], c.nextScene); if (result) addToHistory(result, 'system'); renderScene(c.nextScene); return; }
                         if (c.type === 'reset') { resetGame(); return; }
                         if (c.action && typeof c.action === 'function') {
                             const result = c.action(gameState);
@@ -2268,7 +2300,96 @@
             invContainer.appendChild(el);
         });
     }
-    
+
+    function renderRadialCrew() {
+        const container = document.querySelector('.radial-container');
+        if (!container) return; 
+
+        const crewKeys = ['gareth', 'quinn', 'talon', 'bones']; 
+        
+        // 1. INITIAL BUILD (Check if nodes exist and rebuild if necessary)
+        if (!document.getElementById('node-gareth')) { 
+            // Rebuild all layers if the base nodes are missing (e.g., after a full state reset/load)
+            container.innerHTML = `
+                <div class="radial-grid-mask">
+                    <div class="radial-planar-grid"></div>
+                </div>
+                <div id="tether-gareth" class="spectral-tether tether-nw"></div>
+                <div id="tether-quinn" class="spectral-tether tether-ne"></div>
+                <div id="tether-talon" class="spectral-tether tether-sw"></div>
+                <div id="tether-bones" class="spectral-tether tether-se"></div>
+                <div id="radial-hub" class="radial-hub">
+                    <div class="cinzel font-bold text-cyan-200 text-xs leading-tight text-center mt-2">GUIDING<br>VOICE</div>
+                    <div class="text-cyan-400 text-xs mt-0.5 font-bold animate-pulse tracking-widest">+1d${gameState.guidingDieSize || 4}</div>
+                </div>
+            `;
+            
+            crewKeys.forEach((key, idx) => {
+                const btn = document.createElement('div');
+                btn.id = `node-${key}`; 
+                btn.className = 'crew-node';
+                
+                if (idx === 0) btn.classList.add('node-nw'); 
+                else if (idx === 1) btn.classList.add('node-ne');
+                else if (idx === 2) btn.classList.add('node-sw'); 
+                else if (idx === 3) btn.classList.add('node-se');
+                
+                btn.onclick = () => {
+                    const currentCrew = gameState.crew[key];
+                    if (currentCrew.used && !gameState.crewUseFree) return;
+                    toggleCrewSelection(key); 
+                };
+                container.appendChild(btn);
+            });
+        }
+
+        // 2. STATE UPDATE
+        const hub = document.getElementById('radial-hub');
+        const isAnyActive = activeCrewMember !== null;
+        if(hub) {
+            if(isAnyActive) hub.classList.add('drained');
+            else hub.classList.remove('drained');
+            hub.querySelector('.tracking-widest').innerHTML = `+1d${gameState.guidingDieSize || 4}`;
+        }
+
+
+        crewKeys.forEach(key => {
+            const c = gameState.crew[key]; 
+            const btn = document.getElementById(`node-${key}`);
+            const tether = document.getElementById(`tether-${key}`);
+            
+            if (!btn || !tether) return;
+
+            const isUsed = c.used;
+            const isActive = activeCrewMember && activeCrewMember.id === c.id;
+
+            let displayName = c.name;
+            if(c.name.includes(' ')) displayName = c.name.split(' ')[0]; 
+            if(key === 'gareth') displayName = "Gareth"; 
+            
+            let content = `<span class="crew-node-name">${displayName}</span><span class="crew-node-skill">${c.skill.replace('&', '<br>&')}</span>`;
+            
+            if(isUsed && !gameState.crewUseFree) content += `<i class="fas fa-lock absolute top-1 right-1 text-xs text-gray-500"></i>`;
+            if(gameState.crewUseFree && !isUsed) content += `<i class="fas fa-star absolute top-1 right-1 text-xs text-purple-400 animate-pulse"></i>`;
+            
+            btn.innerHTML = content;
+
+            if (isActive) {
+                btn.classList.add('charged');
+                tether.classList.add('flowing');
+            } else {
+                btn.classList.remove('charged');
+                tether.classList.remove('flowing');
+            }
+
+            if (isUsed && !gameState.crewUseFree) {
+                btn.classList.add('used');
+            } else {
+                btn.classList.remove('used');
+            }
+        });
+    }
+
     function toggleCrewSelection(crewKey) {
         const c = gameState.crew[crewKey];
         if (activeCrewMember && activeCrewMember.id === c.id) {
@@ -2279,9 +2400,9 @@
             audioManager.playGhost();
         }
         updateUI();
+        // Re-render choices to update button borders/text
         renderChoices(scenes[gameState.currentSceneId].choices, false); 
     }
-
 
     function scrollToBottom() {
 		const area = document.getElementById('journal-scroll-area');
@@ -2303,7 +2424,7 @@
 
         // Logic to insert the full style, including keyword highlighting
         if (type === 'entry') {
-            const keywords = /(Captain Gareth|Quinn|Talon|Bones|Silas|Wolf King|Ring of Brass|Sword of Valor|Smelter|Chapel|Sanguine Spire|Bleak Dogtooth|Vampire|Iron Lung|Absorb Elements|Primeval Awareness|Phoenix Draft|Manor Blueprint|Spectral Lantern|The Warding Ember|Mimic's Bile|Radiant-Washed Sword of Valor|Acid-Etched Sword of Valor|Rift Core Fragment)/g;
+            const keywords = /(Captain Gareth|Quinn|Talon|Bones|Silas|Wolf King|Ring of Brass|Sword of Valor|Smelter|Chapel|Sanguine Spire|Bleak Dogtooth|Vampire|Iron Lung|Absorb Elements|Primeval Awareness|Phoenix Draft|Manor Blueprint|Spectral Lantern|The Warding Ember|Mimic's Bile|Mind-Expanding Grog|Radiant-Washed Sword of Valor|Acid-Etched Sword of Valor|Rift Core Fragment)/g;
             const processedText = text.replace(keywords, '<span class="spectral-text-glow">$1</span>');
             html = `<div class="journal-font pb-4 border-b border-gray-700/30 text-gray-400 fade-in">${processedText}</div>`;
         } else if (type === 'system') {
@@ -2357,7 +2478,17 @@
         try {
             const snap = await getDoc(docRef);
             if (!snap.exists()) {
-                await setDoc(docRef, gameState);
+                // Initialize Stocks on first run
+                scenes['market_stall'].stock = { "Healing Potion": 1, "Rope": 1, "Torch": 1, "Curious Cargo": 1, "Rum": 0 };
+                scenes['alchemist_triage'].stock = { "Vitality Tincture": 2, "Smelling Salts": 3, "Flash Powder": 1, "Alchemical Fire": 1, "Holy Water": 1 };
+                scenes['blackwater_tavern'].stock = { "Gruel": 5 };
+
+                const safeState = JSON.parse(JSON.stringify(gameState));
+                safeState.market_stall_stock = scenes['market_stall'].stock;
+                safeState.alchemist_triage_stock = scenes['alchemist_triage'].stock;
+                safeState.blackwater_tavern_stock = scenes['blackwater_tavern'].stock;
+
+                await setDoc(docRef, safeState);
                 renderScene('prologue_storm');
             } else {
                 const data = snap.data();
@@ -2413,6 +2544,68 @@
         await setDoc(docRef, safeState);
     }
 
+    let resetConfirmTimer = null;
+    function confirmReset() {
+        const btn = document.getElementById('reset-game-btn');
+        if (btn.classList.contains('bg-red-900')) {
+            resetGame();
+            clearTimeout(resetConfirmTimer);
+            btn.innerHTML = '<i class="fas fa-skull mr-1"></i>New Game';
+            btn.classList.remove('bg-red-900', 'text-white');
+            btn.classList.add('text-red-400', 'bg-black/60');
+        } else {
+            btn.innerHTML = '<i class="fas fa-exclamation-triangle mr-1"></i>Confirm?';
+            btn.classList.remove('text-red-400', 'bg-black/60');
+            btn.classList.add('bg-red-900', 'text-white');
+            resetConfirmTimer = setTimeout(() => {
+                btn.innerHTML = '<i class="fas fa-skull mr-1"></i>New Game';
+                btn.classList.remove('bg-red-900', 'text-white');
+                btn.classList.add('text-red-400', 'bg-black/60');
+            }, 3000);
+        }
+    }
+
+    async function resetGame() {
+        gameState = createInitialState();
+        
+        // Reset Stocks
+        scenes['market_stall'].stock = { "Healing Potion": 1, "Rope": 1, "Torch": 1, "Curious Cargo": 1, "Rum": 0 };
+        scenes['alchemist_triage'].stock = { "Vitality Tincture": 2, "Smelling Salts": 3, "Flash Powder": 1, "Alchemical Fire": 1, "Holy Water": 1 };
+        scenes['blackwater_tavern'].stock = { "Gruel": 5 };
+        
+        const workBtn = scenes['town_docks'].choices.find(c => c.nextScene === 'docks_work');
+        if (workBtn) workBtn.costHP = 2; 
+        
+        // Reset core flags
+        gameState.isAbsorbCharged = false;
+        gameState.isSurpriseRound = false;
+        gameState.isRiftCollapse = false;
+        gameState.act1Started = false;
+        gameState.hasObservedGambler = false;
+        gameState.hasSearchedSmugglerDrop = false;
+        gameState.docksWorkCount = 0;
+        gameState.quinnLogistics = false;
+        gameState.isEthereal = false;
+        gameState.hallLooted = false;
+        gameState.hasBlinkSkill = false;
+        gameState.act2Started = false;
+        gameState.tetherTimer = 20;
+        gameState.act3Started = false;
+        gameState.shipName = "The Iron Lung";
+        gameState.knownIslands = ['port_hub'];
+        gameState.currentLocation = 'port_hub';
+        gameState.supplies = 10;
+        gameState.companions.silas.joined = false;
+        gameState.silasJoined = false;
+
+        document.getElementById('journal-content').innerHTML = '';
+        await saveGame();
+        renderScene('prologue_storm');
+        rebuildJournal();
+        document.getElementById('inf-status-text').textContent = "Unknown to all";
+        document.getElementById('item-desc-area').textContent = "Hover over an item to inspect it.";
+    }
+
 
     // DEV MENU (KONAMI)
     (function() {
@@ -2431,7 +2624,15 @@
             if(loc==='act2') { gameState.act2Started=true; gameState.isEthereal=true; renderScene('manor_foyer'); }
             if(loc==='act3') { gameState.act3Started=true; gameState.shipName="Dev Ship"; renderScene('sea_map_hub'); }
         };
-        window.devGrant = () => { gameState.maxHP=50; gameState.currentHP=50; gameState.shillings=100; gameState.inventory.push("Sword of Valor", "Ring of Brass", "Spectral Lantern"); updateUI(); };
+        window.devGrant = (type) => { 
+            if (type === 'godmode') { 
+                gameState.maxHP=50; gameState.currentHP=50; gameState.shillings=100; 
+                gameState.inventory.push("Sword of Valor", "Ring of Brass", "Spectral Lantern"); 
+                updateUI(); 
+            } else if (type === 'level') {
+                window.gameFunctions.startDreamscape('act1_transition');
+            }
+        };
     })();
 
     init();
