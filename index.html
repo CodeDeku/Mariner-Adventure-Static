@@ -7793,10 +7793,13 @@
 			const sceneId = gameState.currentSceneId;
 			const suppliesDisplay = document.getElementById('supplies-display');
 			
-			// --- NEW: 2x2 SKILL/ALLY GRID (Replaces old companion panel) ---
+			
+			// 2. Render 2x2 Skill/Ally Grid
 			const abilitiesWrapper = document.getElementById('abilities-combined-container');
             abilitiesWrapper.innerHTML = ''; // Clear for redraw
             
+            let hasContent = false; // Track if we added anything
+
             // --- SLOT 1: PRIMARY SKILL (AE/PA) ---
             if (gameState.player.specialization) {
                 const skillDiv = document.createElement('div');
@@ -7838,20 +7841,15 @@
                         skillDiv.onclick = () => {
                             gameState.combat.hunters_mark_used_this_turn = true;
                             addToHistory("Hunter's Mark applied! Target Vulnerable.", 'combat');
-                            // Apply Vulnerable Effect immediately
                             window.applyStatusEffect(gameState, 'vulnerable', 1);
-                            renderScene(gameState.currentSceneId, false); // Refresh to update buttons
+                            renderScene(gameState.currentSceneId, false); 
                         };
                     }
                 }
                 abilitiesWrapper.appendChild(skillDiv);
-            } else {
-                // Empty placeholder if no specialization yet
-                const emptyDiv = document.createElement('div');
-                emptyDiv.className = 'ability-card slot-skill-primary opacity-20 border-dashed';
-                emptyDiv.innerHTML = '<i class="fas fa-lock text-gray-600"></i>';
-                abilitiesWrapper.appendChild(emptyDiv);
-            }
+                hasContent = true;
+            } 
+            // NO ELSE BLOCK (Removes "Locked" placeholder)
 
             // --- SLOT 2: ALLY 1 (SILAS) ---
             if (gameState.companions.silas.joined) {
@@ -7865,7 +7863,6 @@
                     <span class="text-[9px] text-gray-500">${onCooldown ? `CD: ${gameState.allyCooldowns.silas}` : 'Ready: Intercept'}</span>
                 `;
                 
-                // Only allow clicking if in combat and not on cooldown
                 if (!onCooldown && gameState.isBossCombat) {
                     silasDiv.onclick = () => window.allyCommand('silas');
                 } else if (onCooldown) {
@@ -7874,9 +7871,10 @@
                     silasDiv.classList.add('cursor-default');
                 }
                 abilitiesWrapper.appendChild(silasDiv);
+                hasContent = true;
             }
 
-            // --- SLOT 3: PLANE WALK (Always present if learned, else empty) ---
+            // --- SLOT 3: PLANE WALK ---
             if (gameState.skills.includes("Plane Walking")) {
                 const planeDiv = document.createElement('button');
                 planeDiv.className = 'ability-card slot-skill-plane cursor-pointer hover:bg-cyan-900/20';
@@ -7892,12 +7890,9 @@
                     <span class="text-[9px]">${isActive ? 'ACTIVE' : 'Material'}</span>
                 `;
                 abilitiesWrapper.appendChild(planeDiv);
-            } else {
-                 const emptyDiv = document.createElement('div');
-                 emptyDiv.className = 'ability-card slot-skill-plane opacity-20 border-dashed';
-                 emptyDiv.innerHTML = '<span class="text-[9px] text-gray-600">Locked</span>';
-                 abilitiesWrapper.appendChild(emptyDiv);
+                hasContent = true;
             }
+            // NO ELSE BLOCK (Removes "Locked" placeholder)
 
             // --- SLOT 4: ALLY 2 (BLINK) ---
             if (gameState.companions.blink.joined) {
@@ -7919,7 +7914,18 @@
                     blinkDiv.classList.add('cursor-default');
                 }
                 abilitiesWrapper.appendChild(blinkDiv);
+                hasContent = true;
             }
+
+            // VISIBILITY TOGGLE: Hide container if empty
+            if (!hasContent) {
+                abilitiesWrapper.classList.add('hidden');
+                abilitiesWrapper.style.display = 'none';
+            } else {
+                abilitiesWrapper.classList.remove('hidden');
+                abilitiesWrapper.style.display = 'grid';
+            }
+			
 
 			// 3. HP Bar
 			const displayMaxHP = gameState.maxHP;

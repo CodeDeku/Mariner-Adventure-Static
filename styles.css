@@ -620,7 +620,14 @@
 			grid-template-rows: auto auto; /* Two distinct rows */
 			gap: 0.5rem;
 			margin-top: 0.5rem;
-			min-height: 80px; /* Ensure structure doesn't collapse */
+			min-height: 0; /* FIX: Changed from 80px to 0 to allow collapsing */
+			transition: all 0.3s ease;
+		}
+
+		/* Hide the container entirely if it has no children (handled via JS, but this helps) */
+		#abilities-combined-container.hidden {
+			display: none;
+			margin-top: 0;
 		}
 
 		/* Skill/Ally Card Base */
