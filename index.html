@@ -172,6 +172,98 @@
 		}
 		.crew-node-name { font-size: 0.875rem; font-weight: 700; color: #94a3b8; transition: color 0.3s; }
 		.crew-node-skill { font-size: 0.75rem; color: #64748b; line-height: 1; text-align: center; }
+		
+		/* --- DREAMSCAPE & TAROT UI --- */
+		.dream-blur-active {
+			/* Force GPU layer to prevent lag during blur */
+			transform: translateZ(0);
+			will-change: filter; 
+			filter: blur(8px) brightness(0.4) grayscale(0.5);
+			pointer-events: none;
+			transition: filter 0.5s ease-out; /* Faster timing for responsiveness */
+		}
+
+		#dreamscape-overlay {
+			position: fixed; inset: 0; z-index: 100;
+			display: flex; align-items: center; justify-content: center;
+			opacity: 0; pointer-events: none; 
+			/* GPU Optimize Opacity */
+			will-change: opacity;
+			transition: opacity 0.4s ease-out;
+			background: radial-gradient(circle at center, rgba(15, 23, 42, 0.95) 0%, rgba(2, 6, 23, 0.98) 100%);
+			padding: 1rem;
+		}
+
+		#dreamscape-overlay.active { opacity: 1; pointer-events: auto; }
+
+		.dream-modal-content {
+			width: 100%; max-width: 950px; max-height: 95vh; overflow-y: auto;
+			background-color: #020617; border: 2px solid #22d3ee; 
+			box-shadow: inset 0 0 60px rgba(34, 211, 238, 0.05), 0 0 50px rgba(34, 211, 238, 0.2); 
+			border-radius: 4px; display: flex; flex-direction: column;
+			/* GPU Optimize Scale */
+			will-change: transform;
+			transform: scale(0.95); 
+			transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Slight bounce effect */
+		}
+
+		#dreamscape-overlay.active .dream-modal-content { transform: scale(1); }
+
+		/* --- TAROT CARDS (Optimized Hover) --- */
+		.crew-card {
+			background: 
+				radial-gradient(circle at 50% 30%, rgba(30, 58, 138, 0.4) 0%, transparent 60%),
+				linear-gradient(180deg, #0f172a 0%, #020617 100%);
+			border: 1px solid #1e40af; border-radius: 8px; padding: 2px;
+			display: flex; flex-direction: column; align-items: center; text-align: center;
+			cursor: pointer; position: relative; overflow: hidden;
+			min-height: 280px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+			/* GPU Optimize Hover */
+			transform: translateZ(0);
+			will-change: transform, box-shadow;
+			transition: transform 0.2s ease-out, box-shadow 0.2s ease-out, border-color 0.2s;
+		}
+
+		/* Re-apply the Grid Effect (Visuals untouched) */
+		.crew-card::before, .crew-card::after {
+			content: ''; position: absolute; width: 100%; height: 100%; pointer-events: none; z-index: 1; opacity: 0.3;
+			background-image: 
+				linear-gradient(45deg, transparent 48%, #22d3ee 48%, #22d3ee 52%, transparent 52%),
+				linear-gradient(-45deg, transparent 48%, #22d3ee 48%, #22d3ee 52%, transparent 52%);
+			background-size: 10px 10px;
+			mask-image: radial-gradient(circle, transparent 60%, black 100%);
+			-webkit-mask-image: radial-gradient(circle, transparent 60%, black 100%);
+		}
+
+		.crew-card-inner {
+			width: 100%; height: 100%; border: 1px solid rgba(34, 211, 238, 0.3);
+			border-radius: 6px; padding: 1rem; display: flex; flex-direction: column;
+			align-items: center; background: transparent; z-index: 2; position: relative;
+		}
+
+		.crew-card:hover { 
+			transform: translateY(-5px) scale(1.02); 
+			border-color: #22d3ee; 
+			box-shadow: 0 0 30px rgba(34, 211, 238, 0.2); 
+		}
+		.crew-card:hover .crew-card-inner { border-color: #67e8f9; background: linear-gradient(180deg, rgba(30, 58, 138, 0.2) 0%, transparent 100%); }
+
+		.crew-card.selected { border-color: #22d3ee !important; box-shadow: 0 0 40px rgba(34, 211, 238, 0.5) !important; background: linear-gradient(180deg, #1e3a8a 0%, #020617 100%) !important; }
+		.crew-card i { font-size: 3rem; margin: 0.75rem 0; color: #e0e7ff; text-shadow: 0 0 15px #22d3ee; transition: all 0.3s; }
+		.crew-card:hover i { transform: scale(1.1); text-shadow: 0 0 25px #22d3ee, 0 0 5px white; }
+
+		.crew-boon-container { margin-top: auto; width: 100%; background: rgba(15, 23, 42, 0.8); border: 1px solid #1e40af; padding: 0.5rem; border-radius: 4px; }
+
+		/* NARRATIVE TEXT STYLING */
+		.dream-narrative {
+			font-family: 'Crimson Text', serif; font-size: 1.1rem; color: #cbd5e1;
+			line-height: 1.6; margin-bottom: 1.5rem; text-align: center;
+			max-width: 90%; margin-left: auto; margin-right: auto;
+			text-shadow: 0 2px 4px rgba(0,0,0,0.8); border-top: 1px solid rgba(34,211,238,0.1); border-bottom: 1px solid rgba(34,211,238,0.1);
+			padding: 1rem 0;
+		}
+		.status-text-item { display: flex; align-items: center; font-family: 'Cinzel', serif; font-weight: bold; font-size: 0.9rem; white-space: nowrap; }
+		.status-text-item.levelup { color: #cffafe; text-shadow: 0 0 10px rgba(34, 211, 238, 0.5); animation: pulse-cyan 2s infinite; }
 
 		/* BACKPACK MODAL */
 		#inventory-combined-container { position: relative; z-index: 50; }
@@ -468,7 +560,7 @@
 		}
     </style>
 </head>
-<body>
+<body class="min-h-screen md:h-screen md:overflow-hidden overflow-y-auto bg-[#050a10] text-[#cdd5e0] select-none flex flex-col">
 
     <div id="app-loading" class="fixed inset-0 z-[200] flex flex-col items-center justify-center bg-black text-white">
         <div class="text-4xl cinzel text-blue-500 mb-4 animate-pulse text-center px-4">Edward Jones:<br>The Mariner of the Damned</div>
@@ -481,11 +573,11 @@
         </button>
     </div>
 
-    <div class="grid grid-cols-1 md:flex md:flex-row max-w-7xl mx-auto w-full p-2 md:p-4 gap-4 mb-8">
+    <div id="main-game-container" class="grid grid-cols-1 md:flex md:flex-row max-w-7xl mx-auto w-full p-2 md:p-4 gap-4 md:h-full h-auto">
         
         <div class="contents md:flex md:flex-col md:w-1/3 gap-3 shrink-0 relative z-50">
             
-            <div class="order-1 md:order-none relative w-full aspect-square md:aspect-[4/3] bg-gray-900 rounded border border-gray-700 overflow-hidden shadow-2xl shrink-0 group">
+            <div class="order-1 md:order-none relative w-full aspect-video md:aspect-[4/3] bg-gray-900 rounded border border-gray-700 overflow-hidden shadow-2xl shrink-0 group">
                 <button id="reset-game-btn" onclick="confirmReset()" class="absolute top-2 left-2 z-30 text-[10px] border border-red-900/50 text-red-400 bg-black/60 hover:text-red-200 hover:bg-red-900/80 px-2 py-1 rounded transition-all cinzel font-bold backdrop-blur-sm">
                     <i class="fas fa-skull mr-1"></i>New Game
                 </button>
@@ -614,7 +706,7 @@
 
         <div class="contents md:flex md:flex-col md:w-2/3 gap-4">
             
-            <div id="main-scene-text" class="order-2 md:order-none bg-[#111318] rounded border border-gray-700 p-6 shadow-inner relative flex flex-col justify-center min-h-[160px]">
+            <div id="main-scene-text" class="order-2 md:order-none bg-[#111318] rounded border border-gray-700 p-6 shadow-inner relative min-h-[160px] h-auto shrink-0 transition-all flex flex-col justify-center">
                 <div class="text-center text-gray-500 italic">Initializing Story...</div>
             </div>
 
@@ -637,6 +729,43 @@
 
         </div>
     </div>
+	
+	<div id="dreamscape-overlay">
+		<div class="dream-modal-content">
+			<div class="relative h-32 md:h-40 w-full bg-black overflow-hidden border-b-2 border-cyan-900 shrink-0">
+				<img src="https://placehold.co/900x250/020617/1e293b?text=The+Void+Ocean" class="w-full h-full object-cover opacity-60">
+				<div class="absolute inset-0 bg-gradient-to-t from-[#0f172a] via-transparent to-transparent"></div>
+				<div class="absolute bottom-0 left-0 right-0 p-4 text-center">
+					<h2 class="text-2xl md:text-3xl cinzel text-cyan-400 text-shadow tracking-widest">Dreamscape Sanctuary</h2>
+				</div>
+			</div>
+
+			<div class="p-4 md:p-6 bg-[#0f172a] flex-1">
+				<div class="flex flex-wrap justify-center gap-6 mb-4 cinzel font-bold text-sm tracking-widest uppercase">
+					<div class="flex items-center text-emerald-400 drop-shadow-md">
+						<i class="fas fa-heart mr-2"></i> +5 Max HP
+					</div>
+					<div class="flex items-center text-red-400 drop-shadow-md">
+						<i class="fas fa-fist-raised mr-2"></i> +1 Base Dmg
+					</div>
+					<div class="flex items-center text-purple-400 drop-shadow-md">
+						<i class="fas fa-bed mr-2"></i> Long Rest
+					</div>
+				</div>
+
+				<div id="dream-text-container" class="dream-narrative min-h-[80px] flex items-center justify-center"></div>
+
+				<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4" id="dream-card-grid">
+					</div>
+
+				<div class="mt-6 flex justify-center">
+					<button id="btn-wake-up" onclick="window.gameFunctions.confirmDreamSelection()" class="hidden px-8 py-3 bg-transparent border-2 border-cyan-500 text-cyan-400 rounded hover:bg-cyan-900/30 hover:text-white hover:border-white transition-all cinzel font-bold text-sm shadow-[0_0_20px_rgba(34,211,238,0.3)] tracking-widest uppercase">
+						Confirm Bond & Wake Up
+					</button>
+				</div>
+			</div>
+		</div>
+	</div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
@@ -1100,6 +1229,7 @@
 				shillings: 0, 
 				influence: 0, 
 				doomTimer: 20,
+				guidingDieSize: 4,
 				
 				act1Started: false,
 				isRiftCollapse: false,
@@ -1170,6 +1300,12 @@
 
 				nextAttackCrit: false,
 				negateNextDamage: false,
+				
+				// LEVEL UP tracking
+				baseDamage: 0, // Starts at 0, increases by 1 per Act
+				crewSkillBonuses: { gareth: 0, quinn: 0, talon: 0, bones: 0 },
+				activeBoons: [], // Stores strings: "violence_of_action", "logistics", etc.
+				dreamTransitionPending: null, // Tracks which transition is active
 				
 				allyCooldowns: {
 					silas: 0,
@@ -1352,10 +1488,183 @@
             }
         };
 		
-        
-        // --- WINDOW FUNCTIONS FOR HTML BUTTONS ---
-		window.gameFunctions = {}; // Initialize empty object
+        window.gameFunctions = {};
+		// --- DREAMSCAPE DATA & LOGIC ---
+		const dreamscapeConfig = {
+			'act1_transition': {
+				nextScene: 'lighthouse_morning',
+				narrative: "The storm has passed, but the sea demands a price. The crew stands before you in the grey morning mist. They look to you for orders, but their eyes are hollow.",
+				boons: {
+					gareth: { title: "Violence of Action", effect: "Advantage on Round 1", desc: "Roll twice for attacks in the first round of combat." },
+					quinn: { title: "Logistics Officer", effect: "Reveal Hidden Costs", desc: "See Time/Doom costs before making choices." },
+					talon: { title: "Scavenger's Eye", effect: "+1 Shilling Found", desc: "Gain extra coin whenever you loot or sell." },
+					bones: { title: "Triage Protocol", effect: "+2 Consumable Heal", desc: "Potions and food heal +2 additional HP." }
+				}
+			},
+			'act2_transition': {
+				nextScene: 'act2_arrival',
+				narrative: "You drift between the material and the spectral. The Vanishing Manor awaits in the negative space of the world. Physics is breaking down; gravity is a suggestion. <span class='text-cyan-400'>Who will anchor you to reality?</span>",
+				boons: {
+					gareth: { title: "Iron Will", effect: "-2 Psychic Damage", desc: "Resistance to mental trauma and sanity checks." },
+					quinn: { title: "Efficient Pathing", effect: "Free Safe Movement", desc: "0 Tether cost to move between safe rooms." },
+					talon: { title: "Ghost Hunter", effect: "+2 Dmg vs Spectral", desc: "Bonus damage against Ethereal enemies." },
+					bones: { title: "Spectral Metabolism", effect: "Regen 1 HP on Move", desc: "Heal 1 HP when entering a new room." }
+				}
+			},
+			'act3_transition': {
+				nextScene: 'act3_name_ship',
+				narrative: "The Rift is closed, but the open sea is a battlefield. The factions are moving, and the water turns red with the Sanguine Tithe. <span class='text-cyan-400'>Choose your strength for the final war.</span>",
+				boons: {
+					gareth: { title: "Hold the Line", effect: "Death Defiance", desc: "Survive a lethal blow at 1 HP (Once per rest)." },
+					quinn: { title: "Master Navigator", effect: "-1 Supply Cost", desc: "Sea travel costs 1 less Supply." },
+					talon: { title: "Hunter's Mark", effect: "Crit Range 19-20", desc: "Critical hits land on rolls of 19 or 20." },
+					bones: { title: "Alchemical Resistance", effect: "Resist Acid/Poison", desc: "Take half damage from Acid and Poison." }
+				}
+			}
+		};
 
+		let selectedDreamCrew = null;
+
+		window.gameFunctions.startDreamscape = function(transitionType) {
+			gameState.dreamTransitionPending = transitionType;
+			const config = dreamscapeConfig[transitionType];
+			
+			// 1. Universal Level Up Mechanics (Always happen)
+			gameState.maxHP += 5;
+			gameState.currentHP = gameState.maxHP;
+			gameState.baseDamage += 1;
+			
+			// 2. Conditional Die Upgrade (ONLY for Act 3)
+			let dieUpgradeText = "";
+			let dieClass = "text-gray-500"; // Default: Dimmed (no change)
+			let dieIcon = "fa-dice-d20";
+			
+			if (transitionType === 'act3_transition') {
+				gameState.guidingDieSize = 6; // Upgrade to d6
+				dieUpgradeText = "Guiding Die Upgraded (d6)";
+				dieClass = "text-yellow-400 animate-pulse font-bold"; // Gold & Pulsing
+				dieIcon = "fa-arrow-up";
+			} else {
+				// Keeps current size (d4)
+				gameState.guidingDieSize = gameState.guidingDieSize || 4; 
+				dieUpgradeText = `Guiding Die (d${gameState.guidingDieSize})`;
+			}
+			
+			// 3. Setup UI
+			document.getElementById('main-game-container').classList.add('dream-blur-active');
+			const overlay = document.getElementById('dreamscape-overlay');
+			overlay.classList.add('active');
+			
+			// 4. Update the Modal Header (Specific Order: Rest -> Level Up -> HP -> Dmg -> Die)
+			const modalHeader = overlay.querySelector('.p-4.md\\:p-6 .flex.flex-wrap');
+			if (modalHeader) {
+				modalHeader.innerHTML = `
+					<div class="flex items-center text-purple-400 drop-shadow-md">
+						<i class="fas fa-bed mr-2"></i> Long Rest
+					</div>
+					<div class="flex items-center text-cyan-300 drop-shadow-md">
+						<i class="fas fa-arrow-up mr-2"></i> Level Up!
+					</div>
+					<div class="flex items-center text-emerald-400 drop-shadow-md">
+						<i class="fas fa-heart mr-2"></i> +5 Max HP
+					</div>
+					<div class="flex items-center text-red-400 drop-shadow-md">
+						<i class="fas fa-fist-raised mr-2"></i> +1 Base Dmg
+					</div>
+					<div class="flex items-center ${dieClass} drop-shadow-md">
+						<i class="fas ${dieIcon} mr-2"></i> ${dieUpgradeText}
+					</div>
+				`;
+			}
+			
+			document.getElementById('dream-text-container').innerHTML = `"${config.narrative}"`;
+			document.getElementById('btn-wake-up').classList.add('hidden');
+			selectedDreamCrew = null;
+
+			// 5. Render Cards
+			const grid = document.getElementById('dream-card-grid');
+			grid.innerHTML = '';
+			
+			const crews = [
+				{ id: 'gareth', icon: 'fa-anchor', role: 'Captain' },
+				{ id: 'quinn', icon: 'fa-scroll', role: 'Quartermaster' },
+				{ id: 'talon', icon: 'fa-eye', role: 'Scout' },
+				{ id: 'bones', icon: 'fa-flask', role: 'Surgeon' }
+			];
+
+			crews.forEach(c => {
+				const boon = config.boons[c.id];
+				const card = document.createElement('div');
+				card.className = `crew-card group`;
+				card.id = `card-${c.id}`;
+				card.onclick = () => window.gameFunctions.selectDreamCrew(c.id);
+				
+				card.innerHTML = `
+					<div class="crew-card-inner">
+						<i class="fas ${c.icon}"></i>
+						<h4 class="text-cyan-100 font-cinzel font-bold text-lg mb-1 border-b border-cyan-500/30 pb-1 w-full">${c.id.charAt(0).toUpperCase() + c.id.slice(1)}</h4>
+						<p class="text-gray-400 text-xs italic mb-auto">${c.role} (+1 Skill)</p>
+						<div class="crew-boon-container">
+							<div class="text-[10px] text-blue-400 font-bold uppercase tracking-wider mb-1">Boon: ${boon.title}</div>
+							<div class="text-sm text-white font-cinzel font-bold mb-1">${boon.effect}</div>
+							<div class="text-[10px] text-gray-400 leading-tight">${boon.desc}</div>
+						</div>
+					</div>
+				`;
+				grid.appendChild(card);
+			});
+		};
+
+		// Function 2: Select Card
+		window.gameFunctions.selectDreamCrew = function(crewId) {
+			selectedDreamCrew = crewId;
+			
+			// Visual Selection
+			document.querySelectorAll('.crew-card').forEach(c => c.classList.remove('selected'));
+			document.getElementById(`card-${crewId}`).classList.add('selected');
+			
+			// Show Button
+			const btn = document.getElementById('btn-wake-up');
+			btn.classList.remove('hidden');
+			btn.innerText = `BOND WITH ${crewId.toUpperCase()}`;
+		};
+
+		// Function 3: Confirm & End
+		window.gameFunctions.confirmDreamSelection = function() {
+			if (!selectedDreamCrew) return;
+			
+			const transition = gameState.dreamTransitionPending;
+			const config = dreamscapeConfig[transition];
+			
+			// Apply Rewards
+			gameState.crewSkillBonuses[selectedDreamCrew] += 1;
+			
+			// Map crew ID to specific boon ID for tracking
+			const boonMap = {
+				'act1_transition': { gareth: 'violence_of_action', quinn: 'logistics', talon: 'scavenger', bones: 'triage' },
+				'act2_transition': { gareth: 'iron_will', quinn: 'efficient_pathing', talon: 'ghost_hunter', bones: 'spectral_metabolism' },
+				'act3_transition': { gareth: 'hold_the_line', quinn: 'master_navigator', talon: 'hunters_mark', bones: 'chemical_resist' }
+			};
+			
+			const boonId = boonMap[transition][selectedDreamCrew];
+			if (!gameState.activeBoons.includes(boonId)) {
+				gameState.activeBoons.push(boonId);
+			}
+
+			// Cleanup UI
+			document.getElementById('dreamscape-overlay').classList.remove('active');
+			document.getElementById('main-game-container').classList.remove('dream-blur-active');
+			
+			// Custom Logic Flags based on selection (Legacy compatibility)
+			if (boonId === 'logistics') gameState.quinnLogistics = true;
+			if (boonId === 'violence_of_action') gameState.isSurpriseRound = true;
+
+			// Proceed
+			renderScene(config.nextScene);
+			saveGame();
+		};
+		
+		
 		// 1. CONTRABAND CHECKER
 		window.gameFunctions.checkForContraband = function() {
 			return gameState.inventory.some(itemName => {
@@ -1414,7 +1723,8 @@
 			let eldersKilled = 0;
 
 			// --- 1. CALCULATE PLAYER DAMAGE ---
-			const levelBonus = state.levelUpDamage ? 1 : 0;
+			const levelBonus = (state.baseDamage || 0); 
+			
 			let baseDamage = 0;
 			let isAOE = false;
 			let isStun = false;
@@ -1440,12 +1750,29 @@
 			}
 
 			playerDmg = baseDamage;
-
+			
+			// BOON: Talon's Ghost Hunter (Act 2)
+			// Applies to Ethereal enemies or specific ghostly foes
+			if (state.activeBoons.includes('ghost_hunter')) {
+				const ghostlyEnemies = ['Displacer Beast', 'Drowned Spectre', 'Mimic', 'Brass Sentinel']; // Sentinel is arguably spectral-powered
+				if (state.isEthereal || ghostlyEnemies.includes(state.currentEnemy)) {
+					playerDmg += 2;
+					log += " <span class='text-purple-300 font-bold'>(Ghost Hunter +2)</span>";
+				}
+			}
+			
 			// Apply Planar Vulnerability (Phase 3 Pivot: Last Elder standing)
 			if (isForceDamage && state.activeEnemies.length === 1 && playerDmg > 0) {
 				playerDmg += 2; // +2 Force Damage bonus
 				log += `<span class='text-spectral-d8'>Planar Focus: Force Damage +2.</span> `;
 			}
+			
+			// Simulate a "Crit" roll (10% chance) if the boon is active
+			if (state.activeBoons.includes('hunters_mark') && Math.random() > 0.90) {
+				state.nextAttackCrit = true; 
+				log += "<span class='text-purple-400 font-bold'>Hunter's Precision! (Crit Ready)</span> ";
+			}
+
 
 			// BLINK CRIT MODIFIER
 			if (state.nextAttackCrit && playerDmg > 0) {
@@ -1645,8 +1972,8 @@
 			let log = "";
 			
 			// --- 1. CALCULATE PLAYER DAMAGE ---
-			// Level Up Bonus: +1 Base Damage 
-			const levelBonus = state.levelUpDamage ? 1 : 0;
+			// UPDATED: Use the dynamic baseDamage from Dreamscape
+			const levelBonus = (state.baseDamage || 0);
 
 			if (attackType === 'valor_strike') {
 				playerDmg = Math.floor(Math.random() * 8) + 6 + levelBonus; 
@@ -1875,27 +2202,31 @@
                 }
             },
             "Rum": {
-                name: "Rum",
-                type: 'consumable',
-                icon: 'fa-wine-bottle',
-                color: 'text-amber-500',
-                btnText: "DRINK",
-                desc: "Consumable: Potent grog. Restores 5 HP. Cannot repair Spectral HP.",
-                action: (state) => {
-                    if (state.currentHP >= state.maxHP) {
-                        return "Your natural vitality is full. The burning grog offers no comfort to the Spectral Shield.";
-                    }
+				name: "Rum",
+				type: 'consumable',
+				icon: 'fa-wine-bottle',
+				color: 'text-amber-500',
+				btnText: "DRINK",
+				desc: "Consumable: Potent grog. Restores 5 HP. Cannot repair Spectral HP.",
+				action: (state) => {
+					if (state.currentHP >= state.maxHP) {
+						return "Your natural vitality is full. The burning grog offers no comfort to the Spectral Shield.";
+					}
 
-                    const healAmount = 5;
-                    const oldHP = state.currentHP;
-                    
-                    state.currentHP = Math.min(state.maxHP, state.currentHP + healAmount);
+					// BOON LOGIC: Triage Protocol
+					let healAmount = 5;
+					if (state.activeBoons.includes('triage')) healAmount += 2;
 
-                    const idx = state.inventory.indexOf("Rum");
-                    if (idx > -1) state.inventory.splice(idx, 1);
-                    return `Drank Rum. Healed ${state.currentHP - oldHP} HP.`;
-                }
-            },
+					const oldHP = state.currentHP;
+					state.currentHP = Math.min(state.maxHP, state.currentHP + healAmount);
+
+					const idx = state.inventory.indexOf("Rum");
+					if (idx > -1) state.inventory.splice(idx, 1);
+					
+					const boonText = state.activeBoons.includes('triage') ? " (Triage +2)" : "";
+					return `Drank Rum. Healed ${state.currentHP - oldHP} HP${boonText}.`;
+				}
+			},
             "Healing Potion": {
 				name: "Healing Potion",
 				type: 'consumable',
@@ -1904,18 +2235,21 @@
 				btnText: "DRINK",
 				desc: "Consumable: Alchemical vitality. Restores 10 HP. Cannot repair Spectral HP.",
 				action: (state) => {
-					if (state.currentHP >= state.maxHP) {
-						return "Your natural vitality is full. Potions cannot repair the Spectral Shield.";
-					}
-
-					const healAmount = 10;
-					const oldHP = state.currentHP;
+					if (state.currentHP >= state.maxHP) return "Your health is full.";
 					
+					// BOON LOGIC
+					let healAmount = 10;
+					if (state.activeBoons.includes('triage')) healAmount += 2;
+
+					const oldHP = state.currentHP;
 					state.currentHP = Math.min(state.maxHP, state.currentHP + healAmount);
 					
 					const idx = state.inventory.indexOf("Healing Potion");
 					if (idx > -1) state.inventory.splice(idx, 1);
-					return `Drank Potion. Healed ${state.currentHP - oldHP} HP.`;
+					
+					// Add boon text to log if active
+					const boonText = state.activeBoons.includes('triage') ? " (Triage +2)" : "";
+					return `Drank Potion. Healed ${state.currentHP - oldHP} HP${boonText}.`;
 				}
 			},
             "Rope": { name: "Rope", type: 'key', icon: 'fa-chain', color: 'text-yellow-700', desc: "Passive: Essential for climbing cliffs." },
@@ -2008,14 +2342,18 @@
 						return "Your natural vitality is full. Tinctures cannot repair the Spectral Shield.";
 					}
 
-					const healAmount = 15;
+					// BOON LOGIC: Triage Protocol
+					let healAmount = 15;
+					if (state.activeBoons.includes('triage')) healAmount += 2;
+
 					const oldHP = state.currentHP;
-					
 					state.currentHP = Math.min(state.maxHP, state.currentHP + healAmount);
 					
 					const idx = state.inventory.indexOf("Vitality Tincture");
 					if (idx > -1) state.inventory.splice(idx, 1);
-					return `Drank Tincture. Healed ${state.currentHP - oldHP} HP.`;
+					
+					const boonText = state.activeBoons.includes('triage') ? " (Triage +2)" : "";
+					return `Drank Tincture. Healed ${state.currentHP - oldHP} HP${boonText}.`;
 				}
 			},
             "Smelling Salts": { 
@@ -2237,7 +2575,8 @@
 						if (idx > -1) state.inventory.splice(idx, 1);
 						return "Success! The mutagen rewrites your DNA. +2 Max HP.";
 					} else {
-						state.currentHP = applyDamage(state.currentHP, 6);
+						// UPDATED DAMAGE CALL
+						state.currentHP = applyDamage(state.currentHP, 6, 'poison');
 						const idx = state.inventory.indexOf("Volatile Mutagen");
 						if (idx > -1) state.inventory.splice(idx, 1);
 						fxManager.flashRed();
@@ -3158,16 +3497,22 @@
                     fxManager.flashRed();
                     return "Took 2 Damage (Hurry)."; 
                 },
-                choices: [{ text: "Enter and Rest (Start Act 1)", nextScene: 'lighthouse_vigil', type: 'rest' }]
+                choices: [
+					{ 
+						text: "Rest & Prepare (Level Up)", 
+						type: 'action', 
+						action: () => window.gameFunctions.startDreamscape('act1_transition') 
+					} 
+				]
             },
             
             // --- ACT 1: HUB & ABILITIES ---
             'lighthouse_vigil': {
-                title: "Charting Course",
-                text: "The lighthouse lamp cuts a bright path through the dark, but your gaze is fixed on the water-warped pages of the Ship's Log. The ink has run on the coordinates, but Gareth's handwriting remains clear on the final page—the lyrics to the 'Wolf King's Toll'.<br><br>The bickering voices in your mind fall silent. Then, softly, they begin to hum the melody in unison. It is not a myth; it is a map. To ferry your crew to the afterlife, you must locate these lost artifacts known as the Wolves of Valor.",
-                journal: null,
-                isRest: true,
-                onEnter: (state) => {
+				title: "Charting Course",
+				text: "The lighthouse lamp cuts a bright path through the dark, but your gaze is fixed on the water-warped pages of the Ship's Log. The ink has run on the coordinates, but Gareth's handwriting remains clear on the final page—the lyrics to the 'Wolf King's Toll'.<br><br>The bickering voices in your mind fall silent. Then, softly, they begin to hum the melody in unison. It is not a myth; it is a map. To ferry your crew to the afterlife, you must locate these lost artifacts known as the Wolves of Valor.",
+				journal: null,
+				isRest: true,
+				onEnter: (state) => {
 					const shanty = `The shanty holds the truth. I must find the Ring and the Blade to save my crew. I am the Captain now.<br><br>
 					  <i class='spectral-text-glow'>“There’s a tax for the coin and a tax for the bread,<br>
 					  But who pays the toll for the army of dead?<br>
@@ -3182,19 +3527,23 @@
 					  Waiting for a Captain as cursed as he.“</i>`;
 					
 					addToHistory(shanty, 'entry');
-                    
-                    if (state.currentHP < state.maxHP) {
-                        state.currentHP = state.maxHP;
-                    }
-                    
-                    Object.keys(state.crew).forEach(k => state.crew[k].used = false);
-                    state.docksWorkCount = 0;
-                    return "Mission Accepted: Find the Wolves of Valor. HP and Crew Use Restored.";
-                },
-                choices: [
-                    { text: "Ask the Crew for Final Orders", nextScene: 'captain_orders', type: 'dialogue' } 
-                ]
-            },
+					
+					if (state.currentHP < state.maxHP) {
+						state.currentHP = state.maxHP;
+					}
+					
+					Object.keys(state.crew).forEach(k => state.crew[k].used = false);
+					state.docksWorkCount = 0;
+					return "Mission Accepted: Find the Wolves of Valor. HP and Crew Use Restored.";
+				},
+				choices: [
+					{ 
+						text: "Rest & Prepare (Level Up)", 
+						type: 'action', 
+						action: () => window.gameFunctions.startDreamscape('act1_transition') 
+					} 
+				]
+			},
             'captain_orders': {
                 title: "The Captain's Orders",
                 text: "Before you descend into the Port of Shadows, the crew manifests in the lantern's light. They know the odds. Each offers a final, unique advantage, but you have the focus to maintain only one. Choose who to listen to.",
@@ -4141,11 +4490,11 @@
                         customClass: 'btn-hero'
                     }
                 ],
-                onEnter: (s) => { 
-                    s.currentHP = applyDamage(s.currentHP, 5); 
-                    fxManager.flashRed();
-                    return "Took 5 Fire Damage."; 
-                }, 
+                onEnter: (state) => { 
+					state.currentHP = applyDamage(state.currentHP, 5, 'fire'); 
+					fxManager.flashRed();
+					return "Took 5 Fire Damage."; 
+				},
             },
             'smelter_workers': {
                 title: "Smelter District: Trapped Workers",
@@ -4217,7 +4566,12 @@
                         consume: true,
                         customClass: 'btn-hero'
                     }
-                ]
+                ],
+				onEnter: (state) => {
+					state.currentHP = applyDamage(state.currentHP, 4, 'psychic');
+					fxManager.flashRed();
+					return "Took 4 Psychic Damage from the crew's screams.";
+				},
             },
             
             // --- MULTI-STAGE BOSS FIGHT: SLAG HORROR ---
@@ -4347,10 +4701,10 @@
                     { text: "Hack at the Shell", nextScene: 'smelter_victory_brute', type: 'combat' }
                 ],
                 onEnter: (state) => {
-                    state.currentHP = applyDamage(state.currentHP, state.pendingDamage || 0);
-                    fxManager.flashRed();
-                    return `Took ${state.pendingDamage} Fire Damage approaching the boss.`;
-                },
+					state.currentHP = applyDamage(state.currentHP, state.pendingDamage || 0, 'fire');
+					fxManager.flashRed();
+					return `Took ${state.pendingDamage} Fire Damage approaching the boss.`;
+				},
             },
             'smelter_victory_lubricant': {
                 title: "Slag Horror Defeated",
@@ -4843,12 +5197,12 @@
                 journal: "Brute force victory over the Spectre, taking heavy sanity damage. Claimed the Ring of Brass.",
                 choices: [{ text: "Limp to Town Square", nextScene: 'town_square', type: 'travel', doomCost: 2 }],
                 onEnter: (state) => {
-                    state.isSurpriseRound = false;
-                    state.currentHP = applyDamage(state.currentHP, 12);
-                    fxManager.flashRed();
-                    if (!state.inventory.includes("Ring of Brass")) state.inventory.push("Ring of Brass");
-                    return "Took 12 DMG. Acquired Ring of Brass.";
-                },
+					state.isSurpriseRound = false;
+					state.currentHP = applyDamage(state.currentHP, 12, 'psychic');
+					fxManager.flashRed();
+					if (!state.inventory.includes("Ring of Brass")) state.inventory.push("Ring of Brass");
+					return "Took 12 Psychic DMG. Acquired Ring of Brass.";
+				},
             },
             
             // --- ACT 1: FINALE SCENES ---
@@ -4879,12 +5233,11 @@
 				choices: [
 					{ 
 						text: "Channel the Power", 
-						nextScene: 'act2_arrival',
 						type: 'hold', 
 						customClass: 'btn-channel',
-						doomCost: 0
+						action: () => window.gameFunctions.startDreamscape('act2_transition')
 					}
-				] 
+				]
 			},
 
             // --- ACT 2: MANOR ARRIVAL & HUB ---
@@ -4929,15 +5282,15 @@
                 text: "The silver cord of your consciousness snaps. The Manor dissolves, and the Ethereal Plane violently rejects you, hurling your body and soul back into the Material Plane with the force of a cannonball. You suffer massive psychic trauma and find yourself in the grim port, having lost all progress within the Manor.",
                 journal: "My tether broke. I was ripped back to reality, taking heavy psychic damage. Lost all Ethereal progress.",
                 onEnter: (state) => {
-                    state.currentHP = applyDamage(state.currentHP, 8);
-                    state.act2Started = false;
-                    state.isEthereal = false;
-                    state.tetherTimer = 0;
-                    
-                    document.body.classList.remove('plane-ethereal');
-                    fxManager.flashRed();
-                    return "Tether Failed! Took 8 Psychic DMG. Forcibly Returned to Port Square.";
-                },
+					state.currentHP = applyDamage(state.currentHP, 8, 'psychic');
+					state.act2Started = false;
+					state.isEthereal = false;
+					state.tetherTimer = 0;
+					
+					document.body.classList.remove('plane-ethereal');
+					fxManager.flashRed();
+					return "Tether Failed! Took 8 Psychic DMG. Forcibly Returned to Port Square.";
+				},
                 choices: [
                     { text: "Wake up gasping (Return to Port Square)", nextScene: 'town_square', type: 'travel', tetherCost: 0 }
                 ]
@@ -5517,8 +5870,12 @@
                 text: "You plant the Sword of Valor into the spectral anchor. The Ring of Brass flares, binding the energies. The Vanishing Manor implodes into a singularity of white light.<br><br>While you were in the Ethereal, your <span class='text-item'>Compass</span> spun wildly, drunk on the infinite directions of the void. But as the weight of the Ethereal lifts and you fall back into the salt spray of the material ocean, the needle slams to a halt. It locks onto a single, unwavering heading deep in the open sea.",
                 journal: "Closed the Rift. The Compass has stopped spinning and locked onto a new target.",
                 choices: [
-                    { text: "Wake up at Sea (Begin Act 3)", nextScene: 'act3_name_ship', type: 'travel', doomCost: 0 }
-                ]
+					{ 
+						text: "Wake up at Sea (Begin Act 3)", 
+						type: 'action',
+						action: () => window.gameFunctions.startDreamscape('act3_transition')
+					}
+				]
             },
 
 			// ACT 2: SPECTRAL FORGE
@@ -5675,15 +6032,8 @@
 						if (!name) name = "The Iron Lung"; 
 						
 						state.shipName = name; 
-						
-						// --- LEVEL UP APPLIED HERE  ---
-						state.maxHP = 25; 
-						state.currentHP = 25; // Full heal on level up
-						state.levelUpDamage = true; // +1 Base Damage flag
-						// ----------------------------------------
-
 						renderScene('act3_intro_ship'); 
-						return `Christened the ship: <span class="text-item">${name}</span>. Level Up! Max HP increased to 25. Base Damage increased.`;
+						return `Christened the ship: <span class="text-item">${name}</span>.`;
 					}
                     }
                 ]
@@ -7759,8 +8109,19 @@
 
         // --- CORE FUNCTIONS & ENGINE ---
         
-        function applyDamage(currentHP, damageAmount) {
-            let finalDamage = damageAmount;
+        function applyDamage(currentHP, damageAmount, damageType = 'physical') {
+			let finalDamage = damageAmount;
+			
+			if (damageType === 'psychic' && gameState.activeBoons.includes('iron_will')) {
+				finalDamage = Math.max(0, finalDamage - 2);
+				addToHistory("Iron Will reduced Psychic damage.", 'system');
+			}
+
+			// 2. Bones Act 3 Boon: Alchemical Resistance (Half Poison/Acid)
+			if ((damageType === 'poison' || damageType === 'acid') && gameState.activeBoons.includes('chemical_resist')) {
+				finalDamage = Math.floor(finalDamage / 2);
+				addToHistory("Alchemical Resistance halved the damage.", 'system');
+			}
 
             if (gameState.inventory.includes("Salt-Warped Spyglass") && gameState.influence <= -15) {
                 if (finalDamage > 0) {
@@ -7775,6 +8136,13 @@
             }
 
             let finalHP = Math.max(0, currentHP - finalDamage);
+			
+			// 3. Gareth Act 3 Boon: Hold The Line (Death Defiance)
+			if (finalHP === 0 && gameState.activeBoons.includes('hold_the_line') && !gameState.holdTheLineUsed) {
+				finalHP = 1;
+				gameState.holdTheLineUsed = true;
+				addToHistory("HOLD THE LINE! Gareth's tenacity keeps you at 1 HP.", 'danger');
+			}
             
             if (finalHP === 0) {
                 const phoenixIndex = gameState.inventory.indexOf("Phoenix Draft");
@@ -8111,7 +8479,7 @@
                         const crewKey = activeCrewMember.id;
                         
                         if (isSkilled) { 
-                            const dieSize = gameState.isEthereal ? 8 : 4; 
+                            const dieSize = gameState.isEthereal ? 8 : (gameState.guidingDieSize || 4); 
                             const bonus = Math.floor(Math.random() * dieSize) + 1;
                             roll += bonus;
                             crewUsedName = activeCrewMember.name;
@@ -8609,7 +8977,7 @@
                                 const isSkilled = getBonusForSkill(activeCrewMember, choice.skill);
                                 const crewKey = activeCrewMember.id;
                                 if (isSkilled) { 
-                                    const dieSize = gameState.isEthereal ? 8 : 4; 
+                                    const dieSize = gameState.isEthereal ? 8 : (gameState.guidingDieSize || 4); 
                                     const bonus = Math.floor(Math.random() * dieSize) + 1;
                                     roll += bonus;
                                     const dieLabel = gameState.isEthereal ? `(Spectral D8!)` : `(${activeCrewMember.name})`;
@@ -8761,8 +9129,18 @@
                                  extraGold = 1;
                                  addToHistory("Passive (Privateer's Lens): Found +1 extra Shilling.", 'system');
                             }
-                            if (choice.shillingGain) gameState.shillings += (choice.shillingGain + extraGold);
-                            if (choice.value) gameState.shillings += (choice.value + extraGold);
+                            if (choice.shillingGain || choice.value) {
+								let bonus = extraGold; // From Spyglass
+								
+								// BOON LOGIC: Scavenger's Eye (Talon Act 1)
+								if (gameState.activeBoons.includes('scavenger')) {
+									bonus += 1;
+									addToHistory("Scavenger's Eye: Found +1 extra Shilling.", 'system');
+								}
+								
+								if (choice.shillingGain) gameState.shillings += (choice.shillingGain + bonus);
+								if (choice.value) gameState.shillings += (choice.value + bonus);
+							}
                             
                             if (choice.chaosGain) gameState.influence = Math.min(50, gameState.influence + choice.chaosGain);
                             if (choice.orderGain) gameState.influence = Math.max(-50, gameState.influence - choice.orderGain); 
@@ -8777,10 +9155,24 @@
                                 if (gameState.doomTimer > 0) addToHistory(`Rift Stability: ${gameState.doomTimer} turns remaining.`, 'system');
                             }
 
-                            if (gameState.act2Started && choice.tetherCost !== 0) {
-                                 const cost = choice.tetherCost !== undefined ? choice.tetherCost : (scenes[currentSceneId].isBoss || scenes[currentSceneId].isRest ? 0 : 1);
-                                 gameState.tetherTimer = Math.max(0, gameState.tetherTimer - cost);
-                            }
+                            if (gameState.act2Started) {
+								const hasExplicitCost = choice.tetherCost !== undefined;
+								// Default cost is 1 unless it's a Boss or Rest scene, or explicitly 0
+								let cost = hasExplicitCost ? choice.tetherCost : (scenes[currentSceneId].isBoss || scenes[currentSceneId].isRest ? 0 : 1);
+								
+								// BOON LOGIC: Efficient Pathing (Quinn Act 2)
+								// If we have the boon and it's a standard travel move (cost 1), make it 0
+								if (gameState.activeBoons.includes('efficient_pathing') && cost === 1 && !hasExplicitCost) {
+									cost = 0;
+								}
+
+								if (cost >= 0 && choice.type !== 'reset') {
+									if (cost > 0) indicators.push({ text: `-${cost} Turns`, color: 'text-cyan-400' }); 
+									else if (cost === 0 && (hasExplicitCost || gameState.activeBoons.includes('efficient_pathing'))) {
+										indicators.push({ text: `0 Turns`, color: 'text-cyan-400' });
+									}
+								}
+							}
                             
                             renderScene(choice.nextScene);
                         };
@@ -8804,27 +9196,54 @@
                 if (choice.cost) indicators.push({ text: `-${choice.cost}s`, color: 'text-amber-500' });
                 else if (choice.value) indicators.push({ text: `+${choice.value}s`, color: 'text-amber-500' });
                 else if (choice.shillingGain) indicators.push({ text: `+${choice.shillingGain}s`, color: 'text-amber-500' });
-                if (choice.suppliesCost) indicators.push({ text: `-${choice.suppliesCost} Supplies`, color: 'text-indigo-400' });
+                if (choice.suppliesCost) {
+					let finalSupplyCost = choice.suppliesCost;
+					if (gameState.activeBoons.includes('master_navigator')) {
+						finalSupplyCost = Math.max(1, finalSupplyCost - 1);
+					}					
+					indicators.push({ text: `-${finalSupplyCost} Supplies`, color: 'text-indigo-400' });
+				}
                 if (choice.costHP !== undefined) indicators.push({ text: `-${choice.costHP} HP`, color: 'text-red-400' });
                 if (choice.chaosGain) indicators.push({ text: `+${choice.chaosGain} Chaos`, color: 'text-emerald-400' });
                 else if (choice.orderGain) indicators.push({ text: `+${choice.orderGain} Order`, color: 'text-blue-400' });
                 
-                const isStandardAct1Scene = gameState.act1Started && !scenes[currentSceneId].isBoss && !scenes[currentSceneId].isRest;
-                if (gameState.act1Started && gameState.quinnLogistics && isStandardAct1Scene) {
+                const hasLogistics = gameState.quinnLogistics || gameState.activeBoons.includes('logistics');
+				const isStandardAct1Scene = gameState.act1Started && !scenes[currentSceneId].isBoss && !scenes[currentSceneId].isRest;
+
+				if (gameState.act1Started && hasLogistics && isStandardAct1Scene) {
                     const hasExplicitCost = choice.doomCost !== undefined;
                     const cost = hasExplicitCost ? choice.doomCost : (isStandardAct1Scene ? 1 : 0);
                     if (cost >= 0 && choice.type !== 'reset' && choice.nextScene !== 'lighthouse_vigil') {
                         if (cost > 0) indicators.push({ text: `-${cost} Time`, color: 'text-purple-400' }); 
                         else if (cost === 0 && (hasExplicitCost || choice.type === 'travel')) indicators.push({ text: `0 Time`, color: 'text-purple-400' });
                     }
-                } else if (gameState.act2Started) {
-                    const hasExplicitCost = choice.tetherCost !== undefined;
-                    const cost = hasExplicitCost ? choice.tetherCost : (scenes[currentSceneId].isBoss || scenes[currentSceneId].isRest ? 0 : 1);
-                    if (cost >= 0 && choice.type !== 'reset') {
-                        if (cost > 0) indicators.push({ text: `-${cost} Turns`, color: 'text-cyan-400' }); 
-                        else if (cost === 0 && hasExplicitCost) indicators.push({ text: `0 Turns`, color: 'text-cyan-400' });
-                    }
-                }
+                } 
+				else if (gameState.act2Started) {
+					const hasExplicitCost = choice.tetherCost !== undefined;
+					let cost = hasExplicitCost ? choice.tetherCost : (scenes[currentSceneId].isBoss || scenes[currentSceneId].isRest ? 0 : 1);
+					
+					if (gameState.activeBoons.includes('efficient_pathing') && cost === 1 && !hasExplicitCost) {
+						cost = 0;
+					}
+
+					if (cost >= 0 && choice.type !== 'reset') {
+						if (cost > 0) indicators.push({ text: `-${cost} Turns`, color: 'text-cyan-400' }); 
+						else if (cost === 0 && (hasExplicitCost || gameState.activeBoons.includes('efficient_pathing'))) {
+							indicators.push({ text: `0 Turns`, color: 'text-cyan-400' });
+						}
+
+						if (gameState.activeBoons.includes('spectral_metabolism') && choice.type === 'travel' && choice.nextScene !== currentSceneId) {
+							const originalAction = choice.action; 							
+							choice.action = (state) => {
+								if (state.currentHP < state.maxHP) {
+									state.currentHP += 1;
+								}
+								if (originalAction) return originalAction(state);
+							};
+							indicators.push({ text: `+1 HP`, color: 'text-emerald-400' });
+						}
+					}
+				}
 
                 let indicatorString = '';
                 indicators.forEach(ind => { indicatorString += ` <span class="${ind.color} text-sm ml-1">(${ind.text})</span>`; });
@@ -9087,7 +9506,7 @@
 					<div id="tether-bones" class="spectral-tether tether-se"></div>
 					<div id="radial-hub" class="radial-hub">
 						<div class="cinzel font-bold text-cyan-200 text-xs leading-tight text-center mt-2">GUIDING<br>VOICE</div>
-						<div class="text-cyan-400 text-xs mt-0.5 font-bold animate-pulse tracking-widest">+1d4</div>
+						<div class="text-cyan-400 text-xs mt-0.5 font-bold animate-pulse tracking-widest">+1d${gameState.guidingDieSize || 4}</div>
 					</div>
 				`;
 				
@@ -9170,6 +9589,197 @@
 			// Re-render choices to update button borders/text
 			renderChoices(scenes[gameState.currentSceneId].choices, false); 
 		}
+		
+		// --- KONAMI CODE COMMAND CENTER ---
+		(function() {
+			const konamiCode = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a'];
+			let konamiIndex = 0;
+
+			document.addEventListener('keydown', function(e) {
+				if (e.key === konamiCode[konamiIndex] || e.key.toLowerCase() === konamiCode[konamiIndex]) {
+					konamiIndex++;
+					if (konamiIndex === konamiCode.length) {
+						activateDevMenu();
+						konamiIndex = 0;
+					}
+				} else {
+					konamiIndex = 0;
+				}
+			});
+
+			function activateDevMenu() {
+				// Sound confirm
+				const audio = new Audio('audio/coins.mp3');
+				audio.volume = 0.5;
+				audio.play().catch(() => {});
+				
+				if (document.getElementById('dev-menu')) {
+					toggleDevMenu();
+					return;
+				}
+
+				const menu = document.createElement('div');
+				menu.id = "dev-menu";
+				menu.className = "fixed top-10 left-10 z-[200] bg-gray-950 border-2 border-amber-600 p-4 rounded-lg shadow-[0_0_30px_rgba(245,158,11,0.3)] flex flex-col gap-3 w-80 font-mono text-xs text-amber-500 fade-in";
+				menu.innerHTML = `
+					<div class="flex justify-between items-center border-b border-gray-700 pb-2 mb-1">
+						<h3 class="cinzel font-bold text-sm text-amber-400"><i class="fas fa-terminal mr-2"></i>DEV COMMAND</h3>
+						<button onclick="toggleDevMenu()" class="text-gray-500 hover:text-white"><i class="fas fa-times"></i></button>
+					</div>
+					
+					<div class="space-y-3 max-h-[70vh] overflow-y-auto pr-2 custom-scrollbar">
+						<div>
+							<div class="text-gray-500 font-bold uppercase tracking-wider mb-1 text-[10px]">Act I: The Port</div>
+							<div class="grid grid-cols-2 gap-2">
+								<button onclick="devJump('boss_slag')" class="bg-red-900/30 border border-red-800 p-2 rounded hover:bg-red-800 text-red-200 text-left truncate">Boss: Slag Horror</button>
+								<button onclick="devJump('boss_spectre')" class="bg-purple-900/30 border border-purple-800 p-2 rounded hover:bg-purple-800 text-purple-200 text-left truncate">Boss: Spectre</button>
+								<button onclick="devJump('act1')" class="bg-gray-800 p-2 rounded hover:bg-gray-700 text-gray-300 text-left truncate">Hub: Lighthouse</button>
+								<button onclick="devJump('town_square')" class="bg-gray-800 p-2 rounded hover:bg-gray-700 text-gray-300 text-left truncate">Hub: Port Square</button>
+							</div>
+						</div>
+
+						<div>
+							<div class="text-gray-500 font-bold uppercase tracking-wider mb-1 text-[10px]">Act II: The Manor</div>
+							<div class="grid grid-cols-2 gap-2">
+								<button onclick="devJump('boss_automaton')" class="bg-amber-900/30 border border-amber-800 p-2 rounded hover:bg-amber-800 text-amber-200 text-left truncate">Boss: Sentinel</button>
+								<button onclick="devJump('boss_mimic')" class="bg-amber-900/30 border border-amber-800 p-2 rounded hover:bg-amber-800 text-amber-200 text-left truncate">Mini: Mimic</button>
+								<button onclick="devJump('puzzle_circuit')" class="bg-blue-900/30 border border-blue-800 p-2 rounded hover:bg-blue-800 text-blue-200 text-left truncate">Puzzle: Circuit</button>
+								<button onclick="devJump('act2')" class="bg-gray-800 p-2 rounded hover:bg-gray-700 text-gray-300 text-left truncate">Hub: Foyer</button>
+							</div>
+						</div>
+
+						<div>
+							<div class="text-gray-500 font-bold uppercase tracking-wider mb-1 text-[10px]">Act III: The Sea</div>
+							<div class="grid grid-cols-2 gap-2">
+								<button onclick="devJump('boss_coral')" class="bg-red-900/30 border border-red-800 p-2 rounded hover:bg-red-800 text-red-200 text-left truncate">Boss: Coral Hulk</button>
+								<button onclick="devJump('boss_elders')" class="bg-red-900/30 border border-red-800 p-2 rounded hover:bg-red-800 text-red-200 text-left truncate">Boss: Elders</button>
+								<button onclick="devJump('puzzle_compass')" class="bg-blue-900/30 border border-blue-800 p-2 rounded hover:bg-blue-800 text-blue-200 text-left truncate">Puzzle: Compass</button>
+								<button onclick="devJump('act3')" class="bg-gray-800 p-2 rounded hover:bg-gray-700 text-gray-300 text-left truncate">Hub: Sea Map</button>
+							</div>
+						</div>
+
+						<div class="pt-2 border-t border-gray-700">
+							<div class="grid grid-cols-2 gap-2">
+								<button onclick="devGrant('godmode')" class="bg-green-900/30 border border-green-800 p-2 rounded hover:bg-green-800 text-green-200 text-center font-bold">GOD MODE</button>
+								<button onclick="devGrant('level')" class="bg-cyan-900/30 border border-cyan-800 p-2 rounded hover:bg-cyan-800 text-cyan-200 text-center font-bold">LEVEL UP</button>
+							</div>
+						</div>
+					</div>
+				`;
+				document.body.appendChild(menu);
+			}
+
+			window.toggleDevMenu = function() {
+				const m = document.getElementById('dev-menu');
+				if (m) m.classList.toggle('hidden');
+			};
+
+			window.devJump = function(loc) {
+				// RESET BASE STATE
+				gameState.isEthereal = false;
+				document.body.classList.remove('plane-ethereal');
+				gameState.currentHP = gameState.maxHP;
+				gameState.isBossCombat = false; // Clear boss flag to be safe
+
+				// --- ACT 1 ---
+				if (loc === 'act1') {
+					gameState.act1Started = true;
+					renderScene('lighthouse_vigil');
+				}
+				if (loc === 'town_square') {
+					gameState.act1Started = true;
+					renderScene('town_square');
+				}
+				if (loc === 'boss_slag') {
+					gameState.act1Started = true;
+					if(!gameState.inventory.includes("Rusted Cutlass")) gameState.inventory.push("Rusted Cutlass");
+					if(!gameState.inventory.includes("Holy Water")) gameState.inventory.push("Holy Water");
+					renderScene('smelter_stage1_start');
+				}
+				if (loc === 'boss_spectre') {
+					gameState.act1Started = true;
+					if(!gameState.inventory.includes("Torch")) gameState.inventory.push("Torch");
+					if(!gameState.inventory.includes("Alchemical Fire")) gameState.inventory.push("Alchemical Fire");
+					renderScene('chapel_stage1_reveal');
+				}
+
+				// --- ACT 2 ---
+				if (loc === 'act2') {
+					gameState.act1Started = false;
+					gameState.act2Started = true;
+					gameState.isEthereal = true;
+					gameState.tetherTimer = 20;
+					if(!gameState.inventory.includes("Spectral Lantern")) gameState.inventory.push("Spectral Lantern", "Manor Blueprint");
+					renderScene('manor_foyer');
+				}
+				if (loc === 'boss_automaton') {
+					gameState.act2Started = true;
+					gameState.isEthereal = true;
+					gameState.tetherTimer = 15;
+					if(!gameState.inventory.includes("Sword of Valor")) gameState.inventory.push("Sword of Valor");
+					if(!gameState.skills.includes("Plane Walking")) gameState.hasBlinkSkill = true; 
+					gameState.companions.blink.joined = true;
+					renderScene('manor_automaton_encounter');
+				}
+				if (loc === 'boss_mimic') {
+					gameState.act2Started = true;
+					gameState.isEthereal = true;
+					renderScene('manor_hall_check');
+				}
+				if (loc === 'puzzle_circuit') {
+					gameState.act2Started = true;
+					gameState.isEthereal = true;
+					renderScene('manor_cellar_puzzle');
+				}
+
+				// --- ACT 3 ---
+				if (loc === 'act3') {
+					gameState.act2Started = false;
+					gameState.act3Started = true;
+					gameState.shipName = "The Dev Debugger";
+					gameState.supplies = 20;
+					renderScene('sea_map_hub');
+				}
+				if (loc === 'puzzle_compass') {
+					gameState.act3Started = true;
+					renderScene('sea_fog_puzzle');
+				}
+				if (loc === 'boss_coral') {
+					gameState.act3Started = true;
+					if(!gameState.inventory.includes("Sword of Valor")) gameState.inventory.push("Sword of Valor");
+					initCombat("Coral-Hulk", 80, [6, 12]);
+					renderScene('coral_hulk_combat');
+				}
+				if (loc === 'boss_elders') {
+					gameState.act3Started = true;
+					gameState.companions.silas.joined = true;
+					if(!gameState.inventory.includes("Sword of Valor")) gameState.inventory.push("Sword of Valor", "Ring of Brass", "Flash Powder", "Healing Potion");
+					gameState.activeBoons.push("hunters_mark", "hold_the_line"); 
+					gameState.baseDamage = 2; 
+					renderScene('sanguine_spire_combat');
+				}
+				
+				updateUI();
+			};
+
+			window.devGrant = function(type) {
+				if (type === 'godmode') {
+					gameState.maxHP = 50;
+					gameState.currentHP = 50;
+					gameState.shillings = 100;
+					gameState.supplies = 20;
+					const godItems = ["Sword of Valor", "Ring of Brass", "Spectral Lantern", "Alchemical Fire", "Holy Water", "Sun-Star Grenade", "Vitality Tincture"];
+					godItems.forEach(i => {
+						if(!gameState.inventory.includes(i)) gameState.inventory.push(i);
+					});
+					updateUI();
+				}
+				if (type === 'level') {
+					// Trigger the transition manually
+					window.gameFunctions.startDreamscape('act1_transition');
+				}
+			};
+		})();
 
         init();
     </script>
