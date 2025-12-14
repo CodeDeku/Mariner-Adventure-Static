@@ -2156,28 +2156,36 @@
         const state = window.gameState || gameState;
         const statsPanel = document.getElementById('stats-panel');
         const journalContainer = document.getElementById('journal-container');
-        
-        // 1. Prologue/Journal Visibility FIX
-        const sceneId = gameState.currentSceneId;
-        const isPrologueScene = sceneId && (sceneId.startsWith('prologue') || sceneId === 'start');
-        
-        if (isPrologueScene) {
-            statsPanel.classList.add('prologue-blur');
-            statsPanel.classList.remove('prologue-active');
-            journalContainer.classList.add('log-hidden');
-            journalContainer.classList.remove('log-visible');
-        } else {
-            statsPanel.classList.remove('prologue-blur');
-            statsPanel.classList.add('prologue-active');
-            
-            if(gameState.inventory.includes("Ship's Log")) {
-                journalContainer.classList.remove('log-hidden');
-                journalContainer.classList.add('log-visible');
-            } else {
-                journalContainer.classList.add('log-hidden');
-                journalContainer.classList.remove('log-visible');
-            }
-        }
+		
+		// 1. Prologue/Journal Visibility FIX
+		const sceneId = gameState.currentSceneId;
+
+		// DEFINITION: Only scenes starting with 'prologue' are blurred. 
+		// 'start' (The Wreckage) will now trigger the reveal.
+		const isPrologueScene = sceneId && sceneId.startsWith('prologue');
+
+		if (isPrologueScene) {
+			// Apply the darkness/blur
+			statsPanel.classList.add('prologue-blur');
+			statsPanel.classList.remove('prologue-active');
+			
+			// Hide Journal
+			journalContainer.classList.add('log-hidden');
+			journalContainer.classList.remove('log-visible');
+		} else {
+			// Reveal the UI (happens at 'start' and persists on refresh)
+			statsPanel.classList.remove('prologue-blur');
+			statsPanel.classList.add('prologue-active');
+			
+			// Reveal Journal if item is owned
+			if(gameState.inventory.includes("Ship's Log")) {
+				journalContainer.classList.remove('log-hidden');
+				journalContainer.classList.add('log-visible');
+			} else {
+				journalContainer.classList.add('log-hidden');
+				journalContainer.classList.remove('log-visible');
+			}
+		}
         
         // 2. HP Bar
         const displayMaxHP = gameState.maxHP;
