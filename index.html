@@ -442,7 +442,7 @@
             z-index: 50; 
         }
 
-        /* 6. SAIL HOIST (New from Lab) */
+		/* 6. SAIL HOIST (New from Lab) */
         @keyframes sail-hoist {
             0% { transform: scale(1); filter: brightness(1); }
             20% { transform: scale(0.95); filter: brightness(0.8); border-color: #fff; } 
@@ -602,7 +602,6 @@
                 </div>
             </div>
 
-            <!-- FIX 1: Add prologue-blur class here so stats are hidden on initial page load -->
             <div id="stats-panel" class="order-4 md:order-none bg-gray-800/80 rounded border border-gray-700 p-3 flex flex-col gap-3 shadow-lg backdrop-blur-sm relative transition-all duration-1000 prologue-blur">
                 <div>
 					<div class="flex justify-between text-sm cinzel text-gray-400 mb-1">
@@ -788,6 +787,7 @@
         window.allyCommand = null;
         window.getBonusForSkill = null; // Defined later, used in renderChoices/skill checks
 		
+		// CRITICAL FIX: Stub renderScene to prevent scenes.js from crashing 
 		window.renderScene = () => {};
 
 
@@ -1197,7 +1197,7 @@
                 if (!isDragging || this.isCompassAligned) return;
                 e.preventDefault();
                 const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-                const clientY = e.touches ? e.touches[0].clientY : e.touches[0].clientY; // Fix touch Y coordinate
+                const clientY = e.touches ? e.touches[0].clientY : e.clientY; 
                 const currAngle = getAngle(clientX, clientY);
                 let delta = currAngle - lastRawAngle;
                 if (delta > 180) delta -= 360; if (delta < -180) delta += 360;
@@ -1222,7 +1222,7 @@
     // --- GAME FUNCTIONS ---
     window.gameFunctions.checkForContraband = function() { return gameState.inventory.some(itemName => { const item = itemRegistry[itemName]; return item && item.isContraband; }); };
     
-    // --- CORE GAME ENGINE FUNCTIONS (Must be accessible from scenes.js via window) ---
+    // --- COMBAT INITS/RESOLVERS ---
     function initCombat(enemyName, hp, damageRange) {
         gameState.isBossCombat = true; gameState.currentEnemy = enemyName; gameState.enemyHP = hp; gameState.maxEnemyHP = hp; gameState.enemyDamageRange = damageRange;
         gameState.enemies = {}; gameState.activeEnemies = []; gameState.allyCooldowns.silas = 0; gameState.allyCooldowns.blink = 0;
@@ -1237,7 +1237,6 @@
     }
     window.initHordeCombat = initHordeCombat;
 
-    // --- COMBAT RESOLVERS ---
     window.resolveCombatRound = function(attackType) {
         const state = window.gameState || gameState;
         let playerDmg = 0; let log = "";
@@ -1250,7 +1249,7 @@
         else if (attackType === 'item_flash') { playerDmg = 0; log += "Flash Powder blinded them! "; }
         else if (attackType === 'item_sun_star') { playerDmg = 25; log += "Sun-Star Grenade! "; }
         else if (attackType === 'item_stake_driver') { playerDmg = Math.floor(Math.random() * 8) + 4 + levelBonus; log += "Stake Driver fired! "; }
-        else if (attackType === 'reflect_stance') { playerDmg = 0; } // Damage is dealt back on reflection check
+        else if (attackType === 'reflect_stance') { playerDmg = 0; }
 
         if (state.battleRhythm && playerDmg > 0) { playerDmg *= 2; state.battleRhythm = false; const idx = state.inventory.indexOf("Battle Rhythm"); if (idx > -1) state.inventory.splice(idx, 1); log += "(Battle Rhythm x2) "; }
         if (state.nextAttackCrit && playerDmg > 0) { playerDmg = Math.floor(playerDmg * 2.5); state.nextAttackCrit = false; log += "(Phase Strike Crit) "; }
@@ -1386,239 +1385,38 @@
         const modal = document.getElementById('backpack-modal'); const btn = document.getElementById('btn-combined-pack');
         if (modal && !modal.classList.contains('hidden')) { if (!modal.contains(event.target) && !btn.contains(event.target)) { modal.classList.add('hidden'); } }
     });
-
-    // --- DAMAGE APPLICATION (Must be globally accessible for onEnter logic in scenes.js) ---
-    function applyDamage(currentHP, damageAmount, damageType = 'physical') {
-        let finalDamage = damageAmount;
-        if (damageType === 'psychic' && gameState.activeBoons.includes('iron_will')) finalDamage = Math.max(0, finalDamage - 2);
-        if ((damageType === 'poison' || damageType === 'acid') && gameState.activeBoons.includes('chemical_resist')) finalDamage = Math.floor(finalDamage / 2);
-        if (gameState.inventory.includes("Salt-Warped Spyglass") && gameState.influence <= -15) finalDamage = Math.max(0, finalDamage - 1);
-        if (gameState.negateNextDamage) { finalDamage = 0; gameState.negateNextDamage = false; addToHistory("Silas intercepted!", 'system'); }
-        let finalHP = Math.max(0, currentHP - finalDamage);
-        if (finalHP === 0 && gameState.activeBoons.includes('hold_the_line') && !gameState.holdTheLineUsed) { finalHP = 1; gameState.holdTheLineUsed = true; addToHistory("HOLD THE LINE! (1 HP)", 'danger'); }
-        if (finalHP === 0) { const idx = gameState.inventory.indexOf("Phoenix Draft"); if (idx > -1) { gameState.inventory.splice(idx, 1); finalHP = 10; addToHistory(`*Phoenix Draft Shatters! +10 HP*`, 'system'); fxManager.flashRed(); } }
-        return Math.max(0, finalHP);
-    }
-    window.applyDamage = applyDamage;
-
-    // --- ITEM REGISTRY ---
-    const itemRegistry = {
-        "Captain's Tricorn": { name: "Captain's Tricorn", type: 'key', icon: 'fa-hat-cowboy', color: 'text-blue-500', desc: "Passive: A symbol of authority. +1 to Intimidation checks." },
-        "Compass": { name: "Compass", type: 'key', icon: 'fa-compass', color: 'text-indigo-400', desc: "Passive: Violently hums near planar energy." },
-        "Rusted Cutlass": { name: "Rusted Cutlass", type: 'key', icon: 'fa-khanda', color: 'text-gray-400', desc: "Passive: Reduces damage taken in combat events." },
-        "Ship's Log": { name: "Ship's Log", type: 'key', icon: 'fa-book-open', color: 'text-amber-700', desc: "Key Item: Records of the damned. Unlocks your history." },
-        "Curious Cargo": { name: "Curious Cargo", type: 'key', icon: 'fa-box-open', color: 'text-yellow-600', desc: "Contraband. Sell at Market or Cove.", isContraband: true, btnText: "SELL", action: (state) => { return "Must be sold at a merchant."; } },
-        "Rum": { name: "Rum", type: 'consumable', icon: 'fa-wine-bottle', color: 'text-amber-500', btnText: "DRINK", desc: "Consumable: Potent grog. Restores 5 HP. Cannot repair Spectral HP.", action: (state) => { if (state.currentHP >= state.maxHP) { return "Your natural vitality is full. The burning grog offers no comfort to the Spectral Shield."; } let healAmount = 5; if (state.activeBoons.includes('triage')) healAmount += 2; const oldHP = state.currentHP; state.currentHP = Math.min(state.maxHP, state.currentHP + healAmount); const idx = state.inventory.indexOf("Rum"); if (idx > -1) state.inventory.splice(idx, 1); const boonText = state.activeBoons.includes('triage') ? " (Triage +2)" : ""; return `Drank Rum. Healed ${state.currentHP - oldHP} HP${boonText}.`; } },
-        "Healing Potion": { name: "Healing Potion", type: 'consumable', icon: 'fa-flask', color: 'text-red-500', btnText: "DRINK", desc: "Consumable: Alchemical vitality. Restores 10 HP. Cannot repair Spectral HP.", action: (state) => { if (state.currentHP >= state.maxHP) return "Your health is full."; let healAmount = 10; if (state.activeBoons.includes('triage')) healAmount += 2; const oldHP = state.currentHP; state.currentHP = Math.min(state.maxHP, state.currentHP + healAmount); const idx = state.inventory.indexOf("Healing Potion"); if (idx > -1) state.inventory.splice(idx, 1); const boonText = state.activeBoons.includes('triage') ? " (Triage +2)" : ""; return `Drank Potion. Healed ${state.currentHP - oldHP} HP${boonText}.`; } },
-        "Rope": { name: "Rope", type: 'key', icon: 'fa-chain', color: 'text-yellow-700', desc: "Passive: Essential for climbing cliffs." },
-        "Torch": { name: "Torch", type: 'key', icon: 'fa-fire', color: 'text-orange-500', desc: "Passive: Illuminates dark caves." },
-        "Pearlescent Mushroom": { name: "Pearlescent Mushroom", type: 'consumable', icon: 'fa-cloud-meatball', color: 'text-purple-400', btnText: "EAT", desc: "Consumable: Grants a free use of a Crew member's skill on the next check.", action: (state) => { if (state.crewUseFree) { return "Active."; } if (!state.crewUseFree) { state.crewUseFree = true; const idx = state.inventory.indexOf("Pearlescent Mushroom"); if (idx > -1) state.inventory.splice(idx, 1); return `Consumed Mushroom. Clarity gained!`; } state.inventory.splice(state.inventory.indexOf("Pearlescent Mushroom"), 1); state.crewUseFree = true; return "A soft purple light suffuses your mind. Your next Crew use will be free."; } },
-        "Salt-Warped Spyglass": { name: "Salt-Warped Spyglass", type: 'key', icon: 'fa-eye', color: 'text-cyan-400', desc: "Key: A heavy brass instrument. The lens seems to shift focus on its own." },
-        "Silver Locket": { name: "Silver Locket", type: 'key', icon: 'fa-heart', color: 'text-gray-300', btnText: "SELL", desc: "Passive: A sentimental item. Might be worth something." },
-        "Gruel": { name: "Gruel", type: 'consumable', icon: 'fa-bowl-food', color: 'text-gray-400', btnText: "EAT", desc: "Consumable: Cheap, watery sustenance. Restores 2 HP. Cannot repair Spectral HP.", action: (state) => { if (state.currentHP >= state.maxHP) { return "You are full. The watery gruel offers no comfort to the Spectral Shield."; } const healAmount = 2; const oldHP = state.currentHP; state.currentHP = Math.min(state.maxHP, state.currentHP + healAmount); const idx = state.inventory.indexOf("Gruel"); if (idx > -1) state.inventory.splice(idx, 1); return `Ate Gruel. Healed ${state.currentHP - oldHP} HP.`; } },
-        "Dead Man's Die": { name: "Dead Man's Die", type: 'consumable', icon: 'fa-dice-six', color: 'text-gray-200', btnText: "INSPECT", desc: "Consumable: A bone die loaded to cheat fate. Allows you to escape a failure outcome once." },
-        "Strange Coin": { name: "Strange Coin", type: 'key', icon: 'fa-circle-notch', color: 'text-yellow-600', desc: "Passive: Ancient currency. May open doors not made of wood." },
-        "Vitality Tincture": { name: "Vitality Tincture", type: 'consumable', icon: 'fa-syringe', color: 'text-red-300', btnText: "DRINK", desc: "Consumable: High-grade restorative. Restores 15 HP. Cannot repair Spectral HP.", action: (state) => { if (state.currentHP >= state.maxHP) { return "Your natural vitality is full. Tinctures cannot repair the Spectral Shield."; } let healAmount = 15; if (state.activeBoons.includes('triage')) healAmount += 2; const oldHP = state.currentHP; state.currentHP = Math.min(state.maxHP, state.currentHP + healAmount); const idx = state.inventory.indexOf("Vitality Tincture"); if (idx > -1) state.inventory.splice(idx, 1); const boonText = state.activeBoons.includes('triage') ? " (Triage +2)" : ""; return `Drank Tincture. Healed ${state.currentHP - oldHP} HP${boonText}.`; } },
-        "Smelling Salts": { name: "Smelling Salts", type: 'consumable', icon: 'fa-spray-can', color: 'text-purple-400', btnText: "USE", desc: "Consumable: Revives a single used Crew Member (except the last one used).", action: (state) => { const usedCrew = Object.values(state.crew).filter(c => c.used); if (usedCrew.length === 0) { return "No crew members are currently exhausted."; } const revivableCrew = usedCrew.filter(c => c.id !== state.lastCrewUsedId); if (revivableCrew.length === 0) { return `Cannot revive ${state.lastCrewUsedId.charAt(0).toUpperCase() + state.lastCrewUsedId.slice(1)}: they were last used for a check.`; } const crewToRevive = revivableCrew[0]; state.crew[crewToRevive.id].used = false; const idx = state.inventory.indexOf("Smelling Salts"); if (idx > -1) state.inventory.splice(idx, 1); return `Used Salts. ${crewToRevive.name} is now available.`; } },
-        "Flash Powder": { name: "Flash Powder", type: 'consumable', icon: 'fa-bomb', color: 'text-yellow-300', btnText: "THROW", desc: "Consumable: Guarantees escape from current combat (if in combat)." },
-        "Industrial Lubricant": { name: "Industrial Lubricant", type: 'consumable', icon: 'fa-oil-can', color: 'text-gray-400', btnText: "USE", desc: "Counter: Oily solvent. Critical for Slag Horror (Fire Path)." },
-        "Holy Water": { name: "Holy Water", type: 'consumable', icon: 'fa-cross', color: 'text-blue-200', btnText: "COMBINE", desc: "A sealed flask of consecrated water. Too precious to drink, but potent against the wicked." },
-        "Alchemical Fire": { name: "Alchemical Fire", type: 'consumable', icon: 'fa-fire', color: 'text-orange-600', btnText: "IGNITE", desc: "Counter: Volatile mixture. Critical for Drowned Spectre (Shadow Path).", isCombinable: true },
-        "Phoenix Draft": { name: "Phoenix Draft", type: 'key', icon: 'fa-feather', color: 'text-red-400', btnText: "PASSIVE", desc: "Key Item: Alchemical reserve. Automatically prevents death once, healing 10 HP. Consumed on use." },
-        "Sword of Valor": { name: "Sword of Valor", type: 'weapon', icon: 'fa-star', color: 'text-yellow-400', desc: "A gleaming cutlass, sharp enough to cut the veil. Deals 1d8+1 Magic Damage.", damage: '1d8+1', isCombinable: true },
-        "Ring of Brass": { name: "Ring of Brass", type: 'key', icon: 'fa-ring', color: 'text-amber-500', desc: "Legendary (Wolves of Valor): Doubles Primeval Awareness range. Grants Keen Senses (Perception advantage on hidden objects)." },
-        "Spectral Lantern": { name: "Spectral Lantern", type: 'gear', icon: 'fa-lightbulb', color: 'text-amber-400', desc: "A lantern whose light burns cold and does not cast shadows. Grants +1 Defense (AC). Can be used at the Spectral Forge.", isCombinable: true, onAcquire: (state) => { state.passiveDefenseBonus += 1; }, onRemove: (state) => { state.passiveDefenseBonus -= 1; } },
-        "Manor Blueprint": { name: "Manor Blueprint", type: 'key', icon: 'fa-map-signs', color: 'text-cyan-400', btnText: "VIEW", desc: "Passive: Schematics of the Vanishing Manor. Reveals the current room location via the 'Check Blueprint' action." },
-        "Mimic's Bile": { name: "Mimic's Bile", type: 'ingredient', icon: 'fa-vial', color: 'text-green-500', desc: "Highly corrosive digestive acid, harvested from a Mimic's core. Deals Acid Damage.", isContraband: true, isCombinable: true, action: (state) => { return "A corrosive ingredient for the Spectral Forge. Do not drink."; } },
-        "Mind-Expanding Grog": { name: "Mind-Expanding Grog", type: 'consumable', icon: 'fa-glass-water', color: 'text-purple-300', btnText: "DRINK", desc: "Consumable: A potent mix of spirits and mushroom extract. Acts as a Long Rest and grants one free Crew use.", action: (state) => { state.currentHP = state.maxHP; Object.values(state.crew).forEach(c => c.used = false); state.crewUseFree = true; const idx = state.inventory.indexOf("Mind-Expanding Grog"); if (idx > -1) state.inventory.splice(idx, 1); return "The grog is surprisingly smooth, followed by a rush of clarity. Your wounds close, your Crew awakens, and your next Guiding Voice is free."; } },
-        "The Warding Ember": { name: "The Warding Ember", type: 'passive', icon: 'fa-gem', color: 'text-red-600', desc: "The Spectral Lantern fused with Alchemical Fire. It burns with protective intensity, permanently granting +2 Defense (AC).", onAcquire: (state) => { state.passiveDefenseBonus += 2; } },
-        "Acid-Etched Sword of Valor": { name: "Acid-Etched Sword of Valor", type: 'weapon', icon: 'fa-biohazard', color: 'text-green-500', desc: "The blade is etched with glowing acid, effective against armor. Deals 1d8+1 Magic Damage, and an extra 1d4 Acid Damage (Ignores 1 AC).", damage: '1d8+1 + 1d4 (Acid vs Armor)', isCombined: true, },
-        "Radiant-Washed Sword of Valor": { name: "Radiant-Washed Sword of Valor", type: 'weapon', icon: 'fa-sun', color: 'text-blue-200', desc: "The blade hums with purified light. Deals 1d8+1 Magic Damage, and an extra 1d4 Radiant Damage against Undead.", damage: '1d8+1 + 1d4 (Radiant vs Undead)', isCombined: true, },
-        "Ember-Heart": { name: "Ember-Heart", type: 'key', icon: 'fa-fire-burner', color: 'text-orange-500', desc: "Quest Item: A molten core. The Order needs it for the Foundry; Rook needs it for the Bio-Reactor.", isContraband: true },
-        "Nutrient Slurry": { name: "Nutrient Slurry", type: 'consumable', icon: 'fa-jar', color: 'text-green-500', btnText: "EAT", desc: "Consumable: Rendered Hyper-Coral paste. Tastes like ash and ambition. Restores 8 HP.", action: (state) => { if (state.currentHP >= state.maxHP) return "You are full."; const healAmount = 8; const oldHP = state.currentHP; state.currentHP = Math.min(state.maxHP, state.currentHP + healAmount); const idx = state.inventory.indexOf("Nutrient Slurry"); if (idx > -1) state.inventory.splice(idx, 1); return `Ate Slurry. Healed ${state.currentHP - oldHP} HP.`; } },
-        "Royal Signet Ring": { name: "Royal Signet Ring", type: 'key', icon: 'fa-ring', color: 'text-blue-300', desc: "A silver ring bearing the crest of the Citadel. Proof of a guard's death.", btnText: "SELL", action: (state) => "Can be returned to the Citadel for a reward or sold." },
-        "Volatile Mutagen": { name: "Volatile Mutagen", type: 'consumable', icon: 'fa-syringe', color: 'text-purple-500', btnText: "INJECT", desc: "A glowing syringe of experimental beast blood. Highly unstable. 50% chance to gain +2 Max HP, 50% chance to take massive Poison damage. Can be stabilized at a Forge.", isCombinable: true, action: (state) => { if (Math.random() > 0.5) { state.maxHP += 2; state.currentHP += 2; const idx = state.inventory.indexOf("Volatile Mutagen"); if (idx > -1) state.inventory.splice(idx, 1); return "Success! The mutagen rewrites your DNA. +2 Max HP."; } else { state.currentHP = window.applyDamage(state.currentHP, 6, 'poison'); const idx = state.inventory.indexOf("Volatile Mutagen"); if (idx > -1) state.inventory.splice(idx, 1); fxManager.flashRed(); return "Rejection! Your veins burn. Took 6 Poison Damage."; } } },
-        "Stabilized Mutagen": { name: "Stabilized Mutagen", type: 'consumable', icon: 'fa-dna', color: 'text-emerald-400', btnText: "INJECT", desc: "Refined beast blood. Safe to use. Permanently increases Max HP by 3.", action: (state) => { state.maxHP += 3; state.currentHP += 3; const idx = state.inventory.indexOf("Stabilized Mutagen"); if (idx > -1) state.inventory.splice(idx, 1); return "Injected. +3 Max HP."; } },
-        "Beast Whistle": { name: "Beast Whistle", type: 'key', icon: 'fa-dog', color: 'text-gray-400', desc: "A silver whistle used by Vampires to command their experiments. May allow you to bypass feral beasts." },
-        "Sun-Star Grenade": { name: "Sun-Star Grenade", type: 'consumable', icon: 'fa-bomb', color: 'text-orange-400', btnText: "THROW", desc: "A volatile fusion of Flash Powder and Alchemical Fire. Deals 25 Damage AND Stuns the enemy (skips their next turn).", action: (state) => { if (!state.isBossCombat) return "Save this for a worthy foe."; state.enemyHP -= 25; return "<b>BOOM!</b> The grenade erupts with the heat of a star! Dealt 25 Damage and blinded the enemy!"; } },
-        "Captain's Reserve": { name: "Captain's Reserve", type: 'consumable', icon: 'fa-flask', color: 'text-amber-600', btnText: "DRINK", desc: "Rum distilled with Vitality Tincture. Heals 25 HP and cures all status effects. Tastes like victory.", action: (state) => { const oldHP = state.currentHP; state.currentHP = Math.min(state.maxHP, state.currentHP + 25); const idx = state.inventory.indexOf("Captain's Reserve"); if (idx > -1) state.inventory.splice(idx, 1); return `Downed the Captain's Reserve. Healed ${state.currentHP - oldHP} HP. You feel invincible.`; } },
-        "Snare Trap": { name: "Snare Trap", type: 'key', icon: 'fa-link', color: 'text-gray-400', desc: "A Beast Whistle rigged to a heavy Rope loop. Can be used to instantly capture/defeat a Beast enemy without rolling." },
-        "Feeding Ground Map": { name: "Feeding Ground Map", type: 'key', icon: 'fa-map', color: 'text-indigo-400', desc: "A waterproof chart marked with the Leviathan's hunting patterns. Unlocks a high-risk loot location." },
-        "Mirror Shield": { name: "Mirror Shield", type: 'gear', icon: 'fa-shield-alt', color: 'text-gray-200', desc: "Order Reward: A polished silver tower shield. Passive: -1 Damage taken. Active: Reflects the first attack of a round." },
-        "Scale-Stake Driver": { name: "Scale-Stake Driver", type: 'weapon', icon: 'fa-crosshairs', color: 'text-orange-600', desc: "Chaos Reward: A heavy crossbow carved from Leviathan scale. Active: Deals damage and Stuns the enemy." },
-        "Gilded Sextant": { name: "Gilded Sextant", type: 'passive', icon: 'fa-compass-drafting', color: 'text-yellow-400', desc: "Passive: An instrument of impossible precision. Reduces Supply cost of all sea travel by 1." },
-        "Codex of Tides": { name: "Codex of Tides", type: 'passive', icon: 'fa-book-atlas', color: 'text-blue-300', desc: "Passive: Quinn's research notes. Grants Advantage (roll twice/bonus) on History & Investigation checks." },
-        "Battle Rhythm": { name: "Battle Rhythm", type: 'passive', icon: 'fa-stopwatch', color: 'text-red-500', desc: "Status: You have sparred with Gareth. Your next combat attack deals Double Damage. (One use)." },
-        "Deep-Iron Ingot": { name: "Deep-Iron Ingot", type: 'ingredient', icon: 'fa-cube', color: 'text-gray-400', desc: "A heavy bar of cold iron dredged from the abyss. Can be forged into a weapon." },
-        "Deep-Forged Cutlass": { name: "Deep-Forged Cutlass", type: 'weapon', icon: 'fa-khanda', color: 'text-indigo-400', desc: "A Sword of Valor fused with Deep-Iron. Heavy, brutal, and unbreakable. Deals 1d10+2 Damage.", damage: '1d10+2' },
-        "Brass Gears": { name: "Brass Gears", type: 'ingredient', icon: 'fa-cogs', color: 'text-amber-600', desc: "High-value scrap scavenged from the Manor walls. Can be sold or crafted.", btnText: "SELL", action: (state) => "Sell at a Quartermaster for coin, or use at the Forge." },
-        "Grapple Hook": { name: "Grapple Hook", type: 'gear', icon: 'fa-anchor', color: 'text-gray-300', desc: "Passive: A climber's best friend. Automatically passes vertical Athletics checks." },
-        "Skeleton Key": { name: "Skeleton Key", type: 'key', icon: 'fa-key', color: 'text-white', desc: "Key: A bone key that opens high-security lockboxes in Faction Hubs." },
-    };
-    window.itemRegistry = itemRegistry;
-
-
-    // --- DREAMSCAPE & LEVEL UP LOGIC ---
-    const dreamscapeConfig = {
-        'act1_transition': {
-            nextScene: 'lighthouse_morning',
-            narrative: "The storm has passed, but the sea demands a price. The crew stands before you in the grey morning mist. They look to you for orders, but their eyes are hollow.",
-            boons: {
-                gareth: { title: "Violence of Action", effect: "Advantage on Round 1", desc: "Roll twice for attacks in the first round of combat." },
-                quinn: { title: "Logistics Officer", effect: "Reveal Hidden Costs", desc: "See Time/Doom costs before making choices." },
-                talon: { title: "Scavenger's Eye", effect: "+1 Shilling Found", desc: "Gain extra coin whenever you loot or sell." },
-                bones: { title: "Triage Protocol", effect: "+2 Consumable Heal", desc: "Potions and food heal +2 additional HP." }
-            }
-        },
-        'act2_transition': {
-            nextScene: 'act2_arrival',
-            narrative: "You drift between the material and the spectral. The Vanishing Manor awaits in the negative space of the world. Physics is breaking down; gravity is a suggestion. <span class='text-cyan-400'>Who will anchor you to reality?</span>",
-            boons: {
-                gareth: { title: "Iron Will", effect: "-2 Psychic Damage", desc: "Resistance to mental trauma and sanity checks." },
-                quinn: { title: "Efficient Pathing", effect: "Free Safe Movement", desc: "0 Tether cost to move between safe rooms." },
-                talon: { title: "Ghost Hunter", effect: "+2 Dmg vs Spectral", desc: "Bonus damage against Ethereal enemies." },
-                bones: { title: "Spectral Metabolism", effect: "Regen 1 HP on Move", desc: "Heal 1 HP when entering a new room." }
-            }
-        },
-        'act3_transition': {
-            nextScene: 'act3_name_ship',
-            narrative: "The Rift is closed, but the open sea is a battlefield. The factions are moving, and the water turns red with the Sanguine Tithe. <span class='text-cyan-400'>Choose your strength for the final war.</span>",
-            boons: {
-                gareth: { title: "Hold the Line", effect: "Death Defiance", desc: "Survive a lethal blow at 1 HP (Once per rest)." },
-                quinn: { title: "Master Navigator", effect: "-1 Supply Cost", desc: "Sea travel costs 1 less Supply." },
-                talon: { title: "Hunter's Mark", effect: "Crit Range 19-20", desc: "Critical hits land on rolls of 19 or 20." },
-                bones: { title: "Alchemical Resistance", effect: "Resist Acid/Poison", desc: "Take half damage from Acid and Poison." }
-            }
-        }
-    };
-    let selectedDreamCrew = null;
     
-    window.gameFunctions.startDreamscape = function(transitionType) {
-        gameState.dreamTransitionPending = transitionType;
-        const config = dreamscapeConfig[transitionType];
-        
-        // 1. Universal Level Up Mechanics
-        gameState.maxHP += 5;
-        gameState.currentHP = gameState.maxHP;
-        gameState.baseDamage += 1;
-        
-        // 2. Conditional Die Upgrade (ONLY for Act 3)
-        let dieHtml = ''; // Default: Empty string (Hidden)
-        
-        if (transitionType === 'act3_transition') {
-            gameState.guidingDieSize = 6; // Upgrade to d6
-            dieHtml = `<div class="flex items-center text-cyan-400 drop-shadow-md animate-pulse font-bold"><i class="fas fa-arrow-up mr-2"></i> Guiding Die (d6)</div>`;
-        } else {
-            gameState.guidingDieSize = gameState.guidingDieSize || 4; 
-        }
-        
-        // 3. Setup UI
-        document.getElementById('main-game-container').classList.add('dream-blur-active');
-        const overlay = document.getElementById('dreamscape-overlay');
-        overlay.classList.add('active');
-        
-        // 4. Update the Modal Header
-        const modalHeader = overlay.querySelector('.p-4.md\\:p-6 .flex.flex-wrap');
-        if (modalHeader) {
-            modalHeader.innerHTML = `
-                <div class="flex items-center text-purple-400 drop-shadow-md">
-                    <i class="fas fa-arrow-up mr-2"></i> Level Up!
-                </div>
-                <div class="flex items-center text-emerald-400 drop-shadow-md">
-                    <i class="fas fa-heart mr-2"></i> +5 Max HP
-                </div>
-                <div class="flex items-center text-red-400 drop-shadow-md">
-                    <i class="fas fa-fist-raised mr-2"></i> +1 Base Dmg
-                </div>
-                ${dieHtml} `;
-        }
-        
-        document.getElementById('dream-text-container').innerHTML = `"${config.narrative}"`;
-        document.getElementById('btn-wake-up').classList.add('hidden');
-        selectedDreamCrew = null;
-
-        // 5. Render Cards
-        const grid = document.getElementById('dream-card-grid');
-        grid.innerHTML = '';
-        
-        const crews = [
-            { id: 'gareth', icon: 'fa-anchor', role: 'Captain' },
-            { id: 'quinn', icon: 'fa-scroll', role: 'Quartermaster' },
-            { id: 'talon', icon: 'fa-eye', role: 'Scout' },
-            { id: 'bones', icon: 'fa-flask', role: 'Surgeon' }
-        ];
-
-        crews.forEach(c => {
-            const boon = config.boons[c.id];
-            const card = document.createElement('div');
-            card.className = `crew-card group`;
-            card.id = `card-${c.id}`;
-            card.onclick = () => window.gameFunctions.selectDreamCrew(c.id);
-            
-            card.innerHTML = `
-                <div class="crew-card-inner">
-                    <i class="fas ${c.icon}"></i>
-                    <h4 class="text-cyan-100 font-cinzel font-bold text-lg mb-1 border-b border-cyan-500/30 pb-1 w-full">${c.id.charAt(0).toUpperCase() + c.id.slice(1)}</h4>
-                    <p class="text-gray-400 text-xs italic mb-auto">${c.role} (+1 Skill)</p>
-                    <div class="crew-boon-container">
-                        <div class="text-[10px] text-blue-400 font-bold uppercase tracking-wider mb-1">Boon: ${boon.title}</div>
-                        <div class="text-sm text-white font-cinzel font-bold mb-1">${boon.effect}</div>
-                        <div class="text-[10px] text-gray-400 leading-tight">${boon.desc}</div>
-                    </div>
-                </div>
-            `;
-            grid.appendChild(card);
-        });
-    };
-    
-    window.gameFunctions.selectDreamCrew = function(crewId) {
-        selectedDreamCrew = crewId;
-        document.querySelectorAll('.crew-card').forEach(c => c.classList.remove('selected'));
-        document.getElementById(`card-${crewId}`).classList.add('selected');
-        const btn = document.getElementById('btn-wake-up');
-        btn.classList.remove('hidden');
-        btn.innerText = `BOND WITH ${crewId.toUpperCase()}`;
-    };
-
-    window.gameFunctions.confirmDreamSelection = function() {
-        if (!selectedDreamCrew) return;
-        
-        const transition = gameState.dreamTransitionPending;
-        const config = dreamscapeConfig[transition];
-        
-        gameState.crewSkillBonuses[selectedDreamCrew] += 1;
-        
-        const boonMap = {
-            'act1_transition': { gareth: 'violence_of_action', quinn: 'logistics', talon: 'scavenger', bones: 'triage' },
-            'act2_transition': { gareth: 'iron_will', quinn: 'efficient_pathing', talon: 'ghost_hunter', bones: 'spectral_metabolism' },
-            'act3_transition': { gareth: 'hold_the_line', quinn: 'master_navigator', talon: 'hunters_mark', bones: 'chemical_resist' }
-        };
-        
-        const boonId = boonMap[transition][selectedDreamCrew];
-        if (!gameState.activeBoons.includes(boonId)) {
-            gameState.activeBoons.push(boonId);
-        }
-
-        document.getElementById('dreamscape-overlay').classList.remove('active');
-        document.getElementById('main-game-container').classList.remove('dream-blur-active');
-        
-        if (boonId === 'logistics') gameState.quinnLogistics = true;
-        if (boonId === 'violence_of_action') gameState.isSurpriseRound = true;
-
-        renderScene(config.nextScene);
-        saveGame();
-    };
-
+    // --- COMBINE ITEMS (CRITICAL FIX for Forge scene functionality) ---
     function combineItems(baseItem, ingredient, resultItem) {
-        if (!gameState.inventory.includes(baseItem) || !gameState.inventory.includes(ingredient)) return "Error: Missing ingredients.";
-        const bIdx = gameState.inventory.indexOf(baseItem); const iIdx = gameState.inventory.indexOf(ingredient);
-        const baseDef = itemRegistry[baseItem]; if (baseDef && baseDef.onRemove) baseDef.onRemove(gameState);
-        gameState.inventory.splice(Math.max(bIdx, iIdx), 1); gameState.inventory.splice(Math.min(bIdx, iIdx), 1);
+        if (!gameState.inventory.includes(baseItem) || !gameState.inventory.includes(ingredient)) {
+            return "Error: Missing ingredients.";
+        }
+        const baseIndex = gameState.inventory.indexOf(baseItem);
+        const ingredientIndex = gameState.inventory.indexOf(ingredient);
+        
+        const baseDef = itemRegistry[baseItem];
+        if (baseDef && baseDef.onRemove) {
+            baseDef.onRemove(gameState);
+            addToHistory(`Passive benefit of ${baseItem} removed.`, 'system');
+        }
+        
+        gameState.inventory.splice(Math.max(baseIndex, ingredientIndex), 1); 
+        gameState.inventory.splice(Math.min(baseIndex, ingredientIndex), 1); 
+
         gameState.inventory.push(resultItem);
-        const resDef = itemRegistry[resultItem]; if (resDef && resDef.onAcquire) resDef.onAcquire(gameState);
-        saveGame(); updateUI();
-        return `${baseItem} and ${ingredient} combined into <span class="text-item">${resDef.name}</span>!`;
+
+        const resultDef = itemRegistry[resultItem];
+        if (resultDef && resultDef.onAcquire) {
+            resultDef.onAcquire(gameState);
+            addToHistory(`Passive benefit of ${resultItem} applied.`, 'system');
+        }
+        
+        saveGame();
+        updateUI();
+        return `${baseItem} and ${ingredient} were fused at the Spectral Forge, yielding the <span class="text-item">${resultDef.name}</span>!`;
     }
+    window.combineItems = combineItems;
+
 
     // --- RESTORED IMAGE LOADER ---
     async function generateSceneImage(sceneId) {
@@ -1628,7 +1426,6 @@
         const imgEl = document.getElementById('scene-image');
         const loader = document.getElementById('image-loader');
         
-        // 1. Show loader immediately
         if (loader) loader.style.display = 'flex';
         if (imgEl) {
             imgEl.style.opacity = 0;
@@ -1655,7 +1452,49 @@
         };
     }
 
-    // --- ENGINE: RENDER ---
+    // --- JOURNAL HISTORY ---
+    function rebuildJournal() {
+        const container = document.getElementById('journal-content');
+        container.innerHTML = gameState.history.join('');
+        scrollToBottom();
+    }
+    
+    function scrollToBottom() {
+		const area = document.getElementById('journal-scroll-area');
+		requestAnimationFrame(() => {
+			area.scrollTop = area.scrollHeight;
+		});
+	}
+
+    // Journal History function (re-added to work correctly)
+    function addToHistory(text, type = 'entry') {
+        let html = '';
+        const journalContainer = document.getElementById('journal-container');
+
+        const keywords = /(Captain Gareth|Quinn|Talon|Bones|Silas|Wolf King|Ring of Brass|Sword of Valor|Smelter|Chapel|Sanguine Spire|Bleak Dogtooth|Vampire|Iron Lung|Absorb Elements|Primeval Awareness|Phoenix Draft|Manor Blueprint|Spectral Lantern|The Warding Ember|Mimic's Bile|Mind-Expanding Grog|Radiant-Washed Sword of Valor|Acid-Etched Sword of Valor|Rift Core Fragment)/g;
+        const processedText = text.replace(keywords, '<span class="spectral-text-glow">$1</span>');
+
+        if (type === 'entry') {
+            html = `<div class="journal-font pb-4 border-b border-gray-700/30 text-gray-400 fade-in">${processedText}</div>`;
+        } else if (type === 'system') {
+            html = `<div class="text-xs text-amber-500 font-mono mb-2 fade-in">> ${text}</div>`;
+        } else if (type === 'roll') {
+            html = `<div class="text-xs spectral-text-glow font-bold mb-2 fade-in font-serif">${text}</div>`;
+        } else if (type === 'danger') {
+            html = `<div class="text-xs text-red-400 font-bold mb-2 fade-in font-serif">${text}</div>`;
+        }
+        if (type === 'combat') {
+            html = `<div class="text-xs text-red-100 border-l-2 border-red-600 pl-2 mb-2 font-mono bg-red-900/20 p-2 shadow-inner fade-in">${text}</div>`;
+        }
+
+        if(html) gameState.history.push(html);
+        if(journalContainer) {
+             rebuildJournal();
+        }
+    }
+
+
+    // --- ENGINE: RENDER SCENE ---
     async function renderScene(sceneId, logText = true) {
         const scene = scenes[sceneId];
         
@@ -1692,38 +1531,10 @@
             document.body.classList.remove('plane-ethereal');
         }
         
-        // --- 4. HANDLE LOGIC/ROLL SCENES ---
+        // --- 4. HANDLE LOGIC/ROLL SCENES (Skipped logic here as it's handled above) ---
         if (scene.isLogic) {
-            let roll;
-            let logMsg = "";
-
-            if (gameState.pendingRoll) {
-                roll = gameState.pendingRoll.total;
-                logMsg = gameState.pendingRoll.log;
-                gameState.pendingRoll = null;
-            } else {
-                // Fallback / Safety Roll
-                roll = Math.floor(Math.random() * 20) + 1;
-                let dc = gameState.isRiftCollapse ? (gameState.lastDC || 10) + 2 : (gameState.lastDC || 10);
-                logMsg = `Check (DC ${dc}): Rolled d20 (${roll})`;
-                
-                // Apply Rift Penalty for manual rolls too
-                if (gameState.isRiftCollapse) { 
-                    roll = Math.max(1, roll - 2); 
-                    logMsg += ` - 2 (Rift Penalty)`;
-                }
-            }
-
-            const dcToCheck = gameState.lastDC || 10;
-            const isSuccess = roll >= dcToCheck;
-            
-            const colorClass = isSuccess ? '!text-emerald-400' : '!text-red-400';
-            addToHistory(`${logMsg} <span class="${colorClass}">= ${roll}</span>`, 'roll');
-            
-            const nextId = scene.resolve(roll, gameState); 
-            saveGame();
-            renderScene(nextId); 
-            return;
+            // This is now handled entirely within the skill check logic in renderChoices/buttons
+            return; 
         }
 
         gameState.currentSceneId = sceneId;
@@ -1754,7 +1565,6 @@
         // --- 7. TEXT & TITLE ---
         let displayTitle = scene.title;
         let displayText = scene.text;
-        const isDeath = sceneId === 'edward_death';
         
         // --- 8. INJECT BOSS HEALTH BAR ---
         if (gameState.isBossCombat) {
@@ -1805,8 +1615,8 @@
         
         // Dynamic Banter Logic (Only for non-scripted scenes)
         const isScriptedScene = scene.banter || scene.isBoss || scene.isRest || scene.choices.some(c => c.type === 'skill');
+        const dynamicLine = getDynamicBanter();
         if (!isScriptedScene && !sceneId.startsWith('prologue') && gameState.act1Started) {
-             const dynamicLine = getDynamicBanter();
              if (dynamicLine) {
                   finalHtml += `<div class="mt-4 spectral-text-glow italic border-l-2 border-blue-500 pl-3 fade-in"><span class="font-bold text-xs uppercase block mb-1">${dynamicLine.name}:</span> <span id="banter-type-dynamic"></span></div>`;
              }
@@ -1826,25 +1636,22 @@
         if (sceneId === 'manor_cellar_puzzle') setTimeout(() => puzzleManager.initCircuit(), 100);
         if (sceneId === 'sea_fog_puzzle') setTimeout(() => puzzleManager.initCompass(), 100);
 
-        if (scene.banter || isScriptedScene) {
-            // Apply typewriter effect after DOM update
-            if (scene.banter) {
-                Object.keys(scene.banter).forEach(crewId => {
-                    const targetId = `banter-type-${crewId}`;
-                    const textToType = scene.banter[crewId];
-                    // Delay typing for staggered effect
-                    setTimeout(() => {
-                        if(document.getElementById(targetId)) puzzleManager.typeBanter(targetId, textToType + '"');
-                    }, 500); 
-                });
-            }
-            if (dynamicLine) {
+        // Apply typewriter effect after DOM update
+        if (scene.banter) {
+            Object.keys(scene.banter).forEach(crewId => {
+                const targetId = `banter-type-${crewId}`;
+                const textToType = scene.banter[crewId];
                 setTimeout(() => {
-                    if(document.getElementById('banter-type-dynamic')) puzzleManager.typeBanter('banter-type-dynamic', dynamicLine.line + '"');
-                }, 500);
-            }
+                    if(document.getElementById(targetId)) puzzleManager.typeBanter(targetId, textToType + '"');
+                }, 500); 
+            });
         }
-        
+        if (dynamicLine) {
+            setTimeout(() => {
+                if(document.getElementById('banter-type-dynamic')) puzzleManager.typeBanter('banter-type-dynamic', dynamicLine.line + '"');
+            }, 500);
+        }
+
         // --- VIGNETTE FX ---
         const hpPct = (gameState.currentHP / gameState.maxHP) * 100;
         if (hpPct <= 30) fxManager.setVignette(true);
@@ -1903,6 +1710,24 @@
             if (backToBuyNav) processedChoices.push(backToBuyNav);
             processedChoices.push(leaveNav);
         } 
+        else if (currentSceneId === 'alchemist_triage') {
+            const sellWaresNav = choices.find(c => c.nextScene === 'alchemist_sell');
+            const returnNav = choices.find(c => c.nextScene === 'town_square');
+            processedChoices = []; 
+            const secretTrade = choices.find(c => c.nextScene === 'alchemist_secret_stock');
+            if (secretTrade) processedChoices.push(secretTrade);
+            ALCHEMIST_BUY_OPTIONS.forEach(sale => {
+                const itemText = sale.item.split('(')[0].trim();
+                const actualStock = currentSceneStock[sale.item] || 0;
+                const itemDef = itemRegistry[sale.item];
+                const isHealingItem = itemDef && (itemDef.name && (itemDef.name.includes('Tincture') || itemDef.name.includes('Potion')));
+                const isFullHP = gameState.currentHP >= gameState.maxHP;
+                const canAfford = gameState.shillings >= sale.cost;
+                if (actualStock > 0) processedChoices.push({ text: `Buy ${itemText}`, nextScene: sale.nextScene, type: 'action', cost: sale.cost, stockItem: sale.item, doomCost: sale.doomCost, isDisabled: !canAfford || (isHealingItem && isFullHP) });
+            });
+            if (sellWaresNav) processedChoices.push({ ...sellWaresNav, text: "Sell Wares (Premium)" }); 
+            processedChoices.push(returnNav);
+        } 
         else if (currentSceneId === 'alchemist_sell') {
              const backToBuyNav = choices.find(c => c.nextScene === 'alchemist_triage');
              const returnNav = choices.find(c => c.nextScene === 'town_square');
@@ -1926,11 +1751,8 @@
 
         // --- BUTTON GENERATION LOOP ---
         processedChoices.forEach(c => {
-            // Requirements Logic
             if (c.reqItem && !gameState.inventory.includes(c.reqItem)) return;
-            if (c.reqItems && Array.isArray(c.reqItems)) {
-                if (!c.reqItems.every(item => gameState.inventory.includes(item))) return;
-            }
+            if (c.reqItems && Array.isArray(c.reqItems)) { if (!c.reqItems.every(item => gameState.inventory.includes(item))) return; }
             if (c.reqSmuggler && gameState.influence < c.reqSmuggler) return;
             if (c.reqGuard && gameState.influence > -c.reqGuard) return;
             if (c.reqNotItem && gameState.inventory.includes(c.reqNotItem)) return; 
@@ -1940,7 +1762,6 @@
 
             const btn = document.createElement('button');
             
-            // --- STYLING & ICONS ---
             let rawText = c.text;
             let icon = '<i class="fas fa-chevron-right text-gray-500 group-hover:text-amber-100"></i>';
             let content = `<span class="cinzel font-bold text-gray-300 group-hover:text-amber-100">${rawText}</span>`;
@@ -2155,8 +1976,7 @@
                     }
 
                     const executeAction = () => {
-                        // --- FIX: IMMEDIATE REVEAL ---
-                        // Forces the blur off the instant the 'Wake Up' (Gasp for air) button is clicked.
+                        // FIX: IMMEDIATE REVEAL on waking up (prologue_abyss -> start)
                         if (c.nextScene === 'start') {
                             const panel = document.getElementById('stats-panel');
                             if (panel) {
@@ -2164,8 +1984,7 @@
                                 panel.classList.add('prologue-active');
                             }
                         }
-                        // --- END FIX ---
-
+                        
                         if (c.nextScene === 'manor_map_view') {
                             gameState.returnSceneId = gameState.currentSceneId; 
                             renderScene('manor_map_view');
@@ -2176,13 +1995,17 @@
                         
                         if (c.type === 'combine') { const result = combineItems(c.reqItems[0], c.reqItems[1], c.nextScene); if (result) addToHistory(result, 'system'); renderScene(c.nextScene); return; }
                         if (c.type === 'reset') { resetGame(); return; }
+                        
+                        // Action execution: CRITICAL FOR ACT 1 TRANSITIONS
                         if (c.action && typeof c.action === 'function') {
                             const result = c.action(gameState);
                             if (result) addToHistory(result, 'system');
+                            // If action handled navigation (like Dreamscape transition), skip the final renderScene call
                             if (c.nextScene) renderScene(c.nextScene); else updateUI();
                             return; 
                         }
 
+                        // Normal transaction/flag setting logic
                         if (c.type === 'action' && (currentSceneId === 'market_stall' || currentSceneId === 'alchemist_triage' || currentSceneId === 'blackwater_tavern') && c.stockItem) {
                             scenes[currentSceneId].stock[c.stockItem] = Math.max(0, scenes[currentSceneId].stock[c.stockItem] - 1);
                         }
@@ -2228,7 +2051,14 @@
                         const allBtns = document.querySelectorAll('.btn-game');
                         allBtns.forEach(b => b.disabled = true);
                         btn.classList.add(fxClass);
-                        setTimeout(() => { executeAction(); }, fxDuration);
+                        setTimeout(() => { 
+                            // CRITICAL FIX: Release lock manually before executeAction calls renderScene
+                            const allBtns = document.querySelectorAll('.btn-game');
+                            allBtns.forEach(b => b.disabled = false);
+                            btn.classList.remove(fxClass);
+                            
+                            executeAction(); 
+                        }, fxDuration);
                     } else {
                         executeAction();
                     }
@@ -2243,30 +2073,20 @@
         const statsPanel = document.getElementById('stats-panel');
         const journalContainer = document.getElementById('journal-container');
         
-        // --- 1. PROLOGUE MASK & JOURNAL LOGIC ---
         const sceneId = gameState.currentSceneId;
-        
-        // Debugging: This will tell us if the game actually thinks it's in 'start'
-        console.log("UI Update | Current Scene:", sceneId);
-
-        // Strict check: Only scenes explicitly named 'prologue_...' keep the blur
         const isPrologueScene = sceneId && String(sceneId).startsWith('prologue');
 
         if (isPrologueScene) {
-            // Active Blur (Mask On)
             if (!statsPanel.classList.contains('prologue-blur')) {
                 statsPanel.classList.add('prologue-blur');
                 statsPanel.classList.remove('prologue-active');
             }
-            // Hide Journal in Prologue
             journalContainer.classList.add('log-hidden');
             journalContainer.classList.remove('log-visible');
         } else {
-            // Remove Blur (Mask Off) - Forced removal for ANY non-prologue scene
             statsPanel.classList.remove('prologue-blur');
             statsPanel.classList.add('prologue-active');
             
-            // Separate Logic: Journal Visibility
             if(gameState.inventory.includes("Ship's Log")) {
                 journalContainer.classList.remove('log-hidden');
                 journalContainer.classList.add('log-visible');
@@ -2276,7 +2096,6 @@
             }
         }
         
-        // --- 2. HP Bar ---
         const displayMaxHP = gameState.maxHP;
         const hpToDisplay = gameState.currentHP;
         const hpPct = (hpToDisplay / displayMaxHP) * 100;
@@ -2288,10 +2107,8 @@
         const hpText = document.getElementById('hp-text');
         if(hpText) hpText.innerText = `${hpToDisplay}/${displayMaxHP}`; 
         
-        // Safety check for audioManager before accessing
         if(window.audioManager) window.audioManager.checkVulnerable(gameState.currentHP, gameState.maxHP);
 
-        // --- 3. Meters (Doom/Tether) ---
         const doomDisplay = document.getElementById('doom-counter-display');
         const tetherDisplay = document.getElementById('tether-display');
         
@@ -2319,7 +2136,6 @@
             }
         }
         
-        // --- 4. Influence Marker ---
         const inf = gameState.influence || 0;
         const pct = ((inf + 50) / 100) * 100;
         const marker = document.getElementById('inf-marker');
@@ -2334,10 +2150,8 @@
             else infText.textContent = "Neutral";
         }
 
-        // --- 5. Radial Crew ---
         renderRadialCrew();
         
-        // --- 6. Companion and Planar Skill Visibility ---
         const isSilasJoined = gameState.companions?.silas?.joined;
         const isBlinkJoined = gameState.companions?.blink?.joined;
         const hasPlaneWalk = gameState.skills.includes("Plane Walking");
@@ -2370,7 +2184,6 @@
             }
         }
 
-        // --- 7. Backpack & Supplies ---
         const shillingDisplay = document.getElementById('shillings-display');
         if(shillingDisplay) shillingDisplay.innerText = gameState.shillings;
         
@@ -2576,48 +2389,6 @@
         renderChoices(scenes[gameState.currentSceneId].choices, false); 
     }
 
-    function scrollToBottom() {
-		const area = document.getElementById('journal-scroll-area');
-		requestAnimationFrame(() => {
-			area.scrollTop = area.scrollHeight;
-		});
-	}
-
-    function rebuildJournal() {
-        const container = document.getElementById('journal-content');
-        container.innerHTML = gameState.history.join('');
-        scrollToBottom();
-    }
-    
-    // Journal History function (re-added to work correctly)
-    function addToHistory(text, type = 'entry') {
-        let html = '';
-        const journalContainer = document.getElementById('journal-container');
-
-        // Logic to insert the full style, including keyword highlighting
-        if (type === 'entry') {
-            const keywords = /(Captain Gareth|Quinn|Talon|Bones|Silas|Wolf King|Ring of Brass|Sword of Valor|Smelter|Chapel|Sanguine Spire|Bleak Dogtooth|Vampire|Iron Lung|Absorb Elements|Primeval Awareness|Phoenix Draft|Manor Blueprint|Spectral Lantern|The Warding Ember|Mimic's Bile|Mind-Expanding Grog|Radiant-Washed Sword of Valor|Acid-Etched Sword of Valor|Rift Core Fragment)/g;
-            const processedText = text.replace(keywords, '<span class="spectral-text-glow">$1</span>');
-            html = `<div class="journal-font pb-4 border-b border-gray-700/30 text-gray-400 fade-in">${processedText}</div>`;
-        } else if (type === 'system') {
-            html = `<div class="text-xs text-amber-500 font-mono mb-2 fade-in">> ${text}</div>`;
-        } else if (type === 'roll') {
-            // Updated to spectral-text-glow for better roll visibility
-            html = `<div class="text-xs spectral-text-glow font-bold mb-2 fade-in font-serif">${text}</div>`;
-        } else if (type === 'danger') {
-            html = `<div class="text-xs text-red-400 font-bold mb-2 fade-in font-serif">${text}</div>`;
-        }
-        if (type === 'combat') {
-            html = `<div class="text-xs text-red-100 border-l-2 border-red-600 pl-2 mb-2 font-mono bg-red-900/20 p-2 shadow-inner fade-in">${text}</div>`;
-        }
-
-        if(html) gameState.history.push(html);
-        if(journalContainer) {
-             rebuildJournal();
-        }
-    }
-
-
     // --- FIREBASE AND INITIALIZATION ---
     async function init() {
         window.confirmReset = confirmReset;
@@ -2626,7 +2397,6 @@
         onAuthStateChanged(auth, async (u) => {
             if (u) {
                 user = u;
-                // FIX: Ensure Firebase is awaited before proceeding with load/render
                 await setupRealtimeListener();
                 
                 document.getElementById('app-loading').classList.add('fade-out');
@@ -2650,7 +2420,6 @@
         try {
             const snap = await getDoc(docRef);
             if (!snap.exists()) {
-                // Initialize Stocks on first run
                 scenes['market_stall'].stock = { "Healing Potion": 1, "Rope": 1, "Torch": 1, "Curious Cargo": 1, "Rum": 0 };
                 scenes['alchemist_triage'].stock = { "Vitality Tincture": 2, "Smelling Salts": 3, "Flash Powder": 1, "Alchemical Fire": 1, "Holy Water": 1 };
                 scenes['blackwater_tavern'].stock = { "Gruel": 5 };
@@ -2668,7 +2437,6 @@
                 const savedState = { ...createInitialState(), ...data }; 
                 gameState = savedState;
                 
-                // Restore Stock
                 if (data.market_stall_stock) scenes['market_stall'].stock = data.market_stall_stock;
                 if (data.alchemist_triage_stock) scenes['alchemist_triage'].stock = data.alchemist_triage_stock;
                 if (data.blackwater_tavern_stock) scenes['blackwater_tavern'].stock = data.blackwater_tavern_stock;
@@ -2676,7 +2444,7 @@
                 if (gameState.isEthereal) document.body.classList.add('plane-ethereal');
                 
                 renderScene(gameState.currentSceneId, false);
-                rebuildJournal(); // Restore history view
+                rebuildJournal();
 				updateUI();
             }
         } catch (e) {
@@ -2688,7 +2456,6 @@
             if (snap.exists()) {
                 const data = snap.data();
                 if (JSON.stringify(data) !== JSON.stringify(gameState)) {
-                    // Update stocks in memory before updating gameState
                     if (data.market_stall_stock) scenes['market_stall'].stock = data.market_stall_stock;
                     if (data.alchemist_triage_stock) scenes['alchemist_triage'].stock = data.alchemist_triage_stock;
                     if (data.blackwater_tavern_stock) scenes['blackwater_tavern'].stock = data.blackwater_tavern_stock;
@@ -2698,7 +2465,7 @@
                     if (gameState.isEthereal) document.body.classList.add('plane-ethereal');
                     else document.body.classList.remove('plane-ethereal');
                     
-                    updateUI(); // Only update UI, renderScene is for navigation/logic
+                    updateUI();
                 }
             }
         });
@@ -2709,7 +2476,6 @@
         const docRef = doc(db, 'artifacts', appId, 'users', user.uid, 'data', 'game_save');
         const safeState = JSON.parse(JSON.stringify(gameState));
         
-        // Save current stock levels
         safeState.market_stall_stock = scenes['market_stall'].stock;
         safeState.alchemist_triage_stock = scenes['alchemist_triage'].stock;
         safeState.blackwater_tavern_stock = scenes['blackwater_tavern'].stock;
@@ -2741,7 +2507,6 @@
     async function resetGame() {
         gameState = createInitialState();
         
-        // Reset Stocks
         scenes['market_stall'].stock = { "Healing Potion": 1, "Rope": 1, "Torch": 1, "Curious Cargo": 1, "Rum": 0 };
         scenes['alchemist_triage'].stock = { "Vitality Tincture": 2, "Smelling Salts": 3, "Flash Powder": 1, "Alchemical Fire": 1, "Holy Water": 1 };
         scenes['blackwater_tavern'].stock = { "Gruel": 5 };
@@ -2749,27 +2514,11 @@
         const workBtn = scenes['town_docks'].choices.find(c => c.nextScene === 'docks_work');
         if (workBtn) workBtn.costHP = 2; 
         
-        // Reset core flags
-        gameState.isAbsorbCharged = false;
-        gameState.isSurpriseRound = false;
-        gameState.isRiftCollapse = false;
-        gameState.act1Started = false;
-        gameState.hasObservedGambler = false;
-        gameState.hasSearchedSmugglerDrop = false;
-        gameState.docksWorkCount = 0;
-        gameState.quinnLogistics = false;
-        gameState.isEthereal = false;
-        gameState.hallLooted = false;
-        gameState.hasBlinkSkill = false;
-        gameState.act2Started = false;
-        gameState.tetherTimer = 20;
-        gameState.act3Started = false;
-        gameState.shipName = "The Iron Lung";
-        gameState.knownIslands = ['port_hub'];
-        gameState.currentLocation = 'port_hub';
-        gameState.supplies = 10;
-        gameState.companions.silas.joined = false;
-        gameState.silasJoined = false;
+        gameState.isAbsorbCharged = false; gameState.isSurpriseRound = false; gameState.isRiftCollapse = false; gameState.act1Started = false;
+        gameState.hasObservedGambler = false; gameState.hasSearchedSmugglerDrop = false; gameState.docksWorkCount = 0; gameState.quinnLogistics = false;
+        gameState.isEthereal = false; gameState.hallLooted = false; gameState.hasBlinkSkill = false; gameState.act2Started = false; gameState.tetherTimer = 20;
+        gameState.act3Started = false; gameState.shipName = "The Iron Lung"; gameState.knownIslands = ['port_hub']; gameState.currentLocation = 'port_hub';
+        gameState.supplies = 10; gameState.companions.silas.joined = false; gameState.silasJoined = false;
 
         document.getElementById('journal-content').innerHTML = '';
         await saveGame();
@@ -2787,9 +2536,14 @@
             if(e.key === k[idx] || e.key.toLowerCase() === k[idx]) { idx++; if(idx===k.length) { activateDev(); idx=0; } } else idx=0;
         });
         function activateDev() {
+            // Sound confirm
+            const audio = new Audio('audio/coins.mp3');
+            audio.volume = 0.5;
+            audio.play().catch(() => {});
+
             if(document.getElementById('dev-menu')) { document.getElementById('dev-menu').remove(); return; }
             const m = document.createElement('div'); m.id='dev-menu'; m.className="fixed top-10 left-10 z-[200] bg-gray-950 border-2 border-amber-600 p-4 rounded text-xs font-mono text-amber-500 w-64";
-            m.innerHTML = `<h3 class=\"font-bold border-b border-gray-700 mb-2\">DEV COMMAND</h3><div class=\"grid grid-cols-2 gap-2\"><button onclick=\"window.devJump('act1')\" class=\"bg-gray-800 p-1\">Act 1</button><button onclick=\"window.devJump('act2')\" class=\"bg-gray-800 p-1\">Act 2</button><button onclick=\"window.devJump('act3')\" class=\"bg-gray-800 p-1\">Act 3</button><button onclick=\"window.devGrant()\" class=\"bg-green-900 p-1\">God Mode</button></div>`;
+            m.innerHTML = `<h3 class=\"font-bold border-b border-gray-700 mb-2\">DEV COMMAND</h3><div class=\"grid grid-cols-2 gap-2\"><button onclick=\"window.devJump('act1')\" class=\"bg-gray-800 p-1\">Act 1</button><button onclick=\"window.devJump('act2')\" class=\"bg-gray-800 p-1\">Act 2</button><button onclick=\"window.devJump('act3')\\\" class=\"bg-gray-800 p-1\">Act 3</button><button onclick=\"window.devGrant('godmode')\\\" class=\"bg-green-900 p-1\">God Mode</button></div>`;
             document.body.appendChild(m);
         }
         window.devJump = (loc) => { 
@@ -2799,8 +2553,9 @@
         };
         window.devGrant = (type) => { 
             if (type === 'godmode') { 
-                gameState.maxHP=50; gameState.currentHP=50; gameState.shillings=100; 
-                gameState.inventory.push("Sword of Valor", "Ring of Brass", "Spectral Lantern"); 
+                gameState.maxHP = 50; gameState.currentHP = 50; gameState.shillings = 100; gameState.supplies = 20;
+                const godItems = ["Sword of Valor", "Ring of Brass", "Spectral Lantern", "Alchemical Fire", "Holy Water", "Sun-Star Grenade", "Vitality Tincture"];
+                godItems.forEach(i => { if(!gameState.inventory.includes(i)) gameState.inventory.push(i); });
                 updateUI(); 
             } else if (type === 'level') {
                 window.gameFunctions.startDreamscape('act1_transition');
