@@ -851,20 +851,33 @@
 		};
 		
 		function initCombat(enemyName, hp, damageRange) {
-			gameState.isBossCombat = true;
-			gameState.currentEnemy = enemyName;
-			gameState.enemyHP = hp;
-			gameState.maxEnemyHP = hp;
-			gameState.enemyDamageRange = damageRange; // e.g., [6, 10]
-			
-			// Ensure single-target state is clean
-			gameState.enemies = {};
-			gameState.activeEnemies = [];
+            // 1. Set Legacy Flags
+            gameState.isBossCombat = true;
+            gameState.currentEnemy = enemyName;
+            gameState.enemyHP = hp;
+            gameState.maxEnemyHP = hp;
+            gameState.enemyDamageRange = damageRange; 
+            
+            // 2. Clear Multi-Target State
+            gameState.enemies = {};
+            gameState.activeEnemies = [];
 
-			// Reset Ally Cooldowns
-			gameState.allyCooldowns.silas = 0;
-			gameState.allyCooldowns.blink = 0;
-		}
+            // 3. SYNC NEW COMBAT SYSTEM (Critical Fix)
+            gameState.combat.enemy = { name: enemyName };
+            gameState.combat.enemyHP = hp;
+            gameState.combat.enemyMaxHP = hp;
+            gameState.combat.enemyDamage = '1d6'; // Default base
+            gameState.combat.damageType = 'physical'; // Default
+            gameState.combat.isPlayerTurn = true; // Ensure buttons are enabled
+            gameState.combat.enemyStatus = []; 
+            
+            // 4. Reset Cooldowns
+            gameState.allyCooldowns.silas = 0;
+            gameState.allyCooldowns.blink = 0;
+            
+            // 5. Update UI immediately so bars render
+            updateUI();
+        }
 
 		// NEW: Horde Combat Initialization for Vampire Elders
 		function initHordeCombat(baseName, hpPerEnemy, damageRange, count) {
@@ -1207,6 +1220,19 @@
 		
 		window.attackEnemy = (comboType = 'standard') => {
 			const state = window.gameState;
+			
+            if (comboType === 'check_victory') {
+                if (state.combat.enemyHP <= 0) {
+                    // Route to victory immediately
+                    const enemy = state.combat.enemy.name || "";
+                    if (enemy === "Slag Elemental") renderScene('smelter_victory_generic'); 
+                    else if (enemy === "Drowned Spectre") renderScene('chapel_victory_generic');
+                    else if (enemy.includes("Coral")) renderScene('coral_hulk_victory');
+                    else renderScene('spire_victory');
+                }
+                return;
+            }
+			
 			// Safety check
 			if (!state.combat.enemyHP && state.enemyHP > 0) {
 				// Sync legacy HP to new object if needed
@@ -3419,31 +3445,56 @@
                         action: () => window.attackEnemy('standard'),
                         type: 'action'
                     },
-                    // Narrative Counter: Lubricant deals massive damage
+                    // Narrative Counter: Lubricant
                     { 
                         text: "Throw Industrial Lubricant (Critical Dmg)", 
-                        action: () => {
-                            window.gameState.combat.enemyHP -= 20; 
-                            addToHistory("The lubricant boils instantly, cracking the Elemental's shell! **20 Damage!**", 'combat');
-                            window.attackEnemy('standard'); // Update UI/Check Death
-                        },
                         type: 'action', 
                         reqItem: 'Industrial Lubricant',
                         consume: true,
-                        customClass: 'btn-success-glow'
+                        customClass: 'btn-success-glow',
+                        action: (state) => {
+                            // 1. Deal Damage
+                            const dmg = 20;
+                            state.combat.enemyHP -= dmg;
+                            state.enemyHP -= dmg; // Sync legacy
+                            
+                            // 2. Log it
+                            addToHistory(`You hurl the Industrial Lubricant! The Slag Elemental's joints scream and seize as the oil boils instantly. <span class="text-xl font-bold text-yellow-400">-${dmg} HP</span>`, 'combat');
+                            window.fxManager.flashRed();
+
+                            // 3. Trigger Victory or Turn
+                            if (state.combat.enemyHP <= 0) {
+                                // Trigger victory logic via attackEnemy's check
+                                window.attackEnemy('check_victory'); 
+                            } else {
+                                // Pass turn to enemy
+                                setTimeout(window.enemyTurn, 1000);
+                            }
+                            return "Item Used: Industrial Lubricant.";
+                        }
                     },
                     // Narrative Counter: Holy Water
                     { 
                         text: "Throw Holy Water", 
-                        action: () => {
-                            window.gameState.combat.enemyHP -= 15;
-                            addToHistory("The water flashes to steam, scalding the beast! **15 Damage!**", 'combat');
-                            window.attackEnemy('standard');
-                        },
                         type: 'action', 
                         reqItem: 'Holy Water',
                         consume: true,
-                        customClass: 'btn-success-glow'
+                        customClass: 'btn-success-glow',
+                        action: (state) => {
+                            const dmg = 15;
+                            state.combat.enemyHP -= dmg;
+                            state.enemyHP -= dmg;
+                            
+                            addToHistory(`The Holy Water flashes to steam against the molten iron! The Elemental recoils. <span class="text-xl font-bold text-blue-400">-${dmg} HP</span>`, 'combat');
+                            window.fxManager.flashRed();
+
+                            if (state.combat.enemyHP <= 0) {
+                                window.attackEnemy('check_victory');
+                            } else {
+                                setTimeout(window.enemyTurn, 1000);
+                            }
+                            return "Item Used: Holy Water.";
+                        }
                     }
                 ]
             },
@@ -8246,17 +8297,42 @@
 
 			window.renderStatusEffects = () => {
 				const container = document.getElementById('enemy-status-effects');
-				if (!container || !gameState.combat.enemyStatus) return;
+				if (!container) return;
 				
 				let html = '';
-				gameState.combat.enemyStatus.forEach(status => {
-					const def = window.STATUS_EFFECTS[status.name];
-					if (def) {
-						html += `<div class="status-indicator ${def.color}" title="${def.desc}">
-									<i class="fas ${def.icon}"></i> ${def.name} (${status.duration})
-								 </div>`;
-					}
-				});
+
+				// 1. PLAYER BUFFS (Green/Blue/Cyan)
+				if (gameState.combat.blade_enhanced_active) {
+					html += `<div class="status-indicator text-indigo-300 border-indigo-500 bg-indigo-900/40" title="Blade Enhanced: Combo Ready">
+								<i class="fas fa-bolt mr-1"></i> Blade Enhanced
+							 </div>`;
+				}
+				
+				if (gameState.combat.ae_primed) {
+					const type = gameState.combat.ae_primed.type.toUpperCase();
+					html += `<div class="status-indicator text-cyan-300 border-cyan-500 bg-cyan-900/40 animate-pulse" title="Absorb Elements Active: Next hit deals bonus ${type} damage">
+								<i class="fas fa-shield-halved mr-1"></i> ${type} Primed
+							 </div>`;
+				}
+
+				if (gameState.battleRhythm) {
+					html += `<div class="status-indicator text-red-300 border-red-500 bg-red-900/40" title="Battle Rhythm: Next attack deals double damage">
+								<i class="fas fa-stopwatch mr-1"></i> Rhythm
+							 </div>`;
+				}
+
+				// 2. ENEMY DEBUFFS (Red/Orange)
+				if (gameState.combat.enemyStatus) {
+					gameState.combat.enemyStatus.forEach(status => {
+						const def = window.STATUS_EFFECTS[status.name];
+						if (def) {
+							html += `<div class="status-indicator ${def.color} border-current" title="${def.desc}">
+										<i class="fas ${def.icon} mr-1"></i> ${def.name} (${status.duration})
+									 </div>`;
+						}
+					});
+				}
+				
 				container.innerHTML = html;
 			};
 
