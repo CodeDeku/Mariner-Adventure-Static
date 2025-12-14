@@ -182,6 +182,10 @@
 			pointer-events: none;
 			transition: filter 0.5s ease-out; /* Faster timing for responsiveness */
 		}
+		
+		.dream-banner-bottom {
+			object-position: bottom; 
+		}
 
 		#dreamscape-overlay {
 			position: fixed; inset: 0; z-index: 100;
@@ -573,7 +577,7 @@
         </button>
     </div>
 
-    <div id="main-game-container" class="grid grid-cols-1 md:flex md:flex-row max-w-7xl mx-auto w-full p-2 md:p-4 gap-4 md:h-full h-auto">
+    <div id="main-game-container" class="grid grid-cols-1 md:flex md:flex-row max-w-7xl mx-auto w-full p-2 pb-32 md:p-4 gap-4 md:h-full h-auto">
         
         <div class="contents md:flex md:flex-col md:w-1/3 gap-3 shrink-0 relative z-50">
             
@@ -705,41 +709,39 @@
         </div>
 
         <div class="contents md:flex md:flex-col md:w-2/3 gap-4">
-            
-            <div id="main-scene-text" class="order-2 md:order-none bg-[#111318] rounded border border-gray-700 p-6 shadow-inner relative min-h-[160px] h-auto shrink-0 transition-all flex flex-col justify-center">
+             <div id="main-scene-text" class="order-2 md:order-none bg-[#111318] rounded border border-gray-700 p-6 shadow-inner relative min-h-[160px] h-auto shrink-0 transition-all flex flex-col justify-center">
                 <div class="text-center text-gray-500 italic">Initializing Story...</div>
             </div>
-
             <div class="order-3 md:order-none shrink-0 flex flex-col gap-2">
                 <div id="choices-area" class="grid grid-cols-1 gap-2">
                     </div>
             </div>
-
-            <div id="journal-container" class="order-5 md:order-none log-hidden h-96 md:h-[476px] shrink-0 rounded border border-gray-600 bg-gray-800 shadow-2xl flex flex-col overflow-hidden relative">
-                <div class="bg-[#0f172a] text-center py-1 border-b border-gray-700 z-10 shadow-md">
-                    <h3 class="cinzel text-amber-600 text-sm tracking-[0.2em] font-bold">The Log of The Trident's Kiss</h3>
-                </div>
-                <div id="journal-scroll-area" class="flex-1 water-stained p-6 overflow-y-auto">
-                    <div id="journal-content" class="space-y-6">
-                         </div>
-                    <div class="h-4"></div>
-                </div>
-                <div class="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-black/20 to-transparent pointer-events-none"></div>
-            </div>
-
+            <div class="order-5 md:order-none w-full flex flex-col shrink-0">
+				<div id="journal-container" class="order-5 md:order-none log-hidden h-96 md:h-[476px] shrink-0 rounded border border-gray-600 bg-gray-800 shadow-2xl flex flex-col overflow-hidden relative mb-6">
+				<div class="bg-[#0f172a] text-center py-1 border-b border-gray-700 z-10 shadow-md">
+					<h3 class="cinzel text-amber-600 text-sm tracking-[0.2em] font-bold">The Log of The Trident's Kiss</h3>
+				</div>
+				<div id="journal-scroll-area" class="flex-1 min-h-0 water-stained p-6 overflow-y-auto">
+					<div id="journal-content" class="space-y-6">
+						 </div>
+					<div class="h-4"></div>
+				</div>
+				<div class="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-black/20 to-transparent pointer-events-none"></div>
+			</div>
+			</div>
         </div>
     </div>
+	<div class="order-last w-full h-32 md:hidden shrink-0"></div>
 	
 	<div id="dreamscape-overlay">
-		<div class="dream-modal-content">
-			<div class="relative h-32 md:h-40 w-full bg-black overflow-hidden border-b-2 border-cyan-900 shrink-0">
-				<img src="https://placehold.co/900x250/020617/1e293b?text=The+Void+Ocean" class="w-full h-full object-cover opacity-60">
+    <div class="dream-modal-content">
+        <div class="relative h-40 md:h-64 w-full bg-black overflow-hidden border-b-2 border-cyan-900 shrink-0">
+    		<img src="images/dreamscape_banner.jpg" class="w-full h-full object-cover object-[center_80%] opacity-60">
 				<div class="absolute inset-0 bg-gradient-to-t from-[#0f172a] via-transparent to-transparent"></div>
-				<div class="absolute bottom-0 left-0 right-0 p-4 text-center">
-					<h2 class="text-2xl md:text-3xl cinzel text-cyan-400 text-shadow tracking-widest">Dreamscape Sanctuary</h2>
+				<div class="absolute top-0 left-0 right-0 h-full flex flex-col items-center justify-center p-4 text-center">
+					<h2 class="text-3xl md:text-5xl cinzel text-cyan-400 text-shadow tracking-widest mt-4">Dreamscape Sanctuary</h2>
 				</div>
 			</div>
-
 			<div class="p-4 md:p-6 bg-[#0f172a] flex-1">
 				<div class="flex flex-wrap justify-center gap-6 mb-4 cinzel font-bold text-sm tracking-widest uppercase">
 					<div class="flex items-center text-emerald-400 drop-shadow-md">
@@ -1529,25 +1531,25 @@
 			gameState.dreamTransitionPending = transitionType;
 			const config = dreamscapeConfig[transitionType];
 			
-			// 1. Universal Level Up Mechanics (Always happen)
+			// 1. Universal Level Up Mechanics
 			gameState.maxHP += 5;
 			gameState.currentHP = gameState.maxHP;
 			gameState.baseDamage += 1;
 			
 			// 2. Conditional Die Upgrade (ONLY for Act 3)
-			let dieUpgradeText = "";
-			let dieClass = "text-gray-500"; // Default: Dimmed (no change)
-			let dieIcon = "fa-dice-d20";
+			let dieHtml = ''; // Default: Empty string (Hidden)
 			
 			if (transitionType === 'act3_transition') {
 				gameState.guidingDieSize = 6; // Upgrade to d6
-				dieUpgradeText = "Guiding Die Upgraded (d6)";
-				dieClass = "text-yellow-400 animate-pulse font-bold"; // Gold & Pulsing
-				dieIcon = "fa-arrow-up";
+				// Render ONLY if upgrading
+				dieHtml = `
+					<div class="flex items-center text-cyan-400 drop-shadow-md animate-pulse font-bold">
+						<i class="fas fa-arrow-up mr-2"></i> Guiding Die (d6)
+					</div>
+				`;
 			} else {
-				// Keeps current size (d4)
+				// Keeps current size (d4), but displays nothing
 				gameState.guidingDieSize = gameState.guidingDieSize || 4; 
-				dieUpgradeText = `Guiding Die (d${gameState.guidingDieSize})`;
 			}
 			
 			// 3. Setup UI
@@ -1555,14 +1557,11 @@
 			const overlay = document.getElementById('dreamscape-overlay');
 			overlay.classList.add('active');
 			
-			// 4. Update the Modal Header (Specific Order: Rest -> Level Up -> HP -> Dmg -> Die)
+			// 4. Update the Modal Header
 			const modalHeader = overlay.querySelector('.p-4.md\\:p-6 .flex.flex-wrap');
 			if (modalHeader) {
 				modalHeader.innerHTML = `
 					<div class="flex items-center text-purple-400 drop-shadow-md">
-						<i class="fas fa-bed mr-2"></i> Long Rest
-					</div>
-					<div class="flex items-center text-cyan-300 drop-shadow-md">
 						<i class="fas fa-arrow-up mr-2"></i> Level Up!
 					</div>
 					<div class="flex items-center text-emerald-400 drop-shadow-md">
@@ -1571,10 +1570,7 @@
 					<div class="flex items-center text-red-400 drop-shadow-md">
 						<i class="fas fa-fist-raised mr-2"></i> +1 Base Dmg
 					</div>
-					<div class="flex items-center ${dieClass} drop-shadow-md">
-						<i class="fas ${dieIcon} mr-2"></i> ${dieUpgradeText}
-					</div>
-				`;
+					${dieHtml} `;
 			}
 			
 			document.getElementById('dream-text-container').innerHTML = `"${config.narrative}"`;
@@ -8361,9 +8357,11 @@
         }
 
         function scrollToBottom() {
-            const area = document.getElementById('journal-scroll-area');
-            area.scrollTop = area.scrollHeight;
-        }
+		const area = document.getElementById('journal-scroll-area');
+		requestAnimationFrame(() => {
+			area.scrollTop = area.scrollHeight;
+		});
+	}
 
         function addToHistory(text, type = 'entry') {
             let html = '';
