@@ -102,17 +102,17 @@
 					</div>
 				</div>
 
-				<div id="abilities-combined-container" class="grid grid-cols-2 gap-2 mt-2">
+				<div id="abilities-combined-container" class="grid grid-cols-2 gap-2 mt-2 hidden">
 					<div id="planar-skills-container" class="hidden h-full flex flex-col">
-						<div class="text-xs cinzel font-bold uppercase tracking-wider text-cyan-400 border-b border-cyan-900/50 mb-1 pb-1">Skills</div>
-						<button onclick="window.gameFunctions.togglePlaneWalk()" class="flex-1 p-2 rounded border border-cyan-800 bg-gray-900/60 text-cyan-100 flex items-center justify-center gap-2 hover:bg-cyan-900/20 transition-all">
-							<span class="text-[10px] cinzel font-bold uppercase">Plane Walk</span>
-							<i class="fas fa-shoe-prints text-sm text-cyan-400"></i>
-						</button>
+						<div class="text-xs cinzel font-bold uppercase tracking-wider text-cyan-400 border-b border-cyan-900/50 mb-1 pb-1">Horizon Walker</div>
+						<div id="planar-skills-list" class="flex flex-col gap-1">
+							</div>
 					</div>
+					
 					<div id="companion-panel" class="hidden h-full flex flex-col">
 						<div class="text-xs cinzel font-bold uppercase tracking-wider text-emerald-400 border-b border-emerald-900/50 mb-1 pb-1">Allies</div>
-						<div id="companions-list" class="flex-1 flex flex-col gap-1 justify-center"></div>
+						<div id="companions-list" class="flex flex-col gap-1">
+							</div>
 					</div>
 				</div>
 
@@ -7799,137 +7799,169 @@
 				statsPanel.classList.remove('prologue-blur');
 			}
 			
-			// 2. Render 2x2 Skill/Ally Grid
+			
+			
+			// 2. Render Compact Skills & Allies
 			const abilitiesWrapper = document.getElementById('abilities-combined-container');
-            abilitiesWrapper.innerHTML = ''; // Clear for redraw
-            
-            let hasContent = false; // Track if we added anything
+			const skillsCol = document.getElementById('planar-skills-container');
+			const skillsList = document.getElementById('planar-skills-list');
+			const alliesCol = document.getElementById('companion-panel');
+			const alliesList = document.getElementById('companions-list');
+			
+			// Clear Lists
+			skillsList.innerHTML = '';
+			alliesList.innerHTML = '';
+			
+			let hasSkills = false;
+			let hasAllies = false;
 
-            // --- SLOT 1: PRIMARY SKILL (AE/PA) ---
-            if (gameState.player.specialization) {
-                const skillDiv = document.createElement('div');
-                skillDiv.className = 'ability-card slot-skill-primary';
-                
-                if (gameState.player.specialization === 'AE') {
-                    // ABSORB ELEMENTS LOGIC
-                    if (gameState.combat && gameState.combat.ae_primed) {
-                        const type = gameState.combat.ae_primed.type;
-                        skillDiv.classList.add(`ae-primed-${type === 'fire' ? 'fire' : type === 'cold' ? 'cold' : 'acid'}`);
-                        skillDiv.innerHTML = `
-                            <i class="fas fa-shield-virus text-xl mb-1 text-white"></i>
-                            <span class="text-[10px] font-bold uppercase text-white cinzel">${type} PRIMED</span>
-                            <span class="text-[9px] text-gray-200">Strike to Discharge</span>
-                        `;
-                    } else {
-                        skillDiv.classList.add('ae-passive');
-                        skillDiv.innerHTML = `
-                            <i class="fas fa-shield-halved text-xl mb-1"></i>
-                            <span class="text-[10px] font-bold uppercase cinzel">Absorb Elements</span>
-                            <span class="text-[9px] text-gray-500">Ready</span>
-                        `;
-                    }
-                } else if (gameState.player.specialization === 'PA') {
-                    // PRIMEVAL AWARENESS LOGIC
-                    skillDiv.classList.add('pa-active-btn');
-                    // Check if we are in combat to make it clickable
-                    const inCombat = gameState.isBossCombat && gameState.combat.isPlayerTurn && !gameState.combat.hunters_mark_used_this_turn;
-                    
-                    skillDiv.innerHTML = `
-                        <i class="fas fa-eye text-xl mb-1"></i>
-                        <span class="text-[10px] font-bold uppercase cinzel">Primeval Awareness</span>
-                        <span class="text-[9px] ${inCombat ? 'text-green-400 animate-pulse' : 'text-gray-500'}">
-                            ${inCombat ? 'CLICK TO MARK' : 'Passive'}
-                        </span>
-                    `;
-                    
-                    if (inCombat) {
-                        skillDiv.onclick = () => {
-                            gameState.combat.hunters_mark_used_this_turn = true;
-                            addToHistory("Hunter's Mark applied! Target Vulnerable.", 'combat');
-                            window.applyStatusEffect(gameState, 'vulnerable', 1);
-                            renderScene(gameState.currentSceneId, false); 
-                        };
-                    }
-                }
-                abilitiesWrapper.appendChild(skillDiv);
-                hasContent = true;
-            } 
-            // NO ELSE BLOCK (Removes "Locked" placeholder)
+			// --- RENDER SKILLS (LEFT COLUMN) ---
+			
+			// A. Primary Skill (AE / PA)
+			if (gameState.player.specialization) {
+				const btn = document.createElement('div');
+				// Compact Styling: Matches Silas/Blink
+				btn.className = "w-full p-2 rounded border flex items-center justify-between transition-all cursor-default relative shrink-0 bg-gray-900/60 border-gray-700";
+				
+				if (gameState.player.specialization === 'AE') {
+					// ABSORB ELEMENTS
+					let statusText = "Ready";
+					let iconColor = "text-blue-400";
+					let borderColor = "border-blue-900";
+					let glowClass = "";
 
-            // --- SLOT 2: ALLY 1 (SILAS) ---
-            if (gameState.companions.silas.joined) {
-                const silasDiv = document.createElement('div');
-                silasDiv.className = 'ability-card slot-ally-1 border-emerald-900 cursor-pointer hover:bg-emerald-900/20';
-                const onCooldown = gameState.allyCooldowns.silas > 0;
-                
-                silasDiv.innerHTML = `
-                    <i class="fas fa-moon text-xl mb-1 text-emerald-500"></i>
-                    <span class="text-[10px] font-bold uppercase text-emerald-400 cinzel">Silas</span>
-                    <span class="text-[9px] text-gray-500">${onCooldown ? `CD: ${gameState.allyCooldowns.silas}` : 'Ready: Intercept'}</span>
-                `;
-                
-                if (!onCooldown && gameState.isBossCombat) {
-                    silasDiv.onclick = () => window.allyCommand('silas');
-                } else if (onCooldown) {
-                    silasDiv.classList.add('opacity-50', 'cursor-not-allowed');
-                } else if (!gameState.isBossCombat) {
-                    silasDiv.classList.add('cursor-default');
-                }
-                abilitiesWrapper.appendChild(silasDiv);
-                hasContent = true;
-            }
+					if (gameState.combat && gameState.combat.ae_primed) {
+						const type = gameState.combat.ae_primed.type;
+						statusText = `${type.toUpperCase()} PRIMED`;
+						if (type === 'fire') { iconColor = "text-red-400"; borderColor = "border-red-500"; glowClass = "shadow-[0_0_10px_rgba(248,113,113,0.3)]"; }
+						else if (type === 'cold') { iconColor = "text-cyan-300"; borderColor = "border-cyan-500"; glowClass = "shadow-[0_0_10px_rgba(34,211,238,0.3)]"; }
+						else { iconColor = "text-green-400"; borderColor = "border-green-500"; glowClass = "shadow-[0_0_10px_rgba(74,222,128,0.3)]"; }
+					}
 
-            // --- SLOT 3: PLANE WALK ---
-            if (gameState.skills.includes("Plane Walking")) {
-                const planeDiv = document.createElement('button');
-                planeDiv.className = 'ability-card slot-skill-plane cursor-pointer hover:bg-cyan-900/20';
-                planeDiv.onclick = () => window.gameFunctions.togglePlaneWalk();
-                
-                const isActive = gameState.isEthereal;
-                const activeClass = isActive ? 'text-cyan-300 border-cyan-500 shadow-[0_0_10px_rgba(34,211,238,0.2)]' : 'text-gray-400 border-gray-700';
-                
-                planeDiv.className += ` ${activeClass}`;
-                planeDiv.innerHTML = `
-                    <i class="fas fa-shoe-prints text-xl mb-1"></i>
-                    <span class="text-[10px] font-bold uppercase cinzel">Plane Walk</span>
-                    <span class="text-[9px]">${isActive ? 'ACTIVE' : 'Material'}</span>
-                `;
-                abilitiesWrapper.appendChild(planeDiv);
-                hasContent = true;
-            }
-            // NO ELSE BLOCK (Removes "Locked" placeholder)
+					btn.className = `w-full p-2 rounded border flex items-center justify-between bg-gray-900/80 ${borderColor} ${glowClass}`;
+					btn.innerHTML = `
+						<div class="flex items-center gap-2">
+							<i class="fas fa-shield-halved ${iconColor}"></i>
+							<div class="flex flex-col leading-none">
+								<span class="text-[10px] cinzel font-bold text-gray-300">Absorb Elements</span>
+								<span class="text-[9px] text-gray-500 uppercase tracking-wider">${statusText}</span>
+							</div>
+						</div>
+					`;
+				} 
+				else if (gameState.player.specialization === 'PA') {
+					// PRIMEVAL AWARENESS
+					const inCombat = gameState.isBossCombat && gameState.combat.isPlayerTurn && !gameState.combat.hunters_mark_used_this_turn;
+					const activeClass = inCombat ? "cursor-pointer hover:bg-gray-800 border-green-500/50" : "opacity-70";
+					
+					btn.className = `w-full p-2 rounded border flex items-center justify-between bg-gray-900/60 border-gray-700 ${activeClass}`;
+					btn.innerHTML = `
+						<div class="flex items-center gap-2">
+							<i class="fas fa-eye text-emerald-400"></i>
+							<div class="flex flex-col leading-none">
+								<span class="text-[10px] cinzel font-bold text-gray-300">Primeval Awareness</span>
+								<span class="text-[9px] ${inCombat ? 'text-green-400 animate-pulse' : 'text-gray-500'} uppercase tracking-wider">${inCombat ? 'CLICK TO MARK' : 'Passive'}</span>
+							</div>
+						</div>
+					`;
+					
+					if (inCombat) {
+						btn.onclick = () => {
+							gameState.combat.hunters_mark_used_this_turn = true;
+							addToHistory("Hunter's Mark applied! Target Vulnerable.", 'combat');
+							window.applyStatusEffect(gameState, 'vulnerable', 1);
+							renderScene(gameState.currentSceneId, false);
+						};
+					}
+				}
+				skillsList.appendChild(btn);
+				hasSkills = true;
+			}
 
-            // --- SLOT 4: ALLY 2 (BLINK) ---
-            if (gameState.companions.blink.joined) {
-                const blinkDiv = document.createElement('div');
-                blinkDiv.className = 'ability-card slot-ally-2 border-purple-900 cursor-pointer hover:bg-purple-900/20';
-                const onCooldown = gameState.allyCooldowns.blink > 0;
-                
-                blinkDiv.innerHTML = `
-                    <i class="fas fa-paw text-xl mb-1 text-purple-400"></i>
-                    <span class="text-[10px] font-bold uppercase text-purple-300 cinzel">Blink</span>
-                    <span class="text-[9px] text-gray-500">${onCooldown ? `CD: ${gameState.allyCooldowns.blink}` : 'Ready: Phase'}</span>
-                `;
-                
-                if (!onCooldown && gameState.isBossCombat) {
-                    blinkDiv.onclick = () => window.allyCommand('blink');
-                } else if (onCooldown) {
-                    blinkDiv.classList.add('opacity-50', 'cursor-not-allowed');
-                } else if (!gameState.isBossCombat) {
-                    blinkDiv.classList.add('cursor-default');
-                }
-                abilitiesWrapper.appendChild(blinkDiv);
-                hasContent = true;
-            }
+			// B. Plane Walk Skill
+			if (gameState.skills.includes("Plane Walking")) {
+				const btn = document.createElement('button');
+				const isActive = gameState.isEthereal;
+				const activeStyle = isActive 
+					? "border-cyan-500 shadow-[0_0_10px_rgba(34,211,238,0.2)] bg-cyan-900/20" 
+					: "border-gray-700 bg-gray-900/60 hover:bg-gray-800";
 
-            // VISIBILITY TOGGLE: Hide container if empty
-            if (!hasContent) {
-                abilitiesWrapper.classList.add('hidden');
-                abilitiesWrapper.style.display = 'none';
-            } else {
-                abilitiesWrapper.classList.remove('hidden');
-                abilitiesWrapper.style.display = 'grid';
-            }
+				btn.className = `w-full p-2 rounded border flex items-center justify-between transition-all ${activeStyle}`;
+				btn.onclick = () => window.gameFunctions.togglePlaneWalk();
+				
+				btn.innerHTML = `
+					<div class="flex items-center gap-2">
+						<i class="fas fa-shoe-prints ${isActive ? 'text-cyan-300' : 'text-gray-400'}"></i>
+						<div class="flex flex-col items-start leading-none">
+							<span class="text-[10px] cinzel font-bold ${isActive ? 'text-cyan-100' : 'text-gray-300'}">Plane Walk</span>
+							<span class="text-[9px] ${isActive ? 'text-cyan-400' : 'text-gray-500'} uppercase tracking-wider">${isActive ? 'ACTIVE' : 'Material'}</span>
+						</div>
+					</div>
+				`;
+				skillsList.appendChild(btn);
+				hasSkills = true;
+			}
+
+			// --- RENDER ALLIES (RIGHT COLUMN) ---
+			
+			// Silas
+			if (gameState.companions.silas.joined) {
+				const btn = document.createElement('div');
+				const onCooldown = gameState.allyCooldowns.silas > 0;
+				const clickable = !onCooldown && gameState.isBossCombat;
+				
+				btn.className = `w-full p-2 rounded border flex items-center justify-between bg-gray-900/60 border-emerald-900/50 ${clickable ? 'cursor-pointer hover:bg-emerald-900/20' : 'opacity-70'}`;
+				
+				btn.innerHTML = `
+					<div class="flex items-center gap-2">
+						<i class="fas fa-moon text-emerald-500"></i>
+						<div class="flex flex-col leading-none">
+							<span class="text-[10px] cinzel font-bold text-emerald-100">Silas</span>
+							<span class="text-[9px] text-gray-500 uppercase tracking-wider">${onCooldown ? `CD: ${gameState.allyCooldowns.silas}` : 'Ready: Intercept'}</span>
+						</div>
+					</div>
+				`;
+				
+				if (clickable) btn.onclick = () => window.allyCommand('silas');
+				alliesList.appendChild(btn);
+				hasAllies = true;
+			}
+
+			// Blink
+			if (gameState.companions.blink.joined) {
+				const btn = document.createElement('div');
+				const onCooldown = gameState.allyCooldowns.blink > 0;
+				const clickable = !onCooldown && gameState.isBossCombat;
+				
+				btn.className = `w-full p-2 rounded border flex items-center justify-between bg-gray-900/60 border-purple-900/50 ${clickable ? 'cursor-pointer hover:bg-purple-900/20' : 'opacity-70'}`;
+				
+				btn.innerHTML = `
+					<div class="flex items-center gap-2">
+						<i class="fas fa-paw text-purple-400"></i>
+						<div class="flex flex-col leading-none">
+							<span class="text-[10px] cinzel font-bold text-purple-200">Blink</span>
+							<span class="text-[9px] text-gray-500 uppercase tracking-wider">${onCooldown ? `CD: ${gameState.allyCooldowns.blink}` : 'Ready: Phase'}</span>
+						</div>
+					</div>
+				`;
+				
+				if (clickable) btn.onclick = () => window.allyCommand('blink');
+				alliesList.appendChild(btn);
+				hasAllies = true;
+			}
+
+			// --- VISIBILITY TOGGLES ---
+			if (hasSkills) skillsCol.classList.remove('hidden');
+			else skillsCol.classList.add('hidden');
+
+			if (hasAllies) alliesCol.classList.remove('hidden');
+			else alliesCol.classList.add('hidden');
+
+			if (hasSkills || hasAllies) {
+				abilitiesWrapper.classList.remove('hidden');
+			} else {
+				abilitiesWrapper.classList.add('hidden');
+			}
 			
 
 			// 3. HP Bar
