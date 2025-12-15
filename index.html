@@ -1294,92 +1294,99 @@
         };		
 		
 		
+		
 		window.attackEnemy = (comboType = 'standard') => {
-			const state = window.gameState;
-			if (!state.combat) state.combat = { enemyHP: state.enemyHP, enemyStatus: [] };
+			try {
+				const state = window.gameState;
+				// Safety Initializations
+				if (!state.combat) state.combat = { enemyHP: state.enemyHP, enemyStatus: [] };
+				if (!state.player) state.player = {};
+				if (!state.player.weapon) state.player.weapon = { name: "Fists", damage: '1d4' };
+				if (!state.inventory) state.inventory = [];
 
-			// Prevent crash if player.weapon undefined (Safety)
-			if (!state.player.weapon) state.player.weapon = { damage: '1d6' };
+				let baseDmgStr = state.inventory.includes("Sword of Valor") ? '1d8+2' : (state.player.weapon.damage || '1d6');
+				let baseDamage = window.rollDice(baseDmgStr);
+				let bonusDamage = 0;
+				let log = "";
+				
+				// --- COMBO EXECUTION ---
+				switch (comboType) {
+					case 'zephyrStrike':
+						bonusDamage += window.rollDice('1d8');
+						log = "<b>Zephyr Strike!</b> Force energy ripples through the target.";
+						break;
+					case 'surgicalStrike': // PA Combo
+						bonusDamage += window.rollDice('1d8');
+						log = "<b>Surgical Strike!</b> You hit the exposed nerve.";
+						break;
+					case 'planarStrike': // AE Combo
+						const element = (state.combat.ae_primed && state.combat.ae_primed.type) ? state.combat.ae_primed.type : 'Force';
+						bonusDamage += window.rollDice('1d8') + window.rollDice('1d8'); // Massive Dmg
+						log = `<b>Howling Planar Strike!</b> The absorbed ${element} erupts!`;
+						state.combat.ae_primed = null; // Consume charge
+						break;
+					case 'tripAttack': // Blink Combo
+						bonusDamage += window.rollDice('2d8'); // Crit damage
+						if (window.applyStatusEffect) window.applyStatusEffect(state, 'prone', 1);
+						log = "<b>Dire Wolf Trip!</b> Blink exposes the throat! CRITICAL HIT + PRONE!";
+						break;
+					case 'wolfBite': // Silas + AE Combo
+						bonusDamage += window.rollDice('1d10');
+						const heal = Math.floor((baseDamage + bonusDamage) / 2);
+						state.currentHP = Math.min(state.maxHP, state.currentHP + heal);
+						log = `<b>White Wolf's Bite!</b> Silas opens the guard. You strike and heal for ${heal} HP!`;
+						break;
+					case 'huntersEdge': // Silas + PA Combo
+						bonusDamage += window.rollDice('1d10');
+						if (window.applyStatusEffect) window.applyStatusEffect(state, 'vulnerable', 1);
+						log = "<b>Hunter's Edge!</b> A devastating coordinated assault.";
+						break;
+					case 'elementalStrike':
+						bonusDamage += window.rollDice('1d8');
+						log = "<b>Elemental Retaliation!</b> You discharge the stored energy.";
+						state.combat.ae_primed = null;
+						break;
+					default:
+						log = "Standard attack.";
+						break;
+				}
 
-			let baseDmgStr = state.inventory.includes("Sword of Valor") ? '1d8+2' : '1d6';
-			let baseDamage = window.rollDice(baseDmgStr);
-			let bonusDamage = 0;
-			let log = "";
-			
-			// --- COMBO EXECUTION ---
-			switch (comboType) {
-				case 'zephyrStrike':
-					bonusDamage += window.rollDice('1d8');
-					log = "<b>Zephyr Strike!</b> Force energy ripples through the target.";
-					break;
-				case 'surgicalStrike': // PA Combo
-					bonusDamage += window.rollDice('1d8');
-					log = "<b>Surgical Strike!</b> You hit the exposed nerve.";
-					break;
-				case 'planarStrike': // AE Combo
-					const element = state.combat.ae_primed ? state.combat.ae_primed.type : 'Force';
-					bonusDamage += window.rollDice('1d8') + window.rollDice('1d8'); // Massive Dmg
-					log = `<b>Howling Planar Strike!</b> The absorbed ${element} erupts!`;
-					state.combat.ae_primed = null; // Consume charge
-					break;
-				case 'tripAttack': // Blink Combo
-					bonusDamage += window.rollDice('2d8'); // Crit damage
-					if (window.applyStatusEffect) window.applyStatusEffect(state, 'prone', 1);
-					log = "<b>Dire Wolf Trip!</b> Blink exposes the throat! CRITICAL HIT + PRONE!";
-					break;
-				case 'wolfBite': // Silas + AE Combo
-					bonusDamage += window.rollDice('1d10');
-					const heal = Math.floor((baseDamage + bonusDamage) / 2);
-					state.currentHP = Math.min(state.maxHP, state.currentHP + heal);
-					log = `<b>White Wolf's Bite!</b> Silas opens the guard. You strike and heal for ${heal} HP!`;
-					break;
-				case 'huntersEdge': // Silas + PA Combo
-					bonusDamage += window.rollDice('1d10');
-					if (window.applyStatusEffect) window.applyStatusEffect(state, 'vulnerable', 1);
-					log = "<b>Hunter's Edge!</b> A devastating coordinated assault.";
-					break;
-				case 'elementalStrike':
-					bonusDamage += window.rollDice('1d8');
-					log = "<b>Elemental Retaliation!</b> You discharge the stored energy.";
-					state.combat.ae_primed = null;
-					break;
-				default:
-					log = "Standard attack.";
-					break;
-			}
+				// --- APPLY VULNERABLE MULTIPLIER ---
+				const isVulnerable = state.combat.enemyStatus ? state.combat.enemyStatus.find(s => s.name === 'vulnerable') : false;
+				let totalDamage = baseDamage + bonusDamage;
+				
+				if (isVulnerable) {
+					totalDamage = Math.floor(totalDamage * 1.5);
+					log += " <span class='text-red-500 font-bold'>(Vulnerable! x1.5)</span>";
+					// Consume Vulnerable
+					state.combat.enemyStatus = state.combat.enemyStatus.filter(s => s.name !== 'vulnerable');
+				}
 
-			// --- APPLY VULNERABLE MULTIPLIER ---
-			const isVulnerable = state.combat.enemyStatus ? state.combat.enemyStatus.find(s => s.name === 'vulnerable') : false;
-			let totalDamage = baseDamage + bonusDamage;
-			
-			if (isVulnerable) {
-				totalDamage = Math.floor(totalDamage * 1.5);
-				log += " <span class='text-red-500 font-bold'>(Vulnerable! x1.5)</span>";
-				// Consume Vulnerable
-				state.combat.enemyStatus = state.combat.enemyStatus.filter(s => s.name !== 'vulnerable');
-			}
+				state.combat.enemyHP -= totalDamage;
+				state.enemyHP = state.combat.enemyHP; // Sync legacy
 
-			state.combat.enemyHP -= totalDamage;
-			state.enemyHP = state.combat.enemyHP; // Sync legacy
+				// --- RESET TURN FLAGS ---
+				state.combat.blade_enhanced_active = false;
+				state.combat.blink_used_this_turn = false;
+				state.combat.hunters_mark_used_this_turn = false;
+				state.combat.silas_used_this_turn = false;
 
-			// --- RESET TURN FLAGS ---
-			state.combat.blade_enhanced_active = false;
-			state.combat.blink_used_this_turn = false;
-			state.combat.hunters_mark_used_this_turn = false;
-			state.combat.silas_used_this_turn = false;
+				addToHistory(`${log} Dealt <b>${totalDamage}</b> damage.`, 'combat');
+				if (window.fxManager) window.fxManager.flashRed();
+				
+				// Re-render to clear buttons immediately
+				updateUI();
+				renderScene(state.currentSceneId, false);
 
-			addToHistory(`${log} Dealt <b>${totalDamage}</b> damage.`, 'combat');
-			if (window.fxManager) window.fxManager.flashRed();
-			
-			// Re-render to clear buttons immediately
-			updateUI();
-			renderScene(state.currentSceneId, false);
-
-			// --- TRIGGER ENEMY ---
-			if (state.combat.enemyHP <= 0) {
-				setTimeout(() => window.resolveCombatRound('check_victory'), 500);
-			} else {
-				setTimeout(window.enemyTurn, 1000);
+				// --- TRIGGER ENEMY ---
+				if (state.combat.enemyHP <= 0) {
+					setTimeout(() => window.resolveCombatRound('check_victory'), 500);
+				} else {
+					setTimeout(window.enemyTurn, 1000);
+				}
+			} catch (e) {
+				console.error("Combat Error:", e);
+				addToHistory(`<span class="text-red-500">Combat Error: ${e.message}</span>`, 'system');
 			}
 		};
 		
@@ -6586,6 +6593,13 @@
             
             const imgEl = document.getElementById('scene-image');
             const loader = document.getElementById('image-loader');
+            
+            // --- FIX: PREVENT FLASHING ---
+            // Only reload if the source URL is actually different
+            if (imgEl.src && imgEl.src.includes(url)) {
+                return; 
+            }
+            // -----------------------------
             
             // Show loader and hide image immediately
             imgEl.style.opacity = 0;
