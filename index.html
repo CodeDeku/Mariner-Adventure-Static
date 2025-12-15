@@ -6482,7 +6482,7 @@
                 const snap = await getDoc(docRef);
                 if (!snap.exists()) {
                     await setDoc(docRef, gameState);
-                    renderScene('prologue_storm');
+                    window.renderScene('prologue_storm');
                 } else {
                     const data = snap.data();
                     if (data.influence === undefined) data.influence = 0; 
@@ -6497,12 +6497,13 @@
 
                     if (gameState.isEthereal) document.body.classList.add('plane-ethereal');
                     
-                    renderScene(gameState.currentSceneId, false);
-                    rebuildJournal();
+                    window.renderScene(gameState.currentSceneId, false);
+                    window.rebuildJournal();
                 }
             } catch (e) {
                 console.error("Save error", e);
-                renderScene('prologue_storm');
+                // Delay render slightly and use window.renderScene for safety
+                setTimeout(() => { window.renderScene('prologue_storm'); }, 50);
             }
 
             onSnapshot(docRef, (snap) => {
@@ -6528,7 +6529,7 @@
                         if (gameState.isEthereal) document.body.classList.add('plane-ethereal');
                         else document.body.classList.remove('plane-ethereal');
                         
-                        updateUI();
+                        window.updateUI();
                     }
                 }
             });
