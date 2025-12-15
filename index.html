@@ -7179,7 +7179,7 @@
                     supplementalText += ` <span class="text-xs text-cyan-500/70 font-bold uppercase tracking-wider ml-2 mr-4">[${choice.skill} DC ${displayDC}]</span>`;
                     
                     // 3. FORCE COLOR ON TEXT (This fixes the "not having color" issue)
-                    content = `<span class="cinzel font-bold text-gray-300 group-hover:text-amber-100 drop-shadow-sm">${rawText}</span>`;
+                    content = `<span class="cinzel font-bold text-gray-100 drop-shadow-sm">${rawText}</span>`;
                     
                     // 4. Crew Bonus Logic
                     if (activeCrewMember) {
@@ -7890,7 +7890,7 @@
 			}
 		});
 
-// --- FINAL ROBUST RENDER RADIAL CREW FUNCTION (Guarantees DOM attachment) ---
+
 		function renderRadialCrew() {
 			const container = document.querySelector('.radial-container');
 			if (!container) return; 
@@ -7898,10 +7898,10 @@
 			const crewKeys = ['gareth', 'quinn', 'talon', 'bones']; 
 			
 			// 1. INITIAL BUILD: If the central hub is missing, rebuild the structure completely.
+			// This check must happen first.
 			if (!document.getElementById('radial-hub')) {
 				
-				// Rebuild the core structure (Hub, Tethers, Grid) FIRST.
-				// NOTE: We rely on the initial HTML being empty, as confirmed in your last file.
+				// Rebuild the core structure completely in one go
 				container.innerHTML = `
 					<div class="radial-grid-mask"><div class="radial-planar-grid"></div></div>
 					<div id="tether-gareth" class="spectral-tether tether-nw"></div>
@@ -7932,6 +7932,9 @@
 					};
 					container.appendChild(btn);
 				});
+				
+				// Exit here, and let the next updateUI call handle the state refresh
+				return; 
 			}
 
 			// 2. STATE UPDATE (Refresh Node Visuals)
@@ -7941,25 +7944,24 @@
 			if(hub) {
 				if(isAnyActive) hub.classList.add('drained');
 				else hub.classList.remove('drained');
+				// Update the Guiding Die Text
+				const dieElement = hub.querySelector('.text-cyan-400');
+				if (dieElement) dieElement.innerHTML = `+1d${gameState.guidingDieSize || 4}`;
 			}
-            
-            // Update the Guiding Die Text
-            const dieElement = hub.querySelector('.text-cyan-400');
-            if (dieElement) dieElement.innerHTML = `+1d${gameState.guidingDieSize || 4}`;
 
+			// Update Node States
 			crewKeys.forEach(key => {
 				const c = gameState.crew[key]; 
 				const btn = document.getElementById(`node-${key}`);
 				const tether = document.getElementById(`tether-${key}`);
 				
-				// CRITICAL SAFETY CHECK: If node generation failed, skip update loop
-				if (!btn || !tether) return;
+				// Critical safety check: If any element is missing, skip and wait for rebuild
+				if (!btn || !tether) return; 
 
 				const isUsed = c.used;
 				const isActive = activeCrewMember && activeCrewMember.id === c.id;
 
-				let displayName = c.name;
-				if(c.name.includes(' ')) displayName = c.name.split(' ')[0]; 
+				let displayName = c.name.includes(' ') ? c.name.split(' ')[0] : c.name; 
 				if(key === 'gareth') displayName = "Gareth"; 
 				
 				let content = `<span class="crew-node-name">${displayName}</span><span class="crew-node-skill">${c.skill.replace('&', '<br>&')}</span>`;
@@ -7984,6 +7986,7 @@
 				}
 			});
 		}
+
 
 		// 3. Updated Crew Toggle Logic
 		function toggleCrewSelection(crewKey) {
