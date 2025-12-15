@@ -468,6 +468,7 @@
 			};
 		}
         let gameState = createInitialState();
+		window.gameState = gameState;
         let activeCrewMember = null;
 		
 		
@@ -5706,6 +5707,7 @@
 			},
 
             // 2. THE HORDE COMBAT LOOP
+			// 2. THE HORDE COMBAT LOOP
 			'spire_combat_loop': {
 				title: "Battle: Vampire Elders",
 				text: "",
@@ -5722,44 +5724,40 @@
 						scenes['spire_combat_loop'].text = `Three Elders remain!`;
 					}
 					
-					// --- 2. BUILD CHOICES (Horde-specific generation) ---
+					// --- 2. BUILD CHOICES (Updated for Unified Engine) ---
 					let dynamicChoices = [];
 					
-					// A. ATTACKS (Target-Specific buttons for living Elders)
-					state.activeEnemies.forEach(elderName => {
-						// Valor Strike (If Sword of Valor is present)
-						if (state.inventory.includes('Sword of Valor')) {
-							dynamicChoices.push({
-								text: `Valor Strike (${elderName})`,
-								action: () => window.resolveHordeRound('valor_strike', elderName),
-								type: 'action',
-								customClass: 'btn-hero'
-							});
-						} else {
-							// Heavy Strike (Fallback)
-							dynamicChoices.push({
-								text: `Heavy Strike (${elderName})`,
-								action: () => window.resolveHordeRound('heavy_strike', elderName),
-								type: 'action'
-							});
-						}
-					});
+					// A. ATTACK (Unified Attack Button)
+                    // The new engine automatically targets the first available Elder
+                    if (state.inventory.includes('Sword of Valor')) {
+                        dynamicChoices.push({
+                            text: `Valor Strike (Target Horde)`,
+                            action: () => window.attackEnemy('standard'),
+                            type: 'action',
+                            customClass: 'btn-hero'
+                        });
+                    } else {
+                        dynamicChoices.push({
+                            text: `Heavy Strike (Target Horde)`,
+                            action: () => window.attackEnemy('standard'),
+                            type: 'action'
+                        });
+                    }
 					
-					// B. ALLY COMMANDS (No target needed)
+					// B. ALLY COMMANDS
 					if (state.companions.silas.joined) dynamicChoices.push({ text: "Command Silas (Intercept)", type: 'action', action: () => window.allyCommand('silas'), doomCost: 0 });
 					if (state.companions.blink.joined) dynamicChoices.push({ text: "Command Blink (Phase Shift)", type: 'action', action: () => window.allyCommand('blink'), doomCost: 0 });
 					
-					// C. AOE/ITEM ACTIONS (No target needed - Damage applies to all)
-					if (state.inventory.includes('Holy Water')) dynamicChoices.push({ text: "Throw Holy Water (AOE)", action: () => window.resolveHordeRound('item_holy_water', 'none'), type: 'action', reqItem: 'Holy Water', consume: true, customClass: 'btn-success-glow' });
-					if (state.inventory.includes('Alchemical Fire')) dynamicChoices.push({ text: "Throw Alchemical Fire (AOE)", action: () => window.resolveHordeRound('item_fire', 'none'), type: 'action', reqItem: 'Alchemical Fire', consume: true, customClass: 'btn-fire-glow' });
-					if (state.inventory.includes('Sun-Star Grenade')) dynamicChoices.push({ text: "Throw Sun-Star (AOE Stun)", action: () => window.resolveHordeRound('item_sun_star', 'none'), type: 'action', reqItem: 'Sun-Star Grenade', consume: true, customClass: 'btn-fire-glow' });
+					// C. AOE/ITEM ACTIONS (Unified resolveCombatRound)
+					if (state.inventory.includes('Holy Water')) dynamicChoices.push({ text: "Throw Holy Water (AOE)", action: () => window.resolveCombatRound('item_holy_water'), type: 'action', reqItem: 'Holy Water', consume: true, customClass: 'btn-success-glow' });
+					if (state.inventory.includes('Alchemical Fire')) dynamicChoices.push({ text: "Throw Alchemical Fire (AOE)", action: () => window.resolveCombatRound('item_fire'), type: 'action', reqItem: 'Alchemical Fire', consume: true, customClass: 'btn-fire-glow' });
+					if (state.inventory.includes('Sun-Star Grenade')) dynamicChoices.push({ text: "Throw Sun-Star (AOE Stun)", action: () => window.resolveCombatRound('item_sun_star'), type: 'action', reqItem: 'Sun-Star Grenade', consume: true, customClass: 'btn-fire-glow' });
 
-					// D. STUN/CC (No target needed)
-					if (state.inventory.includes('Flash Powder')) dynamicChoices.push({ text: "Throw Flash Powder (Stun/Skip)", action: () => window.resolveHordeRound('item_flash', 'none'), type: 'action', reqItem: 'Flash Powder', consume: true });
-					if (state.inventory.includes('Scale-Stake Driver')) dynamicChoices.push({ text: "Fire Stake Driver (Stun)", action: () => window.resolveHordeRound('item_stake_driver', 'none'), type: 'action', reqItem: 'Scale-Stake Driver', customClass: 'btn-fire-glow' });
+					// D. STUN/CC
+					if (state.inventory.includes('Flash Powder')) dynamicChoices.push({ text: "Throw Flash Powder (Stun/Skip)", action: () => window.resolveCombatRound('item_flash'), type: 'action', reqItem: 'Flash Powder', consume: true });
+					if (state.inventory.includes('Scale-Stake Driver')) dynamicChoices.push({ text: "Fire Stake Driver (Stun)", action: () => window.resolveCombatRound('item_stake_driver'), type: 'action', reqItem: 'Scale-Stake Driver', customClass: 'btn-fire-glow' });
 
-
-					// E. HEALING (Resolves enemy attack)
+					// E. HEALING
 					if (state.inventory.includes('Vitality Tincture')) {
 						dynamicChoices.push({ 
 							text: "Drink Vitality Tincture (Heal)", 
@@ -5768,13 +5766,14 @@
 							consume: true,
 							action: (state) => {
 								state.currentHP = Math.min(state.maxHP, state.currentHP + 15); 
-								addToHistory("Drank Tincture. Healed 15 HP.", 'combat');
-								window.resolveHordeRound('none', 'none'); // Trigger enemy turn
+								// Trigger enemy turn immediately after healing
+                                window.enemyTurn();
+								return "Drank Tincture. Healed 15 HP.";
 							} 
 						});
 					}
 					
-					// F. PLANAR TOGGLE (No combat action, no enemy retaliation)
+					// F. PLANAR TOGGLE
 					dynamicChoices.push({
 						 text: `Toggle Ethereal Plane (Now: ${state.isEthereal ? 'Ethereal' : 'Material'})`,
 						 type: 'action',
