@@ -7187,7 +7187,7 @@
                     supplementalText += ` <span class="text-xs text-cyan-500/70 font-bold uppercase tracking-wider ml-2 mr-4">[${choice.skill} DC ${displayDC}]</span>`;
                     
                     // 3. FORCE COLOR ON TEXT (This fixes the "not having color" issue)
-                    content = `<span class="cinzel font-bold text-white group-hover:text-white drop-shadow-sm">${rawText}</span>`;
+                    content = `<span class="cinzel font-bold text-gray-100 group-hover:text-white drop-shadow-sm">${rawText}</span>`;
                     
                     // 4. Crew Bonus Logic
                     if (activeCrewMember) {
@@ -7898,18 +7898,19 @@
 			}
 		});
 
+		// --- REPLACE THE ENTIRE renderRadialCrew FUNCTION (Starting approx. Line 3518) ---
 		function renderRadialCrew() {
 			const container = document.querySelector('.radial-container');
 			if (!container) return; 
 
 			const crewKeys = ['gareth', 'quinn', 'talon', 'bones']; 
 			
-			// 1. INITIAL BUILD: If the nodes haven't been created, rebuild the entire radial structure.
+			// 1. INITIAL BUILD: Dynamically create the 4 crew nodes if they don't exist.
 			if (!document.getElementById('node-gareth')) {
+				
+				// Ensure the core structure is minimal to prevent layout conflict
 				container.innerHTML = `
-					<div class="radial-grid-mask">
-						<div class="radial-planar-grid"></div>
-					</div>
+					<div class="radial-grid-mask"><div class="radial-planar-grid"></div></div>
 					<div id="tether-gareth" class="spectral-tether tether-nw"></div>
 					<div id="tether-quinn" class="spectral-tether tether-ne"></div>
 					<div id="tether-talon" class="spectral-tether tether-sw"></div>
@@ -7957,6 +7958,7 @@
 				const btn = document.getElementById(`node-${key}`);
 				const tether = document.getElementById(`tether-${key}`);
 				
+				// CRITICAL SAFETY CHECK: If node generation failed, skip update loop
 				if (!btn || !tether) return;
 
 				const isUsed = c.used;
