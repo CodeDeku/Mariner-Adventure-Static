@@ -7890,17 +7890,18 @@
 			}
 		});
 
-		// --- FINAL ROBUST RENDER RADIAL CREW FUNCTION ---
+// --- FINAL ROBUST RENDER RADIAL CREW FUNCTION (Guarantees DOM attachment) ---
 		function renderRadialCrew() {
 			const container = document.querySelector('.radial-container');
 			if (!container) return; 
 
 			const crewKeys = ['gareth', 'quinn', 'talon', 'bones']; 
 			
-			// 1. INITIAL BUILD: If the container is empty, rebuild the structure completely.
-			if (container.children.length === 0 || !document.getElementById('radial-hub')) {
+			// 1. INITIAL BUILD: If the central hub is missing, rebuild the structure completely.
+			if (!document.getElementById('radial-hub')) {
 				
-				// Rebuild the core structure, including the hub
+				// Rebuild the core structure (Hub, Tethers, Grid) FIRST.
+				// NOTE: We rely on the initial HTML being empty, as confirmed in your last file.
 				container.innerHTML = `
 					<div class="radial-grid-mask"><div class="radial-planar-grid"></div></div>
 					<div id="tether-gareth" class="spectral-tether tether-nw"></div>
@@ -7913,7 +7914,7 @@
 					</div>
 				`;
 				
-				// Add the 4 crew nodes dynamically *after* the hub and tethers exist
+				// Add the 4 crew nodes dynamically *after* the hub and tethers exist.
 				crewKeys.forEach((key, idx) => {
 					const btn = document.createElement('div');
 					btn.id = `node-${key}`; 
