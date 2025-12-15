@@ -1030,6 +1030,13 @@
 			if (state.combat.enemyHP <= 0) {
 				setTimeout(() => window.resolveCombatRound('check_victory'), 500);
 			} else {
+                // CORAL HULK REGENERATION (Must be placed before enemyTurn)
+                if (state.currentEnemy === 'Coral-Hulk') {
+                    const regenAmount = 5;
+                    state.combat.enemyHP = Math.min(state.combat.enemyMaxHP, state.combat.enemyHP + regenAmount);
+                    state.enemyHP = state.combat.enemyHP;
+                    addToHistory(` <span class='text-red-400 font-bold'>The Hyper-Coral knits flesh together (+${regenAmount} HP Regen).</span>`, 'combat');
+                }
 				setTimeout(window.enemyTurn, 1000);
 			}
 		};
@@ -1733,6 +1740,13 @@
                 title: "The Clash",
                 text: "He unhooks a heavy warhammer from his belt. You move to intercept him, driving the momentum into a brutal close-quarters struggle. You barely deflect the crushing weight of his strikes, fighting until he finally falls. You survive, but you are now an enemy of the crown.",
                 journal: "Had combat the Guard. I am an outlaw now.",
+                choices: [
+                    { 
+                        text: "Continue (Take Damage and Proceed)", 
+                        nextScene: 'market_crossroads', 
+                        type: 'travel' 
+                    }
+                ],
                 onEnter: (state) => { 
                     audioManager.playClash();
                     let minDmg = 10;
@@ -1748,8 +1762,7 @@
                     fxManager.flashRed(); 
                     state.influence = 50;
                     return `Took ${dmg} damage. Became Outlaw (Max Chaos).`;
-                },
-                choices: [{ text: "Limp to The Crossroads", nextScene: 'market_crossroads', type: 'travel' }]
+                }
             },
             'smuggler_meet': {
                 title: "The Cove",
@@ -6542,7 +6555,10 @@
             gameState.companions.silas.joined = false;
             gameState.silasJoined = false;
 
-            document.getElementById('journal-content').innerHTML = '';
+            document.getElementById('journal-container').classList.add('log-hidden');
+            document.getElementById('journal-container').classList.remove('log-visible');
+			
+			document.getElementById('journal-content').innerHTML = '';
             await saveGame();
             renderScene('prologue_storm');
             rebuildJournal();
@@ -7888,9 +7904,8 @@
 
 			const crewKeys = ['gareth', 'quinn', 'talon', 'bones']; 
 			
-			// 1. INITIAL BUILD
-			if (!document.getElementById('node-gareth')) { 
-				// NEW: Add the Grid Mask Layers here
+			// 1. INITIAL BUILD: If the nodes haven't been created, rebuild the entire radial structure.
+			if (!document.getElementById('node-gareth')) {
 				container.innerHTML = `
 					<div class="radial-grid-mask">
 						<div class="radial-planar-grid"></div>
@@ -7901,7 +7916,7 @@
 					<div id="tether-bones" class="spectral-tether tether-se"></div>
 					<div id="radial-hub" class="radial-hub">
 						<div class="cinzel font-bold text-cyan-200 text-xs leading-tight text-center mt-2">GUIDING<br>VOICE</div>
-						<div class="text-cyan-400 text-xs mt-0.5 font-bold animate-pulse tracking-widest">+1d4</div>
+						<div class="text-cyan-400 text-xs mt-0.5 font-bold animate-pulse tracking-widest">+1d${gameState.guidingDieSize || 4}</div>
 					</div>
 				`;
 				
@@ -7924,7 +7939,7 @@
 				});
 			}
 
-			// 2. STATE UPDATE (Rest of logic remains the same)
+			// 2. STATE UPDATE (Refresh Node Visuals)
 			const hub = document.getElementById('radial-hub');
 			const isAnyActive = activeCrewMember !== null;
 
@@ -7932,6 +7947,10 @@
 				if(isAnyActive) hub.classList.add('drained');
 				else hub.classList.remove('drained');
 			}
+            
+            // Update the Guiding Die Text
+            const dieElement = hub.querySelector('.text-cyan-400');
+            if (dieElement) dieElement.innerHTML = `+1d${gameState.guidingDieSize || 4}`;
 
 			crewKeys.forEach(key => {
 				const c = gameState.crew[key]; 
