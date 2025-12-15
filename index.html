@@ -820,587 +820,228 @@
 			});
 		};
 		
+		
+		// --- UNIFIED COMBAT ENGINE (Combos + Bosses + Horde) ---
+
+		// 1. Combat Initialization
 		function initCombat(enemyName, hp, damageRange) {
-            // 1. Set Legacy Flags
-            gameState.isBossCombat = true;
-            gameState.currentEnemy = enemyName;
-            gameState.enemyHP = hp;
-            gameState.maxEnemyHP = hp;
-            gameState.enemyDamageRange = damageRange; 
-            
-            // 2. Clear Multi-Target State
-            gameState.enemies = {};
-            gameState.activeEnemies = [];
-
-            // 3. SYNC NEW COMBAT SYSTEM (Critical Fix)
-            gameState.combat.enemy = { name: enemyName };
-            gameState.combat.enemyHP = hp;
-            gameState.combat.enemyMaxHP = hp;
-            gameState.combat.enemyDamage = '1d6'; // Default base
-            gameState.combat.damageType = 'physical'; // Default
-            gameState.combat.isPlayerTurn = true; // Ensure buttons are enabled
-            gameState.combat.enemyStatus = []; 
-            
-            // 4. Reset Cooldowns
-            gameState.allyCooldowns.silas = 0;
-            gameState.allyCooldowns.blink = 0;
-            
-            // 5. Update UI immediately so bars render
-            updateUI();
-        }
-
-		// NEW: Horde Combat Initialization for Vampire Elders
-		function initHordeCombat(baseName, hpPerEnemy, damageRange, count) {
 			gameState.isBossCombat = true;
-			gameState.currentEnemy = baseName;
-			gameState.enemies = {};
-			gameState.activeEnemies = [];
-			gameState.maxElderHP = hpPerEnemy;
+			gameState.currentEnemy = enemyName;
+			
+			// Sync New Combat Object
+			gameState.combat.enemy = { name: enemyName };
+			gameState.combat.enemyHP = hp;
+			gameState.combat.enemyMaxHP = hp;
+			gameState.combat.enemyDamage = '1d6'; // Base fallback
+			gameState.combat.damageType = 'physical';
+			gameState.combat.enemyStatus = [];
+			
+			// Sync Legacy Variables (For UI compatibility)
+			gameState.enemyHP = hp;
+			gameState.maxEnemyHP = hp;
 			gameState.enemyDamageRange = damageRange;
+
+			// Reset Arrays
+			gameState.activeEnemies = [];
+			gameState.enemies = {};
+			gameState.allyCooldowns.silas = 0;
+			gameState.allyCooldowns.blink = 0;
+			
+			updateUI();
+		}
+
+		function initHordeCombat(baseName, hpPerEnemy, damageRange, count) {
+			initCombat(baseName, hpPerEnemy * count, damageRange);
+			gameState.maxElderHP = hpPerEnemy; // Track individual max for UI bars
 
 			let totalHP = 0;
 			for (let i = 0; i < count; i++) {
-				const name = `${baseName} ${String.fromCharCode(65 + i)}`; // Elder A, Elder B, etc.
+				const name = `${baseName} ${String.fromCharCode(65 + i)}`; // Elder A, Elder B
 				gameState.enemies[name] = hpPerEnemy;
 				gameState.activeEnemies.push(name);
 				totalHP += hpPerEnemy;
 			}
-			
-			// Set global HP trackers for UI compatibility
+			// Override total HP tracking
+			gameState.combat.enemyHP = totalHP;
 			gameState.enemyHP = totalHP;
+			gameState.combat.enemyMaxHP = totalHP;
 			gameState.maxEnemyHP = totalHP;
-
-			// Reset Ally Cooldowns
-			gameState.allyCooldowns.silas = 0;
-			gameState.allyCooldowns.blink = 0;
 		}
 
-		// NEW: Horde Combat Resolution for Vampire Elders
-		window.resolveHordeRound = function(attackType, targetElder) {
-			const state = gameState;
-			let playerDmg = 0;
-			let log = "";
-			let eldersKilled = 0;
-
-			// --- FIX: CHECK STATUS EFFECTS (PRONE/VULNERABLE) ---
-			// Check for Prone (Stun) or Vulnerable globally
-			const isProne = state.combat.enemyStatus.find(s => s.name === 'prone');
-			const isVulnerable = state.combat.enemyStatus.find(s => s.name === 'vulnerable');
-			
-			// Consume Prone immediately if it exists (It skips the enemy turn later)
-			if (isProne) {
-				state.combat.enemyStatus = state.combat.enemyStatus.filter(s => s.name !== 'prone');
-			}
-			// ----------------------------------------------------
-
-			// --- 1. CALCULATE PLAYER DAMAGE ---
-			const levelBonus = (state.baseDamage || 0); 
-			
-			let baseDamage = 0;
-			let isAOE = false;
-			let isStun = false;
-			let isForceDamage = state.isEthereal && state.currentEnemy.includes('Vampire');
-
-			// 1.1 Determine Base Damage & Modifiers
-			if (attackType === 'valor_strike') {
-				baseDamage = Math.floor(Math.random() * 8) + 6 + levelBonus; 
-			} else if (attackType === 'heavy_strike') {
-				baseDamage = Math.floor(Math.random() * 6) + 2 + levelBonus; 
-			} else if (attackType === 'item_holy_water') {
-				baseDamage = 25; isAOE = true;
-			} else if (attackType === 'item_fire') {
-				baseDamage = 20; isAOE = true;
-                // Add Burn visual if desired, but AOE burn tracking is complex. 
-                // We'll stick to damage for AOE to keep it simple.
-			} else if (attackType === 'item_flash') {
-				baseDamage = 0; 
-                isStun = true; 
-                // FIX: Add Visual Status
-                window.applyStatusEffect(state, 'prone', 1); 
-			} else if (attackType === 'item_sun_star') {
-				baseDamage = 25; isAOE = true; isStun = true;
-                // FIX: Add Visual Status
-                window.applyStatusEffect(state, 'prone', 1);
-			} else if (attackType === 'item_stake_driver') {
-				baseDamage = Math.floor(Math.random() * 8) + 4 + levelBonus; 
-                isStun = true;
-                // FIX: Add Visual Status
-                window.applyStatusEffect(state, 'prone', 1);
-			} else if (attackType === 'none') {
-				playerDmg = 0;
-			}
-
-			playerDmg = baseDamage;
-			
-			// BOON: Talon's Ghost Hunter (Act 2)
-			if (state.activeBoons.includes('ghost_hunter')) {
-				const ghostlyEnemies = ['Displacer Beast', 'Drowned Spectre', 'Mimic', 'Brass Sentinel']; 
-				if (state.isEthereal || ghostlyEnemies.includes(state.currentEnemy)) {
-					playerDmg += 2;
-					log += " <span class='text-purple-300 font-bold'>(Ghost Hunter +2)</span>";
-				}
-			}
-			
-			// Apply Planar Vulnerability
-			if (isForceDamage && state.activeEnemies.length === 1 && playerDmg > 0) {
-				playerDmg += 2; 
-				log += `<span class='text-spectral-d8'>Planar Focus: Force Damage +2.</span> `;
-			}
-			
-			// Simulate "Crit" roll (10% chance)
-			if (state.activeBoons.includes('hunters_mark') && Math.random() > 0.90) {
-				state.nextAttackCrit = true; 
-				log += "<span class='text-purple-400 font-bold'>Hunter's Precision! (Crit Ready)</span> ";
-			}
-
-			// BLINK CRIT MODIFIER
-			if (state.nextAttackCrit && playerDmg > 0) {
-				playerDmg = Math.floor(playerDmg * 2.5); 
-				state.nextAttackCrit = false;
-				log += "<span class='text-emerald-400 font-bold'>PHASE STRIKE! (Crit)</span> ";
-			}
-
-			// BATTLE RHYTHM CHECK
-			if (gameState.battleRhythm && playerDmg > 0) {
-				playerDmg = playerDmg * 2;
-				gameState.battleRhythm = false; 
-				const buffIdx = gameState.inventory.indexOf("Battle Rhythm");
-				if (buffIdx > -1) gameState.inventory.splice(buffIdx, 1);
-				log += "<span class='text-red-500 font-bold'>BATTLE RHYTHM! (Double Damage)</span> ";
-			}
-
-			// --- FIX: APPLY VULNERABLE MULTIPLIER ---
-			if (isVulnerable && playerDmg > 0) {
-				playerDmg = Math.floor(playerDmg * 1.5);
-				log += " <span class='text-red-500 font-bold'>(Vulnerable! x1.5)</span>";
-				// Consume Vulnerable
-				state.combat.enemyStatus = state.combat.enemyStatus.filter(s => s.name !== 'vulnerable');
-			}
-			// ----------------------------------------
-			
-			// --- 2. APPLY DAMAGE TO BOSSES ---
-			let targetsHit = [];
-			const elderTargets = isAOE ? [...state.activeEnemies] : [targetElder];
-			
-			elderTargets.forEach(elderName => {
-				if (!state.activeEnemies.includes(elderName)) return; 
-
-				let currentDmg = playerDmg;
-				let evasionCheck = false;
-
-				// PHASE 1/2 EVASION CHECK
-				if (!isAOE && !isStun && state.activeEnemies.length >= 2 && !state.isEthereal && attackType !== 'none') {
-					if (Math.random() < 0.3) { 
-						currentDmg = 0;
-						evasionCheck = true;
-						targetsHit.push(`${elderName}: Evaded`);
-					}
-				}
-				
-				if (currentDmg > 0) {
-					state.enemies[elderName] = Math.max(0, state.enemies[elderName] - currentDmg);
-					targetsHit.push(`${elderName}: -${currentDmg}`);
-				} else if (evasionCheck) {
-					targetsHit.push(`${elderName}: Evaded`);
-				}
-				
-				// Check if elder is defeated
-				if (state.enemies[elderName] <= 0 && state.activeEnemies.includes(elderName)) {
-					state.enemies[elderName] = 0;
-					eldersKilled++;
-					log += `<span class='text-blood'>The ${elderName} crumbles to dust!</span> `;
-				}
-			});
-
-			// Update Active Enemies List and Total HP
-			state.activeEnemies = state.activeEnemies.filter(name => state.enemies[name] > 0);
-			state.enemyHP = state.activeEnemies.reduce((total, name) => total + state.enemies[name], 0);
-
-			if (targetsHit.length > 0 && attackType !== 'none') {
-				log += `You struck for ${targetsHit.join(', ')}. `;
-				if (isForceDamage) log = log.replace(/struck for Elder/g, 'struck for <span class="text-spectral-d8">Force Damage</span> Elder');
-			}
-
-			// --- 3. CHECK VICTORY ---
-			if (state.activeEnemies.length === 0) {
-				state.isBossCombat = false;
-				state.enemies = {};
-				audioManager.playClash();
-				addToHistory(log + ` The Sanguine Court is defeated!`, 'combat');
-				renderScene('spire_victory');
-				return;
-			}
-
-			// --- 4. ENEMY LOGIC (RETALIATION & PIVOTS) ---
-			
-			if (eldersKilled === 1 && state.activeEnemies.length === 2) {
-				state.allyCooldowns.silas = Math.max(state.allyCooldowns.silas, 1);
-				state.allyCooldowns.blink = Math.max(state.allyCooldowns.blink, 1);
-				log += `<span class='text-danger'>The remaining Elders shriek, briefly stunning your allies (Cooldown +1).</span> `;
-			}
-			if (eldersKilled === 2 && state.activeEnemies.length === 1) {
-				const finalElderName = state.activeEnemies[0];
-				const healAmount = 20; 
-				state.enemies[finalElderName] = Math.min(state.maxElderHP, state.enemies[finalElderName] + healAmount);
-				state.enemyHP = state.enemies[finalElderName];
-				log += `<span class='text-blood'>Desperation! The last Elder absorbs its kin's power (+${healAmount} HP).</span> `;
-			}
-			
-			// --- FIX: UPDATE RETALIATION LOGIC ---
-			// Retaliation: Only run if not stunned by Item OR Prone status
-			let enemySkipped = isStun || isProne; 
-
-			if (!enemySkipped) {
-				let totalEnemyDmg = 0;
-				let attacksLaunched = 0;
-				
-				// Each active Elder attacks
-				state.activeEnemies.forEach(elderName => {
-					const range = state.enemyDamageRange || [4, 7];
-					const dmg = Math.floor(Math.random() * (range[1] - range[0] + 1)) + range[0];
-					totalEnemyDmg += dmg;
-					attacksLaunched++;
-				});
-
-				// Apply mitigation
-				if (state.inventory.includes("Mirror Shield")) totalEnemyDmg = Math.max(0, totalEnemyDmg - attacksLaunched); 
-				if (state.inventory.includes("Salt-Warped Spyglass") && state.influence <= -15) totalEnemyDmg = Math.max(0, totalEnemyDmg - attacksLaunched);
-
-				// SILAS TANK MODIFIER
-				if (state.negateNextDamage) {
-					totalEnemyDmg = 0;
-					state.negateNextDamage = false; 
-					log += ` <span class='text-emerald-400 font-bold'>Silas blocked all ${attacksLaunched} strikes!</span>`;
-				} else {
-					const oldHP = state.currentHP;
-					state.currentHP = applyDamage(state.currentHP, totalEnemyDmg);
-					const actualTaken = oldHP - state.currentHP;
-					
-					if (actualTaken > 0) {
-						log += ` The Elders hit for a combined <b>${actualTaken}</b> damage!`;
-						fxManager.flashRed();
-					} else {
-						log += ` Your defenses absorbed the blow.`;
-					}
-				}
-			} else if (isProne) {
-				 log += `<span class='text-amber-400'>The Elders are Prone and struggle to recover! (Turn Skipped)</span> `;
-			} else if (isStun) {
-				 log += `<span class='text-yellow-400'>The Elders are stunned and skip their turn!</span> `;
-			}
-
-			// --- 5. COOLDOWN TICK ---
-			if (state.allyCooldowns.silas > 0) state.allyCooldowns.silas--;
-			if (state.allyCooldowns.blink > 0) state.allyCooldowns.blink--;
-
-			addToHistory(log, 'combat');
-			updateUI(); 
-			renderScene(state.currentSceneId); 
-		}
-		
-		// --- BRIDGE: Maps Legacy Combat Calls to New Logic ---
-		window.resolveCombatRound = function(attackType) {
-			const state = window.gameState;
-            
-            // 0. Handle Pure Victory Check (called by special items)
-            if (attackType === 'check_victory') {
-                if (state.combat.enemyHP <= 0) {
-                    const enemy = state.combat.enemy.name || "";
-                    if (enemy === "Slag Elemental") renderScene('smelter_victory_generic'); 
-                    else if (enemy === "Drowned Spectre") renderScene('chapel_victory_generic');
-                    else if (enemy.includes("Coral")) renderScene('coral_hulk_victory');
-                    else renderScene('spire_victory');
-                }
-                return;
-            }
-
-			// 1. If in Horde Mode (Spire), route to Horde Logic
-			if (state.activeEnemies && state.activeEnemies.length > 0) {
-				const target = state.activeEnemies[0]; 
-				window.resolveHordeRound(attackType, target);
-				return;
-			}
-
-			// 2. Standard Boss Logic
-			let damage = 0;
-			let log = "";
-			
-			// Map attackType to damage manually
-			if (attackType === 'valor_strike') damage = window.rollDice('1d8+2'); 
-			else if (attackType === 'heavy_strike') damage = window.rollDice('1d6+1');
-			else if (attackType === 'item_holy_water') damage = 25;
-			else if (attackType === 'item_fire') {
-                damage = 20;
-                // Add Flavor for Spectre if needed
-                if (state.combat.enemy.name === "Drowned Spectre") {
-                    window.applyStatusEffect(state, 'vulnerable', 1);
-                    log += " (Spectral form disrupted!)";
-                }
-            }
-			else if (attackType === 'item_stake_driver') { 
-				damage = 15; 
-				window.applyStatusEffect(state, 'prone', 1); 
-				log += " **STUNNED!**";
-			}
-            else if (attackType === 'item_flash') {
-                damage = 0;
-                window.applyStatusEffect(state, 'prone', 1);
-                log += " **BLINDED!**";
-            }
-			else if (attackType === 'reflect_stance') { 
-				state.negateNextDamage = true; 
-				log = "Mirror Shield raised. Next attack reflected.";
-			}
-
-			// Apply Damage
-			if (damage > 0) {
-				state.combat.enemyHP = Math.max(0, state.combat.enemyHP - damage);
-				state.enemyHP = state.combat.enemyHP; 
-				log = `Attacked with ${attackType}! Dealt ${damage} damage.${log}`;
-			}
-
-			addToHistory(log, 'combat');
-			window.fxManager.flashRed();
-
-			// 3. VICTORY ROUTING (Synced with attackEnemy)
-			if (state.combat.enemyHP <= 0) {
-				updateUI();
-                const enemy = state.combat.enemy.name || "";
-                
-				if (enemy === "Slag Elemental") renderScene('smelter_victory_generic');
-                else if (enemy === "Drowned Spectre") renderScene('chapel_victory_generic');
-                else if (enemy.includes("Coral")) renderScene('coral_hulk_victory');
-                else renderScene('spire_victory');
-                
-				return;
-			}
-
-			// Trigger Enemy Turn
-			setTimeout(window.enemyTurn, 1000);
+		// 2. Helpers
+		window.rollDice = function(diceString) {
+			if (!diceString) return 0;
+			if (typeof diceString === 'number') return diceString;
+			const parts = diceString.match(/(\d+)d(\d+)([\+\-]\d+)?/);
+			if (!parts) return parseInt(diceString) || 0;
+			let total = 0;
+			const numDice = parseInt(parts[1]);
+			const dieSize = parseInt(parts[2]);
+			const modifier = parseInt(parts[3]) || 0;
+			for (let i = 0; i < numDice; i++) { total += Math.floor(Math.random() * dieSize) + 1; }
+			return total + modifier;
 		};
 
-
-		// Updated to be a FREE ACTION (Does not trigger enemy turn)
-		window.allyCommand = function(allyId) {
-			const state = gameState;
-			
-            // Basic validation
-            if (!state.isBossCombat) {
-                 addToHistory("Allies can only be commanded during boss combat!", 'system');
-                 return;
-            }
-            if (state.allyCooldowns[allyId] > 0) {
-                 addToHistory(`Ally ${allyId} is on cooldown!`, 'system');
-                 return;
-            }
-
-            // APPLY EFFECTS
-            if (allyId === 'silas') {
-                state.negateNextDamage = true;
-                
-                // Silas Vengeance Logic
-                let baseCooldown = 3; // Increased base slightly to balance free action
-                if (state.silasVengeanceActive && state.currentEnemy.includes('Vampire')) {
-                        baseCooldown = 1; 
-                        addToHistory("Vengeance Status: Silas Intercept Cooldown reduced!", 'system');
-                }
-                state.allyCooldowns.silas = baseCooldown;
-                addToHistory(`<span class="text-emerald-400 font-bold">Silas: Intercept!</span> Silas raises his shield. Next enemy attack negated.`, 'system');
-                audioManager.playClash(); // Sound effect
-            } 
-            else if (allyId === 'blink') {
-                gameState.nextAttackCrit = true;
-                gameState.allyCooldowns.blink = 3;
-                addToHistory(`<span class="text-emerald-400 font-bold">Blink: Phase Shift!</span> The cub exposes a weakness. Next attack deals massive damage.`, 'system');
-                audioManager.playGhost(); // Sound effect
-            }
-            
-            // SAVE & REFRESH
-			saveGame();
-			updateUI();
-            
-            // Re-render scene to update button states (disable the ally button)
-            renderScene(state.currentSceneId, false); 
-		}
-		
-		
-		
-		// --- MISSING COMBAT HELPERS ---
 		window.applyStatusEffect = (state, effectName, duration) => {
 			if (!state.combat.enemyStatus) state.combat.enemyStatus = [];
 			const existing = state.combat.enemyStatus.find(s => s.name === effectName);
-			if (existing) {
-				existing.duration = duration; // Refresh duration
-			} else {
-				state.combat.enemyStatus.push({ name: effectName, duration: duration });
-			}
+			if (existing) existing.duration = duration;
+			else state.combat.enemyStatus.push({ name: effectName, duration: duration });
 		};
 
 		window.renderStatusEffects = () => {
 			const container = document.getElementById('enemy-status-effects');
 			if (!container) return;
-			
 			let html = '';
-			// Render Player Buffs
-			if (gameState.combat.blade_enhanced_active) html += `<div class="status-indicator text-indigo-300 border-indigo-500"><i class="fas fa-bolt"></i> Blade</div>`;
-			if (gameState.combat.ae_primed) html += `<div class="status-indicator text-cyan-300 border-cyan-500"><i class="fas fa-shield-halved"></i> Primed</div>`;
-			
-			// Render Enemy Debuffs
+			// Buffs
+			if (gameState.combat.blade_enhanced_active) html += `<div class="status-indicator text-indigo-300 border-indigo-500 bg-indigo-900/40"><i class="fas fa-bolt mr-1"></i> Blade</div>`;
+			if (gameState.combat.ae_primed) html += `<div class="status-indicator text-cyan-300 border-cyan-500 bg-cyan-900/40 animate-pulse"><i class="fas fa-shield-halved mr-1"></i> Primed</div>`;
+			// Debuffs
 			if (gameState.combat.enemyStatus) {
 				gameState.combat.enemyStatus.forEach(status => {
-					html += `<div class="status-indicator text-red-400 border-red-500"><i class="fas fa-skull"></i> ${status.name}</div>`;
+					const def = window.STATUS_EFFECTS[status.name];
+					if (def) html += `<div class="status-indicator ${def.color} border-current"><i class="fas ${def.icon} mr-1"></i> ${def.name}</div>`;
 				});
 			}
 			container.innerHTML = html;
 		};
-		
-		
-		
-		// --- COMBAT HELPERS (MOVED HERE FOR STABILITY) ---
-        window.rollDice = function(diceString) {
-            if (!diceString) return 0;
-            if (!isNaN(diceString)) return parseInt(diceString);
-            const parts = diceString.match(/(\d+)d(\d+)([\+\-]\d+)?/);
-            if (!parts) return 0;
-            let total = 0;
-            for (let i = 0; i < parseInt(parts[1]); i++) {
-                total += Math.floor(Math.random() * parseInt(parts[2])) + 1;
-            }
-            return total + (parseInt(parts[3]) || 0);
-        };
 
-        window.applyStatusEffect = (state, effectName, duration) => {
-            if (!state.combat.enemyStatus) state.combat.enemyStatus = [];
-            const existing = state.combat.enemyStatus.find(s => s.name === effectName);
-            if (existing) existing.duration = duration;
-            else state.combat.enemyStatus.push({ name: effectName, duration: duration });
-        };
-
-        window.renderStatusEffects = () => {
-            const container = document.getElementById('enemy-status-effects');
-            if (!container) return;
-            let html = '';
-            // Buffs
-            if (gameState.combat.blade_enhanced_active) html += `<div class="status-indicator text-indigo-300 border-indigo-500 bg-indigo-900/40"><i class="fas fa-bolt mr-1"></i> Blade</div>`;
-            if (gameState.combat.ae_primed) html += `<div class="status-indicator text-cyan-300 border-cyan-500 bg-cyan-900/40 animate-pulse"><i class="fas fa-shield-halved mr-1"></i> Primed</div>`;
-            // Debuffs
-            if (gameState.combat.enemyStatus) {
-                gameState.combat.enemyStatus.forEach(status => {
-                    const def = window.STATUS_EFFECTS[status.name];
-                    if (def) html += `<div class="status-indicator ${def.color} border-current"><i class="fas ${def.icon} mr-1"></i> ${def.name}</div>`;
-                });
-            }
-            container.innerHTML = html;
-        };		
-		
-		
-		
+		// 3. MAIN ATTACK LOGIC (Combos & Damage)
 		window.attackEnemy = (comboType = 'standard') => {
-			try {
-				const state = window.gameState;
-				// Safety Initializations
-				if (!state.combat) state.combat = { enemyHP: state.enemyHP, enemyStatus: [] };
-				if (!state.player) state.player = {};
-				if (!state.player.weapon) state.player.weapon = { name: "Fists", damage: '1d4' };
-				if (!state.inventory) state.inventory = [];
+			const state = window.gameState;
+			
+			// --- A. HORDE TARGETING ---
+			// If fighting Horde (Elders), we default damage to the first active target
+			let targetName = state.combat.enemy.name;
+			if (state.activeEnemies && state.activeEnemies.length > 0) {
+				targetName = state.activeEnemies[0];
+			}
 
-				let baseDmgStr = state.inventory.includes("Sword of Valor") ? '1d8+2' : (state.player.weapon.damage || '1d6');
-				let baseDamage = window.rollDice(baseDmgStr);
-				let bonusDamage = 0;
-				let log = "";
-				
-				// --- COMBO EXECUTION ---
-				switch (comboType) {
-					case 'zephyrStrike':
-						bonusDamage += window.rollDice('1d8');
-						log = "<b>Zephyr Strike!</b> Force energy ripples through the target.";
-						break;
-					case 'surgicalStrike': // PA Combo
-						bonusDamage += window.rollDice('1d8');
-						log = "<b>Surgical Strike!</b> You hit the exposed nerve.";
-						break;
-					case 'planarStrike': // AE Combo
-						const element = (state.combat.ae_primed && state.combat.ae_primed.type) ? state.combat.ae_primed.type : 'Force';
-						bonusDamage += window.rollDice('1d8') + window.rollDice('1d8'); // Massive Dmg
-						log = `<b>Howling Planar Strike!</b> The absorbed ${element} erupts!`;
-						state.combat.ae_primed = null; // Consume charge
-						break;
-					case 'tripAttack': // Blink Combo
-						bonusDamage += window.rollDice('2d8'); // Crit damage
-						if (window.applyStatusEffect) window.applyStatusEffect(state, 'prone', 1);
-						log = "<b>Dire Wolf Trip!</b> Blink exposes the throat! CRITICAL HIT + PRONE!";
-						break;
-					case 'wolfBite': // Silas + AE Combo
-						bonusDamage += window.rollDice('1d10');
-						const heal = Math.floor((baseDamage + bonusDamage) / 2);
-						state.currentHP = Math.min(state.maxHP, state.currentHP + heal);
-						log = `<b>White Wolf's Bite!</b> Silas opens the guard. You strike and heal for ${heal} HP!`;
-						break;
-					case 'huntersEdge': // Silas + PA Combo
-						bonusDamage += window.rollDice('1d10');
-						if (window.applyStatusEffect) window.applyStatusEffect(state, 'vulnerable', 1);
-						log = "<b>Hunter's Edge!</b> A devastating coordinated assault.";
-						break;
-					case 'elementalStrike':
-						bonusDamage += window.rollDice('1d8');
-						log = "<b>Elemental Retaliation!</b> You discharge the stored energy.";
-						state.combat.ae_primed = null;
-						break;
-					default:
-						log = "Standard attack.";
-						break;
+			// --- B. DAMAGE CALCULATION ---
+			let baseDmgStr = state.inventory.includes("Sword of Valor") ? '1d8+2' : (state.player.weapon.damage || '1d6');
+			if(state.baseDamage) baseDmgStr += `+${state.baseDamage}`; // Level Up Bonus
+
+			let baseDamage = window.rollDice(baseDmgStr);
+			let bonusDamage = 0;
+			let log = "";
+			
+			// BOON: Ghost Hunter
+			if (state.activeBoons.includes('ghost_hunter') && (state.isEthereal || targetName.includes('Spectre') || targetName.includes('Beast'))) {
+				bonusDamage += 2;
+			}
+
+			// COMBO TREE
+			switch (comboType) {
+				case 'zephyrStrike':
+					bonusDamage += window.rollDice('1d8');
+					log = "<b>Zephyr Strike!</b> Force energy ripples through the target.";
+					break;
+				case 'surgicalStrike':
+					bonusDamage += window.rollDice('1d8');
+					log = "<b>Surgical Strike!</b> You hit the exposed nerve.";
+					break;
+				case 'planarStrike':
+					const element = (state.combat.ae_primed && state.combat.ae_primed.type) ? state.combat.ae_primed.type : 'Force';
+					bonusDamage += window.rollDice('1d8') + window.rollDice('1d8'); 
+					log = `<b>Howling Planar Strike!</b> The absorbed ${element} erupts!`;
+					state.combat.ae_primed = null; 
+					break;
+				case 'tripAttack':
+					bonusDamage += window.rollDice('2d8'); 
+					window.applyStatusEffect(state, 'prone', 1);
+					log = "<b>Dire Wolf Trip!</b> Blink exposes the throat! CRITICAL HIT + PRONE!";
+					break;
+				case 'wolfBite':
+					bonusDamage += window.rollDice('1d10');
+					const heal = Math.floor((baseDamage + bonusDamage) / 2);
+					state.currentHP = Math.min(state.maxHP, state.currentHP + heal);
+					log = `<b>White Wolf's Bite!</b> Silas opens the guard. You strike and heal for ${heal} HP!`;
+					break;
+				case 'huntersEdge':
+					bonusDamage += window.rollDice('1d10');
+					window.applyStatusEffect(state, 'vulnerable', 1);
+					log = "<b>Hunter's Edge!</b> A devastating coordinated assault.";
+					break;
+				case 'elementalStrike':
+					bonusDamage += window.rollDice('1d8');
+					log = "<b>Elemental Retaliation!</b> You discharge the stored energy.";
+					state.combat.ae_primed = null;
+					break;
+				default: // Heavy Strike / Valor Strike
+					log = `Strike against ${targetName}.`;
+					break;
+			}
+
+			// --- C. STATUS MULTIPLIERS ---
+			let totalDamage = baseDamage + bonusDamage;
+			
+			// Critical (Phase Strike or Hunter's Mark Boon)
+			if (state.nextAttackCrit) {
+				totalDamage = Math.floor(totalDamage * 2.5);
+				state.nextAttackCrit = false;
+				log += " <span class='text-emerald-400 font-bold'>PHASE CRIT!</span>";
+			}
+
+			// Vulnerable
+			const isVulnerable = state.combat.enemyStatus.find(s => s.name === 'vulnerable');
+			if (isVulnerable) {
+				totalDamage = Math.floor(totalDamage * 1.5);
+				log += " <span class='text-red-500 font-bold'>(Vulnerable! x1.5)</span>";
+				state.combat.enemyStatus = state.combat.enemyStatus.filter(s => s.name !== 'vulnerable');
+			}
+
+			// --- D. APPLY DAMAGE ---
+			
+			// HORDE DISTRIBUTION
+			if (state.activeEnemies && state.activeEnemies.length > 0) {
+				// Apply to specific target in horde
+				if (state.enemies[targetName] > 0) {
+					state.enemies[targetName] = Math.max(0, state.enemies[targetName] - totalDamage);
+					if (state.enemies[targetName] <= 0) {
+						log += ` <span class='text-blood'>${targetName} is destroyed!</span>`;
+						state.activeEnemies = state.activeEnemies.filter(e => e !== targetName);
+					}
 				}
-
-				// --- APPLY VULNERABLE MULTIPLIER ---
-				const isVulnerable = state.combat.enemyStatus ? state.combat.enemyStatus.find(s => s.name === 'vulnerable') : false;
-				let totalDamage = baseDamage + bonusDamage;
-				
-				if (isVulnerable) {
-					totalDamage = Math.floor(totalDamage * 1.5);
-					log += " <span class='text-red-500 font-bold'>(Vulnerable! x1.5)</span>";
-					// Consume Vulnerable
-					state.combat.enemyStatus = state.combat.enemyStatus.filter(s => s.name !== 'vulnerable');
-				}
-
+				// Re-calculate Total HP based on remaining horde
+				let newTotal = 0;
+				Object.values(state.enemies).forEach(val => newTotal += val);
+				state.combat.enemyHP = newTotal;
+				state.enemyHP = newTotal;
+			} 
+			// SINGLE BOSS DISTRIBUTION
+			else {
 				state.combat.enemyHP -= totalDamage;
-				state.enemyHP = state.combat.enemyHP; // Sync legacy
+				state.enemyHP = state.combat.enemyHP;
+			}
 
-				// --- RESET TURN FLAGS ---
-				state.combat.blade_enhanced_active = false;
-				state.combat.blink_used_this_turn = false;
-				state.combat.hunters_mark_used_this_turn = false;
-				state.combat.silas_used_this_turn = false;
+			// --- E. CLEANUP & NEXT TURN ---
+			state.combat.blade_enhanced_active = false;
+			state.combat.blink_used_this_turn = false;
+			state.combat.hunters_mark_used_this_turn = false;
+			state.combat.silas_used_this_turn = false;
 
-				addToHistory(`${log} Dealt <b>${totalDamage}</b> damage.`, 'combat');
-				if (window.fxManager) window.fxManager.flashRed();
-				
-				// Re-render to clear buttons immediately
-				updateUI();
-				renderScene(state.currentSceneId, false);
+			addToHistory(`${log} Dealt <b>${totalDamage}</b> damage.`, 'combat');
+			window.fxManager.flashRed();
+			updateUI();
+			renderScene(state.currentSceneId, false);
 
-				// --- TRIGGER ENEMY ---
-				if (state.combat.enemyHP <= 0) {
-					setTimeout(() => window.resolveCombatRound('check_victory'), 500);
-				} else {
-					setTimeout(window.enemyTurn, 1000);
-				}
-			} catch (e) {
-				console.error("Combat Error:", e);
-				addToHistory(`<span class="text-red-500">Combat Error: ${e.message}</span>`, 'system');
+			// VICTORY CHECK
+			if (state.combat.enemyHP <= 0) {
+				setTimeout(() => window.resolveCombatRound('check_victory'), 500);
+			} else {
+				setTimeout(window.enemyTurn, 1000);
 			}
 		};
-		
-		
-		
+
+		// 4. ENEMY TURN LOGIC
 		window.enemyTurn = () => {
 			const state = window.gameState;
-			// Safety check for victory overlap
-			if (state.combat.enemyHP <= 0 && (!state.activeEnemies || state.activeEnemies.length === 0)) return;
+			if (state.combat.enemyHP <= 0) return;
 
-			// 1. CHECK PRONE (CC)
+			// CHECK CC (PRONE)
 			const isProne = state.combat.enemyStatus.find(s => s.name === 'prone');
 			if (isProne) {
-				addToHistory(`${state.combat.enemy ? state.combat.enemy.name : 'Enemy'} is Prone and cannot act!`, 'combat');
+				addToHistory(`${state.currentEnemy} is Prone and cannot act!`, 'combat');
 				state.combat.enemyStatus = state.combat.enemyStatus.filter(s => s.name !== 'prone');
 				state.combat.isPlayerTurn = true;
 				updateUI();
@@ -1408,89 +1049,221 @@
 				return;
 			}
 
-			// --- FIX: CALCULATE DAMAGE (Single vs Horde) ---
+			// DAMAGE CALCULATION
 			let damage = 0;
-			let damageType = state.combat.damageType || 'physical';
-			const enemyName = state.combat.enemy ? state.combat.enemy.name : (state.currentEnemy || "Enemy");
-
-			// A. HORDE LOGIC (Act 3 Elders)
+			let attacksCount = 1;
+			
+			// Horde Logic (Act 3 Elders)
 			if (state.activeEnemies && state.activeEnemies.length > 0) {
-				let attacks = 0;
-				state.activeEnemies.forEach(elder => {
-					// Use stored damage range or default 4-7
-					const range = state.enemyDamageRange || [4, 7];
-					const hit = Math.floor(Math.random() * (range[1] - range[0] + 1)) + range[0];
-					damage += hit;
-					attacks++;
+				attacksCount = state.activeEnemies.length;
+				state.activeEnemies.forEach(e => {
+					damage += Math.floor(Math.random() * 4) + 4; // 4-8 dmg per elder
 				});
-				
-				// Apply Silas/Shield Mitigation per attack
-				if (state.inventory.includes("Mirror Shield")) damage = Math.max(0, damage - attacks);
-			} 
-			// B. SINGLE BOSS LOGIC
-			else {
-				// Handle string '1d6' or array [6, 12]
-				if (state.enemyDamageRange && Array.isArray(state.enemyDamageRange)) {
-					 const r = state.enemyDamageRange;
-					 damage = Math.floor(Math.random() * (r[1] - r[0] + 1)) + r[0];
-				} else {
-					 damage = window.rollDice(state.combat.enemyDamage || '1d6');
-				}
-			}
-			// ------------------------------------------------
-
-			// --- BOSS SPECIFIC FLAVOR ---
-			if (enemyName.includes("Slag")) { 
-				damageType = 'fire';
-				if (Math.random() > 0.7) {
-					addToHistory(`<span class="text-fire">The molten slag clings to you! (Burning)</span>`, 'danger');
-					damage += 2; 
-				}
-			} else if (enemyName.includes("Spectre")) {
-				damageType = 'psychic';
-			} else if (enemyName.includes("Vampire") || enemyName.includes("Hulk")) {
-				damageType = 'physical';
-				if (damage > 10) {
-					 addToHistory(`<span class="text-red-600">Deep wound! You are bleeding.</span>`, 'danger');
-					 damage += 1;
-				}
-				if (enemyName.includes("Hulk") && state.combat.enemyHP < state.maxEnemyHP) {
-					const heal = 3;
-					state.combat.enemyHP = Math.min(state.maxEnemyHP, state.combat.enemyHP + heal);
-					state.enemyHP = state.combat.enemyHP; // Sync legacy
-					addToHistory(`<span class="text-emerald-400 font-bold">The Coral-Hulk regenerates! (+${heal} HP)</span>`, 'danger');
-				}
+			} else {
+				// Single Boss
+				damage = window.rollDice(state.enemyDamageRange ? `1d${state.enemyDamageRange[1]}` : '1d8');
 			}
 
-			// 3. ABSORB ELEMENTS REACTION (Player Mitigation)
-			if (state.player.specialization === 'AE' && damageType !== 'physical') {
-				addToHistory(`Edward reacts! **Absorb Elements** active.`, 'system');
-				damage = Math.floor(damage / 2);
-				state.combat.ae_primed = { type: damageType, bonusDmg: '1d8' };
-				addToHistory(`Damage halved. Blade is now **${damageType.toUpperCase()} PRIMED**.`, 'system');
-			}
-
-			// 4. APPLY DAMAGE
-			// Check Silas Intercept
+			// MITIGATION (Shield/Silas)
+			if (state.inventory.includes("Mirror Shield")) damage = Math.max(0, damage - attacksCount);
 			if (state.negateNextDamage) {
 				damage = 0;
 				state.negateNextDamage = false;
 				addToHistory(`<span class='text-emerald-400 font-bold'>Silas Intercepted the attack!</span>`, 'system');
 			}
 
-			const oldHP = state.currentHP;
-			state.currentHP = window.applyDamage(state.currentHP, damage, damageType);
-			const actualTaken = oldHP - state.currentHP;
-
-			if (actualTaken > 0) {
-				addToHistory(`${enemyName} hits for ${actualTaken} ${damageType} damage.`, 'danger');
-				window.fxManager.flashRed();
-			} else {
-				addToHistory(`${enemyName} attacks, but deals no damage.`, 'system');
+			// ABSORB ELEMENTS REACTION (If damageType is elemental)
+			// Bosses like Slag Elemental sets damageType to 'fire'
+			if (state.player.specialization === 'AE' && state.combat.damageType !== 'physical') {
+				damage = Math.floor(damage / 2);
+				state.combat.ae_primed = { type: state.combat.damageType, bonusDmg: '1d8' };
+				addToHistory(`Absorb Elements! Damage halved. Blade is ${state.combat.damageType.toUpperCase()} PRIMED.`, 'system');
 			}
+
+			// APPLY
+			if (damage > 0) {
+				const oldHP = state.currentHP;
+				state.currentHP = window.applyDamage(state.currentHP, damage, state.combat.damageType);
+				addToHistory(`${state.currentEnemy} hits for ${oldHP - state.currentHP} damage.`, 'danger');
+				window.fxManager.flashRed();
+			}
+
+			// TICK COOLDOWNS
+			if (state.allyCooldowns.silas > 0) state.allyCooldowns.silas--;
+			if (state.allyCooldowns.blink > 0) state.allyCooldowns.blink--;
 
 			state.combat.isPlayerTurn = true;
 			updateUI();
+		};
+
+		// 5. ITEM/UTILITY BRIDGE
+		// This handles Consumables and Victory Checks
+		window.resolveCombatRound = function(attackType) {
+			const state = window.gameState;
+
+			// Victory Routing
+			if (attackType === 'check_victory') {
+				const enemy = state.combat.enemy.name || "";
+				if (state.combat.enemyHP <= 0) {
+					if (enemy.includes("Slag")) renderScene('smelter_victory_generic'); 
+					else if (enemy.includes("Spectre")) renderScene('chapel_victory_generic');
+					else if (enemy.includes("Coral")) renderScene('coral_hulk_victory');
+					else renderScene('spire_victory');
+				}
+				return;
+			}
+
+			// Consumable Logic
+			let damage = 0;
+			let log = "";
+
+			if (attackType === 'item_holy_water') { damage = 25; log = "Holy Water burns the target!"; }
+			else if (attackType === 'item_fire') { damage = 20; log = "Alchemical Fire erupts!"; }
+			else if (attackType === 'item_stake_driver') { 
+				damage = 15; 
+				window.applyStatusEffect(state, 'prone', 1);
+				log = "Stake Driver impact! Target Stunned.";
+			}
+			else if (attackType === 'item_flash') {
+				damage = 0;
+				window.applyStatusEffect(state, 'prone', 1);
+				log = "Flash Powder! Enemy Blinded (Prone).";
+			}
+
+			if (damage > 0) {
+				// Apply to Horde or Single
+				if (state.activeEnemies && state.activeEnemies.length > 0) {
+					// AOE logic for items? Or Single? Let's say AOE for Holy Water/Fire
+					state.activeEnemies.forEach(e => {
+						state.enemies[e] = Math.max(0, state.enemies[e] - damage);
+					});
+					// Recalc total
+					let sum = 0; Object.values(state.enemies).forEach(v=>sum+=v);
+					state.combat.enemyHP = sum;
+					state.enemyHP = sum;
+				} else {
+					state.combat.enemyHP -= damage;
+					state.enemyHP = state.combat.enemyHP;
+				}
+				
+				addToHistory(log + ` Dealt ${damage} damage.`, 'combat');
+				window.fxManager.flashRed();
+			}
+
+			if (state.combat.enemyHP <= 0) {
+				window.resolveCombatRound('check_victory');
+			} else {
+				setTimeout(window.enemyTurn, 1000);
+			}
+		};
+
+		// 6. ALLY COMMAND (Free Action)
+		window.allyCommand = function(allyId) {
+			const state = gameState;
+			if (state.allyCooldowns[allyId] > 0) {
+				addToHistory("Ally on Cooldown!", 'system');
+				return;
+			}
+
+			if (allyId === 'silas') {
+				state.negateNextDamage = true;
+				state.combat.silas_used_this_turn = true; // Trigger for Combo
+				state.allyCooldowns.silas = 3;
+				addToHistory("Silas Intercept Ready! (Combo Enabled)", 'system');
+			}
+			else if (allyId === 'blink') {
+				state.nextAttackCrit = true;
+				state.combat.blink_used_this_turn = true; // Trigger for Combo
+				state.allyCooldowns.blink = 3;
+				addToHistory("Blink Phase Shift! (Crit + Combo Enabled)", 'system');
+			}
+			
+			audioManager.playClick();
+			updateUI();
+			// Re-render scene to update attack buttons to "Combo" state
+			renderScene(state.currentSceneId, false);
+		};
+
+		// 7. DYNAMIC BUTTON GENERATOR
+		window.generateCombatChoices = function(state) {
+			let choices = [];
+			const { combat, player } = state;
+			
+			// --- DETERMINE ATTACK BUTTON ---
+			let attackName = "Strike with Weapon";
+			let attackType = "standard";
+			let customClass = ""; // Default grey
+
+			// Combo Logic
+			if (combat.blade_enhanced_active) {
+				if (combat.blink_used_this_turn) {
+					attackName = "Dire Wolf Trip Attack (Crit + Prone)";
+					attackType = "tripAttack";
+					customClass = "spectral-glow-btn";
+				} 
+				else if (combat.silas_used_this_turn) {
+					if (player.specialization === 'PA') {
+						attackName = "Hunter's Edge (Vulnerable)";
+						attackType = "huntersEdge";
+						customClass = "spectral-glow-btn";
+					} else {
+						attackName = "The White Wolf's Bite (Heal)";
+						attackType = "wolfBite";
+						customClass = "spectral-glow-btn";
+					}
+				}
+				else if (combat.ae_primed) {
+					attackName = "Howling Planar Strike (Force + Element)";
+					attackType = "planarStrike";
+					customClass = "spectral-glow-btn";
+				}
+				else if (combat.hunters_mark_used_this_turn) {
+					attackName = "Surgical Strike (Crit Chance)";
+					attackType = "surgicalStrike";
+					customClass = "spectral-glow-btn";
+				}
+				else {
+					attackName = "Zephyr Strike (Force Dmg)";
+					attackType = "zephyrStrike";
+					customClass = "spectral-glow-btn";
+				}
+			} else if (combat.ae_primed) {
+				attackName = "Elemental Retaliation";
+				attackType = "elementalStrike";
+				customClass = "spectral-glow-btn";
+			}
+
+			// Add Main Attack
+			choices.push({
+				text: attackName,
+				action: () => window.attackEnemy(attackType),
+				type: 'action',
+				customClass: customClass
+			});
+
+			// Add Consumables
+			const combatItems = [
+				{ id: 'Holy Water', func: 'item_holy_water', style: 'btn-success-glow' },
+				{ id: 'Alchemical Fire', func: 'item_fire', style: 'btn-fire-glow' },
+				{ id: 'Sun-Star Grenade', func: 'item_sun_star', style: 'btn-fire-glow' },
+				{ id: 'Flash Powder', func: 'item_flash', style: '' },
+				{ id: 'Scale-Stake Driver', func: 'item_stake_driver', style: 'btn-fire-glow' }
+			];
+
+			combatItems.forEach(item => {
+				if (state.inventory.includes(item.id)) {
+					choices.push({
+						text: `Use ${item.id}`,
+						action: () => window.resolveCombatRound(item.func),
+						type: 'action',
+						consume: true,
+						reqItem: item.id,
+						customClass: item.style
+					});
+				}
+			});
+
+			return choices;
 		};
 		
 		
@@ -2917,7 +2690,7 @@
                         reqNotFlag: 'knowsSmelterSecret',
                         reqNotItem: 'Sword of Valor',
                         doomCost: 1,
-                        customClass: 'btn-pulse' // Added Style
+                        customClass: 'btn-success-glow'
                     },
                     { 
                         text: "Listen to Gravedigger's Warnings (Chapel)", 
@@ -2926,7 +2699,7 @@
                         reqNotFlag: 'knowsChapelSecret',
                         reqNotItem: 'Ring of Brass',
                         doomCost: 1,
-                        customClass: 'btn-pulse' // Added Style 
+                        customClass: 'btn-success-glow'
                     },
                     { 
                         text: "Observe the Card Game", 
@@ -7390,16 +7163,19 @@
                 if (isHeroButton) icon = '<i class="fas fa-star hero-icon"></i>'; 
                 if (isCombineButton) icon = '<i class="fas fa-hammer text-yellow-500"></i>';
                 
-                // --- FIX: EXPLICIT SKILL CHECK ICON & TEXT ---
+                // --- FIX: SKILL CHECK STYLING ---
                 if (isSkillCheck) {
                     // 1. Force the Dice Icon
                     icon = '<i class="fas fa-dice-d20 spectral-text-glow"></i>';
                     
                     // 2. Add DC Text
                     const displayDC = gameState.isRiftCollapse ? choice.dc + 2 : choice.dc;
-                    supplementalText += ` <span class="text-xs text-gray-400 uppercase tracking-wider ml-2 mr-4">[${choice.skill} DC ${displayDC}]</span>`;
+                    supplementalText += ` <span class="text-xs text-cyan-500/70 font-bold uppercase tracking-wider ml-2 mr-4">[${choice.skill} DC ${displayDC}]</span>`;
                     
-                    // 3. Add Crew Bonus Text (if active)
+                    // 3. FORCE COLOR ON TEXT (This fixes the "not having color" issue)
+                    content = `<span class="cinzel font-bold text-cyan-200 group-hover:text-white drop-shadow-sm">${rawText}</span>`;
+                    
+                    // 4. Crew Bonus Logic
                     if (activeCrewMember) {
                         const hasBonus = getBonusForSkill(activeCrewMember, choice.skill);
                         if (hasBonus) {
