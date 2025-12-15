@@ -468,6 +468,30 @@
 				activeEnemies: [],
 				enemies: {},
 				activeBoons: [],
+				// --- ACT 3 FLAGS ---
+				unlocked_dogtooth: false, 
+				unlocked_spire: false,
+				knownIslands: ['port_hub'],
+				currentLocation: 'port_hub',
+				supplies: 10,
+				
+				// --- ACT 3 DOGTOOTH FLAGS ---
+				dogtoothIntimidated: false,
+				dogtoothExamined: false,
+				envoyResolved: false,
+				labLooted: false,
+				silasVengeanceActive: false,
+
+				// --- ACT 3 ORDER/CHAOS QUEST FLAGS ---
+				fenceQuestActive: false, // Order Quest to get Ember-Heart
+				fenceQuestComplete: false,
+				traitorQuestActive: false, // Chaos Quest to get Traitor
+				traitorQuestComplete: false,
+				coralHulkDefeated: false,
+				wardSurgeryDone: false,
+				wardRumDonated: false,
+				wardBloomDone: false,
+				knowsDoctorSecret: false,
 				crewSkillBonuses: { gareth: 0, quinn: 0, talon: 0, bones: 0 },
 				passiveDefenseBonus: 0
 			};
@@ -2168,6 +2192,7 @@
 					
 					Object.keys(state.crew).forEach(k => state.crew[k].used = false);
 					state.docksWorkCount = 0;
+					state.holdTheLineUsed = false;
 					return "Mission Accepted: Find the Wolves of Valor. HP and Crew Use Restored.";
 				},
 				choices: [
@@ -6314,10 +6339,10 @@
         };
 
         // --- CORE FUNCTIONS & ENGINE ---
-        
-        function applyDamage(currentHP, damageAmount, damageType = 'physical') {
+		function applyDamage(currentHP, damageAmount, damageType = 'physical') {
 			let finalDamage = damageAmount;
 			
+			// 1. Gareth Act 2 Boon: Iron Will (Psychic Damage Reduction)
 			if (damageType === 'psychic' && gameState.activeBoons.includes('iron_will')) {
 				finalDamage = Math.max(0, finalDamage - 2);
 				addToHistory("Iron Will reduced Psychic damage.", 'system');
@@ -6329,12 +6354,15 @@
 				addToHistory("Alchemical Resistance halved the damage.", 'system');
 			}
 
+            // 3. Spyglass / Watchman's Lens Passive (Order Reduction)
             if (gameState.inventory.includes("Salt-Warped Spyglass") && gameState.influence <= -15) {
                 if (finalDamage > 0) {
                     finalDamage = Math.max(0, finalDamage - 1);
                     addToHistory("Passive (Watchman's Lens): Damage reduced by 1.", 'system');
                 }
             }
+            
+            // 4. Silas Negation (Ally ability)
             if (gameState.negateNextDamage) {
                 finalDamage = 0;
                 gameState.negateNextDamage = false; 
@@ -6343,13 +6371,15 @@
 
             let finalHP = Math.max(0, currentHP - finalDamage);
 			
-			// 3. Gareth Act 3 Boon: Hold The Line (Death Defiance)
+			// 5. Gareth Act 3 Boon: Hold The Line (Death Defiance)
+			// This check must happen AFTER damage calculation but BEFORE the final return
 			if (finalHP === 0 && gameState.activeBoons.includes('hold_the_line') && !gameState.holdTheLineUsed) {
 				finalHP = 1;
 				gameState.holdTheLineUsed = true;
 				addToHistory("HOLD THE LINE! Gareth's tenacity keeps you at 1 HP.", 'danger');
 			}
             
+            // 6. Phoenix Draft (Last Resort)
             if (finalHP === 0) {
                 const phoenixIndex = gameState.inventory.indexOf("Phoenix Draft");
                 if (phoenixIndex > -1) {
@@ -6362,7 +6392,7 @@
 
             return Math.max(0, finalHP);
         }
-		window.applyDamage = applyDamage;
+        window.applyDamage = applyDamage;
 
         // --- STOCK INITIALIZATION ---
         // Ensure stock is defined even if not loaded from save
@@ -6610,34 +6640,35 @@
         // but to be safe we leave this logic here as part of renderChoices/renderScene flow.
 
         function combineItems(baseItem, ingredient, resultItem) {
-            if (!gameState.inventory.includes(baseItem) || !gameState.inventory.includes(ingredient)) {
-                return "Error: Missing ingredients.";
-            }
+			if (!gameState.inventory.includes(baseItem) || !gameState.inventory.includes(ingredient)) {
+				return "Error: Missing ingredients.";
+			}
 
-            const baseIndex = gameState.inventory.indexOf(baseItem);
-            const ingredientIndex = gameState.inventory.indexOf(ingredient);
-            
-            const baseDef = itemRegistry[baseItem];
-            if (baseDef && baseDef.onRemove) {
-                baseDef.onRemove(gameState);
-                addToHistory(`Passive benefit of ${baseItem} removed.`, 'system');
-            }
-            
-            gameState.inventory.splice(Math.max(baseIndex, ingredientIndex), 1); 
-            gameState.inventory.splice(Math.min(baseIndex, ingredientIndex), 1); 
+			const baseIndex = gameState.inventory.indexOf(baseItem);
+			const ingredientIndex = gameState.inventory.indexOf(ingredient);
+			
+			const baseDef = itemRegistry[baseItem];
+			if (baseDef && baseDef.onRemove) {
+				baseDef.onRemove(gameState);
+				addToHistory(`Passive benefit of ${baseItem} removed.`, 'system');
+			}
+			
+			// Splice logic to remove the items, accounting for index changes
+			gameState.inventory.splice(Math.max(baseIndex, ingredientIndex), 1); 
+			gameState.inventory.splice(Math.min(baseIndex, ingredientIndex), 1); 
 
-            gameState.inventory.push(resultItem);
+			gameState.inventory.push(resultItem);
 
-            const resultDef = itemRegistry[resultItem];
-            if (resultDef && resultDef.onAcquire) {
-                resultDef.onAcquire(gameState);
-                addToHistory(`Passive benefit of ${resultItem} applied.`, 'system');
-            }
-            
-            saveGame();
-            updateUI();
-            return `${baseItem} and ${ingredient} were fused at the Spectral Forge, yielding the <span class="text-item">${resultDef.name}</span>!`;
-        }
+			const resultDef = itemRegistry[resultItem];
+			if (resultDef && resultDef.onAcquire) {
+				resultDef.onAcquire(gameState);
+				addToHistory(`Passive benefit of ${resultItem} applied.`, 'system');
+			}
+			
+			saveGame();
+			updateUI();
+			return `${baseItem} and ${ingredient} were fused at the Spectral Forge, yielding the <span class="text-item">${resultDef.name}</span>!`;
+		}
 
 		async function renderScene(sceneId, logText = true) {
             const scene = scenes[sceneId];
@@ -7949,12 +7980,16 @@
 			});
 		}
 		
+		// 3. Updated Crew Toggle Logic (Now globally accessible)
 		window.toggleCrewSelection = function(crewKey) {
 			const c = gameState.crew[crewKey];
 			if (activeCrewMember && activeCrewMember.id === c.id) {
 				activeCrewMember = null; // Deselect
 				audioManager.playClick();
 			} else {
+				// Safety Check: If trying to select a used crew member, prevent it unless free
+				if (c.used && !gameState.crewUseFree) return;
+				
 				activeCrewMember = c; // Select
 				audioManager.playGhost();
 			}
