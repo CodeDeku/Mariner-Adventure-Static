@@ -92,6 +92,19 @@
 				</div>
 
 				<div class="radial-container mt-2">
+					<div class="radial-grid-mask"><div class="radial-planar-grid"></div></div>
+					<div id="tether-gareth" class="spectral-tether tether-nw"></div>
+					<div id="tether-quinn" class="spectral-tether tether-ne"></div>
+					<div id="tether-talon" class="spectral-tether tether-sw"></div>
+					<div id="tether-bones" class="spectral-tether tether-se"></div>
+					<div id="radial-hub" class="radial-hub">
+						<div class="cinzel font-bold text-cyan-200 text-xs leading-tight text-center mt-2">GUIDING<br>VOICE</div>
+						<div class="text-cyan-400 text-xs mt-0.5 font-bold animate-pulse tracking-widest">+1d4</div>
+					</div>
+					<div id="node-gareth" class="crew-node node-nw" onclick="window.toggleCrewSelection('gareth')"></div>
+					<div id="node-quinn" class="crew-node node-ne" onclick="window.toggleCrewSelection('quinn')"></div>
+					<div id="node-talon" class="crew-node node-sw" onclick="window.toggleCrewSelection('talon')"></div>
+					<div id="node-bones" class="crew-node node-se" onclick="window.toggleCrewSelection('bones')"></div>
 				</div>
 				
 				<div id="abilities-combined-container" class="grid grid-cols-2 gap-2 mt-2 hidden">
@@ -6871,23 +6884,6 @@
         }
 		
 		
-		
-		// 3. Updated Crew Toggle Logic (from Stable)
-		function toggleCrewSelection(crewKey) {
-			const c = gameState.crew[crewKey];
-			if (activeCrewMember && activeCrewMember.id === c.id) {
-				activeCrewMember = null; // Deselect
-				audioManager.playClick();
-			} else {
-				activeCrewMember = c; // Select
-				audioManager.playGhost();
-			}
-			updateUI();
-			// Re-render choices to update button borders/text
-			renderChoices(scenes[gameState.currentSceneId].choices, false); 
-		}
-		
-		
 		function renderChoices(choices, isDeathScene = false) {
             const container = document.getElementById('choices-area');
             container.innerHTML = '';
@@ -7891,47 +7887,13 @@
 		});
 
 
+		// 4. Update Radial Menu - SIMPLIFIED TO ONLY RENDER STATE
 		function renderRadialCrew() {
 			const container = document.querySelector('.radial-container');
 			if (!container) return; 
 
 			const crewKeys = ['gareth', 'quinn', 'talon', 'bones']; 
 			
-			// 1. INITIAL BUILD
-			if (!document.getElementById('radial-hub')) { 
-				// NEW: Add the Grid Mask Layers here
-				container.innerHTML = `
-					<div class="radial-grid-mask"><div class="radial-planar-grid"></div></div>
-					<div id="tether-gareth" class="spectral-tether tether-nw"></div>
-					<div id="tether-quinn" class="spectral-tether tether-ne"></div>
-					<div id="tether-talon" class="spectral-tether tether-sw"></div>
-					<div id="tether-bones" class="spectral-tether tether-se"></div>
-					<div id="radial-hub" class="radial-hub">
-						<div class="cinzel font-bold text-cyan-200 text-xs leading-tight text-center mt-2">GUIDING<br>VOICE</div>
-						<div class="text-cyan-400 text-xs mt-0.5 font-bold animate-pulse tracking-widest">+1d${gameState.guidingDieSize || 4}</div>
-					</div>
-				`;
-				
-				crewKeys.forEach((key, idx) => {
-					const btn = document.createElement('div');
-					btn.id = `node-${key}`; 
-					btn.className = 'crew-node';
-					
-					if (idx === 0) btn.classList.add('node-nw'); 
-					else if (idx === 1) btn.classList.add('node-ne');
-					else if (idx === 2) btn.classList.add('node-sw'); 
-					else if (idx === 3) btn.classList.add('node-se');
-					
-					btn.onclick = () => {
-						const currentCrew = gameState.crew[key];
-						if (currentCrew.used && !gameState.crewUseFree) return;
-						toggleCrewSelection(key); 
-					};
-					container.appendChild(btn);
-				});
-			}
-
-			// 2. STATE UPDATE (Rest of logic remains the same)
 			const hub = document.getElementById('radial-hub');
 			const isAnyActive = activeCrewMember !== null;
 
@@ -7950,8 +7912,7 @@
 				const btn = document.getElementById(`node-${key}`);
 				const tether = document.getElementById(`tether-${key}`);
 				
-				// Critical safety check: If any element is missing, skip
-				if (!btn || !tether) return; 
+				if (!btn || !tether) return;
 
 				const isUsed = c.used;
 				const isActive = activeCrewMember && activeCrewMember.id === c.id;
@@ -7962,11 +7923,13 @@
 				
 				let content = `<span class="crew-node-name">${displayName}</span><span class="crew-node-skill">${c.skill.replace('&', '<br>&')}</span>`;
 				
+				// Add Icons based on state
 				if(isUsed && !gameState.crewUseFree) content += `<i class="fas fa-lock absolute top-1 right-1 text-xs text-gray-500"></i>`;
 				if(gameState.crewUseFree && !isUsed) content += `<i class="fas fa-star absolute top-1 right-1 text-xs text-purple-400 animate-pulse"></i>`;
 				
 				btn.innerHTML = content;
 
+				// Apply/Remove State Classes
 				if (isActive) {
 					btn.classList.add('charged');
 					tether.classList.add('flowing');
@@ -7977,15 +7940,16 @@
 
 				if (isUsed && !gameState.crewUseFree) {
 					btn.classList.add('used');
+					btn.onclick = () => { /* No action */ }; 
 				} else {
 					btn.classList.remove('used');
+					// Re-bind click handler if the button is now usable (it's bound statically in the HTML now, but this is a fail-safe)
+					btn.onclick = () => { window.toggleCrewSelection(key); };
 				}
 			});
 		}
-
-
-		// 3. Updated Crew Toggle Logic
-		function toggleCrewSelection(crewKey) {
+		
+		window.toggleCrewSelection = function(crewKey) {
 			const c = gameState.crew[crewKey];
 			if (activeCrewMember && activeCrewMember.id === c.id) {
 				activeCrewMember = null; // Deselect
@@ -7998,6 +7962,7 @@
 			// Re-render choices to update button borders/text
 			renderChoices(scenes[gameState.currentSceneId].choices, false); 
 		}
+
 		
 		// --- KONAMI CODE COMMAND CENTER ---
 		(function() {
