@@ -1267,7 +1267,8 @@
 			return choices;
 		};
 		
-		
+		window.initCombat = initCombat;
+		window.initHordeCombat = initHordeCombat;
 
         // 1. PLANE WALK LOGIC
         window.gameFunctions.togglePlaneWalk = function() {
@@ -3206,9 +3207,8 @@
 				isBoss: true,
 				choices: [], 
 				onEnter: (state) => {
-					// 1. Generate Base Actions (Items, Standard Attacks)
-					const baseButtons = window.generateCombatChoices(state);
-					scenes['smelter_combat_loop'].choices = baseButtons;
+					const buttons = window.generateCombatChoices(state);
+					scenes['smelter_combat_loop'].choices = buttons;
 					return null; 
 				}
 			},
@@ -3419,10 +3419,10 @@
                 isBoss: true,
                 choices: [],
                 onEnter: (state) => {
-                    const baseButtons = window.generateCombatChoices(state);
-                    scenes['chapel_combat_loop'].choices = baseButtons;
-                    return null;
-                }
+					const buttons = window.generateCombatChoices(state);
+					scenes['chapel_combat_loop'].choices = buttons;
+					return null;
+				}
             },
 
             'chapel_victory_generic': {
@@ -5639,11 +5639,10 @@
 				isBoss: true,
 				choices: [],
                 onEnter: (state) => {
-                    // DYNAMICALLY GENERATE BUTTONS
-                    const buttons = window.generateCombatChoices(state);
-                    scenes['coral_hulk_combat'].choices = buttons;
-                    return null;
-                }
+					const buttons = window.generateCombatChoices(state);
+					scenes['coral_hulk_combat'].choices = buttons;
+					return null;
+				}
 			},
 
 			'coral_hulk_victory': {
@@ -7172,7 +7171,7 @@
                     supplementalText += ` <span class="text-xs text-cyan-500/70 font-bold uppercase tracking-wider ml-2 mr-4">[${choice.skill} DC ${displayDC}]</span>`;
                     
                     // 3. FORCE COLOR ON TEXT (This fixes the "not having color" issue)
-                    content = `<span class="cinzel font-bold text-cyan-200 group-hover:text-white drop-shadow-sm">${rawText}</span>`;
+                    content = `<span class="cinzel font-bold text-white group-hover:text-white drop-shadow-sm">${rawText}</span>`;
                     
                     // 4. Crew Bonus Logic
                     if (activeCrewMember) {
@@ -7902,7 +7901,7 @@
 					<div id="tether-bones" class="spectral-tether tether-se"></div>
 					<div id="radial-hub" class="radial-hub">
 						<div class="cinzel font-bold text-cyan-200 text-xs leading-tight text-center mt-2">GUIDING<br>VOICE</div>
-						<div class="text-cyan-400 text-xs mt-0.5 font-bold animate-pulse tracking-widest">+1d${gameState.guidingDieSize || 4}</div>
+						<div class="text-cyan-400 text-xs mt-0.5 font-bold animate-pulse tracking-widest">+1d4</div>
 					</div>
 				`;
 				
