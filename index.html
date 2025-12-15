@@ -911,7 +911,6 @@
 			for (let i = 0; i < numDice; i++) { total += Math.floor(Math.random() * dieSize) + 1; }
 			return total + modifier;
 		};
-		window.rollDice = rollDice;
 
 		window.applyStatusEffect = (state, effectName, duration) => {
 			if (!state.combat.enemyStatus) state.combat.enemyStatus = [];
