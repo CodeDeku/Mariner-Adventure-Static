@@ -1132,7 +1132,7 @@
 			state.combat.isPlayerTurn = true;
 			updateUI();
 		};
-		window.enemyTurn = enemyTurn;
+        window.enemyTurn = enemyTurn;
 
 		// 5. ITEM/UTILITY BRIDGE
 		// This handles Consumables and Victory Checks
@@ -4574,8 +4574,7 @@
 					// RNG Event Logic
 					const rng = Math.random();
 					if (rng < 0.15) return 'sea_flotsam_event'; // 15% Chance for Flotsam
-					if (rng < 0.1) return 'sea_scavenger_encounter'; // 10% chance
-					if (window.gameFunctions.checkForContraband() && rng < 0.5) return 'sea_navy_encounter';
+					if (rng < 0.25) return 'sea_scavenger_encounter'; // 10% chance
 					const hasContraband = window.gameFunctions.checkForContraband();
 					
 					// High chance of Navy if carrying contraband (40%), otherwise Fog (30%)
@@ -4607,7 +4606,7 @@
 					if (hasContraband && rng < 0.4) return 'sea_navy_encounter'; 
 					if (rng < 0.3) return 'sea_event_fog';
 					
-					return 'bleak_dogtooth'; 
+					return 'bleak_dogtooth';
 				}
 			},
 			'travel_to_spire': {
@@ -4631,7 +4630,7 @@
 					if (hasContraband && rng < 0.4) return 'sea_navy_encounter'; 
 					if (rng < 0.3) return 'sea_event_fog';
 					
-					return 'sanguine_spire_entry'; 
+					return 'sanguine_spire_entry';
 				}
 			},
 			'sea_starve_logic': {
@@ -7863,6 +7862,7 @@
 				invContainer.appendChild(el);
 			});
 		}
+		window.renderInventoryList = renderInventoryList;
 
 		function renderCompanions(silas, blink) {
 			const list = document.getElementById('companions-list');
@@ -7981,6 +7981,7 @@
 				}
 			});
 		}
+		window.renderRadialCrew = renderRadialCrew;
 		
 		// 3. Updated Crew Toggle Logic (Now globally accessible)
 		window.toggleCrewSelection = function(crewKey) {
