@@ -92,16 +92,8 @@
 				</div>
 
 				<div class="radial-container mt-2">
-					<div id="tether-gareth" class="spectral-tether tether-nw"></div>
-					<div id="tether-quinn" class="spectral-tether tether-ne"></div>
-					<div id="tether-talon" class="spectral-tether tether-sw"></div>
-					<div id="tether-bones" class="spectral-tether tether-se"></div>
-					<div id="radial-hub" class="radial-hub">
-						<div class="cinzel font-bold text-cyan-200 text-xs leading-tight text-center mt-2">GUIDING<br>VOICE</div>
-						<div class="text-cyan-400 text-xs mt-0.5 font-bold animate-pulse tracking-widest">+1d4</div>
-					</div>
 				</div>
-
+				
 				<div id="abilities-combined-container" class="grid grid-cols-2 gap-2 mt-2 hidden">
 					<div id="planar-skills-container" class="hidden h-full flex flex-col">
 						<div class="text-xs cinzel font-bold uppercase tracking-wider text-cyan-400 border-b border-cyan-900/50 mb-1 pb-1">Horizon Walker</div>
@@ -7187,7 +7179,7 @@
                     supplementalText += ` <span class="text-xs text-cyan-500/70 font-bold uppercase tracking-wider ml-2 mr-4">[${choice.skill} DC ${displayDC}]</span>`;
                     
                     // 3. FORCE COLOR ON TEXT (This fixes the "not having color" issue)
-                    content = `<span class="cinzel font-bold text-gray-100 group-hover:text-white drop-shadow-sm">${rawText}</span>`;
+                    content = `<span class="cinzel font-bold text-gray-300 group-hover:text-amber-100 drop-shadow-sm">${rawText}</span>`;
                     
                     // 4. Crew Bonus Logic
                     if (activeCrewMember) {
@@ -7898,17 +7890,17 @@
 			}
 		});
 
-		// --- REPLACE THE ENTIRE renderRadialCrew FUNCTION (Starting approx. Line 3518) ---
+		// --- FINAL RENDER RADIAL CREW FUNCTION ---
 		function renderRadialCrew() {
 			const container = document.querySelector('.radial-container');
 			if (!container) return; 
 
 			const crewKeys = ['gareth', 'quinn', 'talon', 'bones']; 
 			
-			// 1. INITIAL BUILD: Dynamically create the 4 crew nodes if they don't exist.
-			if (!document.getElementById('node-gareth')) {
+			// 1. INITIAL BUILD: If the container is empty, or the main hub is missing, rebuild the structure completely.
+			if (!document.getElementById('radial-hub')) {
 				
-				// Ensure the core structure is minimal to prevent layout conflict
+				// Rebuild the core structure
 				container.innerHTML = `
 					<div class="radial-grid-mask"><div class="radial-planar-grid"></div></div>
 					<div id="tether-gareth" class="spectral-tether tether-nw"></div>
@@ -7921,6 +7913,7 @@
 					</div>
 				`;
 				
+				// Add the 4 crew nodes dynamically *after* the hub exists
 				crewKeys.forEach((key, idx) => {
 					const btn = document.createElement('div');
 					btn.id = `node-${key}`; 
@@ -7958,7 +7951,7 @@
 				const btn = document.getElementById(`node-${key}`);
 				const tether = document.getElementById(`tether-${key}`);
 				
-				// CRITICAL SAFETY CHECK: If node generation failed, skip update loop
+				// CRITICAL SAFETY CHECK: If node generation failed (e.g., initial render), skip update loop
 				if (!btn || !tether) return;
 
 				const isUsed = c.used;
