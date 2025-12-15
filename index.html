@@ -2884,15 +2884,16 @@
                 },
                 choices: [
                     { text: "Pay for a Cot (Full Rest)", nextScene: 'tavern_rest_success', type: 'action', cost: 10, doomCost: 3 },
-                    { text: "Eat Gruel Now", nextScene: 'eat_gruel_instant', type: 'action', cost: 1, stockItem: 'Gruel', doomCost: 0 },
-                    { text: "Buy Gruel (To Go)", nextScene: 'buy_gruel_to_go', type: 'action', cost: 1, stockItem: 'Gruel', doomCost: 0 },
+                    { text: "Eat Gruel Now", nextScene: 'eat_gruel_instant', type: 'action', cost: 1, doomCost: 0 },
+                    { text: "Buy Gruel (To Go)", nextScene: 'buy_gruel_to_go', type: 'action', cost: 1, doomCost: 0 },
                     { 
                         text: "Listen to Engineer's Rumors (Smelter)", 
                         nextScene: 'gather_info_smelter', 
                         type: 'dialogue', 
                         reqNotFlag: 'knowsSmelterSecret',
                         reqNotItem: 'Sword of Valor',
-                        doomCost: 1 
+                        doomCost: 1,
+                        customClass: 'btn-pulse' // Added Style
                     },
                     { 
                         text: "Listen to Gravedigger's Warnings (Chapel)", 
@@ -2900,7 +2901,8 @@
                         type: 'dialogue', 
                         reqNotFlag: 'knowsChapelSecret',
                         reqNotItem: 'Ring of Brass',
-                        doomCost: 1 
+                        doomCost: 1,
+                        customClass: 'btn-pulse' // Added Style 
                     },
                     { 
                         text: "Observe the Card Game", 
@@ -3050,6 +3052,7 @@
 				},
                 choices: [
                     { text: "Sell Curious Cargo to Smuggler", nextScene: 'docks_sell_cargo', type: 'action', reqItem: 'Curious Cargo', value: 15, doomCost: 0 },
+                    // Ensure defaults are set here
                     { text: "Work the Lines", nextScene: 'docks_work', type: 'action', costHP: 2, chaosGain: 1, shillingGain: 3, doomCost: 1 }, 
                     { 
                         text: "Dive for Sunken Treasure", 
@@ -7058,8 +7061,6 @@
         }
 		
 		
-		
-		
 		function renderChoices(choices, isDeathScene = false) {
             const container = document.getElementById('choices-area');
             container.innerHTML = '';
@@ -7067,217 +7068,587 @@
             const currentSceneId = gameState.currentSceneId;
             const currentSceneStock = scenes[currentSceneId] ? scenes[currentSceneId].stock : {};
             
-            // 1. FILTER: Remove generic attacks if in Boss Mode
-            let processedChoices = choices.filter(c => {
-                const text = c.text.toLowerCase();
-                if (gameState.isBossCombat) {
-                    if (text.includes("strike with")) return false;
-                    if (text.includes("blade enhancement")) return false;
-                    if (text.includes("hunter's mark")) return false;
-                }
-                return true;
-            });
+            // 1. CLONE CHOICES TO AVOID MUTATION BUGS
+            let processedChoices = choices.map(c => ({...c})); 
+            
+            // --- SCENE SPECIFIC OVERRIDES ---
 
-            // 2. SHOP GENERATION (Restored Logic)
+            // A. MARKET (Standard Shop)
             if (currentSceneId === 'market_stall') {
                 const sellWaresNav = choices.find(c => c.nextScene === 'market_sell');
                 const returnTarget = (gameState.act1Started || gameState.act2Started || gameState.act3Started) ? 'town_square' : 'market_crossroads';
-                processedChoices = []; // Clear defaults
+                const leaveNav = { text: "Leave", nextScene: returnTarget, type: 'travel', doomCost: 0 };
+                
+                processedChoices = []; 
                 
                 MARKET_BUY_OPTIONS.forEach(sale => {
-                    const stock = currentSceneStock[sale.item] || 0;
-                    if (stock > 0) {
+                    const actualStock = currentSceneStock[sale.item] || 0;
+                    const itemDef = itemRegistry[sale.item];
+                    // Logic to prevent buying healing if full
+                    const isHealing = itemDef && (itemDef.name.includes('Heal') || itemDef.name.includes('Rum'));
+                    const isFull = gameState.currentHP >= gameState.maxHP;
+                    const canAfford = gameState.shillings >= sale.cost;
+                    
+                    if (actualStock > 0) {
                         processedChoices.push({ 
-                            text: `Buy ${sale.item} (Stock: ${stock})`, 
-                            nextScene: sale.nextScene, type: 'action', 
-                            cost: sale.cost, stockItem: sale.item, doomCost: 0 
+                            text: `Buy ${sale.item.split('(')[0].trim()}`, 
+                            nextScene: sale.nextScene, 
+                            type: 'action', 
+                            cost: sale.cost, 
+                            stockItem: sale.item, // Triggers generic decrement
+                            doomCost: 0, 
+                            isDisabled: !canAfford || (isHealing && isFull) 
                         });
                     }
                 });
                 if (sellWaresNav) processedChoices.push(sellWaresNav);
-                processedChoices.push({ text: "Leave", nextScene: returnTarget, type: 'travel', doomCost: 0 });
+                processedChoices.push(leaveNav);
             }
-            else if (currentSceneId === 'alchemist_triage') {
-                const sellWaresNav = choices.find(c => c.nextScene === 'alchemist_sell');
-                const secretTrade = choices.find(c => c.nextScene === 'alchemist_secret_stock');
+            // B. TAVERN (Gruel Logic Fix)
+            else if (currentSceneId === 'blackwater_tavern') {
+                // We rebuild the list to ensure stock counts update dynamically
+                const restOption = choices.find(c => c.nextScene === 'tavern_rest_success');
+                const returnOption = choices.find(c => c.nextScene === 'town_square');
+                const gamblerOption = choices.find(c => c.nextScene === 'tavern_gambler');
+                const infoSmelter = choices.find(c => c.nextScene === 'gather_info_smelter');
+                const infoChapel = choices.find(c => c.nextScene === 'gather_info_chapel');
+                const instantEat = choices.find(c => c.nextScene === 'eat_gruel_instant');
+                const buyToGo = choices.find(c => c.nextScene === 'buy_gruel_to_go');
+                
                 processedChoices = []; 
-                if (secretTrade) processedChoices.push(secretTrade);
+                const gruelStock = currentSceneStock['Gruel'] || 0;
+                const canAfford = gameState.shillings >= 1;
+                const isHealingWasteful = gameState.currentHP >= gameState.maxHP; 
+                
+                // Add Stock Text to Title
+                if (instantEat) {
+                    processedChoices.push({ 
+                        ...instantEat, 
+                        text: `Eat Gruel Now (Stock: ${gruelStock})`, 
+                        // Remove stockItem here so we don't double-decrement (onEnter handles it)
+                        stockItem: null, 
+                        isDisabled: !canAfford || gruelStock <= 0 || isHealingWasteful 
+                    });
+                }
+                if (buyToGo) {
+                    processedChoices.push({ 
+                        ...buyToGo, 
+                        text: `Buy Gruel (To Go) (Stock: ${gruelStock})`, 
+                        // Remove stockItem here too
+                        stockItem: null,
+                        isDisabled: gruelStock <= 0 || !canAfford 
+                    });
+                }
+                
+                if (restOption) processedChoices.push(restOption);
+                
+                // Add Styling to Rumors
+                if (infoSmelter && !gameState.knowsSmelterSecret && !gameState.inventory.includes('Sword of Valor')) {
+                    processedChoices.push({ ...infoSmelter, customClass: 'btn-pulse' });
+                }
+                if (infoChapel && !gameState.knowsChapelSecret && !gameState.inventory.includes('Ring of Brass')) {
+                    processedChoices.push({ ...infoChapel, customClass: 'btn-pulse' });
+                }
+                
+                if (gamblerOption && gameState.inventory.includes('Ring of Brass') && !gameState.hasObservedGambler) processedChoices.push(gamblerOption);
+                if (returnOption) processedChoices.push(returnOption);
+            } 
+            // C. DOCKS (Work Costs Fix)
+            else if (currentSceneId === 'town_docks') {
+                 // Ensure the 'Work' button reflects the current dynamic cost
+                 const workBtn = choices.find(c => c.nextScene === 'docks_work');
+                 const cargoBtn = choices.find(c => c.nextScene === 'docks_sell_cargo');
+                 
+                 // Re-map to ensure the costHP property is fresh from the scene object (updated in onEnter)
+                 processedChoices = choices.map(c => {
+                     if (c.nextScene === 'docks_work') {
+                         return { 
+                             ...c, 
+                             isDisabled: gameState.currentHP <= (c.costHP || 2) 
+                         };
+                     }
+                     return c;
+                 });
+
+                 // Hide cargo button if invalid
+                 if (!gameState.inventory.includes('Curious Cargo') || gameState.act3Started) {
+                     processedChoices = processedChoices.filter(c => c.nextScene !== 'docks_sell_cargo');
+                 }
+            }
+            // D. SPIRE COMBAT
+            else if (currentSceneId === 'spire_combat_loop') {
+                processedChoices = scenes['spire_combat_loop'].choices;
+            }
+            // E. ALCHEMIST (Triage/Sell)
+            else if (currentSceneId === 'alchemist_triage') {
+                // Logic mostly preserved, ensure stockItem logic remains for simple shops
+                const sellWaresNav = choices.find(c => c.nextScene === 'alchemist_sell');
+                const returnNav = choices.find(c => c.nextScene === 'town_square');
+                const secretTrade = choices.find(c => c.nextScene === 'alchemist_secret_stock');
+                
+                processedChoices = []; 
+                if (secretTrade && gameState.inventory.includes('Strange Coin') && !gameState.inventory.includes('Phoenix Draft')) {
+                     processedChoices.push({ ...secretTrade, customClass: 'btn-hero' });
+                }
                 
                 ALCHEMIST_BUY_OPTIONS.forEach(sale => {
-                    const stock = currentSceneStock[sale.item] || 0;
-                    if (stock > 0) {
+                    const itemText = sale.item.split('(')[0].trim();
+                    const actualStock = currentSceneStock[sale.item] || 0;
+                    const itemDef = itemRegistry[sale.item];
+                    const isHealingItem = itemDef && (itemDef.name && (itemDef.name.includes('Tincture') || itemDef.name.includes('Potion')));
+                    const isFullHP = gameState.currentHP >= gameState.maxHP;
+                    const canAfford = gameState.shillings >= sale.cost;
+                    
+                    if (actualStock > 0) {
                         processedChoices.push({ 
-                            text: `Buy ${sale.item} (Stock: ${stock})`, 
-                            nextScene: sale.nextScene, type: 'action', 
-                            cost: sale.cost, stockItem: sale.item, doomCost: 0 
+                            text: `Buy ${itemText}`, 
+                            nextScene: sale.nextScene, 
+                            type: 'action', 
+                            cost: sale.cost, 
+                            stockItem: sale.item, 
+                            doomCost: sale.doomCost, 
+                            isDisabled: !canAfford || (isHealingItem && isFullHP) 
                         });
                     }
                 });
                 if (sellWaresNav) processedChoices.push({ ...sellWaresNav, text: "Sell Wares (Premium)" }); 
-                processedChoices.push({ text: "Return to Port Square", nextScene: 'town_square', type: 'travel', doomCost: 0 });
+                processedChoices.push(returnNav);
             }
-            else if (currentSceneId === 'blackwater_tavern') {
-                 // Ensure Gruel options show stock
-                 processedChoices.forEach(c => {
-                     if (c.stockItem === 'Gruel') {
-                         const stock = currentSceneStock['Gruel'] || 0;
-                         if (!c.text.includes("Stock")) c.text += ` (Stock: ${stock})`;
-                         if (stock <= 0) c.isDisabled = true;
-                     }
-                 });
-            }
-
-            // 3. COMBAT INJECTION (Combo Buttons)
-			const isCombatScene = (currentSceneId.includes('combat') || currentSceneId.includes('loop')) 
-								  && !currentSceneId.includes('start') && !currentSceneId.includes('intro') && !currentSceneId.includes('victory');
-			
-			if (gameState.isBossCombat && gameState.combat.isPlayerTurn && isCombatScene) {
-				const { blade_enhanced_active, blink_used_this_turn, ae_primed, hunters_mark_used_this_turn, silas_used_this_turn } = gameState.combat;
-				let comboBtn = null;
-
-				if (blade_enhanced_active) {
-					if (blink_used_this_turn) comboBtn = { text: "Dire Wolf Trip Attack (Crit + Prone)", action: () => window.attackEnemy('tripAttack'), type: 'action', customClass: 'spectral-glow-btn' };
-					else if (ae_primed) comboBtn = { text: "Howling Planar Strike", action: () => window.attackEnemy('planarStrike'), type: 'action', customClass: 'spectral-glow-btn' };
-					else comboBtn = { text: "Zephyr Strike (Force)", action: () => window.attackEnemy('zephyrStrike'), type: 'action', customClass: 'spectral-glow-btn' };
-				} 
-                else if (ae_primed) comboBtn = { text: `${ae_primed.type.toUpperCase()} Strike`, action: () => window.attackEnemy('elementalStrike'), type: 'action', customClass: 'spectral-glow-btn' };
-				
-                if (comboBtn) processedChoices.unshift(comboBtn);
-				
-				// Skill Toggles
-				if (gameState.player.specialization === 'AE' && !blade_enhanced_active) {
-					 processedChoices.unshift({ text: "Blade Enhancement (Free Action)", action: (s) => { s.combat.blade_enhanced_active = true; renderScene(s.currentSceneId, false); return "Blade charged."; }, type: 'action', customClass: 'btn-keen-senses' });
-				}
-				if (gameState.player.specialization === 'PA' && !hunters_mark_used_this_turn) {
-					 processedChoices.unshift({ text: "Hunter's Mark (Free Action)", action: (s) => { s.combat.hunters_mark_used_this_turn = true; renderScene(s.currentSceneId, false); return "Target Marked."; }, type: 'action', customClass: 'text-green-500 border-green-500' });
-				}
-				
-				// Standard Attacks
-				if (gameState.inventory.includes('Sword of Valor')) {
-					processedChoices.push({ text: "Strike with Sword of Valor", action: () => window.attackEnemy('standard'), type: 'action', customClass: 'btn-hero' });
-				} else {
-					processedChoices.push({ text: "Strike with Weapon", action: () => window.attackEnemy('standard'), type: 'action' });
-				}
-			}
-
-            // --- 4. RENDER LOOP ---
-            processedChoices.forEach(choice => {
-                // Requirements
-                if (choice.reqItem && !gameState.inventory.includes(choice.reqItem)) return;
-                if (choice.reqItems && !choice.reqItems.some(item => gameState.inventory.includes(item))) return;
-                if (choice.reqFlag && !gameState[choice.reqFlag]) return;
-                if (choice.reqNotFlag && gameState[choice.reqNotFlag]) return;
+            else if (currentSceneId === 'alchemist_sell') {
+                // Rebuild sell list dynamically
+                const backToBuyNav = choices.find(c => c.nextScene === 'alchemist_triage');
+                const returnNav = choices.find(c => c.nextScene === 'town_square');
+                processedChoices = []; 
                 
-                // Visual Prep
+                ALCHEMIST_SELL_OPTIONS.forEach(sell => {
+                    if (gameState.inventory.includes(sell.item)) {
+                        let isDisabled = false;
+                        // Don't sell tincture if shop is full
+                        if (sell.nextScene === 'sell_tincture' && currentSceneStock["Vitality Tincture"] >= 2) isDisabled = true; 
+                        
+                        // Don't sell artifacts if you have the legendary reward already
+                        const isArtifactSell = sell.nextScene === 'sell_fire' || sell.nextScene === 'sell_water';
+                        const hasRing = gameState.inventory.includes("Ring of Brass");
+                        const hasSword = gameState.inventory.includes("Sword of Valor");
+                        if (isArtifactSell && (hasRing || hasSword)) isDisabled = true;
+                        
+                        processedChoices.push({ 
+                            text: `Sell ${sell.item.split('(')[0].trim()}`, 
+                            nextScene: sell.nextScene, 
+                            type: 'action', 
+                            reqItem: sell.item, 
+                            value: sell.value, 
+                            doomCost: sell.doomCost, 
+                            isDisabled: isDisabled 
+                        });
+                    }
+                });
+                if (backToBuyNav) processedChoices.push(backToBuyNav);
+                processedChoices.push(returnNav);
+            } else if (currentSceneId === 'port_provisioner') {
+                 // Clean up port provisioner to ensure dynamic updates
+                 const sellNav = choices.find(c => c.nextScene === 'port_provisioner_sell');
+                 const returnNav = choices.find(c => c.nextScene === 'town_square');
+                 processedChoices = [];
+                 SHIP_SUPPLIES_OPTIONS.forEach(sale => {
+                    const canAfford = gameState.shillings >= sale.cost;
+                    const isMax = gameState.supplies >= 20;
+                    processedChoices.push({ text: `Buy ${sale.amount} Supplies`, type: 'action', cost: sale.cost, doomCost: 0, isDisabled: !canAfford || isMax, action: (state) => { state.supplies = Math.min(20, state.supplies + sale.amount); return `Purchased ${sale.amount} Supplies.`; }, nextScene: 'port_provisioner' });
+                });
+                if (sellNav) processedChoices.push(sellNav);
+                if (returnNav) processedChoices.push(returnNav);
+            } else if (currentSceneId === 'port_provisioner_sell') {
+                const buyNav = choices.find(c => c.nextScene === 'port_provisioner');
+                const returnNav = choices.find(c => c.nextScene === 'town_square');
+                processedChoices = [];
+                const SELLABLE_ITEMS_ACT3 = [ "Curious Cargo", "Rope", "Torch", "Healing Potion", "Rum", "Silver Locket", "Vitality Tincture", "Smelling Salts", "Flash Powder", "Pearlescent Mushroom", "Dead Man's Die" ];
+                SELLABLE_ITEMS_ACT3.forEach(itemName => {
+                    if (gameState.inventory.includes(itemName)) {
+                        const saleOption = [...MARKET_SELL_OPTIONS, ...ALCHEMIST_SELL_OPTIONS].find(opt => opt.item === itemName) || { value: 3 }; 
+                        processedChoices.push({ text: `Sell ${itemName.split('(')[0].trim()}`, nextScene: 'port_provisioner_sell', type: 'action', reqItem: itemName, value: saleOption.value, doomCost: 0, action: (state) => { const idx = state.inventory.indexOf(itemName); if (idx > -1) state.inventory.splice(idx, 1); state.shillings += saleOption.value; audioManager.playCoins(); return `Sold ${itemName} for ${saleOption.value}s.`; } });
+                    }
+                });
+                if (buyNav) processedChoices.push(buyNav);
+                if (returnNav) processedChoices.push(returnNav);
+            }
+
+            // --- RENDER LOOP ---
+            processedChoices.forEach(choice => {
+                // Requirements Checks
+                if (choice.reqItem && !gameState.inventory.includes(choice.reqItem)) return;
+                if (choice.reqItems && Array.isArray(choice.reqItems) && !choice.reqItems.some(item => gameState.inventory.includes(item))) return;
+                if (choice.reqSmuggler && gameState.influence < choice.reqSmuggler) return;
+                if (choice.reqGuard && gameState.influence > -choice.reqGuard) return;
+                if (choice.reqNotItem && gameState.inventory.includes(choice.reqNotItem)) return; 
+                if (choice.reqFlag && !gameState[choice.reqFlag]) return;
+                if (choice.reqNotFlag && gameState[choice.reqNotFlag]) return; 
+                if (choice.reqSkill && !gameState.skills.includes(choice.reqSkill) && choice.type !== 'skill') return;
+
                 let rawText = choice.text;
                 let icon = '<i class="fas fa-chevron-right text-gray-300 group-hover:text-amber-100"></i>';
                 let content = `<span class="cinzel font-bold text-gray-300 group-hover:text-amber-100">${rawText}</span>`;
                 let supplementalText = '';
+                
                 let isDisabled = false;
                 let disabledClass = '';
                 
+                // --- COST & DISABLE LOGIC ---
                 if (choice.cost && gameState.shillings < choice.cost) { isDisabled = true; disabledClass = 'btn-disabled-cost'; }
-                if (choice.isDisabled && (typeof choice.isDisabled === 'function' ? choice.isDisabled(gameState) : choice.isDisabled)) { isDisabled = true; disabledClass = 'btn-disabled-cost'; }
-
-                // Button Element
-                const btn = document.createElement('button');
+                if (choice.suppliesCost && gameState.supplies < choice.suppliesCost) { isDisabled = true; disabledClass = 'btn-disabled-cost'; }
+                if (choice.costHP !== undefined && gameState.currentHP <= choice.costHP) { isDisabled = true; disabledClass = 'btn-disabled-cost'; }
                 
-                // Styling Logic
-                let isCustom = choice.customClass ? true : false;
-                let isSkillCheck = choice.type === 'skill';
-                const alignmentClass = (isSkillCheck || choice.cost || choice.value) ? 'justify-start' : 'justify-between';
+                let disabledResult = choice.isDisabled;
+                if (typeof disabledResult === 'function') disabledResult = disabledResult(gameState);
+                if (disabledResult) { isDisabled = true; disabledClass = 'btn-disabled-cost'; }
                 
-                let btnClass = isCustom 
-                    ? `btn-game w-full text-left rounded shadow flex items-center ${alignmentClass} cinzel font-bold mb-2 ${choice.customClass}`
-                    : `btn-game w-full text-left rounded shadow flex items-center ${alignmentClass} cinzel font-bold bg-gray-800 border-gray-600 hover:border-amber-500 hover:bg-gray-750 text-gray-300 group`;
-
-                if (isDisabled) { btnClass += ` ${disabledClass}`; btn.disabled = true; }
-                
-                // Icons & Metadata
-                if (choice.cost) { icon = '<i class="fas fa-coins text-amber-500"></i>'; supplementalText += ` <span class="text-amber-500 text-sm ml-2">(-${choice.cost}s)</span>`; }
-                if (isSkillCheck) {
-                    icon = '<i class="fas fa-dice-d20 spectral-text-glow"></i>';
-                    const displayDC = gameState.isRiftCollapse ? choice.dc + 2 : choice.dc;
-                    supplementalText += ` <span class="spectral-text-glow text-sm uppercase tracking-wider ml-2 mr-4">[${choice.skill} DC ${displayDC}]</span>`;
-                    if (activeCrewMember && getBonusForSkill(activeCrewMember, choice.skill)) {
-                        btnClass += " border-cyan-500 ring-1 ring-cyan-400";
-                        supplementalText += ` <span class="text-cyan-300 text-[12px] font-bold animate-pulse">+ 1d${gameState.isEthereal?'8':'4'} (${activeCrewMember.name})</span>`;
+                // Combine Check
+                if (choice.type === 'combine' && choice.reqItems) {
+                    if (choice.reqItems.some(item => !gameState.inventory.includes(item))) {
+                        isDisabled = true;
+                        disabledClass = 'btn-disabled-cost';
+                        rawText = `${rawText} (Missing Item)`;
                     }
                 }
+
+                const btn = document.createElement('button');
                 
-                if (isCustom) {
-                     if (choice.customClass.includes('btn-fire-glow')) icon = '<i class="fas fa-fire text-red-400"></i>';
-                     else if (choice.customClass.includes('btn-hero')) icon = '<i class="fas fa-star text-blue-400"></i>';
+                let isHeroButton = choice.reqSkill ? true : false;
+                let isCustomClassButton = choice.customClass ? true : false;
+                let isTradeButton = choice.cost || choice.value || choice.shillingGain || (choice.nextScene && choice.nextScene.includes('sell'));
+                let isSkillCheck = choice.type === 'skill';
+                const isCombineButton = choice.type === 'combine'; 
+
+                // --- ALIGNMENT FIX ---
+                // We use justify-start for ANY button that has costs/indicators to prevent text overlap
+                const hasIndicators = (choice.cost || choice.value || choice.shillingGain || choice.costHP !== undefined || choice.chaosGain || choice.orderGain || choice.doomCost !== undefined || choice.tetherCost !== undefined || choice.suppliesCost !== undefined);
+                const alignmentClass = (isSkillCheck || hasIndicators || isCombineButton) ? 'justify-start' : 'justify-between';
+                
+                let btnClass = "";
+                
+                if (isDeathScene) {
+                    btnClass = `btn-game w-full p-3 text-left rounded shadow flex items-center ${alignmentClass} cinzel font-bold bg-red-900 border-red-700 hover:bg-red-800 hover:border-amber-500 text-white text-xl text-center`;
+                } else if (isCustomClassButton) {
+                    content = `<span class="cinzel font-bold text-white">${rawText}</span>`;
+                    
+                    // Icon Mapping
+                    if (choice.customClass === 'btn-success-glow') icon = '<i class="fas fa-ear-listen text-gray-300"></i>';
+                    else if (choice.customClass === 'btn-keen-senses') icon = '<i class="fas fa-eye text-purple-300"></i>';
+                    else if (choice.customClass === 'btn-lantern-glow') icon = '<i class="fas fa-lightbulb text-yellow-300"></i>';
+                    else if (choice.customClass === 'btn-anchor') icon = '<i class="fas fa-anchor text-cyan-300"></i>';
+                    else if (choice.customClass === 'btn-planewalk-reveal') icon = '<i class="fas fa-shoe-prints text-cyan-300"></i>';
+                    else if (choice.customClass === 'btn-pulse') icon = '<i class="fas fa-bullhorn text-amber-300"></i>';                    
+                    else icon = '<i class="fas fa-chevron-right text-white"></i>';
+
+                    if (choice.customClass && choice.customClass.includes('spectral-active')) {
+                         btnClass = `btn-game w-full text-left rounded shadow flex items-center ${alignmentClass} cinzel font-bold mb-2 spectral-active text-blue-100 ring-1 ring-blue-400 hover:ring-white`;
+                    } else {
+                        btnClass = `btn-game w-full text-left rounded shadow flex items-center ${alignmentClass} cinzel font-bold mb-2 ${choice.customClass}`;
+                    }
+                } else {
+                    // Standard Style
+                    btnClass = `btn-game w-full text-left rounded shadow flex items-center ${alignmentClass} cinzel font-bold bg-gray-800 border-gray-600 hover:border-amber-500 hover:bg-gray-750 text-gray-300 group`;
                 }
+                
+                if (isDisabled) {
+                    btnClass += ` ${disabledClass}`;
+                    btn.disabled = true;
+                }
+                
+                // Icon Overrides
+                if (isTradeButton) icon = '<i class="fas fa-coins text-amber-500"></i>';
+                if (choice.type === 'reset') icon = '<i class="fas fa-sync-alt text-gray-400 group-hover:text-white"></i>';
+                if (isHeroButton) icon = '<i class="fas fa-star hero-icon"></i>'; 
+                if (isCombineButton) icon = '<i class="fas fa-hammer text-yellow-500"></i>';
+                
+                // Silas Guard State
+                if (gameState.negateNextDamage && (isDeathScene || choice.type === 'action' || choice.costHP)) {
+                    btnClass += " ring-1 ring-emerald-500 bg-emerald-900/30";
+                    supplementalText += " <span class='text-emerald-400 text-[10px] uppercase font-bold animate-pulse ml-2'>[Silas Blocking]</span>";
+                }
+                
+                // Phase Strike Crit State
+                if (gameState.nextAttackCrit && (choice.type === 'action')) {
+                    btnClass += " ring-1 ring-emerald-500 bg-emerald-900/30";
+                    supplementalText += " <span class='text-emerald-400 text-[10px] uppercase font-bold animate-pulse ml-2'>[Phase Strike Ready]</span>";
+                }
+
+                // --- INDICATOR GENERATION (The Fix for "Work the Lines") ---
+                let indicators = [];
+                if (choice.cost) indicators.push({ text: `-${choice.cost}s`, color: 'text-amber-500' });
+                else if (choice.value) indicators.push({ text: `+${choice.value}s`, color: 'text-amber-500' });
+                else if (choice.shillingGain) indicators.push({ text: `+${choice.shillingGain}s`, color: 'text-amber-500' });
+                
+                if (choice.suppliesCost) {
+                    let finalSupplyCost = choice.suppliesCost;
+                    if (gameState.activeBoons.includes('master_navigator')) finalSupplyCost = Math.max(1, finalSupplyCost - 1);
+                    indicators.push({ text: `-${finalSupplyCost} Supplies`, color: 'text-indigo-400' });
+                }
+                
+                // FIX: explicitly check costHP here
+                if (choice.costHP !== undefined) indicators.push({ text: `-${choice.costHP} HP`, color: 'text-red-400' });
+                
+                if (choice.chaosGain) indicators.push({ text: `+${choice.chaosGain} Chaos`, color: 'text-emerald-400' });
+                else if (choice.orderGain) indicators.push({ text: `+${choice.orderGain} Order`, color: 'text-blue-400' });
+                
+                // Logistics & Tether Logic
+                const hasLogistics = gameState.quinnLogistics || gameState.activeBoons.includes('logistics');
+				const isStandardAct1Scene = gameState.act1Started && !scenes[currentSceneId].isBoss && !scenes[currentSceneId].isRest;
+
+				if (gameState.act1Started && hasLogistics && isStandardAct1Scene) {
+                    const hasExplicitCost = choice.doomCost !== undefined;
+                    const cost = hasExplicitCost ? choice.doomCost : (isStandardAct1Scene ? 1 : 0);
+                    if (cost >= 0 && choice.type !== 'reset' && choice.nextScene !== 'lighthouse_vigil') {
+                        if (cost > 0) indicators.push({ text: `-${cost} Time`, color: 'text-purple-400' }); 
+                        else if (cost === 0 && (hasExplicitCost || choice.type === 'travel')) indicators.push({ text: `0 Time`, color: 'text-purple-400' });
+                    }
+                } 
+				else if (gameState.act2Started) {
+					const hasExplicitCost = choice.tetherCost !== undefined;
+					let cost = hasExplicitCost ? choice.tetherCost : (scenes[currentSceneId].isBoss || scenes[currentSceneId].isRest ? 0 : 1);
+					
+					if (gameState.activeBoons.includes('efficient_pathing') && cost === 1 && !hasExplicitCost) cost = 0;
+
+					if (cost >= 0 && choice.type !== 'reset') {
+						if (cost > 0) indicators.push({ text: `-${cost} Turns`, color: 'text-cyan-400' }); 
+						else if (cost === 0 && (hasExplicitCost || gameState.activeBoons.includes('efficient_pathing'))) {
+							indicators.push({ text: `0 Turns`, color: 'text-cyan-400' });
+						}
+                        // Bones Boon
+						if (gameState.activeBoons.includes('spectral_metabolism') && choice.type === 'travel' && choice.nextScene !== currentSceneId) {
+							const originalAction = choice.action; 							
+							choice.action = (state) => {
+								if (state.currentHP < state.maxHP) state.currentHP += 1;
+								if (originalAction) return originalAction(state);
+							};
+							indicators.push({ text: `+1 HP`, color: 'text-emerald-400' });
+						}
+					}
+				}
+
+                // Append Indicators to Button Text
+                let indicatorString = '';
+                indicators.forEach(ind => { indicatorString += ` <span class="${ind.color} text-sm ml-1 whitespace-nowrap">(${ind.text})</span>`; });
+                
+                if (supplementalText) content += supplementalText;
+                
+                // Final HTML Construction
+                // We use flex-wrap on the content wrapper to handle small screens gracefully
+                if (indicatorString) btn.innerHTML = `<div class="btn-content-wrapper ${alignmentClass}">${content} <span class="flex items-center">${indicatorString}</span> <span class="ml-auto pl-2">${icon}</span></div>`;
+                else btn.innerHTML = `${content} <span class="ml-auto">${icon}</span>`;
 
                 btn.className = btnClass;
 
-                // Click Handler
-                btn.onclick = (e) => {
-                    if (btn.disabled) { audioManager.playClick(); return; }
-                    
-                    // Skill Animation
-                    if (isSkillCheck) {
-                        const allBtns = document.querySelectorAll('.btn-game');
-                        allBtns.forEach(b => b.disabled = true);
-                        audioManager.playDice();
-                        btn.classList.add('fx-skill-active');
-                        
-                        // Logic moved to timeout for animation
-                        setTimeout(() => {
-                            let roll = Math.floor(Math.random() * 20) + 1;
-                            // ... [Full roll logic calculation here is assumed from previous working version, omitted for brevity but CRITICAL to keep] ...
-                            // RE-INSERTING BASIC ROLL LOGIC TO PREVENT CRASH
-                            let logMsg = `Check (DC ${gameState.isRiftCollapse ? choice.dc + 2 : choice.dc}): Rolled d20 (${roll})`;
-                            gameState.lastDC = gameState.isRiftCollapse ? choice.dc + 2 : choice.dc;
-                            gameState.lastSkillType = choice.skill;
-                            
-                            if (activeCrewMember && getBonusForSkill(activeCrewMember, choice.skill)) {
-                                 roll += Math.floor(Math.random() * (gameState.isEthereal ? 8 : 4)) + 1;
+                // --- EVENT LISTENERS ---
+                if (choice.type === 'hold') {
+                    let holdTimer = null;
+                    const duration = 3000;
+                    btn.style.setProperty('--channel-duration', `${duration}ms`);
+
+                    const startChannel = (e) => {
+                        if (e.type === 'touchstart') e.preventDefault(); 
+                        if (btn.disabled) return;
+                        btn.classList.add('channeling');
+                        holdTimer = setTimeout(async () => {
+                            fxManager.setVignette(false); 
+                            fxManager.clearEffects();     
+                            if (choice.nextScene === 'act2_arrival') {
+                                gameState.isEthereal = true; 
+                                document.body.classList.add('plane-ethereal'); 
+                                await saveGame(); 
+                            }
+                            renderScene(choice.nextScene);
+                        }, duration);
+                    };
+                    const cancelChannel = (e) => {
+                        if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; }
+                        btn.classList.remove('channeling');
+                    };
+                    btn.addEventListener('mousedown', startChannel);
+                    btn.addEventListener('mouseup', cancelChannel);
+                    btn.addEventListener('mouseleave', cancelChannel);
+                    btn.addEventListener('touchstart', startChannel);
+                    btn.addEventListener('touchend', cancelChannel);
+                    btn.onclick = null; 
+                } 
+                else {
+                    btn.onclick = (e) => {
+                        if (btn.disabled) { audioManager.playClick(); return; }
+
+                        // SKILL CHECK LOGIC
+                        if (choice.type === 'skill') {
+                            const allBtns = document.querySelectorAll('.btn-game');
+                            allBtns.forEach(b => b.disabled = true);
+                            audioManager.playDice(); 
+                            btn.classList.add('fx-skill-active'); 
+
+                            setTimeout(() => {
+                                let roll = Math.floor(Math.random() * 20) + 1;
+                                let logMsg = `Check (DC ${gameState.isRiftCollapse ? choice.dc + 2 : choice.dc}): Rolled d20 (${roll})`;
+                                gameState.lastSkillType = choice.skill;
+                                gameState.lastDC = gameState.isRiftCollapse ? choice.dc + 2 : choice.dc;
+                                gameState.lastCrewUsedId = null;
+
+                                if (choice.skill === 'Intimidation' && gameState.inventory.includes("Captain's Tricorn")) {
+                                    roll += 1; logMsg += ` + 1 (Tricorn)`;
+                                }
+
+                                if (activeCrewMember) {
+                                    const isSkilled = getBonusForSkill(activeCrewMember, choice.skill);
+                                    const crewKey = activeCrewMember.id;
+                                    if (isSkilled) { 
+                                        const dieSize = gameState.isEthereal ? 8 : (gameState.guidingDieSize || 4); 
+                                        const bonus = Math.floor(Math.random() * dieSize) + 1;
+                                        roll += bonus;
+                                        const dieLabel = gameState.isEthereal ? `(Spectral D8!)` : `(${activeCrewMember.name})`;
+                                        logMsg += ` + <span class="${gameState.isEthereal ? 'text-spectral-d8' : ''}">${bonus}</span> ${dieLabel}`; 
+                                        
+                                        if (gameState.crewUseFree) {
+                                            addToHistory(`*Pearlescent Mushroom consumed for FREE GUIDANCE.*`, 'system');
+                                            gameState.crewUseFree = false;
+                                        } else {
+                                            gameState.crew[crewKey].used = true;
+                                        }
+                                        if (roll >= gameState.lastDC) gameState.lastCrewUsedId = crewKey;
+                                    } else {
+                                        logMsg += ` + 0 (${activeCrewMember.name} - Invalid Skill)`;
+                                    }
+                                    activeCrewMember = null;
+                                }
+
+                                if (gameState.isRiftCollapse) { roll = Math.max(1, roll - 2); logMsg += ` - 2 (Rift Penalty)`; }
+
+                                const isSuccess = roll >= gameState.lastDC;
+
+                                btn.classList.remove('fx-skill-active');
+                                if (isSuccess) {
+                                    audioManager.playSuccess(); 
+                                    btn.classList.add('fx-skill-success');
+                                } else {
+                                    audioManager.playFail(); 
+                                    btn.classList.add('fx-skill-fail');
+                                }
+
+                                setTimeout(() => {
+                                    gameState.pendingRoll = { total: roll, log: logMsg };
+                                    renderScene(choice.nextScene);
+                                }, 600);
+                            }, 800);
+                            return; 
+                        }
+
+                        // STANDARD LOGIC & FX
+                        let fxClass = null;
+                        let fxDuration = 0;
+
+                        if (choice.customClass) {
+                            if (choice.customClass.includes('btn-fire-glow')) { fxClass = 'fx-burn-active'; fxDuration = 1800; }
+                            else if (choice.customClass.includes('btn-shadow-glow')) { fxClass = 'fx-mist-active'; fxDuration = 1800; }
+                            else if (choice.customClass.includes('btn-hero')) { fxClass = 'fx-hero-active'; fxDuration = 1200; }
+                            else if (choice.customClass.includes('btn-planewalk-reveal')) { fxClass = 'fx-glitch-active'; fxDuration = 1200; }
+                            else if (choice.customClass.includes('btn-anchor')) { fxClass = 'fx-sail-active'; fxDuration = 1500; }
+                        }
+
+                        const executeAction = () => {
+                            if (choice.nextScene === 'manor_map_view') {
+                                gameState.returnSceneId = gameState.currentSceneId; 
+                                renderScene('manor_map_view');
+                                return;
                             }
                             
-                            const isSuccess = roll >= gameState.lastDC;
+                            // Audio triggers
+                            if (choice.cost || choice.value || choice.shillingGain) audioManager.playCoins();
+                            else if (!fxClass) audioManager.playClick();
                             
-                            btn.classList.remove('fx-skill-active');
-                            if(isSuccess) { audioManager.playSuccess(); btn.classList.add('fx-skill-success'); }
-                            else { audioManager.playFail(); btn.classList.add('fx-skill-fail'); }
-                            
-                            setTimeout(() => {
-                                gameState.pendingRoll = { total: roll, log: logMsg };
+                            if (choice.type === 'combine') {
+                                const result = choice.onSelect(gameState);
+                                if (result) addToHistory(result, 'system');
                                 renderScene(choice.nextScene);
-                            }, 600);
-                        }, 800);
-                        return;
-                    }
+                                return;
+                            }
+                            
+                            if (choice.action && typeof choice.action === 'function') {
+                                const result = choice.action(gameState);
+                                if (result) addToHistory(result, 'system');
+                                if (choice.nextScene) {
+                                    if (choice.nextScene === 'lighthouse_morning' && gameState.currentSceneId === 'captain_orders' && choice.onSelect) {
+                                        choice.onSelect(gameState);
+                                    }
+                                    renderScene(choice.nextScene);
+                                } else { updateUI(); }
+                                return; 
+                            }
+                            
+                            if (choice.type === 'reset') { resetGame(); return; }
+                            
+                            // Handle Stock Decrement (Generic fallback, though specific scenes handle it better via onEnter now)
+                            if (choice.type === 'action' && choice.stockItem && scenes[currentSceneId].stock) {
+                                 scenes[currentSceneId].stock[choice.stockItem] = Math.max(0, scenes[currentSceneId].stock[choice.stockItem] - 1);
+                            }
+                            
+                            if (choice.consume && choice.reqItem) {
+                                const idx = gameState.inventory.indexOf(choice.reqItem);
+                                if (idx > -1) {
+                                    gameState.inventory.splice(idx, 1);
+                                    addToHistory(`${choice.reqItem} consumed.`, 'system');
+                                }
+                            }
+                            if (choice.consumeItems && Array.isArray(choice.consumeItems)) {
+                                choice.consumeItems.forEach(itemToConsume => {
+                                    const idx = gameState.inventory.indexOf(itemToConsume);
+                                    if (idx > -1) {
+                                        gameState.inventory.splice(idx, 1);
+                                        addToHistory(`${itemToConsume} consumed.`, 'system');
+                                    }
+                                });
+                            }
 
-                    // Standard Action
-                    let fxClass = null;
-                    if (choice.customClass && choice.customClass.includes('btn-fire-glow')) fxClass = 'fx-burn-active';
-                    
-                    if (choice.cost) audioManager.playCoins();
-                    else if (!fxClass) audioManager.playClick();
+                            const currentScene = scenes[gameState.currentSceneId];
+                            if (currentScene.journal) {
+                                let journalText = currentScene.journal;
+                                if (currentSceneId === 'act3_name_ship') journalText = journalText.replace('[SHIP_NAME]', gameState.shipName);
+                                addToHistory(journalText, 'entry');
+                            }
 
-                    const execute = () => {
-                        if (choice.action) {
-                            const res = choice.action(gameState);
-                            if (res) addToHistory(res, 'system');
-                            if (!choice.nextScene) updateUI();
-                            else renderScene(choice.nextScene);
-                        } else if (choice.nextScene) renderScene(choice.nextScene);
+                            // Variable Updates
+                            if (choice.cost) gameState.shillings -= choice.cost;
+                            if (choice.costHP !== undefined) gameState.currentHP = applyDamage(gameState.currentHP, choice.costHP);
+
+                            let extraGold = 0;
+                            if (gameState.inventory.includes("Salt-Warped Spyglass") && gameState.influence >= 15) extraGold = 1;
+                            if (choice.shillingGain || choice.value) {
+								let bonus = extraGold;
+								if (gameState.activeBoons.includes('scavenger')) bonus += 1;
+								if (choice.shillingGain) gameState.shillings += (choice.shillingGain + bonus);
+								if (choice.value) gameState.shillings += (choice.value + bonus);
+							}
+                            
+                            if (choice.chaosGain) gameState.influence = Math.min(50, gameState.influence + choice.chaosGain);
+                            if (choice.orderGain) gameState.influence = Math.max(-50, gameState.influence - choice.orderGain); 
+                            
+                            if (choice.nextScene === 'lighthouse_morning' && currentSceneId === 'captain_orders' && choice.onSelect) {
+                                choice.onSelect(gameState);
+                            }
+
+                            if (gameState.act1Started && choice.doomCost !== 0) {
+                                const cost = choice.doomCost !== undefined ? choice.doomCost : 1; 
+                                gameState.doomTimer = Math.max(0, gameState.doomTimer - cost);
+                                if (gameState.doomTimer > 0) addToHistory(`Rift Stability: ${gameState.doomTimer} turns remaining.`, 'system');
+                            }
+                            
+                            renderScene(choice.nextScene);
+                        };
+
+                        if (fxClass && !isDeathScene) {
+                            const allBtns = document.querySelectorAll('.btn-game');
+                            allBtns.forEach(b => b.disabled = true);
+                            btn.classList.add(fxClass);
+                            setTimeout(() => { executeAction(); }, fxDuration);
+                        } else {
+                            executeAction();
+                        }
                     };
+                }
 
-                    if (fxClass && !isDeathScene) {
-                        btn.classList.add(fxClass);
-                        setTimeout(execute, 1800);
-                    } else {
-                        execute();
-                    }
-                };
-
-                // Final HTML Construction (Restores Wrapper)
-                if (supplementalText) content += supplementalText;
-                btn.innerHTML = `<div class="btn-content-wrapper ${alignmentClass}">${content} <span class="ml-auto">${icon}</span></div>`;
-                
                 container.appendChild(btn);
             });
         }
