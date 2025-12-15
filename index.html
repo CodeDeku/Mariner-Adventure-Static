@@ -7096,7 +7096,7 @@
 
                 let rawText = choice.text;
                 let icon = '<i class="fas fa-chevron-right text-gray-300 group-hover:text-amber-100"></i>';
-                let content = `<span class="cinzel font-bold text-gray-300 group-hover:text-amber-100">${rawText}</span>`;
+                content = `<span class="cinzel font-bold text-gray-300 group-hover:text-amber-100 drop-shadow-sm">${rawText}</span>`;
                 let supplementalText = '';
                 
                 let isDisabled = false;
@@ -7890,17 +7890,17 @@
 			}
 		});
 
-		// --- FINAL RENDER RADIAL CREW FUNCTION ---
+		// --- FINAL ROBUST RENDER RADIAL CREW FUNCTION ---
 		function renderRadialCrew() {
 			const container = document.querySelector('.radial-container');
 			if (!container) return; 
 
 			const crewKeys = ['gareth', 'quinn', 'talon', 'bones']; 
 			
-			// 1. INITIAL BUILD: If the container is empty, or the main hub is missing, rebuild the structure completely.
-			if (!document.getElementById('radial-hub')) {
+			// 1. INITIAL BUILD: If the container is empty, rebuild the structure completely.
+			if (container.children.length === 0 || !document.getElementById('radial-hub')) {
 				
-				// Rebuild the core structure
+				// Rebuild the core structure, including the hub
 				container.innerHTML = `
 					<div class="radial-grid-mask"><div class="radial-planar-grid"></div></div>
 					<div id="tether-gareth" class="spectral-tether tether-nw"></div>
@@ -7913,7 +7913,7 @@
 					</div>
 				`;
 				
-				// Add the 4 crew nodes dynamically *after* the hub exists
+				// Add the 4 crew nodes dynamically *after* the hub and tethers exist
 				crewKeys.forEach((key, idx) => {
 					const btn = document.createElement('div');
 					btn.id = `node-${key}`; 
@@ -7951,7 +7951,7 @@
 				const btn = document.getElementById(`node-${key}`);
 				const tether = document.getElementById(`tether-${key}`);
 				
-				// CRITICAL SAFETY CHECK: If node generation failed (e.g., initial render), skip update loop
+				// CRITICAL SAFETY CHECK: If node generation failed, skip update loop
 				if (!btn || !tether) return;
 
 				const isUsed = c.used;
