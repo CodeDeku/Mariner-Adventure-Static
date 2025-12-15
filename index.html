@@ -385,6 +385,42 @@
         
         const fxManager = new FXManager();
 		window.fxManager = fxManager;
+		
+		function rebuildJournal() {
+            const container = document.getElementById('journal-content');
+            if (container) container.innerHTML = gameState.history.join('');
+            scrollToBottom();
+        }
+
+        function scrollToBottom() {
+            const area = document.getElementById('journal-scroll-area');
+            if (area) {
+                requestAnimationFrame(() => {
+                    area.scrollTop = area.scrollHeight;
+                });
+            }
+        }
+
+        function addToHistory(text, type = 'entry') {
+            let html = '';
+            if (type === 'entry') {
+                const processedText = text.replace(/(Captain Gareth|Gareth|Quinn|Talon|Bones|Silas|Wolf King|Ring of Brass|Sword of Valor|Smelter|Chapel|Sanguine Spire|Bleak Dogtooth|Vampire|Iron Lung|Absorb Elements|Primeval Awareness|Phoenix Draft|Manor Blueprint|Spectral Lantern|The Warding Ember|Mimic's Bile|Mind-Expanding Grog|Radiant-Washed Sword of Valor|Acid-Etched Sword of Valor)/g, '<span class="spectral-text-glow">$1</span>');
+                html = `<div class="journal-font pb-4 border-b border-gray-700/30 text-gray-400 fade-in">${processedText}</div>`;
+            } else if (type === 'system') {
+                html = `<div class="text-xs text-amber-500 font-mono mb-2 fade-in">> ${text}</div>`;
+            } else if (type === 'roll') {
+                html = `<div class="text-xs spectral-text-glow font-bold mb-2 fade-in font-serif">${text}</div>`;
+            } else if (type === 'danger') {
+                html = `<div class="text-xs text-red-400 font-bold mb-2 fade-in font-serif">${text}</div>`;
+            }
+            if (type === 'combat') {
+                html = `<div class="text-xs text-red-100 border-l-2 border-red-600 pl-2 mb-2 font-mono bg-red-900/20 p-2 shadow-inner fade-in">${text}</div>`;
+            }
+            if(html) gameState.history.push(html);
+            rebuildJournal();
+        }
+        window.addToHistory = addToHistory; 
+        window.rebuildJournal = rebuildJournal;
 
         // --- STATIC IMAGE MAPPING ---
 		// --- Previously SceneImages ---
@@ -6601,75 +6637,6 @@
             document.getElementById('item-desc-area').textContent = "Hover over an item to inspect it.";
         }
 
-        function rebuildJournal() {
-            const container = document.getElementById('journal-content');
-            container.innerHTML = gameState.history.join('');
-            scrollToBottom();
-        }
-
-        function scrollToBottom() {
-		const area = document.getElementById('journal-scroll-area');
-		requestAnimationFrame(() => {
-			area.scrollTop = area.scrollHeight;
-		});
-	}
-
-        function addToHistory(text, type = 'entry') {
-            let html = '';
-            if (type === 'entry') {
-                const processedText = text.replace(/(Captain Gareth|Gareth|Quinn|Talon|Bones|Silas|Wolf King|Ring of Brass|Sword of Valor|Smelter|Chapel|Sanguine Spire|Bleak Dogtooth|Vampire|Iron Lung|Absorb Elements|Primeval Awareness|Phoenix Draft|Manor Blueprint|Spectral Lantern|The Warding Ember|Mimic's Bile|Mind-Expanding Grog|Radiant-Washed Sword of Valor|Acid-Etched Sword of Valor)/g, '<span class="spectral-text-glow">$1</span>');
-                html = `<div class="journal-font pb-4 border-b border-gray-700/30 text-gray-400 fade-in">${processedText}</div>`;
-            } else if (type === 'system') {
-                html = `<div class="text-xs text-amber-500 font-mono mb-2 fade-in">> ${text}</div>`;
-            } else if (type === 'roll') {
-                html = `<div class="text-xs spectral-text-glow font-bold mb-2 fade-in font-serif">${text}</div>`;
-            } else if (type === 'danger') {
-                html = `<div class="text-xs text-red-400 font-bold mb-2 fade-in font-serif">${text}</div>`;
-            }
-            if (type === 'combat') {
-                html = `<div class="text-xs text-red-100 border-l-2 border-red-600 pl-2 mb-2 font-mono bg-red-900/20 p-2 shadow-inner fade-in">${text}</div>`;
-            }
-            if(html) gameState.history.push(html);
-            rebuildJournal();
-        }
-
-        // --- GLOBAL WINDOW FUNCTIONS ---
-        // allyCommand is already defined in the main script block above for HTML access,
-        // but we ensure it calls the right logic here.
-        // NOTE: The previous window.allyCommand definition in the file is sufficient if correct,
-        // but to be safe we leave this logic here as part of renderChoices/renderScene flow.
-
-        function combineItems(baseItem, ingredient, resultItem) {
-			if (!gameState.inventory.includes(baseItem) || !gameState.inventory.includes(ingredient)) {
-				return "Error: Missing ingredients.";
-			}
-
-			const baseIndex = gameState.inventory.indexOf(baseItem);
-			const ingredientIndex = gameState.inventory.indexOf(ingredient);
-			
-			const baseDef = itemRegistry[baseItem];
-			if (baseDef && baseDef.onRemove) {
-				baseDef.onRemove(gameState);
-				addToHistory(`Passive benefit of ${baseItem} removed.`, 'system');
-			}
-			
-			// Splice logic to remove the items, accounting for index changes
-			gameState.inventory.splice(Math.max(baseIndex, ingredientIndex), 1); 
-			gameState.inventory.splice(Math.min(baseIndex, ingredientIndex), 1); 
-
-			gameState.inventory.push(resultItem);
-
-			const resultDef = itemRegistry[resultItem];
-			if (resultDef && resultDef.onAcquire) {
-				resultDef.onAcquire(gameState);
-				addToHistory(`Passive benefit of ${resultItem} applied.`, 'system');
-			}
-			
-			saveGame();
-			updateUI();
-			return `${baseItem} and ${ingredient} were fused at the Spectral Forge, yielding the <span class="text-item">${resultDef.name}</span>!`;
-		}
-		window.combineItems = combineItems;
 
 		async function renderScene(sceneId, logText = true) {
             const scene = scenes[sceneId];
