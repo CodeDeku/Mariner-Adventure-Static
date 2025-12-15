@@ -7003,8 +7003,11 @@
                 ALCHEMIST_SELL_OPTIONS.forEach(sell => {
                     if (gameState.inventory.includes(sell.item)) {
                         let isDisabled = false;
-                        if (sell.nextScene === 'sell_tincture' && currentSceneStock["Vitality Tincture"] >= 2) isDisabled = true; 
                         
+                        // Check for Stock Limit
+                        if (sell.nextScene === 'sell_tincture' && scenes['alchemist_triage'].stock["Vitality Tincture"] >= 2) isDisabled = true; 
+                        
+                        // Check for Artifact Sale Protection
                         const isArtifactSell = sell.nextScene === 'sell_fire' || sell.nextScene === 'sell_water';
                         const hasRing = gameState.inventory.includes("Ring of Brass");
                         const hasSword = gameState.inventory.includes("Sword of Valor");
