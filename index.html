@@ -911,6 +911,7 @@
 			for (let i = 0; i < numDice; i++) { total += Math.floor(Math.random() * dieSize) + 1; }
 			return total + modifier;
 		};
+		window.rollDice = rollDice;
 
 		window.applyStatusEffect = (state, effectName, duration) => {
 			if (!state.combat.enemyStatus) state.combat.enemyStatus = [];
@@ -6338,7 +6339,7 @@
             }
         };
 
-        // --- CORE FUNCTIONS & ENGINE ---
+        // --- DAMAGE CALCULATION LOGIC ---
 		function applyDamage(currentHP, damageAmount, damageType = 'physical') {
 			let finalDamage = damageAmount;
 			
@@ -7808,7 +7809,7 @@
 			// 9. Update Inventory List
 			if (window.renderInventoryList) window.renderInventoryList();
 		}
-		
+		window.updateUI = updateUI;
 		
 
 		// Helper to render inventory list (Needed for the backpack modal)
