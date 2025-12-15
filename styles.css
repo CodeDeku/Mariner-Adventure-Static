@@ -565,12 +565,13 @@
 			transform: translateY(-2px);
 		}
 
-		/* --- 3. THE ANIMATION FIX (Critical) --- */
-		/* When shaking, we must DISABLE transitions so the button moves instantly */
-		.btn-game.border-cyan-500.fx-skill-active {
-			transition: none !important; /* Stop trying to smooth the shake */
-			border-color: #fbbf24 !important; /* Revert to Amber "Rolling" color */
-			/* Do NOT set transform: none here, or it will freeze! */
+		/* --- 3. THE ANIMATION FIX (ROBUST) --- */
+		/* REPLACEMENT: Applies to ALL buttons, fixing the 'no shake' bug */
+		.fx-skill-active {
+			transition: none !important;
+			border-color: #fbbf24 !important; /* Force Amber color */
+			animation: dice-rattle 0.1s linear infinite !important;
+			pointer-events: none;
 		}
 		/* --- NEW UI: COMBO BUTTON GLOW --- */
 		.spectral-glow-btn {
