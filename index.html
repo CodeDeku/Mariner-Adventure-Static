@@ -6871,6 +6871,23 @@
         }
 		
 		
+		
+		// 3. Updated Crew Toggle Logic (from Stable)
+		function toggleCrewSelection(crewKey) {
+			const c = gameState.crew[crewKey];
+			if (activeCrewMember && activeCrewMember.id === c.id) {
+				activeCrewMember = null; // Deselect
+				audioManager.playClick();
+			} else {
+				activeCrewMember = c; // Select
+				audioManager.playGhost();
+			}
+			updateUI();
+			// Re-render choices to update button borders/text
+			renderChoices(scenes[gameState.currentSceneId].choices, false); 
+		}
+		
+		
 		function renderChoices(choices, isDeathScene = false) {
             const container = document.getElementById('choices-area');
             container.innerHTML = '';
@@ -6881,7 +6898,7 @@
             // 1. CLONE CHOICES TO AVOID MUTATION BUGS
             let processedChoices = choices.map(c => ({...c})); 
             
-            // --- SCENE SPECIFIC OVERRIDES ---
+            // --- SCENE SPECIFIC OVERRIDES (Re-implemented for stability) ---
 
             // A. MARKET (Standard Shop)
             if (currentSceneId === 'market_stall') {
@@ -6894,8 +6911,7 @@
                 MARKET_BUY_OPTIONS.forEach(sale => {
                     const actualStock = currentSceneStock[sale.item] || 0;
                     const itemDef = itemRegistry[sale.item];
-                    // Logic to prevent buying healing if full
-                    const isHealing = itemDef && (itemDef.name.includes('Heal') || itemDef.name.includes('Rum'));
+                    const isHealing = itemDef && (itemDef.name || '').includes('Heal') || (itemDef.name || '').includes('Rum');
                     const isFull = gameState.currentHP >= gameState.maxHP;
                     const canAfford = gameState.shillings >= sale.cost;
                     
@@ -6905,7 +6921,7 @@
                             nextScene: sale.nextScene, 
                             type: 'action', 
                             cost: sale.cost, 
-                            stockItem: sale.item, // Triggers generic decrement
+                            stockItem: sale.item, 
                             doomCost: 0, 
                             isDisabled: !canAfford || (isHealing && isFull) 
                         });
@@ -6916,7 +6932,6 @@
             }
             // B. TAVERN (Gruel Logic Fix)
             else if (currentSceneId === 'blackwater_tavern') {
-                // We rebuild the list to ensure stock counts update dynamically
                 const restOption = choices.find(c => c.nextScene === 'tavern_rest_success');
                 const returnOption = choices.find(c => c.nextScene === 'town_square');
                 const gamblerOption = choices.find(c => c.nextScene === 'tavern_gambler');
@@ -6930,13 +6945,10 @@
                 const canAfford = gameState.shillings >= 1;
                 const isHealingWasteful = gameState.currentHP >= gameState.maxHP; 
                 
-                // Add Stock Text to Title
                 if (instantEat) {
                     processedChoices.push({ 
                         ...instantEat, 
                         text: `Eat Gruel Now (Stock: ${gruelStock})`, 
-                        // Remove stockItem here so we don't double-decrement (onEnter handles it)
-                        stockItem: null, 
                         isDisabled: !canAfford || gruelStock <= 0 || isHealingWasteful 
                     });
                 }
@@ -6944,32 +6956,23 @@
                     processedChoices.push({ 
                         ...buyToGo, 
                         text: `Buy Gruel (To Go) (Stock: ${gruelStock})`, 
-                        // Remove stockItem here too
-                        stockItem: null,
                         isDisabled: gruelStock <= 0 || !canAfford 
                     });
                 }
                 
                 if (restOption) processedChoices.push(restOption);
                 
-                // Add Styling to Rumors
-                if (infoSmelter && !gameState.knowsSmelterSecret && !gameState.inventory.includes('Sword of Valor')) {
-                    processedChoices.push({ ...infoSmelter, customClass: 'btn-pulse' });
-                }
-                if (infoChapel && !gameState.knowsChapelSecret && !gameState.inventory.includes('Ring of Brass')) {
-                    processedChoices.push({ ...infoChapel, customClass: 'btn-pulse' });
-                }
+                if (infoSmelter && !gameState.knowsSmelterSecret && !gameState.inventory.includes('Sword of Valor')) processedChoices.push({ ...infoSmelter, customClass: 'btn-pulse' });
+                if (infoChapel && !gameState.knowsChapelSecret && !gameState.inventory.includes('Ring of Brass')) processedChoices.push({ ...infoChapel, customClass: 'btn-pulse' });
                 
                 if (gamblerOption && gameState.inventory.includes('Ring of Brass') && !gameState.hasObservedGambler) processedChoices.push(gamblerOption);
                 if (returnOption) processedChoices.push(returnOption);
             } 
             // C. DOCKS (Work Costs Fix)
             else if (currentSceneId === 'town_docks') {
-                 // Ensure the 'Work' button reflects the current dynamic cost
                  const workBtn = choices.find(c => c.nextScene === 'docks_work');
                  const cargoBtn = choices.find(c => c.nextScene === 'docks_sell_cargo');
                  
-                 // Re-map to ensure the costHP property is fresh from the scene object (updated in onEnter)
                  processedChoices = choices.map(c => {
                      if (c.nextScene === 'docks_work') {
                          return { 
@@ -6980,7 +6983,6 @@
                      return c;
                  });
 
-                 // Hide cargo button if invalid
                  if (!gameState.inventory.includes('Curious Cargo') || gameState.act3Started) {
                      processedChoices = processedChoices.filter(c => c.nextScene !== 'docks_sell_cargo');
                  }
@@ -6991,7 +6993,6 @@
             }
             // E. ALCHEMIST (Triage/Sell)
             else if (currentSceneId === 'alchemist_triage') {
-                // Logic mostly preserved, ensure stockItem logic remains for simple shops
                 const sellWaresNav = choices.find(c => c.nextScene === 'alchemist_sell');
                 const returnNav = choices.find(c => c.nextScene === 'town_square');
                 const secretTrade = choices.find(c => c.nextScene === 'alchemist_secret_stock');
@@ -7025,7 +7026,6 @@
                 processedChoices.push(returnNav);
             }
             else if (currentSceneId === 'alchemist_sell') {
-                // Rebuild sell list dynamically
                 const backToBuyNav = choices.find(c => c.nextScene === 'alchemist_triage');
                 const returnNav = choices.find(c => c.nextScene === 'town_square');
                 processedChoices = []; 
@@ -7033,10 +7033,8 @@
                 ALCHEMIST_SELL_OPTIONS.forEach(sell => {
                     if (gameState.inventory.includes(sell.item)) {
                         let isDisabled = false;
-                        // Don't sell tincture if shop is full
                         if (sell.nextScene === 'sell_tincture' && currentSceneStock["Vitality Tincture"] >= 2) isDisabled = true; 
                         
-                        // Don't sell artifacts if you have the legendary reward already
                         const isArtifactSell = sell.nextScene === 'sell_fire' || sell.nextScene === 'sell_water';
                         const hasRing = gameState.inventory.includes("Ring of Brass");
                         const hasSword = gameState.inventory.includes("Sword of Valor");
@@ -7056,7 +7054,6 @@
                 if (backToBuyNav) processedChoices.push(backToBuyNav);
                 processedChoices.push(returnNav);
             } else if (currentSceneId === 'port_provisioner') {
-                 // Clean up port provisioner to ensure dynamic updates
                  const sellNav = choices.find(c => c.nextScene === 'port_provisioner_sell');
                  const returnNav = choices.find(c => c.nextScene === 'town_square');
                  processedChoices = [];
@@ -7086,7 +7083,7 @@
             processedChoices.forEach(choice => {
                 // Requirements Checks
                 if (choice.reqItem && !gameState.inventory.includes(choice.reqItem)) return;
-                if (choice.reqItems && Array.isArray(choice.reqItems) && !choice.reqItems.some(item => gameState.inventory.includes(item))) return;
+                if (choice.reqItems && Array.isArray(choice.reqItems) && !choice.reqItems.every(item => gameState.inventory.includes(item))) return;
                 if (choice.reqSmuggler && gameState.influence < choice.reqSmuggler) return;
                 if (choice.reqGuard && gameState.influence > -choice.reqGuard) return;
                 if (choice.reqNotItem && gameState.inventory.includes(choice.reqNotItem)) return; 
@@ -7096,7 +7093,7 @@
 
                 let rawText = choice.text;
                 let icon = '<i class="fas fa-chevron-right text-gray-300 group-hover:text-amber-100"></i>';
-                content = `<span class="cinzel font-bold text-gray-300 group-hover:text-amber-100 drop-shadow-sm">${rawText}</span>`;
+                let content = `<span class="cinzel font-bold text-gray-300 group-hover:text-amber-100 drop-shadow-sm">${rawText}</span>`;
                 let supplementalText = '';
                 
                 let isDisabled = false;
@@ -7154,7 +7151,6 @@
                         btnClass = `btn-game w-full text-left rounded shadow flex items-center ${alignmentClass} cinzel font-bold mb-2 ${choice.customClass}`;
                     }
                 } else {
-                    // Standard Style
                     btnClass = `btn-game w-full text-left rounded shadow flex items-center ${alignmentClass} cinzel font-bold bg-gray-800 border-gray-600 hover:border-amber-500 hover:bg-gray-750 text-gray-300 group`;
                 }
                 
@@ -7169,29 +7165,29 @@
                 if (isHeroButton) icon = '<i class="fas fa-star hero-icon"></i>'; 
                 if (isCombineButton) icon = '<i class="fas fa-hammer text-yellow-500"></i>';
                 
-                // --- FIX: SKILL CHECK STYLING ---
+                // --- SKILL CHECK STYLING (Reverted to Stable Logic) ---
                 if (isSkillCheck) {
                     // 1. Force the Dice Icon
                     icon = '<i class="fas fa-dice-d20 spectral-text-glow"></i>';
                     
-                    // 2. Add DC Text
-                    const displayDC = gameState.isRiftCollapse ? choice.dc + 2 : choice.dc;
-                    supplementalText += ` <span class="text-xs text-cyan-500/70 font-bold uppercase tracking-wider ml-2 mr-4">[${choice.skill} DC ${displayDC}]</span>`;
+                    // 2. Add DC Text and Styling
+                    const dcValue = gameState.isRiftCollapse ? choice.dc + 2 : choice.dc;
+                    supplementalText += ` <span class="spectral-text-glow text-sm uppercase tracking-wider ml-2 mr-4">[${choice.skill} DC ${dcValue}]</span>`;
                     
-                    // 3. FORCE COLOR ON TEXT (This fixes the "not having color" issue)
-                    content = `<span class="cinzel font-bold text-gray-100 drop-shadow-sm">${rawText}</span>`;
+                    // 3. Set the base class for skill checks to trigger the specific CSS
+                    btnClass += " border-cyan-500";
                     
                     // 4. Crew Bonus Logic
                     if (activeCrewMember) {
                         const hasBonus = getBonusForSkill(activeCrewMember, choice.skill);
                         if (hasBonus) {
-                            btnClass += " border-cyan-500 ring-1 ring-cyan-400"; 
-                            const dieType = gameState.isEthereal ? '8' : '4';
+                            btnClass += " ring-1 ring-cyan-400"; 
+                            const dieType = gameState.isEthereal ? '8' : (gameState.guidingDieSize || 4);
                             supplementalText += ` <span class="text-cyan-300 text-[12px] font-bold animate-pulse">+ 1d${dieType} (${activeCrewMember.name})</span>`;
                         }
                     }
                 }
-
+                
                 // Silas Guard State
                 if (gameState.negateNextDamage && (isDeathScene || choice.type === 'action' || choice.costHP)) {
                     btnClass += " ring-1 ring-emerald-500 bg-emerald-900/30";
@@ -7216,13 +7212,11 @@
                     indicators.push({ text: `-${finalSupplyCost} Supplies`, color: 'text-indigo-400' });
                 }
                 
-                // FIX: explicitly check costHP here
                 if (choice.costHP !== undefined) indicators.push({ text: `-${choice.costHP} HP`, color: 'text-red-400' });
                 
                 if (choice.chaosGain) indicators.push({ text: `+${choice.chaosGain} Chaos`, color: 'text-emerald-400' });
                 else if (choice.orderGain) indicators.push({ text: `+${choice.orderGain} Order`, color: 'text-blue-400' });
                 
-                // Logistics & Tether Logic
                 const hasLogistics = gameState.quinnLogistics || gameState.activeBoons.includes('logistics');
 				const isStandardAct1Scene = gameState.act1Started && !scenes[currentSceneId].isBoss && !scenes[currentSceneId].isRest;
 
@@ -7245,7 +7239,7 @@
 						else if (cost === 0 && (hasExplicitCost || gameState.activeBoons.includes('efficient_pathing'))) {
 							indicators.push({ text: `0 Turns`, color: 'text-cyan-400' });
 						}
-                        // Bones Boon
+                        
 						if (gameState.activeBoons.includes('spectral_metabolism') && choice.type === 'travel' && choice.nextScene !== currentSceneId) {
 							const originalAction = choice.action; 							
 							choice.action = (state) => {
@@ -7264,7 +7258,6 @@
                 if (supplementalText) content += supplementalText;
                 
                 // Final HTML Construction
-                // We use flex-wrap on the content wrapper to handle small screens gracefully
                 if (indicatorString) btn.innerHTML = `<div class="btn-content-wrapper ${alignmentClass}">${content} <span class="flex items-center">${indicatorString}</span> <span class="ml-auto pl-2">${icon}</span></div>`;
                 else btn.innerHTML = `${content} <span class="ml-auto">${icon}</span>`;
 
@@ -7306,13 +7299,14 @@
                     btn.onclick = (e) => {
                         if (btn.disabled) { audioManager.playClick(); return; }
 
-                        // SKILL CHECK LOGIC
+                        // SKILL CHECK LOGIC (Reverted back to full animation/logic from stable)
                         if (choice.type === 'skill') {
                             const allBtns = document.querySelectorAll('.btn-game');
                             allBtns.forEach(b => b.disabled = true);
                             audioManager.playDice(); 
                             btn.classList.add('fx-skill-active'); 
 
+                            // Calculate roll immediately, but execute scene transition later
                             setTimeout(() => {
                                 let roll = Math.floor(Math.random() * 20) + 1;
                                 let logMsg = `Check (DC ${gameState.isRiftCollapse ? choice.dc + 2 : choice.dc}): Rolled d20 (${roll})`;
@@ -7320,10 +7314,12 @@
                                 gameState.lastDC = gameState.isRiftCollapse ? choice.dc + 2 : choice.dc;
                                 gameState.lastCrewUsedId = null;
 
+                                // Tricorn Bonus
                                 if (choice.skill === 'Intimidation' && gameState.inventory.includes("Captain's Tricorn")) {
                                     roll += 1; logMsg += ` + 1 (Tricorn)`;
                                 }
 
+                                // Crew Bonus Logic
                                 if (activeCrewMember) {
                                     const isSkilled = getBonusForSkill(activeCrewMember, choice.skill);
                                     const crewKey = activeCrewMember.id;
@@ -7412,7 +7408,7 @@
                             
                             if (choice.type === 'reset') { resetGame(); return; }
                             
-                            // Handle Stock Decrement (Generic fallback, though specific scenes handle it better via onEnter now)
+                            // Handle Stock Decrement 
                             if (choice.type === 'action' && choice.stockItem && scenes[currentSceneId].stock) {
                                  scenes[currentSceneId].stock[choice.stockItem] = Math.max(0, scenes[currentSceneId].stock[choice.stockItem] - 1);
                             }
@@ -7420,6 +7416,8 @@
                             if (choice.consume && choice.reqItem) {
                                 const idx = gameState.inventory.indexOf(choice.reqItem);
                                 if (idx > -1) {
+                                    const itemDef = itemRegistry[choice.reqItem];
+                                    if (itemDef && itemDef.onRemove) itemDef.onRemove(gameState);
                                     gameState.inventory.splice(idx, 1);
                                     addToHistory(`${choice.reqItem} consumed.`, 'system');
                                 }
@@ -7428,6 +7426,8 @@
                                 choice.consumeItems.forEach(itemToConsume => {
                                     const idx = gameState.inventory.indexOf(itemToConsume);
                                     if (idx > -1) {
+                                        const itemDef = itemRegistry[itemToConsume];
+                                        if (itemDef && itemDef.onRemove) itemDef.onRemove(gameState);
                                         gameState.inventory.splice(idx, 1);
                                         addToHistory(`${itemToConsume} consumed.`, 'system');
                                     }
@@ -7897,11 +7897,9 @@
 
 			const crewKeys = ['gareth', 'quinn', 'talon', 'bones']; 
 			
-			// 1. INITIAL BUILD: If the central hub is missing, rebuild the structure completely.
-			// This check must happen first.
-			if (!document.getElementById('radial-hub')) {
-				
-				// Rebuild the core structure completely in one go
+			// 1. INITIAL BUILD
+			if (!document.getElementById('radial-hub')) { 
+				// NEW: Add the Grid Mask Layers here
 				container.innerHTML = `
 					<div class="radial-grid-mask"><div class="radial-planar-grid"></div></div>
 					<div id="tether-gareth" class="spectral-tether tether-nw"></div>
@@ -7914,7 +7912,6 @@
 					</div>
 				`;
 				
-				// Add the 4 crew nodes dynamically *after* the hub and tethers exist.
 				crewKeys.forEach((key, idx) => {
 					const btn = document.createElement('div');
 					btn.id = `node-${key}`; 
@@ -7932,18 +7929,16 @@
 					};
 					container.appendChild(btn);
 				});
-				
-				// Exit here, and let the next updateUI call handle the state refresh
-				return; 
 			}
 
-			// 2. STATE UPDATE (Refresh Node Visuals)
+			// 2. STATE UPDATE (Rest of logic remains the same)
 			const hub = document.getElementById('radial-hub');
 			const isAnyActive = activeCrewMember !== null;
 
 			if(hub) {
 				if(isAnyActive) hub.classList.add('drained');
 				else hub.classList.remove('drained');
+				
 				// Update the Guiding Die Text
 				const dieElement = hub.querySelector('.text-cyan-400');
 				if (dieElement) dieElement.innerHTML = `+1d${gameState.guidingDieSize || 4}`;
@@ -7955,13 +7950,14 @@
 				const btn = document.getElementById(`node-${key}`);
 				const tether = document.getElementById(`tether-${key}`);
 				
-				// Critical safety check: If any element is missing, skip and wait for rebuild
+				// Critical safety check: If any element is missing, skip
 				if (!btn || !tether) return; 
 
 				const isUsed = c.used;
 				const isActive = activeCrewMember && activeCrewMember.id === c.id;
 
-				let displayName = c.name.includes(' ') ? c.name.split(' ')[0] : c.name; 
+				let displayName = c.name;
+				if(c.name.includes(' ')) displayName = c.name.split(' ')[0]; 
 				if(key === 'gareth') displayName = "Gareth"; 
 				
 				let content = `<span class="crew-node-name">${displayName}</span><span class="crew-node-skill">${c.skill.replace('&', '<br>&')}</span>`;
