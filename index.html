@@ -7480,22 +7480,23 @@
         }
 		
 		
-		
 		function updateUI() {
 			const statsPanel = document.getElementById('stats-panel');
 			const journalContainer = document.getElementById('journal-container');
 			const sceneId = gameState.currentSceneId;
 			const suppliesDisplay = document.getElementById('supplies-display');
 			
+			// 1. Scene Visuals
 			if (sceneId.startsWith('prologue')) {
 				statsPanel.classList.add('prologue-blur');
 			} else {
 				statsPanel.classList.remove('prologue-blur');
 			}
 			
-			
-			
-			// 2. Render Compact Skills & Allies
+			// 2. Render Status Effects (Ensures icons persist on reload)
+			if (window.renderStatusEffects) window.renderStatusEffects();
+
+			// 3. Render Ability Grid (Skills & Allies)
 			const abilitiesWrapper = document.getElementById('abilities-combined-container');
 			const skillsCol = document.getElementById('planar-skills-container');
 			const skillsList = document.getElementById('planar-skills-list');
@@ -7503,33 +7504,26 @@
 			const alliesList = document.getElementById('companions-list');
 			
 			// Clear Lists
-			skillsList.innerHTML = '';
-			alliesList.innerHTML = '';
+			if (skillsList) skillsList.innerHTML = '';
+			if (alliesList) alliesList.innerHTML = '';
 			
 			let hasSkills = false;
 			let hasAllies = false;
 
-			
-			
 			// --- RENDER SKILLS (LEFT COLUMN) ---
-			
-			// Safety Check: Ensure the container exists before modifying it
 			if (skillsList) {
-				skillsList.innerHTML = ''; // Clear previous buttons
-
-				// 1. Blade Enhancement (Universal Ranger Ability)
+				// A. Blade Enhancement (Universal)
 				if (gameState.act1Started) {
 					const btn = document.createElement('div'); 
 					const isActive = gameState.combat.blade_enhanced_active;
 					const isCombat = gameState.isBossCombat && gameState.combat.isPlayerTurn;
 					
-					// Interactive Style
+					// Style: Interactable only in combat
 					const activeStyle = isActive 
 						? "skill-btn-active" 
 						: (isCombat ? "bg-gray-900/60 border-gray-700 hover:bg-gray-800 cursor-pointer" : "bg-gray-900/40 border-gray-800 opacity-50 cursor-not-allowed");
 
 					btn.className = `w-full p-2 rounded border flex items-center justify-between transition-all mb-1 select-none ${activeStyle}`;
-					
 					btn.innerHTML = `
 						<div class="flex items-center gap-2">
 							<i class="fas fa-bolt ${isActive ? 'text-white' : 'text-indigo-400'}"></i>
@@ -7541,9 +7535,8 @@
 					
 					if (isCombat) {
 						btn.onclick = () => {
-							// Toggle the flag directly
 							gameState.combat.blade_enhanced_active = !gameState.combat.blade_enhanced_active;
-							audioManager.playClick();
+							window.audioManager.playClick();
 							// Re-render scene to update the "Attack" button text immediately
 							renderScene(gameState.currentSceneId, false);
 							updateUI(); 
@@ -7553,7 +7546,7 @@
 					hasSkills = true;
 				}
 
-				// 2. Specialization Skill (Absorb Elements OR Primeval Awareness)
+				// B. Specialization (Absorb Elements OR Hunter's Mark)
 				if (gameState.player.specialization) {
 					const btn = document.createElement('div');
 					
@@ -7564,7 +7557,6 @@
 						let borderColor = "border-blue-900";
 						let glowClass = "";
 
-						// Check if we successfully absorbed something
 						if (gameState.combat && gameState.combat.ae_primed) {
 							const type = gameState.combat.ae_primed.type;
 							statusText = `${type.toUpperCase()} PRIMED`;
@@ -7615,7 +7607,7 @@
 					hasSkills = true;
 				}
 
-				// 3. Plane Walk Skill
+				// C. Plane Walk Skill (Corrected: Single Instance)
 				if (gameState.skills.includes("Plane Walking")) {
 					const btn = document.createElement('button');
 					const isActive = gameState.isEthereal;
@@ -7640,123 +7632,78 @@
 				}
 			}
 
-			// 3. Plane Walk Skill
-			if (gameState.skills.includes("Plane Walking")) {
-				const btn = document.createElement('button');
-				const isActive = gameState.isEthereal;
-				const activeStyle = isActive 
-					? "border-cyan-500 shadow-[0_0_10px_rgba(34,211,238,0.2)] bg-cyan-900/20" 
-					: "border-gray-700 bg-gray-900/60 hover:bg-gray-800";
-
-				btn.className = `w-full p-2 rounded border flex items-center justify-between transition-all ${activeStyle}`;
-				btn.onclick = () => window.gameFunctions.togglePlaneWalk();
-				
-				btn.innerHTML = `
-					<div class="flex items-center gap-2">
-						<i class="fas fa-shoe-prints ${isActive ? 'text-cyan-300' : 'text-gray-400'}"></i>
-						<div class="flex flex-col items-start leading-none">
-							<span class="text-[10px] cinzel font-bold ${isActive ? 'text-cyan-100' : 'text-gray-300'}">Plane Walk</span>
-							<span class="text-[9px] ${isActive ? 'text-cyan-400' : 'text-gray-500'} uppercase tracking-wider">${isActive ? 'ACTIVE' : 'Material'}</span>
-						</div>
-					</div>
-				`;
-				skillsList.appendChild(btn);
-				hasSkills = true;
-			}
-
-			// B. Plane Walk Skill
-			if (gameState.skills.includes("Plane Walking")) {
-				const btn = document.createElement('button');
-				const isActive = gameState.isEthereal;
-				const activeStyle = isActive 
-					? "border-cyan-500 shadow-[0_0_10px_rgba(34,211,238,0.2)] bg-cyan-900/20" 
-					: "border-gray-700 bg-gray-900/60 hover:bg-gray-800";
-
-				btn.className = `w-full p-2 rounded border flex items-center justify-between transition-all ${activeStyle}`;
-				btn.onclick = () => window.gameFunctions.togglePlaneWalk();
-				
-				btn.innerHTML = `
-					<div class="flex items-center gap-2">
-						<i class="fas fa-shoe-prints ${isActive ? 'text-cyan-300' : 'text-gray-400'}"></i>
-						<div class="flex flex-col items-start leading-none">
-							<span class="text-[10px] cinzel font-bold ${isActive ? 'text-cyan-100' : 'text-gray-300'}">Plane Walk</span>
-							<span class="text-[9px] ${isActive ? 'text-cyan-400' : 'text-gray-500'} uppercase tracking-wider">${isActive ? 'ACTIVE' : 'Material'}</span>
-						</div>
-					</div>
-				`;
-				skillsList.appendChild(btn);
-				hasSkills = true;
-			}
-
 			// --- RENDER ALLIES (RIGHT COLUMN) ---
-			
-			// Silas
-			if (gameState.companions.silas.joined) {
-				const btn = document.createElement('div');
-				const onCooldown = gameState.allyCooldowns.silas > 0;
-				const clickable = !onCooldown && gameState.isBossCombat;
-				
-				const activeStyle = "bg-emerald-900/40 border-emerald-500 text-emerald-100 shadow-[0_0_10px_rgba(16,185,129,0.2)] hover:bg-emerald-800 cursor-pointer";
-				const cooldownStyle = "bg-gray-900/60 border-gray-700 text-gray-500 opacity-70 cursor-not-allowed";
-				
-				btn.className = `w-full p-2 rounded border flex items-center justify-between transition-all ${clickable ? activeStyle : cooldownStyle}`;
-				
-				btn.innerHTML = `
-					<div class="flex items-center gap-2">
-						<i class="fas fa-shield-alt ${clickable ? 'text-emerald-400' : 'text-gray-600'}"></i>
-						<div class="flex flex-col leading-none">
-							<span class="text-[10px] cinzel font-bold">Silas</span>
-							<span class="text-[9px] uppercase tracking-wider font-bold">${onCooldown ? `CD: ${gameState.allyCooldowns.silas}` : 'READY'}</span>
+			if (alliesList) {
+				// Silas
+				if (gameState.companions.silas.joined) {
+					const btn = document.createElement('div');
+					const onCooldown = gameState.allyCooldowns.silas > 0;
+					const clickable = !onCooldown && gameState.isBossCombat && gameState.combat.isPlayerTurn;
+					
+					const activeStyle = "bg-emerald-900/40 border-emerald-500 text-emerald-100 shadow-[0_0_10px_rgba(16,185,129,0.2)] hover:bg-emerald-800 cursor-pointer";
+					const cooldownStyle = "bg-gray-900/60 border-gray-700 text-gray-500 opacity-70 cursor-not-allowed";
+					
+					btn.className = `w-full p-2 rounded border flex items-center justify-between transition-all ${clickable ? activeStyle : cooldownStyle}`;
+					
+					btn.innerHTML = `
+						<div class="flex items-center gap-2">
+							<i class="fas fa-shield-alt ${clickable ? 'text-emerald-400' : 'text-gray-600'}"></i>
+							<div class="flex flex-col leading-none">
+								<span class="text-[10px] cinzel font-bold">Silas</span>
+								<span class="text-[9px] uppercase tracking-wider font-bold">${onCooldown ? `CD: ${gameState.allyCooldowns.silas}` : 'READY'}</span>
+							</div>
 						</div>
-					</div>
-				`;
-				
-				if (clickable) btn.onclick = () => window.allyCommand('silas');
-				alliesList.appendChild(btn);
-				hasAllies = true;
-			}
+					`;
+					
+					if (clickable) btn.onclick = () => window.allyCommand('silas');
+					alliesList.appendChild(btn);
+					hasAllies = true;
+				}
 
-			// Blink
-			if (gameState.companions.blink.joined) {
-				const btn = document.createElement('div');
-				const onCooldown = gameState.allyCooldowns.blink > 0;
-				const clickable = !onCooldown && gameState.isBossCombat;
-				
-				const activeStyle = "bg-purple-900/40 border-purple-500 text-purple-100 shadow-[0_0_10px_rgba(168,85,247,0.2)] hover:bg-purple-800 cursor-pointer";
-				const cooldownStyle = "bg-gray-900/60 border-gray-700 text-gray-500 opacity-70 cursor-not-allowed";
-				
-				btn.className = `w-full p-2 rounded border flex items-center justify-between transition-all ${clickable ? activeStyle : cooldownStyle}`;
-				
-				btn.innerHTML = `
-					<div class="flex items-center gap-2">
-						<i class="fas fa-paw ${clickable ? 'text-purple-400' : 'text-gray-600'}"></i>
-						<div class="flex flex-col leading-none">
-							<span class="text-[10px] cinzel font-bold">Blink</span>
-							<span class="text-[9px] uppercase tracking-wider font-bold">${onCooldown ? `CD: ${gameState.allyCooldowns.blink}` : 'READY'}</span>
+				// Blink
+				if (gameState.companions.blink.joined) {
+					const btn = document.createElement('div');
+					const onCooldown = gameState.allyCooldowns.blink > 0;
+					const clickable = !onCooldown && gameState.isBossCombat && gameState.combat.isPlayerTurn;
+					
+					const activeStyle = "bg-purple-900/40 border-purple-500 text-purple-100 shadow-[0_0_10px_rgba(168,85,247,0.2)] hover:bg-purple-800 cursor-pointer";
+					const cooldownStyle = "bg-gray-900/60 border-gray-700 text-gray-500 opacity-70 cursor-not-allowed";
+					
+					btn.className = `w-full p-2 rounded border flex items-center justify-between transition-all ${clickable ? activeStyle : cooldownStyle}`;
+					
+					btn.innerHTML = `
+						<div class="flex items-center gap-2">
+							<i class="fas fa-paw ${clickable ? 'text-purple-400' : 'text-gray-600'}"></i>
+							<div class="flex flex-col leading-none">
+								<span class="text-[10px] cinzel font-bold">Blink</span>
+								<span class="text-[9px] uppercase tracking-wider font-bold">${onCooldown ? `CD: ${gameState.allyCooldowns.blink}` : 'READY'}</span>
+							</div>
 						</div>
-					</div>
-				`;
-				
-				if (clickable) btn.onclick = () => window.allyCommand('blink');
-				alliesList.appendChild(btn);
-				hasAllies = true;
+					`;
+					
+					if (clickable) btn.onclick = () => window.allyCommand('blink');
+					alliesList.appendChild(btn);
+					hasAllies = true;
+				}
 			}
 
 			// --- VISIBILITY TOGGLES ---
-			if (hasSkills) skillsCol.classList.remove('hidden');
-			else skillsCol.classList.add('hidden');
+			if (skillsCol) {
+                if (hasSkills) skillsCol.classList.remove('hidden');
+                else skillsCol.classList.add('hidden');
+            }
 
-			if (hasAllies) alliesCol.classList.remove('hidden');
-			else alliesCol.classList.add('hidden');
+			if (alliesCol) {
+                if (hasAllies) alliesCol.classList.remove('hidden');
+                else alliesCol.classList.add('hidden');
+            }
 
-			if (hasSkills || hasAllies) {
-				abilitiesWrapper.classList.remove('hidden');
-			} else {
-				abilitiesWrapper.classList.add('hidden');
-			}
-			
+			if (abilitiesWrapper) {
+                if (hasSkills || hasAllies) abilitiesWrapper.classList.remove('hidden');
+                else abilitiesWrapper.classList.add('hidden');
+            }
 
-			// 3. HP Bar
+			// 4. HP Bar
 			const displayMaxHP = gameState.maxHP;
 			const hpToDisplay = gameState.currentHP;
 			const hpPct = (hpToDisplay / displayMaxHP) * 100;
@@ -7765,9 +7712,9 @@
 			bar.style.width = `${Math.min(100, hpPct)}%`;
 			bar.className = `h-full transition-all duration-500 ${hpToDisplay < (displayMaxHP * 0.3) ? 'bg-red-600 animate-pulse' : 'bg-red-800'}`;
 			document.getElementById('hp-text').innerText = `${hpToDisplay}/${displayMaxHP}`; 
-			audioManager.checkVulnerable(gameState.currentHP, gameState.maxHP);
+			window.audioManager.checkVulnerable(gameState.currentHP, gameState.maxHP);
 			
-			// 4. Doom/Tether Meters
+			// 5. Doom/Tether Meters
 			const doomDisplay = document.getElementById('doom-counter-display');
 			const tetherDisplay = document.getElementById('tether-display');
 
@@ -7787,7 +7734,7 @@
 				tetherDisplay.classList.add('hidden');
 			}
 
-			// 5. Influence Marker
+			// 6. Influence Marker
 			const inf = gameState.influence || 0;
 			const pct = ((inf + 50) / 100) * 100;
 			const marker = document.getElementById('inf-marker');
@@ -7802,10 +7749,10 @@
 				else infText.textContent = "Neutral";
 			}
 
-			// 6. Render Radial Crew
-			renderRadialCrew();
+			// 7. Render Radial Crew
+			if (window.renderRadialCrew) window.renderRadialCrew();
 
-			// 7. Update Backpack Button & Modal
+			// 8. Update Backpack Button & Modal
 			document.getElementById('shillings-display').innerText = gameState.shillings;
 			
 			const packDisplay = document.getElementById('pack-resources-display');
@@ -7824,10 +7771,9 @@
 				suppliesDisplay.classList.add('hidden');
 			}
 
-			// 8. Update Inventory List
-			renderInventoryList();
+			// 9. Update Inventory List
+			if (window.renderInventoryList) window.renderInventoryList();
 		}
-		
 		
 		
 
@@ -7925,104 +7871,6 @@
 			}
 		};
 		
-		
-		
-		
-		
-		
-		
-		
-		
-		window.generateCombatChoices = function(state) {
-			let choices = [];
-			const { combat, player } = state;
-			
-			// --- 1. DETERMINE COMBO TIER ---
-			let attackName = "Strike with Weapon";
-			let attackType = "standard";
-			let customClass = "";
-			
-			// Base Weapon Name Check
-			if (state.inventory.includes('Sword of Valor')) {
-				attackName = "Strike with Sword of Valor";
-			}
-
-			// COMBO LOGIC TREE
-			if (combat.blade_enhanced_active) {
-				// TIER 4: ALLY COMBOS
-				if (combat.blink_used_this_turn) {
-					attackName = "Dire Wolf Trip Attack (Crit + Prone)";
-					attackType = "tripAttack";
-					customClass = "spectral-glow-btn";
-				} 
-				else if (combat.silas_used_this_turn) {
-					if (player.specialization === 'PA') {
-						attackName = "Hunter's Edge (Vulnerable)";
-						attackType = "huntersEdge";
-						customClass = "spectral-glow-btn";
-					} else {
-						attackName = "The White Wolf's Bite (Heal)";
-						attackType = "wolfBite";
-						customClass = "spectral-glow-btn";
-					}
-				}
-				// TIER 3: SOLO COMBOS
-				else if (combat.ae_primed) {
-					attackName = "Howling Planar Strike (Force + Element)";
-					attackType = "planarStrike";
-					customClass = "spectral-glow-btn";
-				}
-				else if (combat.hunters_mark_used_this_turn) {
-					attackName = "Surgical Strike (Crit Chance)";
-					attackType = "surgicalStrike";
-					customClass = "spectral-glow-btn";
-				}
-				// TIER 2: BASE ENHANCEMENT
-				else {
-					attackName = "Zephyr Strike (Force Dmg)";
-					attackType = "zephyrStrike";
-					customClass = "spectral-glow-btn";
-				}
-			} 
-			// TIER 2 ALTERNATE: AE PRIMED ONLY (No Blade Enhance)
-			else if (combat.ae_primed) {
-				attackName = `${combat.ae_primed.type.toUpperCase()} Strike`;
-				attackType = "elementalStrike";
-				customClass = "spectral-glow-btn";
-			}
-
-			// --- 2. PUSH MAIN ATTACK BUTTON ---
-			choices.push({
-				text: attackName,
-				action: () => window.attackEnemy(attackType),
-				type: 'action',
-				customClass: customClass
-			});
-
-			// --- 3. PUSH CONSUMABLES (Keep as items) ---
-			const combatItems = [
-				{ id: 'Holy Water', func: 'item_holy_water', style: 'btn-success-glow' },
-				{ id: 'Alchemical Fire', func: 'item_fire', style: 'btn-fire-glow' },
-				{ id: 'Sun-Star Grenade', func: 'item_sun_star', style: 'btn-fire-glow' },
-				{ id: 'Flash Powder', func: 'item_flash', style: '' },
-				{ id: 'Scale-Stake Driver', func: 'item_stake_driver', style: 'btn-fire-glow' }
-			];
-
-			combatItems.forEach(item => {
-				if (state.inventory.includes(item.id)) {
-					choices.push({
-						text: `Use ${item.id}`,
-						action: () => window.resolveCombatRound(item.func),
-						type: 'action',
-						consume: true,
-						reqItem: item.id,
-						customClass: item.style
-					});
-				}
-			});
-
-			return choices;
-		};
 		
 
 		// Close backpack when clicking outside
