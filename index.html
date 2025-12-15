@@ -7756,6 +7756,8 @@
 		// Helper to render inventory list (Needed for the backpack modal)
 		function renderInventoryList() {
 			const invContainer = document.getElementById('inventory-panel');
+			if (!invContainer) return;
+
 			invContainer.innerHTML = '';
 			
 			if (gameState.inventory.length === 0) {
@@ -7767,7 +7769,8 @@
 			const defaultText = "Hover to inspect.";
 
 			gameState.inventory.forEach(itemName => {
-				const itemDef = itemRegistry[itemName] || { icon: 'fa-box', color: 'text-gray-500', desc: "Unknown item." };
+				// CRITICAL FIX: Use window.itemRegistry for module safety
+				const itemDef = window.itemRegistry[itemName] || { icon: 'fa-box', color: 'text-gray-500', desc: "Unknown item." };
 				const el = document.createElement('div');
 				el.className = "group w-full flex items-center justify-between p-2 rounded border border-gray-700/50 bg-gray-900/60 hover:bg-gray-800 transition-all cursor-default relative shrink-0";
 				
