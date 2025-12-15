@@ -614,6 +614,24 @@
 			gap: 4px;
 			cursor: help;
 		}
+		/* --- UI SKILL STATES --- */
+		.skill-btn-active {
+			border-color: #818cf8 !important; /* Indigo */
+			background-color: rgba(49, 46, 129, 0.6) !important;
+			box-shadow: 0 0 10px rgba(99, 102, 241, 0.5) !important;
+			color: #e0e7ff !important;
+		}
+
+		.skill-btn-cooldown {
+			opacity: 0.5;
+			cursor: not-allowed;
+			filter: grayscale(1);
+		}
+
+		/* AE Primed States for the UI Badge */
+		.ae-badge-fire { color: #f87171; border: 1px solid #7f1d1d; background: rgba(69, 10, 10, 0.5); }
+		.ae-badge-cold { color: #22d3ee; border: 1px solid #164e63; background: rgba(8, 51, 68, 0.5); }
+		.ae-badge-acid { color: #4ade80; border: 1px solid #14532d; background: rgba(5, 46, 22, 0.5); }
 		/* --- NEW: 2x2 SKILL/ALLY GRID --- */
 		#abilities-combined-container {
 			display: grid;

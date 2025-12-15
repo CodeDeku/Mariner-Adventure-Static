@@ -395,11 +395,53 @@
 				doomTimer: 20,
 				guidingDieSize: 4,
 				
+				// --- FLAGS ---
 				act1Started: false,
 				isRiftCollapse: false,
-				hasLoggedCollapse: false,
-				isAbsorbCharged: false,
-				isSurpriseRound: false,
+				act2Started: false,
+				isEthereal: false,
+				tetherTimer: 20,
+				act3Started: false,
+				
+				// --- NEW COMBAT FLAGS ---
+				player: {
+					specialization: null, // 'AE' (Absorb) or 'PA' (Awareness) - Set in Act 1
+					weapon: { name: 'Rusted Cutlass', damage: '1d6' } 
+				},
+				combat: {
+					enemy: null,
+					enemyHP: 0,
+					enemyMaxHP: 0,
+					enemyDamage: '1d6',
+					damageType: 'physical',
+					enemyStatus: [], 
+					isPlayerTurn: true,
+					
+					// SKILL FLAGS (Toggles)
+					blade_enhanced_active: false,
+					hunters_mark_used_this_turn: false,
+					ae_primed: null, 
+					blink_used_this_turn: false,
+					silas_used_this_turn: false
+				},
+
+				// ... Keep your existing inventory, history, and crew objects ...
+				inventory: [], 
+				skills: [],
+				crew: {
+					gareth: { id: 'gareth', name: 'Captain Gareth', skill: 'Intimidation & Insight', used: false },
+					quinn: { id: 'quinn', name: 'Quinn', skill: 'Investigation & History', used: false },
+					talon: { id: 'talon', name: 'Talon', skill: 'Survival & Perception', used: false },
+					bones: { id: 'bones', name: 'Bones', skill: 'Medicine & Nature', used: false }
+				},
+				history: [],
+				companions: {
+					silas: { joined: false, name: "Silas", desc: "Seneschal", active: false },
+					blink: { joined: false, name: "Blink", desc: "Phase-Cub", active: false }
+				},
+				allyCooldowns: { silas: 0, blink: 0 },
+				
+				// ... (Keep existing game flags) ...
 				knowsSmelterSecret: false,
 				knowsChapelSecret: false,
 				hasObservedGambler: false, 
@@ -407,15 +449,8 @@
 				docksWorkCount: 0,
 				quinnLogistics: false,
 				hasDivedTreasure: false,
-
-				act2Started: false,
-				isEthereal: false,
-				tetherTimer: 20,
-				returnSceneId: null,
 				hallLooted: false,
 				hasBlinkSkill: false,
-
-				act3Started: false,
 				cellarUnlocked: false,
 				pendingDestination: null,
 				factionAligned: null,
@@ -424,77 +459,12 @@
 				knownIslands: ['port_hub'],
 				currentLocation: 'port_hub',
 				silasJoined: false,
-				silasVengeanceActive: false, // CRITICAL FIX: Silas Vengeance Flag Added
-				
-				inventory: [], 
-				skills: [],
-				crewUseFree: false, 
-				lastCrewUsedId: null, 
-				crew: {
-					gareth: { id: 'gareth', name: 'Captain Gareth', skill: 'Intimidation & Insight', used: false, desc: 'Add +1d4 to Intimidation & Insight' },
-					quinn: { id: 'quinn', name: 'Quinn', skill: 'Investigation & History', used: false, desc: 'Add +1d4 to Investigation & History' },
-					talon: { id: 'talon', name: 'Talon', skill: 'Survival & Perception', used: false, desc: 'Add +1d4 to Survival & Perception' },
-					bones: { id: 'bones', name: 'Bones', skill: 'Medicine & Nature', used: false, desc: 'Add +1d4 to Medicine & Nature' }
-				},
-				history: [],
-				companions: {
-					silas: { 
-						joined: false, 
-						name: "Silas", 
-						desc: "Wolf King's Seneschal (Passive: Pack Tactics)",
-						active: false 
-					},
-					blink: {
-						joined: false,
-						name: "Blink",
-						desc: "Displacer Cub (Active: Phase Shift)",
-						active: false
-					}
-				},
-				player: {
-					specialization: null, // 'AE' or 'PA' (Set this when they choose in Act 1)
-				},
-				combat: {
-					enemy: null,
-					enemyHP: 0,
-					enemyMaxHP: 0,
-					enemyDamage: '1d6',
-					damageType: 'physical',
-					enemyStatus: [], // Array of { name: 'vulnerable', duration: 1 }
-					isPlayerTurn: true,
-					
-					// Combo Flags
-					ae_primed: null, // e.g., { type: 'fire', bonusDmg: '1d8' }
-					blade_enhanced_active: false,
-					blink_used_this_turn: false,
-					hunters_mark_used_this_turn: false,
-					silas_used_this_turn: false
-				},
-				isBossCombat: false,
-				enemyHP: 0,
-				maxEnemyHP: 0,
-				currentEnemy: '',
-				
-				// MULTI-TARGET COMBAT (Elders)
-				enemies: {}, 
+				silasVengeanceActive: false,
 				activeEnemies: [],
-				maxElderHP: 0, 
-				// END MULTI-TARGET
-
-				nextAttackCrit: false,
-				negateNextDamage: false,
-				
-				// LEVEL UP tracking
-				baseDamage: 0, // Starts at 0, increases by 1 per Act
+				enemies: {},
+				activeBoons: [],
 				crewSkillBonuses: { gareth: 0, quinn: 0, talon: 0, bones: 0 },
-				activeBoons: [], // Stores strings: "violence_of_action", "logistics", etc.
-				dreamTransitionPending: null, // Tracks which transition is active
-				
-				allyCooldowns: {
-					silas: 0,
-					blink: 0,
-				},
-				passiveDefenseBonus: 0,
+				passiveDefenseBonus: 0
 			};
 		}
         let gameState = createInitialState();
@@ -1326,41 +1296,88 @@
 		
 		window.attackEnemy = (comboType = 'standard') => {
 			const state = window.gameState;
-			
-			// 1. Safety Initialize
-			if (!state.combat) state.combat = { enemyHP: state.enemyHP };
-			
-			let weaponDmg = state.inventory.includes("Sword of Valor") ? '1d8+1' : '1d6';
-			let baseDamage = window.rollDice(weaponDmg);
-			let bonusDamage = 0;
-			let log = "Attacked enemy.";
+			if (!state.combat) state.combat = { enemyHP: state.enemyHP, enemyStatus: [] };
 
-			// 2. Combo Logic
-			if (comboType === 'zephyrStrike') {
-				bonusDamage += window.rollDice('1d8');
-				log = "<b>Zephyr Strike!</b> Force energy ripples from the blade.";
-			} else if (comboType === 'tripAttack') {
-				bonusDamage += window.rollDice("2d8");
-				log = "<b>Dire Wolf Trip!</b> A massive critical hit!";
-				if (window.applyStatusEffect) window.applyStatusEffect(state, 'prone', 1);
+			// Prevent crash if player.weapon undefined (Safety)
+			if (!state.player.weapon) state.player.weapon = { damage: '1d6' };
+
+			let baseDmgStr = state.inventory.includes("Sword of Valor") ? '1d8+2' : '1d6';
+			let baseDamage = window.rollDice(baseDmgStr);
+			let bonusDamage = 0;
+			let log = "";
+			
+			// --- COMBO EXECUTION ---
+			switch (comboType) {
+				case 'zephyrStrike':
+					bonusDamage += window.rollDice('1d8');
+					log = "<b>Zephyr Strike!</b> Force energy ripples through the target.";
+					break;
+				case 'surgicalStrike': // PA Combo
+					bonusDamage += window.rollDice('1d8');
+					log = "<b>Surgical Strike!</b> You hit the exposed nerve.";
+					break;
+				case 'planarStrike': // AE Combo
+					const element = state.combat.ae_primed ? state.combat.ae_primed.type : 'Force';
+					bonusDamage += window.rollDice('1d8') + window.rollDice('1d8'); // Massive Dmg
+					log = `<b>Howling Planar Strike!</b> The absorbed ${element} erupts!`;
+					state.combat.ae_primed = null; // Consume charge
+					break;
+				case 'tripAttack': // Blink Combo
+					bonusDamage += window.rollDice('2d8'); // Crit damage
+					if (window.applyStatusEffect) window.applyStatusEffect(state, 'prone', 1);
+					log = "<b>Dire Wolf Trip!</b> Blink exposes the throat! CRITICAL HIT + PRONE!";
+					break;
+				case 'wolfBite': // Silas + AE Combo
+					bonusDamage += window.rollDice('1d10');
+					const heal = Math.floor((baseDamage + bonusDamage) / 2);
+					state.currentHP = Math.min(state.maxHP, state.currentHP + heal);
+					log = `<b>White Wolf's Bite!</b> Silas opens the guard. You strike and heal for ${heal} HP!`;
+					break;
+				case 'huntersEdge': // Silas + PA Combo
+					bonusDamage += window.rollDice('1d10');
+					if (window.applyStatusEffect) window.applyStatusEffect(state, 'vulnerable', 1);
+					log = "<b>Hunter's Edge!</b> A devastating coordinated assault.";
+					break;
+				case 'elementalStrike':
+					bonusDamage += window.rollDice('1d8');
+					log = "<b>Elemental Retaliation!</b> You discharge the stored energy.";
+					state.combat.ae_primed = null;
+					break;
+				default:
+					log = "Standard attack.";
+					break;
 			}
 
-			// 3. Apply Damage
-			state.combat.enemyHP -= (baseDamage + bonusDamage);
+			// --- APPLY VULNERABLE MULTIPLIER ---
+			const isVulnerable = state.combat.enemyStatus ? state.combat.enemyStatus.find(s => s.name === 'vulnerable') : false;
+			let totalDamage = baseDamage + bonusDamage;
+			
+			if (isVulnerable) {
+				totalDamage = Math.floor(totalDamage * 1.5);
+				log += " <span class='text-red-500 font-bold'>(Vulnerable! x1.5)</span>";
+				// Consume Vulnerable
+				state.combat.enemyStatus = state.combat.enemyStatus.filter(s => s.name !== 'vulnerable');
+			}
+
+			state.combat.enemyHP -= totalDamage;
 			state.enemyHP = state.combat.enemyHP; // Sync legacy
 
-			addToHistory(`${log} Dealt ${baseDamage + bonusDamage} damage.`, 'combat');
+			// --- RESET TURN FLAGS ---
+			state.combat.blade_enhanced_active = false;
+			state.combat.blink_used_this_turn = false;
+			state.combat.hunters_mark_used_this_turn = false;
+			state.combat.silas_used_this_turn = false;
+
+			addToHistory(`${log} Dealt <b>${totalDamage}</b> damage.`, 'combat');
 			if (window.fxManager) window.fxManager.flashRed();
-
-			// 4. Critical: Reset Turn & Render
-			state.combat.isPlayerTurn = false;
 			
-			renderScene(state.currentSceneId, false); // Forces button update
+			// Re-render to clear buttons immediately
 			updateUI();
+			renderScene(state.currentSceneId, false);
 
-			// 5. Trigger Enemy
+			// --- TRIGGER ENEMY ---
 			if (state.combat.enemyHP <= 0) {
-				setTimeout(() => window.attackEnemy('check_victory'), 500);
+				setTimeout(() => window.resolveCombatRound('check_victory'), 500);
 			} else {
 				setTimeout(window.enemyTurn, 1000);
 			}
@@ -7319,7 +7336,6 @@
                 const isCombineButton = choice.type === 'combine'; 
 
                 // --- ALIGNMENT FIX ---
-                // We use justify-start for ANY button that has costs/indicators to prevent text overlap
                 const hasIndicators = (choice.cost || choice.value || choice.shillingGain || choice.costHP !== undefined || choice.chaosGain || choice.orderGain || choice.doomCost !== undefined || choice.tetherCost !== undefined || choice.suppliesCost !== undefined);
                 const alignmentClass = (isSkillCheck || hasIndicators || isCombineButton) ? 'justify-start' : 'justify-between';
                 
@@ -7360,6 +7376,26 @@
                 if (isHeroButton) icon = '<i class="fas fa-star hero-icon"></i>'; 
                 if (isCombineButton) icon = '<i class="fas fa-hammer text-yellow-500"></i>';
                 
+                // --- FIX: EXPLICIT SKILL CHECK ICON & TEXT ---
+                if (isSkillCheck) {
+                    // 1. Force the Dice Icon
+                    icon = '<i class="fas fa-dice-d20 spectral-text-glow"></i>';
+                    
+                    // 2. Add DC Text
+                    const displayDC = gameState.isRiftCollapse ? choice.dc + 2 : choice.dc;
+                    supplementalText += ` <span class="text-xs text-gray-400 uppercase tracking-wider ml-2 mr-4">[${choice.skill} DC ${displayDC}]</span>`;
+                    
+                    // 3. Add Crew Bonus Text (if active)
+                    if (activeCrewMember) {
+                        const hasBonus = getBonusForSkill(activeCrewMember, choice.skill);
+                        if (hasBonus) {
+                            btnClass += " border-cyan-500 ring-1 ring-cyan-400"; 
+                            const dieType = gameState.isEthereal ? '8' : '4';
+                            supplementalText += ` <span class="text-cyan-300 text-[12px] font-bold animate-pulse">+ 1d${dieType} (${activeCrewMember.name})</span>`;
+                        }
+                    }
+                }
+
                 // Silas Guard State
                 if (gameState.negateNextDamage && (isDeathScene || choice.type === 'action' || choice.costHP)) {
                     btnClass += " ring-1 ring-emerald-500 bg-emerald-900/30";
@@ -7683,65 +7719,157 @@
 			let hasSkills = false;
 			let hasAllies = false;
 
+			
+			
 			// --- RENDER SKILLS (LEFT COLUMN) ---
 			
-			// A. Primary Skill (AE / PA)
-			if (gameState.player.specialization) {
-				const btn = document.createElement('div');
-				// Compact Styling: Matches Silas/Blink
-				btn.className = "w-full p-2 rounded border flex items-center justify-between transition-all cursor-default relative shrink-0 bg-gray-900/60 border-gray-700";
-				
-				if (gameState.player.specialization === 'AE') {
-					// ABSORB ELEMENTS
-					let statusText = "Ready";
-					let iconColor = "text-blue-400";
-					let borderColor = "border-blue-900";
-					let glowClass = "";
+			// Safety Check: Ensure the container exists before modifying it
+			if (skillsList) {
+				skillsList.innerHTML = ''; // Clear previous buttons
 
-					if (gameState.combat && gameState.combat.ae_primed) {
-						const type = gameState.combat.ae_primed.type;
-						statusText = `${type.toUpperCase()} PRIMED`;
-						if (type === 'fire') { iconColor = "text-red-400"; borderColor = "border-red-500"; glowClass = "shadow-[0_0_10px_rgba(248,113,113,0.3)]"; }
-						else if (type === 'cold') { iconColor = "text-cyan-300"; borderColor = "border-cyan-500"; glowClass = "shadow-[0_0_10px_rgba(34,211,238,0.3)]"; }
-						else { iconColor = "text-green-400"; borderColor = "border-green-500"; glowClass = "shadow-[0_0_10px_rgba(74,222,128,0.3)]"; }
-					}
+				// 1. Blade Enhancement (Universal Ranger Ability)
+				if (gameState.act1Started) {
+					const btn = document.createElement('div'); 
+					const isActive = gameState.combat.blade_enhanced_active;
+					const isCombat = gameState.isBossCombat && gameState.combat.isPlayerTurn;
+					
+					// Interactive Style
+					const activeStyle = isActive 
+						? "skill-btn-active" 
+						: (isCombat ? "bg-gray-900/60 border-gray-700 hover:bg-gray-800 cursor-pointer" : "bg-gray-900/40 border-gray-800 opacity-50 cursor-not-allowed");
 
-					btn.className = `w-full p-2 rounded border flex items-center justify-between bg-gray-900/80 ${borderColor} ${glowClass}`;
+					btn.className = `w-full p-2 rounded border flex items-center justify-between transition-all mb-1 select-none ${activeStyle}`;
+					
 					btn.innerHTML = `
 						<div class="flex items-center gap-2">
-							<i class="fas fa-shield-halved ${iconColor}"></i>
-							<div class="flex flex-col leading-none">
-								<span class="text-[10px] cinzel font-bold text-gray-300">Absorb Elements</span>
-								<span class="text-[9px] text-gray-500 uppercase tracking-wider">${statusText}</span>
+							<i class="fas fa-bolt ${isActive ? 'text-white' : 'text-indigo-400'}"></i>
+							<div class="flex flex-col leading-none text-left">
+								<span class="text-[10px] cinzel font-bold text-gray-300">Blade Enhance</span>
+								<span class="text-[9px] text-gray-500 uppercase tracking-wider">${isActive ? 'ACTIVE' : 'Free Action'}</span>
 							</div>
-						</div>
-					`;
-				} 
-				else if (gameState.player.specialization === 'PA') {
-					// PRIMEVAL AWARENESS
-					const inCombat = gameState.isBossCombat && gameState.combat.isPlayerTurn && !gameState.combat.hunters_mark_used_this_turn;
-					const activeClass = inCombat ? "cursor-pointer hover:bg-gray-800 border-green-500/50" : "opacity-70";
+						</div>`;
 					
-					btn.className = `w-full p-2 rounded border flex items-center justify-between bg-gray-900/60 border-gray-700 ${activeClass}`;
-					btn.innerHTML = `
-						<div class="flex items-center gap-2">
-							<i class="fas fa-eye text-emerald-400"></i>
-							<div class="flex flex-col leading-none">
-								<span class="text-[10px] cinzel font-bold text-gray-300">Primeval Awareness</span>
-								<span class="text-[9px] ${inCombat ? 'text-green-400 animate-pulse' : 'text-gray-500'} uppercase tracking-wider">${inCombat ? 'CLICK TO MARK' : 'Passive'}</span>
-							</div>
-						</div>
-					`;
-					
-					if (inCombat) {
+					if (isCombat) {
 						btn.onclick = () => {
-							gameState.combat.hunters_mark_used_this_turn = true;
-							addToHistory("Hunter's Mark applied! Target Vulnerable.", 'combat');
-							window.applyStatusEffect(gameState, 'vulnerable', 1);
+							// Toggle the flag directly
+							gameState.combat.blade_enhanced_active = !gameState.combat.blade_enhanced_active;
+							audioManager.playClick();
+							// Re-render scene to update the "Attack" button text immediately
 							renderScene(gameState.currentSceneId, false);
+							updateUI(); 
 						};
 					}
+					skillsList.appendChild(btn);
+					hasSkills = true;
 				}
+
+				// 2. Specialization Skill (Absorb Elements OR Primeval Awareness)
+				if (gameState.player.specialization) {
+					const btn = document.createElement('div');
+					
+					if (gameState.player.specialization === 'AE') {
+						// ABSORB ELEMENTS (Passive Indicator)
+						let statusText = "Passive";
+						let iconColor = "text-blue-400";
+						let borderColor = "border-blue-900";
+						let glowClass = "";
+
+						// Check if we successfully absorbed something
+						if (gameState.combat && gameState.combat.ae_primed) {
+							const type = gameState.combat.ae_primed.type;
+							statusText = `${type.toUpperCase()} PRIMED`;
+							if (type === 'fire') { iconColor = "text-red-400"; borderColor = "border-red-500"; glowClass = "ae-badge-fire"; }
+							else if (type === 'cold') { iconColor = "text-cyan-300"; borderColor = "border-cyan-500"; glowClass = "ae-badge-cold"; }
+							else { iconColor = "text-green-400"; borderColor = "border-green-500"; glowClass = "ae-badge-acid"; }
+						}
+
+						btn.className = `w-full p-2 rounded border flex items-center justify-between bg-gray-900/80 ${borderColor} ${glowClass}`;
+						btn.innerHTML = `
+							<div class="flex items-center gap-2">
+								<i class="fas fa-shield-halved ${iconColor}"></i>
+								<div class="flex flex-col leading-none">
+									<span class="text-[10px] cinzel font-bold text-gray-300">Absorb Elements</span>
+									<span class="text-[9px] text-gray-500 uppercase tracking-wider">${statusText}</span>
+								</div>
+							</div>
+						`;
+					} 
+					else if (gameState.player.specialization === 'PA') {
+						// HUNTER'S MARK (Active Click)
+						const isUsed = gameState.combat.hunters_mark_used_this_turn;
+						const inCombat = gameState.isBossCombat && gameState.combat.isPlayerTurn;
+						const activeClass = (inCombat && !isUsed) ? "cursor-pointer hover:bg-gray-800 border-green-500/50" : (isUsed ? "skill-btn-active" : "opacity-70 border-gray-800");
+						
+						btn.className = `w-full p-2 rounded border flex items-center justify-between bg-gray-900/60 ${activeClass}`;
+						btn.innerHTML = `
+							<div class="flex items-center gap-2">
+								<i class="fas fa-crosshairs ${isUsed ? 'text-white' : 'text-emerald-400'}"></i>
+								<div class="flex flex-col leading-none">
+									<span class="text-[10px] cinzel font-bold text-gray-300">Hunter's Mark</span>
+									<span class="text-[9px] ${inCombat && !isUsed ? 'text-green-400 animate-pulse' : 'text-gray-500'} uppercase tracking-wider">${isUsed ? 'APPLIED' : 'Free Action'}</span>
+								</div>
+							</div>
+						`;
+						
+						if (inCombat && !isUsed) {
+							btn.onclick = () => {
+								gameState.combat.hunters_mark_used_this_turn = true;
+								addToHistory("Hunter's Mark applied! Target Vulnerable.", 'combat');
+								window.applyStatusEffect(gameState, 'vulnerable', 1);
+								renderScene(gameState.currentSceneId, false);
+								updateUI();
+							};
+						}
+					}
+					skillsList.appendChild(btn);
+					hasSkills = true;
+				}
+
+				// 3. Plane Walk Skill
+				if (gameState.skills.includes("Plane Walking")) {
+					const btn = document.createElement('button');
+					const isActive = gameState.isEthereal;
+					const activeStyle = isActive 
+						? "border-cyan-500 shadow-[0_0_10px_rgba(34,211,238,0.2)] bg-cyan-900/20" 
+						: "border-gray-700 bg-gray-900/60 hover:bg-gray-800";
+
+					btn.className = `w-full p-2 rounded border flex items-center justify-between transition-all ${activeStyle}`;
+					btn.onclick = () => window.gameFunctions.togglePlaneWalk();
+					
+					btn.innerHTML = `
+						<div class="flex items-center gap-2">
+							<i class="fas fa-shoe-prints ${isActive ? 'text-cyan-300' : 'text-gray-400'}"></i>
+							<div class="flex flex-col items-start leading-none">
+								<span class="text-[10px] cinzel font-bold ${isActive ? 'text-cyan-100' : 'text-gray-300'}">Plane Walk</span>
+								<span class="text-[9px] ${isActive ? 'text-cyan-400' : 'text-gray-500'} uppercase tracking-wider">${isActive ? 'ACTIVE' : 'Material'}</span>
+							</div>
+						</div>
+					`;
+					skillsList.appendChild(btn);
+					hasSkills = true;
+				}
+			}
+
+			// 3. Plane Walk Skill
+			if (gameState.skills.includes("Plane Walking")) {
+				const btn = document.createElement('button');
+				const isActive = gameState.isEthereal;
+				const activeStyle = isActive 
+					? "border-cyan-500 shadow-[0_0_10px_rgba(34,211,238,0.2)] bg-cyan-900/20" 
+					: "border-gray-700 bg-gray-900/60 hover:bg-gray-800";
+
+				btn.className = `w-full p-2 rounded border flex items-center justify-between transition-all ${activeStyle}`;
+				btn.onclick = () => window.gameFunctions.togglePlaneWalk();
+				
+				btn.innerHTML = `
+					<div class="flex items-center gap-2">
+						<i class="fas fa-shoe-prints ${isActive ? 'text-cyan-300' : 'text-gray-400'}"></i>
+						<div class="flex flex-col items-start leading-none">
+							<span class="text-[10px] cinzel font-bold ${isActive ? 'text-cyan-100' : 'text-gray-300'}">Plane Walk</span>
+							<span class="text-[9px] ${isActive ? 'text-cyan-400' : 'text-gray-500'} uppercase tracking-wider">${isActive ? 'ACTIVE' : 'Material'}</span>
+						</div>
+					</div>
+				`;
 				skillsList.appendChild(btn);
 				hasSkills = true;
 			}
@@ -8009,30 +8137,84 @@
 		
 		
 		
+		
+		
+		
+		
+		
+		
 		window.generateCombatChoices = function(state) {
 			let choices = [];
-
+			const { combat, player } = state;
+			
+			// --- 1. DETERMINE COMBO TIER ---
+			let attackName = "Strike with Weapon";
+			let attackType = "standard";
+			let customClass = "";
+			
+			// Base Weapon Name Check
 			if (state.inventory.includes('Sword of Valor')) {
-				choices.push({ 
-					text: "Strike with Sword of Valor", 
-					action: () => window.attackEnemy('standard'),
-					type: 'action', 
-					customClass: 'btn-hero'
-				});
-			} else {
-				choices.push({ 
-					text: "Strike with Weapon", 
-					action: () => window.attackEnemy('standard'),
-					type: 'action'
-				});
+				attackName = "Strike with Sword of Valor";
 			}
 
-			// Add Items
+			// COMBO LOGIC TREE
+			if (combat.blade_enhanced_active) {
+				// TIER 4: ALLY COMBOS
+				if (combat.blink_used_this_turn) {
+					attackName = "Dire Wolf Trip Attack (Crit + Prone)";
+					attackType = "tripAttack";
+					customClass = "spectral-glow-btn";
+				} 
+				else if (combat.silas_used_this_turn) {
+					if (player.specialization === 'PA') {
+						attackName = "Hunter's Edge (Vulnerable)";
+						attackType = "huntersEdge";
+						customClass = "spectral-glow-btn";
+					} else {
+						attackName = "The White Wolf's Bite (Heal)";
+						attackType = "wolfBite";
+						customClass = "spectral-glow-btn";
+					}
+				}
+				// TIER 3: SOLO COMBOS
+				else if (combat.ae_primed) {
+					attackName = "Howling Planar Strike (Force + Element)";
+					attackType = "planarStrike";
+					customClass = "spectral-glow-btn";
+				}
+				else if (combat.hunters_mark_used_this_turn) {
+					attackName = "Surgical Strike (Crit Chance)";
+					attackType = "surgicalStrike";
+					customClass = "spectral-glow-btn";
+				}
+				// TIER 2: BASE ENHANCEMENT
+				else {
+					attackName = "Zephyr Strike (Force Dmg)";
+					attackType = "zephyrStrike";
+					customClass = "spectral-glow-btn";
+				}
+			} 
+			// TIER 2 ALTERNATE: AE PRIMED ONLY (No Blade Enhance)
+			else if (combat.ae_primed) {
+				attackName = `${combat.ae_primed.type.toUpperCase()} Strike`;
+				attackType = "elementalStrike";
+				customClass = "spectral-glow-btn";
+			}
+
+			// --- 2. PUSH MAIN ATTACK BUTTON ---
+			choices.push({
+				text: attackName,
+				action: () => window.attackEnemy(attackType),
+				type: 'action',
+				customClass: customClass
+			});
+
+			// --- 3. PUSH CONSUMABLES (Keep as items) ---
 			const combatItems = [
 				{ id: 'Holy Water', func: 'item_holy_water', style: 'btn-success-glow' },
 				{ id: 'Alchemical Fire', func: 'item_fire', style: 'btn-fire-glow' },
 				{ id: 'Sun-Star Grenade', func: 'item_sun_star', style: 'btn-fire-glow' },
-				{ id: 'Flash Powder', func: 'item_flash', style: '' }, 
+				{ id: 'Flash Powder', func: 'item_flash', style: '' },
 				{ id: 'Scale-Stake Driver', func: 'item_stake_driver', style: 'btn-fire-glow' }
 			];
 
@@ -8050,7 +8232,7 @@
 			});
 
 			return choices;
-		};	
+		};
 		
 
 		// Close backpack when clicking outside
