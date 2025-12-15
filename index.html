@@ -1132,6 +1132,7 @@
 			state.combat.isPlayerTurn = true;
 			updateUI();
 		};
+		window.enemyTurn = enemyTurn;
 
 		// 5. ITEM/UTILITY BRIDGE
 		// This handles Consumables and Victory Checks
@@ -6669,6 +6670,7 @@
 			updateUI();
 			return `${baseItem} and ${ingredient} were fused at the Spectral Forge, yielding the <span class="text-item">${resultDef.name}</span>!`;
 		}
+		window.combineItems = combineItems;
 
 		async function renderScene(sceneId, logText = true) {
             const scene = scenes[sceneId];
